@@ -1,0 +1,556 @@
+{
+  "character": "Riff",
+  "pack": "riff_phaser_ready_pack",
+  "style": "32-bit pixel art, 2.5D top-down/slightly angled companion robot",
+  "repoTarget": "AdonisDRoss/motel-pheromones-cosmic-feedback",
+  "installRoot": "repo root",
+  "notes": [
+    "All generated sheets are padded to exact Phaser grid dimensions.",
+    "White/checker generator background has been removed to transparent where possible.",
+    "Sprite sheets are 8 columns x 4 rows with 222x222 frames.",
+    "FX sheets are 4 columns x 4 rows with 314x314 frames.",
+    "Directions are mapped as down, left, right, up. Verify in-game and swap rows if needed."
+  ],
+  "sprites": {
+    "movement": {
+      "sourceFile": "pixel_robot_sprite_sheet_animation.png",
+      "sourceSize": {
+        "w": 1774,
+        "h": 887
+      },
+      "path": "assets/sprites/companions/riff/riff_movement_8x4_222.png",
+      "columns": 8,
+      "rows": 4,
+      "frameWidth": 222,
+      "frameHeight": 222,
+      "frameCount": 32,
+      "paddedSize": {
+        "w": 1776,
+        "h": 888
+      }
+    },
+    "attack": {
+      "sourceFile": "pixelated_robot_action_sprite_sheet.png",
+      "sourceSize": {
+        "w": 1774,
+        "h": 887
+      },
+      "path": "assets/sprites/companions/riff/riff_attack_8x4_222.png",
+      "columns": 8,
+      "rows": 4,
+      "frameWidth": 222,
+      "frameHeight": 222,
+      "frameCount": 32,
+      "paddedSize": {
+        "w": 1776,
+        "h": 888
+      }
+    },
+    "actions": {
+      "sourceFile": "pixel_art_robot_sprite_sheet.png",
+      "sourceSize": {
+        "w": 1774,
+        "h": 887
+      },
+      "path": "assets/sprites/companions/riff/riff_actions_8x4_222.png",
+      "columns": 8,
+      "rows": 4,
+      "frameWidth": 222,
+      "frameHeight": 222,
+      "frameCount": 32,
+      "paddedSize": {
+        "w": 1776,
+        "h": 888
+      }
+    },
+    "hurt": {
+      "sourceFile": "pixel_art_robot_animation_frames.png",
+      "sourceSize": {
+        "w": 1774,
+        "h": 887
+      },
+      "path": "assets/sprites/companions/riff/riff_hurt_8x4_222.png",
+      "columns": 8,
+      "rows": 4,
+      "frameWidth": 222,
+      "frameHeight": 222,
+      "frameCount": 32,
+      "paddedSize": {
+        "w": 1776,
+        "h": 888
+      }
+    },
+    "reactions": {
+      "sourceFile": "chibi_robot_sprite_sheet_animation.png",
+      "sourceSize": {
+        "w": 1774,
+        "h": 887
+      },
+      "path": "assets/sprites/companions/riff/riff_reactions_8x4_222.png",
+      "columns": 8,
+      "rows": 4,
+      "frameWidth": 222,
+      "frameHeight": 222,
+      "frameCount": 32,
+      "paddedSize": {
+        "w": 1776,
+        "h": 888
+      }
+    },
+    "extra_poses": {
+      "sourceFile": "steampunk_robot_sprite_sheet_design.png",
+      "sourceSize": {
+        "w": 1774,
+        "h": 887
+      },
+      "path": "assets/sprites/companions/riff/riff_extra_poses_8x4_222.png",
+      "columns": 8,
+      "rows": 4,
+      "frameWidth": 222,
+      "frameHeight": 222,
+      "frameCount": 32,
+      "paddedSize": {
+        "w": 1776,
+        "h": 888
+      }
+    }
+  },
+  "fx": {
+    "movement": {
+      "sourceFile": "sci_fi_motion_and_impact_effects.png",
+      "sourceSize": {
+        "w": 1254,
+        "h": 1254
+      },
+      "path": "assets/fx/companions/riff/riff_fx_movement_4x4_314.png",
+      "columns": 4,
+      "rows": 4,
+      "frameWidth": 314,
+      "frameHeight": 314,
+      "frameCount": 16,
+      "paddedSize": {
+        "w": 1256,
+        "h": 1256
+      }
+    },
+    "attack": {
+      "sourceFile": "pixel_art_sci_fi_energy_effects.png",
+      "sourceSize": {
+        "w": 1254,
+        "h": 1254
+      },
+      "path": "assets/fx/companions/riff/riff_fx_attack_4x4_314.png",
+      "columns": 4,
+      "rows": 4,
+      "frameWidth": 314,
+      "frameHeight": 314,
+      "frameCount": 16,
+      "paddedSize": {
+        "w": 1256,
+        "h": 1256
+      }
+    },
+    "reactions": {
+      "sourceFile": "pixel_art_energy_and_impact_effects.png",
+      "sourceSize": {
+        "w": 1254,
+        "h": 1254
+      },
+      "path": "assets/fx/companions/riff/riff_fx_reactions_4x4_314.png",
+      "columns": 4,
+      "rows": 4,
+      "frameWidth": 314,
+      "frameHeight": 314,
+      "frameCount": 16,
+      "paddedSize": {
+        "w": 1256,
+        "h": 1256
+      }
+    },
+    "actions": {
+      "sourceFile": "sci_fi_tech_effect_icons_sheet.png",
+      "sourceSize": {
+        "w": 1254,
+        "h": 1254
+      },
+      "path": "assets/fx/companions/riff/riff_fx_actions_4x4_314.png",
+      "columns": 4,
+      "rows": 4,
+      "frameWidth": 314,
+      "frameHeight": 314,
+      "frameCount": 16,
+      "paddedSize": {
+        "w": 1256,
+        "h": 1256
+      }
+    }
+  },
+  "animations": {
+    "riff_walk_down": {
+      "sheet": "riff_movement",
+      "start": 0,
+      "end": 7,
+      "frameRate": 8,
+      "repeat": -1
+    },
+    "riff_walk_left": {
+      "sheet": "riff_movement",
+      "start": 8,
+      "end": 15,
+      "frameRate": 8,
+      "repeat": -1
+    },
+    "riff_walk_right": {
+      "sheet": "riff_movement",
+      "start": 16,
+      "end": 23,
+      "frameRate": 8,
+      "repeat": -1
+    },
+    "riff_walk_up": {
+      "sheet": "riff_movement",
+      "start": 24,
+      "end": 31,
+      "frameRate": 8,
+      "repeat": -1
+    },
+    "riff_short_down": {
+      "sheet": "riff_attack",
+      "start": 0,
+      "end": 3,
+      "frameRate": 10,
+      "repeat": 0
+    },
+    "riff_long_down": {
+      "sheet": "riff_attack",
+      "start": 4,
+      "end": 7,
+      "frameRate": 10,
+      "repeat": 0
+    },
+    "riff_short_left": {
+      "sheet": "riff_attack",
+      "start": 8,
+      "end": 11,
+      "frameRate": 10,
+      "repeat": 0
+    },
+    "riff_long_left": {
+      "sheet": "riff_attack",
+      "start": 12,
+      "end": 15,
+      "frameRate": 10,
+      "repeat": 0
+    },
+    "riff_short_right": {
+      "sheet": "riff_attack",
+      "start": 16,
+      "end": 19,
+      "frameRate": 10,
+      "repeat": 0
+    },
+    "riff_long_right": {
+      "sheet": "riff_attack",
+      "start": 20,
+      "end": 23,
+      "frameRate": 10,
+      "repeat": 0
+    },
+    "riff_short_up": {
+      "sheet": "riff_attack",
+      "start": 24,
+      "end": 27,
+      "frameRate": 10,
+      "repeat": 0
+    },
+    "riff_long_up": {
+      "sheet": "riff_attack",
+      "start": 28,
+      "end": 31,
+      "frameRate": 10,
+      "repeat": 0
+    },
+    "riff_action_scan_down": {
+      "sheet": "riff_actions",
+      "start": 0,
+      "end": 3,
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "riff_action_use_down": {
+      "sheet": "riff_actions",
+      "start": 4,
+      "end": 7,
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "riff_action_scan_left": {
+      "sheet": "riff_actions",
+      "start": 8,
+      "end": 11,
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "riff_action_use_left": {
+      "sheet": "riff_actions",
+      "start": 12,
+      "end": 15,
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "riff_action_scan_right": {
+      "sheet": "riff_actions",
+      "start": 16,
+      "end": 19,
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "riff_action_use_right": {
+      "sheet": "riff_actions",
+      "start": 20,
+      "end": 23,
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "riff_action_scan_up": {
+      "sheet": "riff_actions",
+      "start": 24,
+      "end": 27,
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "riff_action_use_up": {
+      "sheet": "riff_actions",
+      "start": 28,
+      "end": 31,
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "riff_hurt_down": {
+      "sheet": "riff_hurt",
+      "start": 0,
+      "end": 3,
+      "frameRate": 9,
+      "repeat": 0
+    },
+    "riff_knockdown_down": {
+      "sheet": "riff_hurt",
+      "start": 4,
+      "end": 7,
+      "frameRate": 9,
+      "repeat": 0
+    },
+    "riff_hurt_left": {
+      "sheet": "riff_hurt",
+      "start": 8,
+      "end": 11,
+      "frameRate": 9,
+      "repeat": 0
+    },
+    "riff_knockdown_left": {
+      "sheet": "riff_hurt",
+      "start": 12,
+      "end": 15,
+      "frameRate": 9,
+      "repeat": 0
+    },
+    "riff_hurt_right": {
+      "sheet": "riff_hurt",
+      "start": 16,
+      "end": 19,
+      "frameRate": 9,
+      "repeat": 0
+    },
+    "riff_knockdown_right": {
+      "sheet": "riff_hurt",
+      "start": 20,
+      "end": 23,
+      "frameRate": 9,
+      "repeat": 0
+    },
+    "riff_hurt_up": {
+      "sheet": "riff_hurt",
+      "start": 24,
+      "end": 27,
+      "frameRate": 9,
+      "repeat": 0
+    },
+    "riff_knockdown_up": {
+      "sheet": "riff_hurt",
+      "start": 28,
+      "end": 31,
+      "frameRate": 9,
+      "repeat": 0
+    },
+    "riff_react_alert_down": {
+      "sheet": "riff_reactions",
+      "start": 0,
+      "end": 3,
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "riff_react_signal_down": {
+      "sheet": "riff_reactions",
+      "start": 4,
+      "end": 7,
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "riff_react_alert_left": {
+      "sheet": "riff_reactions",
+      "start": 8,
+      "end": 11,
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "riff_react_signal_left": {
+      "sheet": "riff_reactions",
+      "start": 12,
+      "end": 15,
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "riff_react_alert_right": {
+      "sheet": "riff_reactions",
+      "start": 16,
+      "end": 19,
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "riff_react_signal_right": {
+      "sheet": "riff_reactions",
+      "start": 20,
+      "end": 23,
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "riff_react_alert_up": {
+      "sheet": "riff_reactions",
+      "start": 24,
+      "end": 27,
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "riff_react_signal_up": {
+      "sheet": "riff_reactions",
+      "start": 28,
+      "end": 31,
+      "frameRate": 8,
+      "repeat": 0
+    }
+  },
+  "fxAnimations": {
+    "riff_fx_movement_row1": {
+      "sheet": "riff_fx_movement",
+      "start": 0,
+      "end": 3,
+      "frameRate": 12,
+      "repeat": 0
+    },
+    "riff_fx_movement_row2": {
+      "sheet": "riff_fx_movement",
+      "start": 4,
+      "end": 7,
+      "frameRate": 12,
+      "repeat": 0
+    },
+    "riff_fx_movement_row3": {
+      "sheet": "riff_fx_movement",
+      "start": 8,
+      "end": 11,
+      "frameRate": 12,
+      "repeat": 0
+    },
+    "riff_fx_movement_row4": {
+      "sheet": "riff_fx_movement",
+      "start": 12,
+      "end": 15,
+      "frameRate": 12,
+      "repeat": 0
+    },
+    "riff_fx_attack_row1": {
+      "sheet": "riff_fx_attack",
+      "start": 0,
+      "end": 3,
+      "frameRate": 12,
+      "repeat": 0
+    },
+    "riff_fx_attack_row2": {
+      "sheet": "riff_fx_attack",
+      "start": 4,
+      "end": 7,
+      "frameRate": 12,
+      "repeat": 0
+    },
+    "riff_fx_attack_row3": {
+      "sheet": "riff_fx_attack",
+      "start": 8,
+      "end": 11,
+      "frameRate": 12,
+      "repeat": 0
+    },
+    "riff_fx_attack_row4": {
+      "sheet": "riff_fx_attack",
+      "start": 12,
+      "end": 15,
+      "frameRate": 12,
+      "repeat": 0
+    },
+    "riff_fx_reactions_row1": {
+      "sheet": "riff_fx_reactions",
+      "start": 0,
+      "end": 3,
+      "frameRate": 12,
+      "repeat": 0
+    },
+    "riff_fx_reactions_row2": {
+      "sheet": "riff_fx_reactions",
+      "start": 4,
+      "end": 7,
+      "frameRate": 12,
+      "repeat": 0
+    },
+    "riff_fx_reactions_row3": {
+      "sheet": "riff_fx_reactions",
+      "start": 8,
+      "end": 11,
+      "frameRate": 12,
+      "repeat": 0
+    },
+    "riff_fx_reactions_row4": {
+      "sheet": "riff_fx_reactions",
+      "start": 12,
+      "end": 15,
+      "frameRate": 12,
+      "repeat": 0
+    },
+    "riff_fx_actions_row1": {
+      "sheet": "riff_fx_actions",
+      "start": 0,
+      "end": 3,
+      "frameRate": 12,
+      "repeat": 0
+    },
+    "riff_fx_actions_row2": {
+      "sheet": "riff_fx_actions",
+      "start": 4,
+      "end": 7,
+      "frameRate": 12,
+      "repeat": 0
+    },
+    "riff_fx_actions_row3": {
+      "sheet": "riff_fx_actions",
+      "start": 8,
+      "end": 11,
+      "frameRate": 12,
+      "repeat": 0
+    },
+    "riff_fx_actions_row4": {
+      "sheet": "riff_fx_actions",
+      "start": 12,
+      "end": 15,
+      "frameRate": 12,
+      "repeat": 0
+    }
+  }
+}
