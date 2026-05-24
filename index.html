@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Motel Pheromones: Cosmic Feedback</title>
+<title>Cosmic Feedback</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
-html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#000;touch-action:none;-webkit-user-select:none;user-select:none}
-#game{position:fixed;inset:0}
+html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#000;touch-action:none;-webkit-user-select:none;user-select:none;font-family:monospace}
+#game{position:fixed;inset:0;background:#000}
 canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 </style>
 </head>
@@ -15,249 +15,112 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 <script>
 (()=>{
 'use strict';
-const W=960,H=540;
+const W=960, H=540, WORLD_W=1920;
 
-const ROOMS=[
-  {id:'drive_to_camp',name:'Road to Red Concord Camp',bg:'bg_drive',
-   path:'assets/backgrounds/planets/dust_9/drive/dust9_road_chunk_01_no_vans.png',
-   spawn:[480,400],bounds:[100,125,760,385],
-   exits:[
-     ['to_camp','Camp Perimeter',390,35,180,90,null,'Reach Camp'],
-     ['to_van','Back to Van',420,455,130,70,null,'Return']
-   ]},
-  {id:'camp_checkpoint',name:'Red Concord Camp Checkpoint',bg:'bg_camp',
-   path:'assets/backgrounds/dust9/dust9_checkpoint_empty_1920x540.png',
-   spawn:[180,390],bounds:[50,210,860,300],
-   exits:[
-     ['road','Back to Road',20,420,100,100,'drive_to_camp','Return to Road']
-   ]}
-];
+const ASSETS={
+  titleVideo:'assets/cosmic-feedback/video/title_intro.mp4',
+  titleBg:'assets/backgrounds/dust9/dust9_checkpoint_empty_1920x540.png',
+  donny:'assets/sprites/player/donny/donny_empty_pistol_pose_sheet.png',
+  van:'assets/sprites/vehicles/astro_van/astro_van_side_drive_idle_4f.png'
+};
 
-/* ─── BOOT ─────────────────────────────────────────────────────────── */
-class Boot extends Phaser.Scene {
+const ROOMS={
+  checkpoint:{name:'Outer Checkpoint',key:'bg_checkpoint',background:'assets/backgrounds/dust9/dust9_checkpoint_empty_1920x540.png',spawn:{x:170,y:410},walk:{x:0,y:250,width:1920,height:250},exits:{right:'prisoner_housing_yard'}},
+  prisoner_housing_yard:{name:'Prisoner Housing Yard',key:'bg_prisoner_housing_yard',background:'assets/backgrounds/dust9/dust9_prisoner_housing_yard_empty_1920x540.png',spawn:{x:140,y:405},walk:{x:0,y:235,width:1920,height:280},exits:{left:'checkpoint',right:'mining_yard'}},
+  mining_yard:{name:'Outdoor Mining Yard',key:'bg_mining_yard',background:'assets/backgrounds/dust9/dust9_mining_yard_empty_1920x540.png',spawn:{x:150,y:420},walk:{x:0,y:250,width:1920,height:260},exits:{left:'prisoner_housing_yard',right:'support_block'}},
+  support_block:{name:'Support Block',key:'bg_support_block',background:'assets/backgrounds/dust9/dust9_support_block_empty_1920x540.png',spawn:{x:160,y:405},walk:{x:0,y:245,width:1920,height:275},exits:{left:'mining_yard',right:'high_command_tower'}},
+  high_command_tower:{name:'High Command Tower Exterior',key:'bg_high_command_tower',background:'assets/backgrounds/dust9/dust9_high_command_tower_exterior_empty_1920x540.png',spawn:{x:150,y:410},walk:{x:0,y:245,width:1920,height:275},exits:{left:'support_block',right:'control_room'}},
+  control_room:{name:'Camp Control Room',key:'bg_control_room',background:'assets/backgrounds/dust9/dust9_control_room_empty_1920x540.png',spawn:{x:180,y:385},walk:{x:0,y:250,width:1920,height:250},exits:{left:'high_command_tower',right:'basement_prison'}},
+  basement_prison:{name:'Basement High-Security Prison',key:'bg_basement_prison',background:'assets/backgrounds/dust9/dust9_basement_prison_empty_1920x540.png',spawn:{x:160,y:390},walk:{x:0,y:245,width:1920,height:280},exits:{left:'control_room',right:'loading_pad_escape'}},
+  loading_pad_escape:{name:'Loading Pad / Escape Route',key:'bg_loading_pad_escape',background:'assets/backgrounds/dust9/dust9_loading_pad_escape_route_empty_1920x540.png',spawn:{x:180,y:400},walk:{x:0,y:235,width:1920,height:290},exits:{left:'basement_prison'}}
+};
+
+function label(scene,x,y,text,size=14,color='#d9f7ff'){
+  return scene.add.text(x,y,text,{fontFamily:'monospace',fontSize:size+'px',color,stroke:'#000',strokeThickness:3});
+}
+
+class Boot extends Phaser.Scene{
   constructor(){super('Boot')}
-
   preload(){
-    this.load.on('loaderror', f => console.warn('Asset missing (ok):', f.key, f.url));
-
-    // Title video — muted so autoplay works on mobile
-    this.load.video('title_video','assets/cosmic-feedback/video/title_intro.mp4','loadeddata',false,true);
-
-    // Room backgrounds
-    ROOMS.forEach(r => this.load.image(r.bg, r.path));
-
-    // Player sprite
-    this.load.spritesheet('donny1',
-      'assets/sprites/player/donny/donny_empty_pistol_pose_sheet.png',
-      {frameWidth:128,frameHeight:128});
-
-    // Van sprite
-    this.load.spritesheet('van_drive',
-      'assets/sprites/vehicles/astro_van/astro_van_side_drive_idle_4f.png',
-      {frameWidth:256,frameHeight:128});
+    this.load.on('loaderror', f => console.warn('[Missing asset]', f.key, f.url));
+    this.load.video('title_video', ASSETS.titleVideo, 'loadeddata', false, true);
+    this.load.image('title_bg', ASSETS.titleBg);
+    Object.values(ROOMS).forEach(r=>this.load.image(r.key,r.background));
+    this.load.spritesheet('donny', ASSETS.donny, {frameWidth:128,frameHeight:128});
+    this.load.spritesheet('astro_van', ASSETS.van, {frameWidth:256,frameHeight:128});
   }
-
   create(){
-    // Placeholder textures if assets failed to load
-    const mk=(k,w,h,c)=>{
-      if(this.textures.exists(k)) return;
-      const g=this.add.graphics();
-      g.fillStyle(c,1).fillRect(0,0,w,h)
-       .lineStyle(2,0xffffff,.5).strokeRect(1,1,w-2,h-2)
-       .generateTexture(k,w,h);
-      g.destroy();
-    };
-    mk('ph_bg',960,540,0x17131c);
-    mk('ph_player',46,82,0x314dff);
-
+    const mk=(k,w,h,c)=>{if(this.textures.exists(k))return;const g=this.add.graphics();g.fillStyle(c,1).fillRect(0,0,w,h);g.lineStyle(2,0xffffff,.55).strokeRect(1,1,w-2,h-2);g.generateTexture(k,w,h);g.destroy();};
+    mk('ph_bg',WORLD_W,H,0x17131c); mk('ph_player',46,82,0x314dff); mk('ph_van',180,90,0x2d2d3a);
     this.scene.start('Title');
   }
 }
 
-/* ─── TITLE ─────────────────────────────────────────────────────────── */
-class Title extends Phaser.Scene {
+class Title extends Phaser.Scene{
   constructor(){super('Title')}
-
   create(){
-    // ── Video background ──────────────────────────────────────────────
-    const vid = this.add.video(W/2, H/2, 'title_video');
-
-    // Scale to cover the full canvas (crop if aspect ratio differs)
-    const vw = vid.width  || W;
-    const vh = vid.height || H;
-    const scale = Math.max(W/vw, H/vh);
-    vid.setScale(scale);
-    vid.setDepth(0);
-
-    // Muted loop — safe on all browsers including mobile
-    vid.setMute(true);
-    vid.setLoop(true);
-    vid.play();
-
-    // If video fails (e.g. GitHub Pages hasn't deployed it yet) fall back to solid bg
-    vid.on('error', () => {
-      this.add.rectangle(0,0,W,H,0x07050a).setOrigin(0).setDepth(0);
-    });
-
-    // ── Dark overlay so text is readable ──────────────────────────────
-    this.add.rectangle(0,0,W,H,0x000000,0.52).setOrigin(0).setDepth(1);
-
-    // ── Title text ────────────────────────────────────────────────────
-    this.add.text(W/2,100,'MOTEL PHEROMONES',{
-      fontFamily:'monospace',fontSize:'44px',color:'#f4e7ff',
-      stroke:'#000',strokeThickness:6
-    }).setOrigin(.5).setDepth(2);
-
-    this.add.text(W/2,158,'COSMIC FEEDBACK',{
-      fontFamily:'monospace',fontSize:'28px',color:'#86f7ff',
-      stroke:'#000',strokeThickness:4
-    }).setOrigin(.5).setDepth(2);
-
-    this.add.text(W/2,210,'— a forgotten signal from the Outer Rim —',{
-      fontFamily:'monospace',fontSize:'13px',color:'#7a6b8a'
-    }).setOrigin(.5).setDepth(2);
-
-    // ── Menu buttons ──────────────────────────────────────────────────
-    const btn=(y,label,cb)=>{
-      const t=this.add.text(W/2,y,label,{
-        fontFamily:'monospace',fontSize:'22px',color:'#fff',
-        backgroundColor:'#2a1040',padding:{x:28,y:14},
-        stroke:'#000',strokeThickness:2
-      }).setOrigin(.5).setInteractive().setDepth(2);
-      t.on('pointerover', ()=>t.setStyle({backgroundColor:'#5a2e8a'}));
-      t.on('pointerout',  ()=>t.setStyle({backgroundColor:'#2a1040'}));
-      t.on('pointerdown', cb);
-      return t;
-    };
-
-    btn(310,'[ START GAME ]', ()=>{
-      // Stop video before leaving to avoid memory leaks
-      vid.stop();
-      this.scene.start('Game',{startRoom:'drive_to_camp'});
-    });
-
-    btn(390,'[ TEST DUST-9 ROAD WORLD ]', ()=>{
-      vid.stop();
-      this.scene.start('Game',{startRoom:'drive_to_camp'});
-    });
-
-    this.add.text(W/2,490,'ENTER = Start Game',{
-      fontFamily:'monospace',fontSize:'11px',color:'#443355'
-    }).setOrigin(.5).setDepth(2);
-
-    this.input.keyboard.once('keydown-ENTER', ()=>{
-      vid.stop();
-      this.scene.start('Game',{startRoom:'drive_to_camp'});
-    });
+    if(this.cache.video.exists('title_video')){
+      this.vid=this.add.video(W/2,H/2,'title_video').setDepth(0);
+      this.vid.setMute(true); this.vid.setLoop(true); this.vid.play(true);
+      this.vid.once('play',()=>{const vw=this.vid.video.videoWidth||W,vh=this.vid.video.videoHeight||H;this.vid.setScale(Math.max(W/vw,H/vh));});
+    } else {
+      this.add.image(W/2,H/2,this.textures.exists('title_bg')?'title_bg':'ph_bg').setDisplaySize(W,H).setDepth(0);
+    }
+    this.add.rectangle(0,0,W,H,0x000000,.48).setOrigin(0).setDepth(1);
+    label(this,W/2,72,'COSMIC FEEDBACK',44,'#fff').setOrigin(.5).setDepth(2);
+    label(this,W/2,125,'The signal starts on Dust-9',17,'#8ff9ff').setOrigin(.5).setDepth(2);
+    label(this,W/2,168,'GitHub Pages build: actual Dust-9 assets wired',12,'#b08cff').setOrigin(.5).setDepth(2);
+    const makeBtn=(y,txt,cb)=>{const t=this.add.text(W/2,y,txt,{fontFamily:'monospace',fontSize:'22px',color:'#fff',backgroundColor:'#3b145c',padding:{x:26,y:14},stroke:'#000',strokeThickness:2}).setOrigin(.5).setDepth(3).setInteractive({useHandCursor:true});t.on('pointerover',()=>t.setStyle({backgroundColor:'#7a1f9a'}));t.on('pointerout',()=>t.setStyle({backgroundColor:'#3b145c'}));t.on('pointerdown',cb);return t;};
+    makeBtn(300,'START GAME',()=>this.startDust9());
+    makeBtn(375,'TEST DUST-9 ROAD WORLD',()=>this.startDust9());
+    makeBtn(450,'DIRECT ROAD TEST PAGE',()=>{window.location.href='dust9-road-test.html';});
+    this.input.keyboard.once('keydown-ENTER',()=>this.startDust9());
   }
+  startDust9(){ if(this.vid)this.vid.stop(); this.scene.start('Dust9',{room:'checkpoint'}); }
 }
 
-/* ─── GAME (Dust-9 Road World) ──────────────────────────────────────── */
-class Game extends Phaser.Scene {
-  constructor(){super('Game');this.roomId='drive_to_camp';this.exitBoxes=[];}
-
-  init(data){if(data&&data.startRoom) this.roomId=data.startRoom;}
-
+class Dust9 extends Phaser.Scene{
+  constructor(){super('Dust9');this.roomId='checkpoint';this.touch={left:false,right:false,up:false,down:false};}
+  init(data){if(data&&data.room)this.roomId=data.room;}
   create(){
-    this.keys=this.input.keyboard.addKeys('W,A,S,D');
-    this.cursors=this.input.keyboard.createCursorKeys();
-    this.loadRoom(this.roomId||'drive_to_camp');
-    this.makePlayer(...(ROOMS.find(r=>r.id===this.roomId)||ROOMS[0]).spawn);
-
-    // HUD
-    this.add.text(10,10,'DUST-9',{
-      fontFamily:'monospace',fontSize:'13px',color:'#86f7ff',
-      stroke:'#000',strokeThickness:2
-    }).setDepth(100);
-
-    this.add.text(10,28,'WASD / Arrows = move   walk into exit zones to change rooms',{
-      fontFamily:'monospace',fontSize:'10px',color:'#998899',stroke:'#000',strokeThickness:1
-    }).setDepth(100);
-
-    // Back link
-    this.add.text(W-10,10,'← Main Menu',{
-      fontFamily:'monospace',fontSize:'12px',color:'#86f7ff',
-      stroke:'#000',strokeThickness:1
-    }).setOrigin(1,0).setDepth(100).setInteractive()
-      .on('pointerdown',()=>this.scene.start('Title'));
+    this.cameras.main.setBounds(0,0,WORLD_W,H);
+    this.keys=this.input.keyboard.addKeys('W,A,S,D'); this.cursors=this.input.keyboard.createCursorKeys();
+    this.drawRoom(this.roomId); this.makePlayer(); this.makeHud(); this.makeMobileControls();
   }
-
-  tex(k){return this.textures.exists(k)}
-
-  loadRoom(id){
-    const r=ROOMS.find(x=>x.id===id)||ROOMS[0];
-    this.room=r; this.roomId=r.id;
-
-    if(this.bg) this.bg.destroy();
-    this.bg=this.add.image(W/2,H/2,this.tex(r.bg)?r.bg:'ph_bg')
-      .setDisplaySize(W,H).setDepth(0);
-
-    this.exitBoxes.forEach(x=>x.destroy());
-    this.exitBoxes=[];
-    (r.exits||[]).forEach(e=>{
-      const g=this.add.graphics().setDepth(8);
-      g.lineStyle(1,0x86f7ff,.35).strokeRect(e[2],e[3],e[4],e[5]);
-      const lbl=this.add.text(e[2]+e[4]/2,e[3]+e[5]/2,e[7]||e[1],{
-        fontFamily:'monospace',fontSize:'10px',color:'#86f7ff',stroke:'#000',strokeThickness:1
-      }).setOrigin(.5).setDepth(9).setAlpha(.7);
-      this.exitBoxes.push(g,lbl);
-      g._exit=e; lbl._exit=e;
-    });
-
-    if(this.player){
-      this.player.x=r.spawn[0];
-      this.player.y=r.spawn[1];
-    }
+  has(k){return this.textures.exists(k)}
+  drawRoom(id){
+    const r=ROOMS[id]||ROOMS.checkpoint; this.roomId=id; this.room=r;
+    if(this.bg)this.bg.destroy();
+    this.bg=this.add.image(0,0,this.has(r.key)?r.key:'ph_bg').setOrigin(0,0).setDepth(0).setDisplaySize(WORLD_W,H);
+    if(this.roomText)this.roomText.destroy(); if(this.helpText)this.helpText.destroy(); if(this.van)this.van.destroy();
+    this.roomText=label(this,16,12,'DUST-9 / '+r.name,14,'#86f7ff').setScrollFactor(0).setDepth(100);
+    this.helpText=label(this,W/2,34,'Move to left/right edge to change areas. Mobile controls are on screen.',11,'#d0bbff').setOrigin(.5,0).setScrollFactor(0).setDepth(100);
+    if(id==='checkpoint' && this.has('astro_van')) this.van=this.add.sprite(115,435,'astro_van',0).setOrigin(.5,1).setScale(.72).setDepth(5);
   }
-
-  makePlayer(x,y){
-    const key=this.tex('donny1')?'donny1':'ph_player';
-    this.player=this.add.image(x,y,key).setDepth(20).setScale(0.8);
-    if(key==='donny1') this.player.setFrame(0);
+  makePlayer(){
+    const s=this.room.spawn, key=this.has('donny')?'donny':'ph_player';
+    this.player=this.add.sprite(s.x,s.y,key,0).setOrigin(.5,1).setDepth(20).setScale(key==='donny'?0.78:1);
+    this.cameras.main.startFollow(this.player,true,.08,.08);
   }
-
-  checkExits(){
-    const px=this.player.x, py=this.player.y;
-    for(const e of (this.room.exits||[])){
-      if(px>=e[2]&&px<=e[2]+e[4]&&py>=e[3]&&py<=e[3]+e[5]){
-        const dest=e[6];
-        if(dest&&ROOMS.find(x=>x.id===dest)) this.loadRoom(dest);
-        return;
-      }
-    }
+  makeHud(){
+    label(this,16,500,'HP 100   VAN 100   CREDITS 25   Objective: reach the relay route',12,'#f4e7ff').setScrollFactor(0).setDepth(100);
+    label(this,W-16,12,'← Main Menu',12,'#86f7ff').setOrigin(1,0).setScrollFactor(0).setDepth(100).setInteractive({useHandCursor:true}).on('pointerdown',()=>this.scene.start('Title'));
   }
-
+  makeMobileControls(){
+    const mk=(x,y,txt,flag)=>{const b=this.add.text(x,y,txt,{fontFamily:'monospace',fontSize:'24px',color:'#fff',backgroundColor:'rgba(40,20,70,.55)',padding:{x:16,y:12},stroke:'#000',strokeThickness:3}).setOrigin(.5).setScrollFactor(0).setDepth(200).setInteractive();b.on('pointerdown',()=>this.touch[flag]=true);['pointerup','pointerout','pointerupoutside'].forEach(e=>b.on(e,()=>this.touch[flag]=false));return b;};
+    mk(74,H-86,'◀','left'); mk(162,H-86,'▶','right'); mk(118,H-130,'▲','up'); mk(118,H-42,'▼','down');
+  }
   update(){
-    if(!this.player) return;
-    const spd=3;
-    const L=this.cursors.left.isDown ||this.keys.A.isDown;
-    const R=this.cursors.right.isDown||this.keys.D.isDown;
-    const U=this.cursors.up.isDown   ||this.keys.W.isDown;
-    const D=this.cursors.down.isDown ||this.keys.S.isDown;
-    if(L) this.player.x-=spd;
-    if(R) this.player.x+=spd;
-    if(U) this.player.y-=spd;
-    if(D) this.player.y+=spd;
-    const b=this.room.bounds;
-    this.player.x=Math.max(b[0],Math.min(b[0]+b[2],this.player.x));
-    this.player.y=Math.max(b[1],Math.min(b[1]+b[3],this.player.y));
-    this.checkExits();
+    if(!this.player||!this.room)return;
+    const L=this.cursors.left.isDown||this.keys.A.isDown||this.touch.left, R=this.cursors.right.isDown||this.keys.D.isDown||this.touch.right, U=this.cursors.up.isDown||this.keys.W.isDown||this.touch.up, D=this.cursors.down.isDown||this.keys.S.isDown||this.touch.down;
+    const spd=3.2; if(L)this.player.x-=spd; if(R)this.player.x+=spd; if(U)this.player.y-=spd; if(D)this.player.y+=spd;
+    const b=this.room.walk; this.player.x=Phaser.Math.Clamp(this.player.x,b.x+20,b.x+b.width-20); this.player.y=Phaser.Math.Clamp(this.player.y,b.y+40,b.y+b.height-5);
+    const exits=this.room.exits||{}; if(this.player.x>WORLD_W-35 && exits.right)this.changeRoom(exits.right,'left'); if(this.player.x<35 && exits.left)this.changeRoom(exits.left,'right');
   }
+  changeRoom(id,enterFrom){const r=ROOMS[id]; if(!r)return; this.drawRoom(id); this.player.x=enterFrom==='left'?70:WORLD_W-70; this.player.y=r.spawn.y; this.room=r;}
 }
 
-/* ─── LAUNCH ────────────────────────────────────────────────────────── */
-new Phaser.Game({
-  type:Phaser.AUTO,
-  parent:'game',
-  width:W,
-  height:H,
-  backgroundColor:'#000000',
-  pixelArt:true,
-  roundPixels:true,
-  scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},
-  input:{activePointers:3},
-  scene:[Boot,Title,Game]
-});
+new Phaser.Game({type:Phaser.AUTO,parent:'game',width:W,height:H,backgroundColor:'#000',pixelArt:true,roundPixels:true,scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},input:{activePointers:5},scene:[Boot,Title,Dust9]});
 })();
 </script>
 </body>
