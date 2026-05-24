@@ -62,6 +62,21 @@ class Dust9Atmosphere {
 
 const ASSET = (p) => p + "?v=" + VERSION;
 
+const INTERIOR_LABELS = {
+  saloon_large:           "Saloon / Cantina",
+  general_store:          "General Store",
+  repair_shop:            "Repair Shop",
+  clinic:                 "Clinic",
+  security_office:        "Sheriff's Office",
+  jail_cell_block:        "Jail Cells",
+  docking_office:         "Docking Office",
+  boarding_house:         "Boarding House",
+  market_stall:           "Market",
+  simple_home:            "Home",
+  residential_shack:      "Shack",
+  secret_camp_checkpoint: "???"
+};
+
 const BUILDINGS = [
   {id:"saloon", sheet:"buildingsA", frame:4, x:980, y:780, scale:.72, label:"Saloon"},
   {id:"store", sheet:"buildingsA", frame:2, x:1500, y:650, scale:.66, label:"General Store"},
@@ -121,6 +136,9 @@ class PreloadScene extends Phaser.Scene {
     this.load.spritesheet("inmate", ASSET("assets/sprites/npcs/dust9_town/dust9_town_inmate_01.png"), {frameWidth:128, frameHeight:128});
     this.load.spritesheet("dockWorker", ASSET("assets/sprites/npcs/dust9_town/dust9_dock_worker.png"), {frameWidth:128, frameHeight:128});
     this.load.spritesheet("secretContact", ASSET("assets/sprites/npcs/dust9_town/dust9_secret_contact_female.png"), {frameWidth:128, frameHeight:128});
+
+    this.load.json("doorTriggers", ASSET("assets/data/dust9_town/dust9_town_door_triggers.json"));
+    this.load.json("interiorLinks", ASSET("assets/data/dust9_town/dust9_town_interior_links.json"));
   }
   create(){ this.scene.start("WorldScene"); }
 }
@@ -130,14 +148,25 @@ class WorldScene extends Phaser.Scene {
   create(){
     this.mode = "town";
     this.root = this.add.container(0,0);
-    this.keys = this.input.keyboard.addKeys("W,A,S,D,T,I,L,ONE,TWO,THREE,FOUR,FIVE,SIX,PLUS,MINUS");
+    this.keys = this.input.keyboard.addKeys("W,A,S,D,T,I,L,E,ONE,TWO,THREE,FOUR,FIVE,SIX,PLUS,MINUS,ESC,BACKSPACE");
     this.cursors = this.input.keyboard.createCursorKeys();
     this.atmosphere = new Dust9Atmosphere(this);
     this.makeAnimations();
+
+    this.doorTriggers = [];
+    this.nearDoor = null;
+
+    this.promptText = this.add.text(480, 500, "", {
+      fontFamily:"monospace", fontSize:"18px", color:"#ffffff",
+      backgroundColor:"rgba(0,0,0,.72)", padding:{x:14,y:7}
+    }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(1000001).setVisible(false);
+
     this.showTown();
 
+    this.doorTriggers = this.cache.json.get("doorTriggers") || [];
+
     this.hud = this.add.text(14,14,
-      "DUST-9 WORLD UPDATE\nT: Town  L: Saloon  I: Interior gallery\n1/2/3: Clear/Wind/Storm  4/5/6: Day/Dusk/Night\nWASD/Arrows: camera  +/-: zoom",
+      "DUST-9 WORLD UPDATE\nT: Town  L: Saloon  I: Interior gallery\nE: Enter building  ESC/Backspace: Exit\n1/2/3: Clear/Wind/Storm  4/5/6: Day/Dusk/Night\nWASD/Arrows: camera  +/-: zoom",
       {fontFamily:"monospace",fontSize:"14px",color:"#f9d48c",backgroundColor:"rgba(0,0,0,.55)",padding:{x:10,y:8}}
     ).setScrollFactor(0).setDepth(999999);
   }
@@ -217,10 +246,74 @@ class WorldScene extends Phaser.Scene {
         i++;
       }
     }
+    if(this.promptText) this.promptText.setVisible(false);
+  }
+
+  checkDoorProximity(){
+    if(this.mode !== "town"){ this.nearDoor = null; this.promptText.setVisible(false); return; }
+    const cam = this.cameras.main;
+    const cx = cam.worldView.centerX;
+    const cy = cam.worldView.centerY;
+    const RADIUS = 350;
+    let found = null;
+    for(const t of this.doorTriggers){
+      if(t.requires) continue;
+      const tx = t.x + t.w / 2;
+      const ty = t.y + t.h / 2;
+      const dist = Math.sqrt((cx-tx)*(cx-tx)+(cy-ty)*(cy-ty));
+      if(dist < RADIUS){ found = t; break; }
+    }
+    if(found){
+      this.nearDoor = found;
+      const label = INTERIOR_LABELS[found.to] || found.to;
+      this.promptText.setText("[ E ]  Enter " + label).setVisible(true);
+    } else {
+      this.nearDoor = null;
+      this.promptText.setVisible(false);
+    }
+  }
+
+  enterInterior(interiorId){
+    const links = this.cache.json.get("interiorLinks") || {};
+    const link = links[interiorId];
+    if(!link){
+      this.showSingleInterior(interiorId, 0, INTERIOR_LABELS[interiorId] || interiorId);
+      return;
+    }
+    if(link.type === "single_large_image"){
+      this.showSaloon();
+      return;
+    }
+    const MAX_MULTI_FRAME = 8;
+    const frame = Math.min(link.frame, MAX_MULTI_FRAME);
+    this.showSingleInterior(interiorId, frame, INTERIOR_LABELS[interiorId] || interiorId);
+  }
+
+  showSingleInterior(interiorId, frame, label){
+    this.mode = "interior_" + interiorId;
+    this.clearRoot();
+    this.cameras.main.setBounds(0,0,1024,768).setZoom(0.72).centerOn(512,384);
+    this.root.add(this.add.sprite(512,384,"multiInteriors",frame).setDepth(0));
+    this.root.add(
+      this.add.text(512, 720, label, {
+        fontFamily:"monospace", fontSize:"22px", color:"#f7d28b",
+        backgroundColor:"rgba(0,0,0,.62)", padding:{x:10,y:5}
+      }).setOrigin(0.5,1).setDepth(10)
+    );
+    if(this.promptText) this.promptText.setVisible(false);
   }
 
   update(time,delta){
     this.atmosphere.update(delta);
+
+    const isInterior = this.mode !== "town" && this.mode !== "interiors";
+    if(Phaser.Input.Keyboard.JustDown(this.keys.ESC) || Phaser.Input.Keyboard.JustDown(this.keys.BACKSPACE)){
+      if(isInterior || this.mode === "saloon") this.showTown();
+    }
+    if(Phaser.Input.Keyboard.JustDown(this.keys.E)){
+      if(this.mode === "town" && this.nearDoor) this.enterInterior(this.nearDoor.to);
+    }
+
     if(Phaser.Input.Keyboard.JustDown(this.keys.T)) this.showTown();
     if(Phaser.Input.Keyboard.JustDown(this.keys.L)) this.showSaloon();
     if(Phaser.Input.Keyboard.JustDown(this.keys.I)) this.showInteriorGallery();
@@ -232,6 +325,8 @@ class WorldScene extends Phaser.Scene {
     if(Phaser.Input.Keyboard.JustDown(this.keys.SIX)) this.atmosphere.timeOfDay=.02;
     if(Phaser.Input.Keyboard.JustDown(this.keys.PLUS)) this.cameras.main.zoom = Phaser.Math.Clamp(this.cameras.main.zoom + .05, .25, 1.2);
     if(Phaser.Input.Keyboard.JustDown(this.keys.MINUS)) this.cameras.main.zoom = Phaser.Math.Clamp(this.cameras.main.zoom - .05, .25, 1.2);
+
+    this.checkDoorProximity();
 
     const cam=this.cameras.main, spd=700*(delta/1000)/cam.zoom;
     if(this.cursors.left.isDown || this.keys.A.isDown) cam.scrollX -= spd;
