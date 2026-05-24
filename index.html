@@ -18,10 +18,39 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 const W=960, H=540, WORLD_W=1920;
 
 const ASSETS={
-  titleVideo:'assets/cosmic-feedback/video/title_intro.mp4',
-  titleBg:'assets/backgrounds/dust9/dust9_checkpoint_empty_1920x540.png',
-  donny:'assets/sprites/player/donny/donny_empty_pistol_pose_sheet.png',
-  van:'assets/sprites/vehicles/astro_van/astro_van_side_drive_idle_4f.png'
+  titleVideo : 'assets/cosmic-feedback/video/title_intro.mp4',
+  titleBg    : 'assets/backgrounds/dust9/dust9_checkpoint_empty_1920x540.png',
+  // Donny overhead walk sheet — DO NOT swap for pistol pose sheet
+  donny      : 'assets/sprites/player/donny/donny_overhead_sheet.png',
+  // Holster overlay
+  holster    : 'assets/sprites/equipment/holsters/donny_tight_holster_brown_4dir_1779504330.png',
+  // Van
+  van        : 'assets/sprites/vehicles/astro_van/astro_van_side_drive_idle_4f.png',
+  // Weapons JSON
+  weaponsJson: 'assets/data/dust9/red_concord_weapons.json',
+  // Weapon overlays (loaded for later use, non-blocking)
+  weaponOverlay : 'assets/sprites/weapons/red_concord/red_concord_weapons_4dir_overlay.png',
+  weaponPickup  : 'assets/sprites/weapons/red_concord/red_concord_weapon_pickups.png',
+  weaponFx      : 'assets/fx/red_concord/red_concord_weapon_fx.png',
+  // Riff
+  riff       : 'assets/sprites/companions/riff/riff_movement.png'
+};
+
+// Donny overhead sheet: frameWidth 192, frameHeight 288
+// Frames: down 0-3 | right 4-7 | left 8-11 | up 12-15
+const DONNY_FRAMES = { down:0, right:4, left:8, up:12 };
+
+// Holster sheet: frameWidth 128, frameHeight 128
+// Frames: down 0-3 | right 4-7 | left 8-11 | up 12-15
+const HOLSTER_FRAMES = { down:0, right:4, left:8, up:12 };
+
+// Holster pixel offsets relative to player (origin bottom-centre)
+// Tune these values until holster sits on Donny's hip
+const HOLSTER_OFFSET = {
+  down  : { x:  16, y: -82 },
+  right : { x:  22, y: -80 },
+  left  : { x: -22, y: -80 },
+  up    : { x: -14, y: -88 }
 };
 
 const ROOMS={
@@ -39,88 +68,339 @@ function label(scene,x,y,text,size=14,color='#d9f7ff'){
   return scene.add.text(x,y,text,{fontFamily:'monospace',fontSize:size+'px',color,stroke:'#000',strokeThickness:3});
 }
 
+/* ─── BOOT ───────────────────────────────────────────────────────────── */
 class Boot extends Phaser.Scene{
   constructor(){super('Boot')}
+
   preload(){
-    this.load.on('loaderror', f => console.warn('[Missing asset]', f.key, f.url));
+    this.load.on('loaderror', f => console.warn('[Missing asset — ok]', f.key, f.url));
+
+    // Video
     this.load.video('title_video', ASSETS.titleVideo, 'loadeddata', false, true);
+    // Fallback title bg
     this.load.image('title_bg', ASSETS.titleBg);
-    Object.values(ROOMS).forEach(r=>this.load.image(r.key,r.background));
-    this.load.spritesheet('donny', ASSETS.donny, {frameWidth:128,frameHeight:128});
-    this.load.spritesheet('astro_van', ASSETS.van, {frameWidth:256,frameHeight:128});
+
+    // Room backgrounds
+    Object.values(ROOMS).forEach(r => this.load.image(r.key, r.background));
+
+    // Donny overhead walk sheet — frameWidth:192, frameHeight:288
+    this.load.spritesheet('donny', ASSETS.donny, {frameWidth:192, frameHeight:288});
+
+    // Holster overlay — frameWidth:128, frameHeight:128
+    this.load.spritesheet('holster', ASSETS.holster, {frameWidth:128, frameHeight:128});
+
+    // Astro Van
+    this.load.spritesheet('astro_van', ASSETS.van, {frameWidth:256, frameHeight:128});
+
+    // Riff
+    this.load.spritesheet('riff', ASSETS.riff, {frameWidth:128, frameHeight:128});
+
+    // Weapons JSON (for pistol config — non-blocking)
+    this.load.json('weapons_json', ASSETS.weaponsJson);
+
+    // Weapon visuals — loaded but not yet used
+    this.load.image('weapon_overlay', ASSETS.weaponOverlay);
+    this.load.image('weapon_pickup',  ASSETS.weaponPickup);
+    this.load.image('weapon_fx',      ASSETS.weaponFx);
   }
+
   create(){
-    const mk=(k,w,h,c)=>{if(this.textures.exists(k))return;const g=this.add.graphics();g.fillStyle(c,1).fillRect(0,0,w,h);g.lineStyle(2,0xffffff,.55).strokeRect(1,1,w-2,h-2);g.generateTexture(k,w,h);g.destroy();};
-    mk('ph_bg',WORLD_W,H,0x17131c); mk('ph_player',46,82,0x314dff); mk('ph_van',180,90,0x2d2d3a);
+    const mk=(k,w,h,c)=>{
+      if(this.textures.exists(k)) return;
+      const g=this.add.graphics();
+      g.fillStyle(c,1).fillRect(0,0,w,h);
+      g.lineStyle(2,0xffffff,.55).strokeRect(1,1,w-2,h-2);
+      g.generateTexture(k,w,h);
+      g.destroy();
+    };
+    mk('ph_bg', WORLD_W, H, 0x17131c);
+    mk('ph_player', 46, 82, 0x314dff);
+    mk('ph_holster', 32, 32, 0x8b6914);
+    mk('ph_van', 180, 90, 0x2d2d3a);
+
+    // Read pistol config from JSON if loaded
+    this._pistolConfig = null;
+    if(this.cache.json.exists('weapons_json')){
+      const data = this.cache.json.get('weapons_json');
+      const weapons = data.weapons || data;
+      if(Array.isArray(weapons)){
+        this._pistolConfig = weapons.find(w => w.id === 'pistol') || null;
+      }
+    }
+    if(!this._pistolConfig){
+      // Fallback pistol config if JSON missing
+      this._pistolConfig = {id:'pistol',damage:8,range:420,ammo:12};
+    }
+
     this.scene.start('Title');
   }
 }
 
+/* ─── TITLE ──────────────────────────────────────────────────────────── */
 class Title extends Phaser.Scene{
   constructor(){super('Title')}
+
   create(){
     if(this.cache.video.exists('title_video')){
-      this.vid=this.add.video(W/2,H/2,'title_video').setDepth(0);
-      this.vid.setMute(true); this.vid.setLoop(true); this.vid.play(true);
-      this.vid.once('play',()=>{const vw=this.vid.video.videoWidth||W,vh=this.vid.video.videoHeight||H;this.vid.setScale(Math.max(W/vw,H/vh));});
+      this.vid = this.add.video(W/2, H/2, 'title_video').setDepth(0);
+      this.vid.setMute(true);
+      this.vid.setLoop(true);
+      this.vid.play(true);
+      this.vid.once('play', ()=>{
+        const vw=this.vid.video.videoWidth||W, vh=this.vid.video.videoHeight||H;
+        this.vid.setScale(Math.max(W/vw, H/vh));
+      });
     } else {
-      this.add.image(W/2,H/2,this.textures.exists('title_bg')?'title_bg':'ph_bg').setDisplaySize(W,H).setDepth(0);
+      this.add.image(W/2,H/2,this.textures.exists('title_bg')?'title_bg':'ph_bg')
+        .setDisplaySize(W,H).setDepth(0);
     }
+
     this.add.rectangle(0,0,W,H,0x000000,.48).setOrigin(0).setDepth(1);
     label(this,W/2,72,'COSMIC FEEDBACK',44,'#fff').setOrigin(.5).setDepth(2);
     label(this,W/2,125,'The signal starts on Dust-9',17,'#8ff9ff').setOrigin(.5).setDepth(2);
-    label(this,W/2,168,'GitHub Pages build: actual Dust-9 assets wired',12,'#b08cff').setOrigin(.5).setDepth(2);
-    const makeBtn=(y,txt,cb)=>{const t=this.add.text(W/2,y,txt,{fontFamily:'monospace',fontSize:'22px',color:'#fff',backgroundColor:'#3b145c',padding:{x:26,y:14},stroke:'#000',strokeThickness:2}).setOrigin(.5).setDepth(3).setInteractive({useHandCursor:true});t.on('pointerover',()=>t.setStyle({backgroundColor:'#7a1f9a'}));t.on('pointerout',()=>t.setStyle({backgroundColor:'#3b145c'}));t.on('pointerdown',cb);return t;};
-    makeBtn(300,'START GAME',()=>this.startDust9());
-    makeBtn(375,'TEST DUST-9 ROAD WORLD',()=>this.startDust9());
-    makeBtn(450,'DIRECT ROAD TEST PAGE',()=>{window.location.href='dust9-road-test.html';});
-    this.input.keyboard.once('keydown-ENTER',()=>this.startDust9());
+
+    const makeBtn=(y,txt,cb)=>{
+      const t=this.add.text(W/2,y,txt,{
+        fontFamily:'monospace',fontSize:'22px',color:'#fff',
+        backgroundColor:'#3b145c',padding:{x:26,y:14},
+        stroke:'#000',strokeThickness:2
+      }).setOrigin(.5).setDepth(3).setInteractive({useHandCursor:true});
+      t.on('pointerover',()=>t.setStyle({backgroundColor:'#7a1f9a'}));
+      t.on('pointerout', ()=>t.setStyle({backgroundColor:'#3b145c'}));
+      t.on('pointerdown', cb);
+      return t;
+    };
+
+    makeBtn(290,'START GAME',            ()=>this.go());
+    makeBtn(365,'TEST DUST-9 ROAD WORLD',()=>this.go());
+    makeBtn(440,'DIRECT ROAD TEST PAGE', ()=>{window.location.href='dust9-road-test.html';});
+
+    this.input.keyboard.once('keydown-ENTER', ()=>this.go());
   }
-  startDust9(){ if(this.vid)this.vid.stop(); this.scene.start('Dust9',{room:'checkpoint'}); }
+
+  go(){
+    if(this.vid) this.vid.stop();
+    this.scene.start('Dust9', {room:'checkpoint'});
+  }
 }
 
+/* ─── DUST-9 GAME SCENE ──────────────────────────────────────────────── */
 class Dust9 extends Phaser.Scene{
-  constructor(){super('Dust9');this.roomId='checkpoint';this.touch={left:false,right:false,up:false,down:false};}
-  init(data){if(data&&data.room)this.roomId=data.room;}
+  constructor(){
+    super('Dust9');
+    this.roomId = 'checkpoint';
+    this.touch  = {left:false,right:false,up:false,down:false,fire:false};
+    this.facing = 'down';
+
+    // Pistol / holster state
+    this.pistol = {
+      owned      : true,
+      state      : 'holstered',   // 'holstered' | 'drawn'
+      ammo       : 12,
+      equipped   : 'pistol'
+    };
+  }
+
+  init(data){ if(data && data.room) this.roomId = data.room; }
+
   create(){
-    this.cameras.main.setBounds(0,0,WORLD_W,H);
-    this.keys=this.input.keyboard.addKeys('W,A,S,D'); this.cursors=this.input.keyboard.createCursorKeys();
-    this.drawRoom(this.roomId); this.makePlayer(); this.makeHud(); this.makeMobileControls();
+    this.cameras.main.setBounds(0, 0, WORLD_W, H);
+    this.keys    = this.input.keyboard.addKeys('W,A,S,D,F');
+    this.cursors = this.input.keyboard.createCursorKeys();
+
+    // F key — draw / holster toggle
+    this._fWasDown = false;
+
+    this.drawRoom(this.roomId);
+    this.makePlayer();
+    this.makeHud();
+    this.makeMobileControls();
   }
-  has(k){return this.textures.exists(k)}
+
+  has(k){ return this.textures.exists(k); }
+
+  /* ── Room ─────────────────────────────────────────────────────────── */
   drawRoom(id){
-    const r=ROOMS[id]||ROOMS.checkpoint; this.roomId=id; this.room=r;
-    if(this.bg)this.bg.destroy();
-    this.bg=this.add.image(0,0,this.has(r.key)?r.key:'ph_bg').setOrigin(0,0).setDepth(0).setDisplaySize(WORLD_W,H);
-    if(this.roomText)this.roomText.destroy(); if(this.helpText)this.helpText.destroy(); if(this.van)this.van.destroy();
-    this.roomText=label(this,16,12,'DUST-9 / '+r.name,14,'#86f7ff').setScrollFactor(0).setDepth(100);
-    this.helpText=label(this,W/2,34,'Move to left/right edge to change areas. Mobile controls are on screen.',11,'#d0bbff').setOrigin(.5,0).setScrollFactor(0).setDepth(100);
-    if(id==='checkpoint' && this.has('astro_van')) this.van=this.add.sprite(115,435,'astro_van',0).setOrigin(.5,1).setScale(.72).setDepth(5);
+    const r = ROOMS[id] || ROOMS.checkpoint;
+    this.roomId = id;
+    this.room   = r;
+
+    if(this.bg)       this.bg.destroy();
+    if(this.roomText) this.roomText.destroy();
+    if(this.helpText) this.helpText.destroy();
+    if(this.van)      this.van.destroy();
+
+    this.bg = this.add.image(0,0, this.has(r.key)?r.key:'ph_bg')
+      .setOrigin(0,0).setDepth(0).setDisplaySize(WORLD_W,H);
+
+    this.roomText = label(this,16,12,'DUST-9 / '+r.name,14,'#86f7ff')
+      .setScrollFactor(0).setDepth(100);
+    this.helpText = label(this,W/2,34,'Move to left/right edge to change areas',11,'#d0bbff')
+      .setOrigin(.5,0).setScrollFactor(0).setDepth(100);
+
+    // Van parked at checkpoint
+    if(id==='checkpoint' && this.has('astro_van')){
+      this.van = this.add.sprite(115,435,'astro_van',0)
+        .setOrigin(.5,1).setScale(.72).setDepth(5);
+    }
   }
+
+  /* ── Player + holster ─────────────────────────────────────────────── */
   makePlayer(){
-    const s=this.room.spawn, key=this.has('donny')?'donny':'ph_player';
-    this.player=this.add.sprite(s.x,s.y,key,0).setOrigin(.5,1).setDepth(20).setScale(key==='donny'?0.78:1);
-    this.cameras.main.startFollow(this.player,true,.08,.08);
+    const s   = this.room.spawn;
+    const key = this.has('donny') ? 'donny' : 'ph_player';
+    this.player = this.add.sprite(s.x, s.y, key, DONNY_FRAMES['down'])
+      .setOrigin(.5,1)
+      .setDepth(20)
+      .setScale(key==='donny' ? 0.52 : 1);  // 192px * 0.52 ≈ 100px wide
+
+    // Holster overlay — always tracks Donny
+    const hKey = this.has('holster') ? 'holster' : 'ph_holster';
+    this.holsterSprite = this.add.sprite(s.x, s.y, hKey, HOLSTER_FRAMES['down'])
+      .setDepth(21)   // above Donny
+      .setScale(0.52);
+
+    this.cameras.main.startFollow(this.player, true, .08, .08);
   }
+
+  /* ── HUD ──────────────────────────────────────────────────────────── */
   makeHud(){
-    label(this,16,500,'HP 100   VAN 100   CREDITS 25   Objective: reach the relay route',12,'#f4e7ff').setScrollFactor(0).setDepth(100);
-    label(this,W-16,12,'← Main Menu',12,'#86f7ff').setOrigin(1,0).setScrollFactor(0).setDepth(100).setInteractive({useHandCursor:true}).on('pointerdown',()=>this.scene.start('Title'));
+    // Static HUD labels
+    label(this,16,500,'HP 100   VAN 100   CREDITS 25', 12,'#f4e7ff')
+      .setScrollFactor(0).setDepth(100);
+
+    // Pistol / ammo HUD — updated every frame
+    this.hudPistol = label(this, W-16, 500, this._pistolLabel(), 13, '#ffe97a')
+      .setOrigin(1,0).setScrollFactor(0).setDepth(100);
+
+    this.hudAmmo = label(this, W-16, 518, 'AMMO: '+this.pistol.ammo, 12, '#ffd46a')
+      .setOrigin(1,0).setScrollFactor(0).setDepth(100);
+
+    label(this,W-16,12,'← Main Menu',12,'#86f7ff')
+      .setOrigin(1,0).setScrollFactor(0).setDepth(100)
+      .setInteractive({useHandCursor:true})
+      .on('pointerdown',()=>this.scene.start('Title'));
+
+    // F key hint
+    label(this, W/2, H-20, '[ F ] Draw / Holster Pistol', 11, '#aaaacc')
+      .setOrigin(.5,1).setScrollFactor(0).setDepth(100);
   }
+
+  _pistolLabel(){
+    return 'PISTOL: '+(this.pistol.state==='drawn' ? 'DRAWN' : 'HOLSTERED');
+  }
+
+  /* ── Mobile controls ─────────────────────────────────────────────── */
   makeMobileControls(){
-    const mk=(x,y,txt,flag)=>{const b=this.add.text(x,y,txt,{fontFamily:'monospace',fontSize:'24px',color:'#fff',backgroundColor:'rgba(40,20,70,.55)',padding:{x:16,y:12},stroke:'#000',strokeThickness:3}).setOrigin(.5).setScrollFactor(0).setDepth(200).setInteractive();b.on('pointerdown',()=>this.touch[flag]=true);['pointerup','pointerout','pointerupoutside'].forEach(e=>b.on(e,()=>this.touch[flag]=false));return b;};
-    mk(74,H-86,'◀','left'); mk(162,H-86,'▶','right'); mk(118,H-130,'▲','up'); mk(118,H-42,'▼','down');
+    const mk=(x,y,txt,flag)=>{
+      const b = this.add.text(x,y,txt,{
+        fontFamily:'monospace',fontSize:'24px',color:'#fff',
+        backgroundColor:'rgba(40,20,70,.55)',padding:{x:16,y:12},
+        stroke:'#000',strokeThickness:3
+      }).setOrigin(.5).setScrollFactor(0).setDepth(200).setInteractive();
+      b.on('pointerdown',()=>this.touch[flag]=true);
+      ['pointerup','pointerout','pointerupoutside'].forEach(e=>b.on(e,()=>this.touch[flag]=false));
+      return b;
+    };
+    mk( 74, H-86, '◀', 'left');
+    mk(162, H-86, '▶', 'right');
+    mk(118, H-130,'▲', 'up');
+    mk(118, H-42, '▼', 'down');
+
+    // FIRE / DRAW button — right side
+    const fireBtn = this.add.text(W-70, H-80, 'DRAW\nFIRE',{
+      fontFamily:'monospace',fontSize:'16px',color:'#ffe97a',
+      backgroundColor:'rgba(90,20,20,.7)',padding:{x:14,y:10},
+      stroke:'#000',strokeThickness:3,align:'center'
+    }).setOrigin(.5).setScrollFactor(0).setDepth(200).setInteractive();
+    fireBtn.on('pointerdown', ()=>{ this._togglePistol(); });
   }
+
+  /* ── Pistol toggle ───────────────────────────────────────────────── */
+  _togglePistol(){
+    this.pistol.state = this.pistol.state === 'holstered' ? 'drawn' : 'holstered';
+    this.hudPistol.setText(this._pistolLabel());
+    this._updateHolsterVisual();
+  }
+
+  _updateHolsterVisual(){
+    if(!this.holsterSprite) return;
+    if(this.pistol.state === 'drawn'){
+      // Holster fades slightly when pistol is drawn (still there, just empty)
+      this.holsterSprite.setAlpha(0.35);
+    } else {
+      this.holsterSprite.setAlpha(1);
+    }
+  }
+
+  /* ── Update ──────────────────────────────────────────────────────── */
   update(){
-    if(!this.player||!this.room)return;
-    const L=this.cursors.left.isDown||this.keys.A.isDown||this.touch.left, R=this.cursors.right.isDown||this.keys.D.isDown||this.touch.right, U=this.cursors.up.isDown||this.keys.W.isDown||this.touch.up, D=this.cursors.down.isDown||this.keys.S.isDown||this.touch.down;
-    const spd=3.2; if(L)this.player.x-=spd; if(R)this.player.x+=spd; if(U)this.player.y-=spd; if(D)this.player.y+=spd;
-    const b=this.room.walk; this.player.x=Phaser.Math.Clamp(this.player.x,b.x+20,b.x+b.width-20); this.player.y=Phaser.Math.Clamp(this.player.y,b.y+40,b.y+b.height-5);
-    const exits=this.room.exits||{}; if(this.player.x>WORLD_W-35 && exits.right)this.changeRoom(exits.right,'left'); if(this.player.x<35 && exits.left)this.changeRoom(exits.left,'right');
+    if(!this.player || !this.room) return;
+
+    // F key — toggle with press (not hold)
+    const fDown = this.keys.F.isDown;
+    if(fDown && !this._fWasDown) this._togglePistol();
+    this._fWasDown = fDown;
+
+    // Movement
+    const L = this.cursors.left.isDown  || this.keys.A.isDown  || this.touch.left;
+    const R = this.cursors.right.isDown || this.keys.D.isDown  || this.touch.right;
+    const U = this.cursors.up.isDown    || this.keys.W.isDown  || this.touch.up;
+    const D = this.cursors.down.isDown  || this.keys.S.isDown  || this.touch.down;
+
+    const spd = 3.2;
+    let moved = false;
+    if(L){ this.player.x -= spd; this.facing = 'left';  moved = true; }
+    if(R){ this.player.x += spd; this.facing = 'right'; moved = true; }
+    if(U){ this.player.y -= spd; this.facing = 'up';    moved = true; }
+    if(D){ this.player.y += spd; this.facing = 'down';  moved = true; }
+
+    // Update Donny's frame based on facing direction
+    if(this.has('donny')){
+      this.player.setFrame(DONNY_FRAMES[this.facing]);
+    }
+
+    // Bounds clamp
+    const b = this.room.walk;
+    this.player.x = Phaser.Math.Clamp(this.player.x, b.x+20, b.x+b.width-20);
+    this.player.y = Phaser.Math.Clamp(this.player.y, b.y+40, b.y+b.height-5);
+
+    // Holster tracks Donny
+    if(this.holsterSprite){
+      const off = HOLSTER_OFFSET[this.facing];
+      this.holsterSprite.x = this.player.x + off.x;
+      this.holsterSprite.y = this.player.y + off.y;
+      this.holsterSprite.setFrame(HOLSTER_FRAMES[this.facing]);
+    }
+
+    // Room exit triggers
+    const exits = this.room.exits || {};
+    if(this.player.x > WORLD_W-35 && exits.right) this.changeRoom(exits.right,'left');
+    if(this.player.x < 35         && exits.left)  this.changeRoom(exits.left,'right');
   }
-  changeRoom(id,enterFrom){const r=ROOMS[id]; if(!r)return; this.drawRoom(id); this.player.x=enterFrom==='left'?70:WORLD_W-70; this.player.y=r.spawn.y; this.room=r;}
+
+  changeRoom(id, enterFrom){
+    const r = ROOMS[id];
+    if(!r) return;
+    this.drawRoom(id);
+    this.player.x = enterFrom==='left' ? 70 : WORLD_W-70;
+    this.player.y = r.spawn.y;
+    this.room = r;
+    // Re-attach holster after room change
+    this._updateHolsterVisual();
+  }
 }
 
-new Phaser.Game({type:Phaser.AUTO,parent:'game',width:W,height:H,backgroundColor:'#000',pixelArt:true,roundPixels:true,scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},input:{activePointers:5},scene:[Boot,Title,Dust9]});
+/* ─── LAUNCH ─────────────────────────────────────────────────────────── */
+new Phaser.Game({
+  type:Phaser.AUTO, parent:'game',
+  width:W, height:H,
+  backgroundColor:'#000',
+  pixelArt:true, roundPixels:true,
+  scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},
+  input:{activePointers:5},
+  scene:[Boot,Title,Dust9]
+});
 })();
 </script>
 </body>
