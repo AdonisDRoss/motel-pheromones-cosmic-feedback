@@ -1,0 +1,139 @@
+{
+  "pack": "donny_new_movement_slide_crawl_pack",
+  "notes": [
+    "These are Phaser-safe padded PNG copies of the uploaded Donny sheets.",
+    "The uploaded sheets appear to have baked checkerboard backgrounds; this pack preserves the art and pads only the outer canvas.",
+    "Use donny_movement_walk_8x4_181x272.png as Donny's main walking/movement sheet.",
+    "Use donny_slide_sitting_8x4_222x222.png for slide/sitting/downed/grounded poses.",
+    "Use donny_crawl_8x4_181x272.png for crawl/prone movement.",
+    "Do not use donny_empty_pistol_pose_sheet.png for normal walking."
+  ],
+  "sprites": {
+    "movement": {
+      "path": "assets/sprites/player/donny/donny_movement_walk_8x4_181x272.png",
+      "sourceSize": {
+        "w": 1448,
+        "h": 1086
+      },
+      "paddedSize": {
+        "w": 1448,
+        "h": 1088
+      },
+      "columns": 8,
+      "rows": 4,
+      "frameWidth": 181,
+      "frameHeight": 272,
+      "frameCount": 32,
+      "animations": {
+        "walk_down": {
+          "start": 0,
+          "end": 7,
+          "frameRate": 8,
+          "repeat": -1
+        },
+        "walk_right": {
+          "start": 8,
+          "end": 15,
+          "frameRate": 8,
+          "repeat": -1
+        },
+        "walk_left": {
+          "start": 16,
+          "end": 23,
+          "frameRate": 8,
+          "repeat": -1
+        },
+        "walk_up": {
+          "start": 24,
+          "end": 31,
+          "frameRate": 8,
+          "repeat": -1
+        }
+      }
+    },
+    "crawl": {
+      "path": "assets/sprites/player/donny/donny_crawl_8x4_181x272.png",
+      "sourceSize": {
+        "w": 1448,
+        "h": 1086
+      },
+      "paddedSize": {
+        "w": 1448,
+        "h": 1088
+      },
+      "columns": 8,
+      "rows": 4,
+      "frameWidth": 181,
+      "frameHeight": 272,
+      "frameCount": 32,
+      "animations": {
+        "crawl_down": {
+          "start": 0,
+          "end": 7,
+          "frameRate": 8,
+          "repeat": -1
+        },
+        "crawl_right": {
+          "start": 8,
+          "end": 15,
+          "frameRate": 8,
+          "repeat": -1
+        },
+        "crawl_left": {
+          "start": 16,
+          "end": 23,
+          "frameRate": 8,
+          "repeat": -1
+        },
+        "crawl_up": {
+          "start": 24,
+          "end": 31,
+          "frameRate": 8,
+          "repeat": -1
+        }
+      }
+    },
+    "slide": {
+      "path": "assets/sprites/player/donny/donny_slide_sitting_8x4_222x222.png",
+      "sourceSize": {
+        "w": 1774,
+        "h": 887
+      },
+      "paddedSize": {
+        "w": 1776,
+        "h": 888
+      },
+      "columns": 8,
+      "rows": 4,
+      "frameWidth": 222,
+      "frameHeight": 222,
+      "frameCount": 32,
+      "animations": {
+        "slide_down": {
+          "start": 0,
+          "end": 7,
+          "frameRate": 8,
+          "repeat": 0
+        },
+        "slide_right": {
+          "start": 8,
+          "end": 15,
+          "frameRate": 8,
+          "repeat": 0
+        },
+        "slide_left": {
+          "start": 16,
+          "end": 23,
+          "frameRate": 8,
+          "repeat": 0
+        },
+        "slide_up": {
+          "start": 24,
+          "end": 31,
+          "frameRate": 8,
+          "repeat": 0
+        }
+      }
+    }
+  }
+}
