@@ -25,22 +25,42 @@ const A={
   donnyWalk:'assets/sprites/player/donny/donny_movement_walk_8x4_181x272.png',
   donnyCrawl:'assets/sprites/player/donny/donny_crawl_8x4_181x272.png',
   donnySlide:'assets/sprites/player/donny/donny_slide_sitting_8x4_222x222.png',
+  holsterEmpty:'assets/sprites/equipment/holsters/donny_holster_empty_4dir.png',
+  holsterLoaded:'assets/sprites/equipment/holsters/donny_holster_loaded_4dir.png',
   van:'assets/sprites/vehicles/astro_van/astro_van_side_drive_idle_4f.png',
   riff:'assets/sprites/companions/riff/riff_movement.png'
 };
 
-/* Exact usable frame boxes from the current Donny movement sheet.
-   Rows in the uploaded art:
-   row 1 = DOWN / front
-   row 2 = LEFT
-   row 3 = RIGHT
-   row 4 = UP / back
+/*
+Donny movement sheet rows:
+row 1 = DOWN / front
+row 2 = LEFT
+row 3 = RIGHT
+row 4 = UP / back
+
+The uploaded sheet is 7 usable frames per row, not a perfect 8 columns.
+These crop boxes stop Phaser from slicing empty areas as animation frames.
 */
 const DONNY_FRAMES={
   down:[[49,14,144,251],[260,15,140,250],[462,16,140,249],[656,14,140,251],[844,14,140,251],[1040,14,141,251],[1246,15,137,250]],
   left:[[54,282,139,233],[269,282,137,233],[471,282,129,233],[664,282,135,233],[853,283,131,232],[1043,282,138,233],[1251,282,132,233]],
   right:[[49,539,134,231],[256,539,129,231],[464,539,128,231],[650,539,129,231],[847,539,125,231],[1037,539,125,231],[1238,539,127,231]],
   up:[[50,782,143,270],[256,782,136,270],[458,782,141,270],[650,782,138,270],[840,783,136,269],[1037,783,140,269],[1241,783,142,269]]
+};
+
+const HOLSTER_F={down:0,left:4,right:8,up:12};
+const HOLSTER_OFF={
+  down:{x:18,y:-92},
+  left:{x:-42,y:-86},
+  right:{x:42,y:-86},
+  up:{x:-18,y:-96}
+};
+
+const HAND_GUN_OFF={
+  down:{x:32,y:-86,rot:0.20},
+  left:{x:-52,y:-100,rot:Math.PI},
+  right:{x:52,y:-100,rot:0},
+  up:{x:-24,y:-128,rot:Math.PI}
 };
 
 const ROOMS={
@@ -150,6 +170,8 @@ class Boot extends Phaser.Scene{
     this.load.image('donny_raw',A.donnyWalk);
     this.load.image('donny_crawl_raw',A.donnyCrawl);
     this.load.image('donny_slide_raw',A.donnySlide);
+    this.load.spritesheet('holster_empty',A.holsterEmpty,{frameWidth:128,frameHeight:128});
+    this.load.spritesheet('holster_loaded',A.holsterLoaded,{frameWidth:128,frameHeight:128});
     this.load.spritesheet('astro_van',A.van,{frameWidth:256,frameHeight:128});
     this.load.spritesheet('riff',A.riff,{frameWidth:181,frameHeight:272});
   }
@@ -164,7 +186,9 @@ class Boot extends Phaser.Scene{
     };
     mk('ph_bg',WORLD_W,H,0x17131c);
     mk('ph_player',64,96,0x314dff);
+    mk('ph_holster',34,34,0x2b1a0b);
     mk('ph_van',220,110,0x3a2d1a);
+
     this.makeCleanDonnyTexture();
     this.makeDonnyAnims();
     this.scene.start('Title');
@@ -176,7 +200,6 @@ class Boot extends Phaser.Scene{
     const ctx=ct.getContext();
     ctx.drawImage(src,0,0);
 
-    // Remove white / checkerboard-ish background.
     const img=ctx.getImageData(0,0,src.width,src.height);
     const d=img.data;
     for(let i=0;i<d.length;i+=4){
@@ -246,7 +269,6 @@ class Title extends Phaser.Scene{
     btn(288,'START STORY',()=>this.goStory());
     btn(363,'TEST DUST-9 ROAD WORLD',()=>this.goRoom('checkpoint'));
     btn(438,'DIRECT ROAD TEST PAGE',()=>{location.href='dust9-road-test.html';});
-
     this.input.keyboard.once('keydown-ENTER',()=>this.goStory());
   }
   stopVid(){if(this.vid)this.vid.stop();}
@@ -295,7 +317,11 @@ class Dust9 extends Phaser.Scene{
     this.roomId='donny_office';
     this.facing='down';
     this.touch={left:false,right:false,up:false,down:false};
-    this.pistol={state:'holstered',ammo:12};
+    this.pistol={state:'holstered',ammo:12,cooldown:0};
+    this.mode='normal';
+    this.jumpTimer=0;
+    this.slideTimer=0;
+    this.fireTimer=0;
     this.day=0;
   }
   init(d){
@@ -303,7 +329,7 @@ class Dust9 extends Phaser.Scene{
   }
   create(){
     this.cameras.main.setBounds(0,0,WORLD_W,H);
-    this.keys=this.input.keyboard.addKeys('W,A,S,D,F,E,I');
+    this.keys=this.input.keyboard.addKeys('W,A,S,D,F,E,I,J,K,L,C,ESC');
     this.cursors=this.input.keyboard.createCursorKeys();
     this.drawRoom(this.roomId);
     this.makePlayer();
@@ -356,6 +382,15 @@ class Dust9 extends Phaser.Scene{
       this.has('donny_clean')?'down_0':undefined
     ).setOrigin(.5,1).setScale(this.has('donny_clean')?.52:1).setDepth(20);
 
+    this.holsterSprite=this.add.sprite(
+      s.x,s.y,
+      this.has('holster_loaded')?'holster_loaded':(this.has('holster_empty')?'holster_empty':'ph_holster'),
+      0
+    ).setOrigin(.5,.5).setScale(.74).setDepth(21);
+
+    this.handGun=this.add.graphics().setDepth(22);
+    this.muzzleFx=this.add.graphics().setDepth(23);
+
     this.cameras.main.startFollow(this.playerBody,true,.08,.08);
     this.updateVisuals(false);
   }
@@ -367,6 +402,9 @@ class Dust9 extends Phaser.Scene{
       .setOrigin(1,0).setScrollFactor(0).setDepth(100);
     this.ammoHud=txt(this,W-16,517,'AMMO: '+this.pistol.ammo,12,'#ffd46a')
       .setOrigin(1,0).setScrollFactor(0).setDepth(100);
+    this.stateHud=txt(this,W/2,500,'STATE: NORMAL',12,'#a7ffec')
+      .setOrigin(.5,0).setScrollFactor(0).setDepth(100);
+
     txt(this,W-16,12,'← Menu',12,'#86f7ff')
       .setOrigin(1,0).setScrollFactor(0).setDepth(100)
       .setInteractive({useHandCursor:true})
@@ -380,6 +418,13 @@ class Dust9 extends Phaser.Scene{
 
   pistolText(){
     return 'PISTOL: '+(this.pistol.state==='drawn'?'DRAWN':'HOLSTERED');
+  }
+
+  updateStateHud(){
+    const st=this.mode.toUpperCase()+(this.fireTimer>0?' / FIRING':'');
+    this.stateHud.setText('STATE: '+st);
+    this.pHud.setText(this.pistolText());
+    this.ammoHud.setText('AMMO: '+this.pistol.ammo);
   }
 
   makeMobileControls(){
@@ -411,8 +456,8 @@ class Dust9 extends Phaser.Scene{
     const groupX=W-114, groupY=H-102, btnR=31;
 
     const snesBtn=(x,y,label,sub,color,cb)=>{
-      const c=this.add.circle(x,y,btnR,color,.8)
-        .setStrokeStyle(3,0xffffff,.35)
+      const c=this.add.circle(x,y,btnR,color,.84)
+        .setStrokeStyle(3,0xffffff,.38)
         .setScrollFactor(0).setDepth(200).setInteractive({useHandCursor:true});
       c.on('pointerdown',cb);
       this.add.text(x,y,label,{
@@ -425,25 +470,69 @@ class Dust9 extends Phaser.Scene{
     };
 
     snesBtn(groupX+52,groupY,'A','USE',0x5f57d6,()=>this.actionA());
-    snesBtn(groupX,groupY-50,'X','DRAW',0x7360db,()=>this.togglePistol());
-    snesBtn(groupX,groupY+50,'B','BACK',0x4d3dbb,()=>{});
-    snesBtn(groupX-52,groupY,'Y','MENU',0x5a49cc,()=>this.toggleInventory());
+    snesBtn(groupX,groupY-50,'X','FIRE',0x7360db,()=>this.firePistol());
+    snesBtn(groupX,groupY+50,'B','JUMP',0x4d3dbb,()=>this.jump());
+    snesBtn(groupX-52,groupY,'Y','SLIDE',0x5a49cc,()=>this.slide());
 
-    this.menuBtn=this.add.text(W/2,H-16,'MENU',{
-      fontFamily:'monospace',
-      fontSize:'14px',
-      color:'#fff',
-      backgroundColor:'rgba(20,20,20,.7)',
-      padding:{x:20,y:8},
-      stroke:'#000',
-      strokeThickness:2
-    }).setOrigin(.5,1).setScrollFactor(0).setDepth(200)
-      .setInteractive().on('pointerdown',()=>this.toggleInventory());
+    const smallBtn=(x,y,label,cb)=>{
+      const b=this.add.text(x,y,label,{
+        fontFamily:'monospace',
+        fontSize:'12px',
+        color:'#fff',
+        backgroundColor:'rgba(55,30,90,.82)',
+        padding:{x:12,y:8},
+        stroke:'#000',
+        strokeThickness:2
+      }).setOrigin(.5).setScrollFactor(0).setDepth(202).setInteractive();
+      b.on('pointerdown',cb);
+      return b;
+    };
+
+    smallBtn(W-238,H-152,'DRAW',()=>this.togglePistol());
+    smallBtn(W-238,H-106,'CRAWL',()=>this.toggleCrawl());
+    smallBtn(W/2,H-18,'MENU',()=>this.toggleInventory());
   }
 
   togglePistol(){
     this.pistol.state=this.pistol.state==='holstered'?'drawn':'holstered';
-    this.pHud.setText(this.pistolText());
+    this.updateStateHud();
+  }
+
+  firePistol(){
+    if(this.pistol.state==='holstered') this.pistol.state='drawn';
+    if(this.pistol.ammo<=0) return;
+    if(this.fireTimer>0) return;
+
+    this.pistol.ammo--;
+    this.fireTimer=12;
+    this.updateStateHud();
+  }
+
+  jump(){
+    if(this.jumpTimer<=0){
+      this.jumpTimer=24;
+      this.mode='jump';
+      this.updateStateHud();
+    }
+  }
+
+  slide(){
+    if(this.slideTimer<=0){
+      this.slideTimer=22;
+      this.mode='slide';
+      // small dash in facing direction
+      const dash=32;
+      if(this.facing==='left') this.playerBody.x-=dash;
+      if(this.facing==='right') this.playerBody.x+=dash;
+      if(this.facing==='up') this.playerBody.y-=dash;
+      if(this.facing==='down') this.playerBody.y+=dash;
+      this.updateStateHud();
+    }
+  }
+
+  toggleCrawl(){
+    this.mode=this.mode==='crawl'?'normal':'crawl';
+    this.updateStateHud();
   }
 
   toggleInventory(){
@@ -468,8 +557,22 @@ class Dust9 extends Phaser.Scene{
     if(!this.playerBody || !this.room) return;
 
     if(Phaser.Input.Keyboard.JustDown(this.keys.F)) this.togglePistol();
+    if(Phaser.Input.Keyboard.JustDown(this.keys.J)) this.firePistol();
+    if(Phaser.Input.Keyboard.JustDown(this.keys.K)) this.jump();
+    if(Phaser.Input.Keyboard.JustDown(this.keys.L)) this.slide();
+    if(Phaser.Input.Keyboard.JustDown(this.keys.C)) this.toggleCrawl();
     if(Phaser.Input.Keyboard.JustDown(this.keys.I)) this.toggleInventory();
     if(Phaser.Input.Keyboard.JustDown(this.keys.E)) this.actionA();
+
+    if(this.jumpTimer>0){
+      this.jumpTimer--;
+      if(this.jumpTimer<=0 && this.mode==='jump') this.mode='normal';
+    }
+    if(this.slideTimer>0){
+      this.slideTimer--;
+      if(this.slideTimer<=0 && this.mode==='slide') this.mode='normal';
+    }
+    if(this.fireTimer>0) this.fireTimer--;
 
     const L=this.cursors.left.isDown || this.keys.A.isDown || this.touch.left;
     const R=this.cursors.right.isDown || this.keys.D.isDown || this.touch.right;
@@ -477,12 +580,13 @@ class Dust9 extends Phaser.Scene{
     const D=this.cursors.down.isDown || this.keys.S.isDown || this.touch.down;
 
     let moving=false;
+    let speed=this.mode==='crawl'?1.65:(this.mode==='slide'?4.8:3.2);
 
-    if(L){ this.playerBody.x-=3.2; this.facing='left'; moving=true; }
-    else if(R){ this.playerBody.x+=3.2; this.facing='right'; moving=true; }
+    if(L){ this.playerBody.x-=speed; this.facing='left'; moving=true; }
+    else if(R){ this.playerBody.x+=speed; this.facing='right'; moving=true; }
 
-    if(U){ this.playerBody.y-=3.2; this.facing='up'; moving=true; }
-    else if(D){ this.playerBody.y+=3.2; this.facing='down'; moving=true; }
+    if(U){ this.playerBody.y-=speed; this.facing='up'; moving=true; }
+    else if(D){ this.playerBody.y+=speed; this.facing='down'; moving=true; }
 
     const b=this.room.walk;
     this.playerBody.x=Phaser.Math.Clamp(this.playerBody.x,b.x+22,b.x+b.width-22);
@@ -498,11 +602,26 @@ class Dust9 extends Phaser.Scene{
     this.day=(this.day+.00045)%1;
     const night=Math.max(0,Math.sin(this.day*Math.PI*2)*.28);
     this.dayOverlay.setAlpha(night);
+
+    this.updateStateHud();
   }
 
   updateVisuals(moving){
+    let visualY=this.playerBody.y;
+    if(this.jumpTimer>0){
+      const t=this.jumpTimer/24;
+      visualY-=Math.sin(t*Math.PI)*38;
+    }
+    if(this.mode==='crawl'){
+      this.playerSprite.setScale(.43);
+    }else if(this.mode==='slide'){
+      this.playerSprite.setScale(.49);
+    }else{
+      this.playerSprite.setScale(.52);
+    }
+
     this.playerSprite.x=this.playerBody.x;
-    this.playerSprite.y=this.playerBody.y;
+    this.playerSprite.y=visualY;
     this.playerSprite.setDepth(20 + this.playerBody.y/1000);
 
     if(this.has('donny_clean')){
@@ -516,6 +635,70 @@ class Dust9 extends Phaser.Scene{
         this.playerSprite.setFrame(this.facing+'_0');
       }
     }
+
+    this.updateHolster();
+    this.updateHandGun();
+    this.updateMuzzleFx();
+  }
+
+  updateHolster(){
+    if(!this.holsterSprite) return;
+
+    const off=HOLSTER_OFF[this.facing];
+    const holsterTexture=this.pistol.state==='holstered'?'holster_loaded':'holster_empty';
+
+    if(this.has(holsterTexture) && this.holsterSprite.texture.key!==holsterTexture){
+      this.holsterSprite.setTexture(holsterTexture);
+    }
+
+    this.holsterSprite.setFrame(HOLSTER_F[this.facing]);
+    this.holsterSprite.x=this.playerBody.x+off.x;
+    this.holsterSprite.y=this.playerBody.y+off.y;
+    this.holsterSprite.setDepth(this.playerSprite.depth+0.02);
+    this.holsterSprite.setVisible(this.mode!=='crawl');
+    this.holsterSprite.setAlpha(.95);
+  }
+
+  updateHandGun(){
+    this.handGun.clear();
+    if(this.pistol.state!=='drawn') return;
+
+    const off=HAND_GUN_OFF[this.facing];
+    const x=this.playerBody.x+off.x;
+    const y=this.playerBody.y+off.y;
+    const rot=off.rot;
+
+    this.handGun.lineStyle(4,0x111111,1);
+    this.handGun.fillStyle(0x4a4540,1);
+
+    // Draw a small simple pistol as an overlay near Donny’s hand.
+    const len=24, grip=10;
+    const dx=Math.cos(rot), dy=Math.sin(rot);
+    const px=-dy, py=dx;
+
+    this.handGun.lineBetween(x,y,x+dx*len,y+dy*len);
+    this.handGun.lineStyle(3,0x9a8e74,1);
+    this.handGun.lineBetween(x+dx*4,y+dy*4,x+dx*(len-4),y+dy*(len-4));
+    this.handGun.lineStyle(4,0x191919,1);
+    this.handGun.lineBetween(x+px*2,y+py*2,x+px*2-dx*grip+dy*6,y+py*2-dy*grip-dx*6);
+  }
+
+  updateMuzzleFx(){
+    this.muzzleFx.clear();
+    if(this.fireTimer<=0) return;
+
+    const off=HAND_GUN_OFF[this.facing];
+    const x=this.playerBody.x+off.x;
+    const y=this.playerBody.y+off.y;
+    const rot=off.rot;
+    const dx=Math.cos(rot), dy=Math.sin(rot);
+    const mx=x+dx*30, my=y+dy*30;
+
+    const alpha=Math.min(1,this.fireTimer/6);
+    this.muzzleFx.fillStyle(0xfff0a0,alpha);
+    this.muzzleFx.fillCircle(mx,my,7);
+    this.muzzleFx.fillStyle(0xff7a00,alpha*.8);
+    this.muzzleFx.fillCircle(mx,my,12);
   }
 
   changeRoom(id,enterFrom){
