@@ -1,0 +1,39 @@
+{
+  "name": "donny_empty_pistol_pose",
+  "image": "donny_empty_pistol_pose_sheet.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "columns": 4,
+  "rows": 4,
+  "frameTotal": 16,
+  "animations": {
+    "down_pistol_empty": {
+      "start": 0,
+      "end": 3,
+      "frameRate": 10,
+      "repeat": 0
+    },
+    "right_pistol_empty": {
+      "start": 4,
+      "end": 7,
+      "frameRate": 10,
+      "repeat": 0
+    },
+    "left_pistol_empty": {
+      "start": 8,
+      "end": 11,
+      "frameRate": 10,
+      "repeat": 0
+    },
+    "up_pistol_empty": {
+      "start": 12,
+      "end": 15,
+      "frameRate": 10,
+      "repeat": 0
+    }
+  },
+  "notes": [
+    "Empty-hand pistol-aiming poses for modular ranged weapon overlays.",
+    "Row 1 down, row 2 right, row 3 left, row 4 up."
+  ]
+}

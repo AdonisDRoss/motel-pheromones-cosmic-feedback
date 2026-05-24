@@ -1,0 +1,13 @@
+{
+  "id": "riff_robot_portraits",
+  "character": "riff",
+  "variant": "robot",
+  "portrait": "assets/portraits/riff/riff_robot_portrait.png",
+  "cutoutReference": "assets/portraits/riff/riff_robot_cutout_reference.png",
+  "redConcordReference": "assets/references/red_concord/red_concord_group_reference.png",
+  "notes": [
+    "User confirmed: The robot is Riff.",
+    "Use portrait for dialogue/profile/codex.",
+    "Use movement sheet for gameplay companion."
+  ]
+}

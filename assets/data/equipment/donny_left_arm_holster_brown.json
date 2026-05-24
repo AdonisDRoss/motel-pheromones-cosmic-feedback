@@ -1,0 +1,40 @@
+{
+  "name": "donny_left_arm_holster_brown",
+  "image": "donny_left_arm_holster_brown.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "columns": 4,
+  "rows": 4,
+  "frameTotal": 16,
+  "animations": {
+    "down_holster": {
+      "start": 0,
+      "end": 3,
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "right_holster": {
+      "start": 4,
+      "end": 7,
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "left_holster": {
+      "start": 8,
+      "end": 11,
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "up_holster": {
+      "start": 12,
+      "end": 15,
+      "frameRate": 8,
+      "repeat": 0
+    }
+  },
+  "notes": [
+    "Dark brown leather shoulder holster overlay.",
+    "Intended to sit under Donny's left arm.",
+    "Use first frame in each row for idle; later frames can be used to match action poses."
+  ]
+}

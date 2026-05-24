@@ -1,0 +1,28 @@
+{
+  "package": "dust9_raven_wired_package",
+  "createdFiles": {
+    "index": "index.html",
+    "readme": "README.md",
+    "assetManifest": "assets/data/dust9/dust9_assets_manifest.json",
+    "rooms": "assets/data/dust9/dust9_rooms.json",
+    "props": "assets/data/dust9/dust9_prop_placements.json",
+    "spawns": "assets/data/dust9/dust9_enemy_spawns.json",
+    "objectives": "assets/data/dust9/dust9_objectives.json",
+    "caskBoss": "assets/data/dust9/cask_veyr_boss.json",
+    "mechConfig": "assets/data/dust9/red_concord_mech_config.json",
+    "weapons": "assets/data/dust9/red_concord_weapons.json",
+    "raven": "assets/data/ships/raven_manifest.json",
+    "tombstone": "assets/data/ships/tombstone_manifest.json"
+  },
+  "rooms": [
+    "checkpoint",
+    "prisoner_housing_yard",
+    "mining_yard",
+    "support_block",
+    "high_command_tower",
+    "control_room",
+    "basement_prison",
+    "loading_pad_escape"
+  ],
+  "status": "Wired test build. Phaser will load assets and allow room traversal/objective interactions."
+}

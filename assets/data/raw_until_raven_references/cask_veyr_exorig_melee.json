@@ -1,0 +1,68 @@
+{
+  "key": "cask_veyr_exorig_melee",
+  "path": "assets/sprites/enemies/red_concord/cask_veyr/cask_veyr_exorig_melee.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "columns": 8,
+  "rows": 4,
+  "frames": 32,
+  "animations": {
+    "exorig_melee_down": {
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "exorig_melee_left": {
+      "frames": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "exorig_melee_right": {
+      "frames": [
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23
+      ],
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "exorig_melee_up": {
+      "frames": [
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31
+      ],
+      "frameRate": 8,
+      "repeat": 0
+    }
+  },
+  "notes": "Cask Veyr exo-rig melee sheet. Use for heavy shove, armored punch, exo-assisted strike, and close-range boss attacks."
+}

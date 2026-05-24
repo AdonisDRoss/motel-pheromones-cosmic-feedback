@@ -1,0 +1,84 @@
+{
+  "id": "riff_robot_movement_8f",
+  "name": "Riff Robot Movement",
+  "image": "assets/sprites/companions/riff/riff_movement.png",
+  "alternateImage": "assets/sprites/companions/riff/riff_robot_movement_8f.png",
+  "frameWidth": 181,
+  "frameHeight": 272,
+  "columns": 8,
+  "rows": 4,
+  "frameCount": 32,
+  "transparent": false,
+  "character": {
+    "id": "riff",
+    "name": "Riff",
+    "variant": "robot",
+    "description": "Donny's robot road-dog companion."
+  },
+  "animations": {
+    "walk_down": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "walk_right": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "walk_left": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+    ],
+    "walk_up": [
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "idle_down": [
+      0
+    ],
+    "idle_right": [
+      8
+    ],
+    "idle_left": [
+      16
+    ],
+    "idle_up": [
+      24
+    ]
+  },
+  "frameRate": 8,
+  "phaserLoad": "this.load.spritesheet('riff_movement', 'assets/sprites/companions/riff/riff_movement.png', { frameWidth: 181, frameHeight: 272 });",
+  "notes": [
+    "Updated Riff identity: Riff is the robot.",
+    "Original uploaded image was 1448x1086; padded to 1448x1088 so Phaser can slice 8 columns x 4 rows cleanly.",
+    "Frame size is 181x272.",
+    "Row 1: walk down/front.",
+    "Row 2: walk right/profile.",
+    "Row 3: walk left/profile.",
+    "Row 4: walk up/back.",
+    "Uploaded as JPEG with baked checkerboard; clean alpha pass may still be needed."
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "id": "vela_9",
+  "name": "Vela-9",
+  "race": "The Echelon",
+  "role": "Mayor 86 receptionist",
+  "location": "Dust-9 Mayor's Office Reception",
+  "image": "assets/sprites/npcs/echelon/vela_9/vela_9_receptionist_movement.png",
+  "idleFullbody": "assets/sprites/npcs/echelon/vela_9/vela_9_receptionist_idle_fullbody.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "columns": 8,
+  "rows": 4,
+  "frameCount": 32,
+  "transparent": true,
+  "rowOrder": [
+    "down",
+    "right",
+    "left",
+    "up"
+  ],
+  "animations": {
+    "walk_down": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "walk_right": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "walk_left": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+    ],
+    "walk_up": [
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "idle_down": [
+      0
+    ],
+    "idle_right": [
+      8
+    ],
+    "idle_left": [
+      16
+    ],
+    "idle_up": [
+      24
+    ]
+  },
+  "frameRate": 8,
+  "phaserLoad": "this.load.spritesheet('vela_9_receptionist_movement', 'assets/sprites/npcs/echelon/vela_9/vela_9_receptionist_movement.png', { frameWidth: 128, frameHeight: 128 });",
+  "notes": [
+    "Source upload was 1024x506 RGB with baked checkerboard background.",
+    "Frames were rebuilt into a clean 1024x512 RGBA sheet: 8 columns x 4 rows, 128x128 frames.",
+    "Checkerboard background was removed automatically by connected-background cleanup.",
+    "Review edge cleanup in-game; a true transparent export from the generator would still be cleaner."
+  ]
+}

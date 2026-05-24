@@ -1,0 +1,35 @@
+{
+  "donny_left_arm_holster_brown": {
+    "image": "assets/sprites/equipment/holsters/donny_left_arm_holster_brown.png",
+    "frameWidth": 128,
+    "frameHeight": 128,
+    "directionFrame": {
+      "down": 0,
+      "right": 4,
+      "left": 8,
+      "up": 12
+    },
+    "offset": {
+      "down": {
+        "x": 0,
+        "y": -2
+      },
+      "right": {
+        "x": 0,
+        "y": -1
+      },
+      "left": {
+        "x": 0,
+        "y": -1
+      },
+      "up": {
+        "x": 0,
+        "y": -1
+      }
+    },
+    "notes": [
+      "Overlay this at the same world position as Donny's sprite.",
+      "Keep depth just above body if you want it visible over jacket edge, or just below weapon sprite."
+    ]
+  }
+}

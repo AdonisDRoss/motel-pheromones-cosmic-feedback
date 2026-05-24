@@ -1,0 +1,38 @@
+{
+  "id": "muzzle_flash_burst",
+  "name": "Muzzle Flash Burst",
+  "type": "muzzle_flash",
+  "image": "assets/sprites/fx/weapons/muzzle_flash_burst.png",
+  "frameWidth": 320,
+  "frameHeight": 320,
+  "columns": 8,
+  "rows": 1,
+  "frameCount": 8,
+  "transparent": true,
+  "frameRate": 16,
+  "animations": {
+    "play": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "start": [
+      0
+    ],
+    "peak": [
+      4
+    ],
+    "end": [
+      7
+    ]
+  },
+  "notes": [
+    "Good for pistols, rifles, and compact energy shots.",
+    "Single-row Phaser-ready sprite sheet."
+  ]
+}

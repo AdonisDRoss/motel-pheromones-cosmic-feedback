@@ -1,0 +1,38 @@
+{
+  "id": "plasma_ring_blast",
+  "name": "Plasma Ring Blast",
+  "type": "energy_blast",
+  "image": "assets/sprites/fx/weapons/plasma_ring_blast.png",
+  "frameWidth": 320,
+  "frameHeight": 320,
+  "columns": 8,
+  "rows": 1,
+  "frameCount": 8,
+  "transparent": true,
+  "frameRate": 12,
+  "animations": {
+    "play": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "start": [
+      0
+    ],
+    "peak": [
+      4
+    ],
+    "end": [
+      7
+    ]
+  },
+  "notes": [
+    "Use for feedback cannon or sci-fi portal-style blast effects.",
+    "Single-row Phaser-ready sprite sheet."
+  ]
+}

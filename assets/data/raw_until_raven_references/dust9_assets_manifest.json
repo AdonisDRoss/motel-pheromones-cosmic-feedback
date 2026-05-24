@@ -1,0 +1,235 @@
+{
+  "backgrounds": [
+    {
+      "key": "dust9_checkpoint",
+      "path": "assets/backgrounds/dust9/dust9_checkpoint_empty_1920x540.png"
+    },
+    {
+      "key": "dust9_prisoner_housing_yard",
+      "path": "assets/backgrounds/dust9/dust9_prisoner_housing_yard_empty_1920x540.png"
+    },
+    {
+      "key": "dust9_mining_yard",
+      "path": "assets/backgrounds/dust9/dust9_mining_yard_empty_1920x540.png"
+    },
+    {
+      "key": "dust9_support_block",
+      "path": "assets/backgrounds/dust9/dust9_support_block_empty_1920x540.png"
+    },
+    {
+      "key": "dust9_high_command_tower",
+      "path": "assets/backgrounds/dust9/dust9_high_command_tower_exterior_empty_1920x540.png"
+    },
+    {
+      "key": "dust9_control_room",
+      "path": "assets/backgrounds/dust9/dust9_control_room_empty_1920x540.png"
+    },
+    {
+      "key": "dust9_basement_prison",
+      "path": "assets/backgrounds/dust9/dust9_basement_prison_empty_1920x540.png"
+    },
+    {
+      "key": "dust9_loading_pad_escape",
+      "path": "assets/backgrounds/dust9/dust9_loading_pad_escape_route_empty_1920x540.png"
+    },
+    {
+      "key": "tombstone_bridge",
+      "path": "assets/backgrounds/ships/tombstone_bridge_empty_1920x540.png"
+    }
+  ],
+  "spritesheets": [
+    {
+      "key": "dust9_checkpoint_props",
+      "path": "assets/props/dust9/dust9_checkpoint_props.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "dust9_mining_yard_props",
+      "path": "assets/props/dust9/dust9_mining_yard_props.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "dust9_industrial_utility_props",
+      "path": "assets/props/dust9/dust9_industrial_utility_props_40.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "dust9_support_block_props",
+      "path": "assets/props/dust9/dust9_support_block_props.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "dust9_high_command_tower_props",
+      "path": "assets/props/dust9/dust9_high_command_tower_props.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "dust9_basement_prison_props",
+      "path": "assets/props/dust9/dust9_basement_prison_props.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "dust9_loading_pad_props",
+      "path": "assets/props/dust9/dust9_loading_pad_props.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "dust9_control_room_props",
+      "path": "assets/props/dust9/dust9_control_room_props.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "workcamp_guard_movement",
+      "path": "assets/sprites/enemies/red_concord/guard/workcamp_guard_movement.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "workcamp_guard_empty_pistol",
+      "path": "assets/sprites/enemies/red_concord/guard/workcamp_guard_empty_pistol.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "workcamp_guard_empty_rifle",
+      "path": "assets/sprites/enemies/red_concord/guard/workcamp_guard_empty_rifle.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "workcamp_guard_empty_melee",
+      "path": "assets/sprites/enemies/red_concord/guard/workcamp_guard_empty_melee.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "workcamp_guard_reactions",
+      "path": "assets/sprites/enemies/red_concord/guard/workcamp_guard_reactions.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "prisoner_dex_movement",
+      "path": "assets/sprites/npcs/dex/prisoner_dex_movement.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "cask_veyr_movement",
+      "path": "assets/sprites/enemies/red_concord/cask_veyr/cask_veyr_movement.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "cask_veyr_command_actions",
+      "path": "assets/sprites/enemies/red_concord/cask_veyr/cask_veyr_command_actions.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "cask_veyr_exorig_melee",
+      "path": "assets/sprites/enemies/red_concord/cask_veyr/cask_veyr_exorig_melee.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "cask_veyr_reactions",
+      "path": "assets/sprites/enemies/red_concord/cask_veyr/cask_veyr_reactions.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "cask_veyr_panic_protocol",
+      "path": "assets/sprites/enemies/red_concord/cask_veyr/cask_veyr_panic_protocol.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "red_concord_mech_torso_core",
+      "path": "assets/sprites/enemies/red_concord/mech/red_concord_mech_torso_core.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "red_concord_mech_legs_walk",
+      "path": "assets/sprites/enemies/red_concord/mech/red_concord_mech_legs_walk.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "red_concord_mech_arms_empty",
+      "path": "assets/sprites/enemies/red_concord/mech/red_concord_mech_arms_empty.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "red_concord_mech_weapon_mounts",
+      "path": "assets/sprites/enemies/red_concord/mech/red_concord_mech_weapon_mounts.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "red_concord_mech_damage_parts",
+      "path": "assets/sprites/enemies/red_concord/mech/red_concord_mech_damage_parts.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "red_concord_weapons_4dir_overlay",
+      "path": "assets/sprites/weapons/red_concord/red_concord_weapons_4dir_overlay.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "red_concord_weapon_pickups",
+      "path": "assets/sprites/weapons/red_concord/red_concord_weapon_pickups.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "red_concord_weapon_fx",
+      "path": "assets/fx/red_concord/red_concord_weapon_fx.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    },
+    {
+      "key": "raven_reactor_orb_pulse_8f_256",
+      "path": "assets/sprites/ships/raven/raven_reactor_orb_pulse_8f_256.png",
+      "frameWidth": 256,
+      "frameHeight": 256
+    }
+  ],
+  "images": [
+    {
+      "key": "dust9_escape_shuttle_landed",
+      "path": "assets/sprites/vehicles/dust9/dust9_escape_shuttle_landed.png"
+    },
+    {
+      "key": "raven_landed_reference",
+      "path": "assets/sprites/ships/raven/raven_landed_reference.png"
+    },
+    {
+      "key": "raven_outer_view_reference_sheet",
+      "path": "assets/sprites/ships/raven/raven_outer_view_reference_sheet.png"
+    }
+  ],
+  "data": [
+    "assets/data/dust9/dust9_rooms.json",
+    "assets/data/dust9/dust9_prop_placements.json",
+    "assets/data/dust9/dust9_enemy_spawns.json",
+    "assets/data/dust9/dust9_objectives.json",
+    "assets/data/dust9/cask_veyr_boss.json",
+    "assets/data/dust9/red_concord_mech_config.json",
+    "assets/data/dust9/red_concord_weapons.json",
+    "assets/data/ships/raven_manifest.json",
+    "assets/data/ships/tombstone_manifest.json"
+  ]
+}

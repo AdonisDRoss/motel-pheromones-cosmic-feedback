@@ -1,0 +1,51 @@
+{
+  "id": "marshals_hands",
+  "name": "The Marshal's Hands",
+  "faction": "The Red Concord",
+  "unit": "Supreme Marshal\u2019s Personal Guard",
+  "role": "Elite twin bodyguards / mini-boss duo",
+  "members": [
+    {
+      "id": "cassian_varric_movement",
+      "name": "Cassian Varric",
+      "role": "blade / close-range pressure",
+      "image": "assets/sprites/enemies/red_concord/marshals_hands/cassian_varric_movement.png",
+      "json": "assets/data/enemies/red_concord/marshals_hands/cassian_varric_movement.json",
+      "source": "/mnt/data/038A1785-9B56-49D5-93C7-F30B2C0BBECB.jpeg",
+      "rawReference": "_references/marshals_hands_raw_uploads/038A1785-9B56-49D5-93C7-F30B2C0BBECB.jpeg",
+      "originalSize": {
+        "w": 1774,
+        "h": 887
+      },
+      "paddedSize": {
+        "w": 1776,
+        "h": 888
+      },
+      "frameWidth": 222,
+      "frameHeight": 222,
+      "columns": 8,
+      "rows": 4
+    },
+    {
+      "id": "cael_varric_movement",
+      "name": "Cael Varric",
+      "role": "rifle / tactical ranged pressure",
+      "image": "assets/sprites/enemies/red_concord/marshals_hands/cael_varric_movement.png",
+      "json": "assets/data/enemies/red_concord/marshals_hands/cael_varric_movement.json",
+      "source": "/mnt/data/1C847771-6A5E-44FC-9A5A-A8640AC6FE5C.jpeg",
+      "rawReference": "_references/marshals_hands_raw_uploads/1C847771-6A5E-44FC-9A5A-A8640AC6FE5C.jpeg",
+      "originalSize": {
+        "w": 1774,
+        "h": 887
+      },
+      "paddedSize": {
+        "w": 1776,
+        "h": 888
+      },
+      "frameWidth": 222,
+      "frameHeight": 222,
+      "columns": 8,
+      "rows": 4
+    }
+  ]
+}

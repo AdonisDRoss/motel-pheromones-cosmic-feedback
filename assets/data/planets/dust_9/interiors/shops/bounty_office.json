@@ -1,0 +1,125 @@
+{
+  "id": "bounty_office",
+  "name": "Donny's Bounty Hunter Office",
+  "planetId": "dust_9",
+  "parentChunk": "1,2",
+  "parentChunkName": "Sand Motel Ruins",
+  "scene": "BountyOfficeScene",
+  "background": "assets/backgrounds/planets/dust_9/interiors/shops/bounty_office_interior.png",
+  "size": {
+    "w": 960,
+    "h": 540
+  },
+  "spawn": {
+    "x": 480,
+    "y": 430,
+    "dir": "up"
+  },
+  "walkBounds": {
+    "x": 70,
+    "y": 145,
+    "w": 820,
+    "h": 320
+  },
+  "exit": {
+    "id": "exitDoor",
+    "label": "Exit to Sand Motel Ruins",
+    "x": 425,
+    "y": 420,
+    "w": 110,
+    "h": 95,
+    "targetScene": "PlanetChunkScene",
+    "targetPlanetId": "dust_9",
+    "targetChunkId": "1,2",
+    "entrySide": "office",
+    "message": "Leaving Donny's Bounty Office."
+  },
+  "interactZones": [
+    {
+      "id": "wantedBoard",
+      "label": "Wanted Board",
+      "x": 82,
+      "y": 62,
+      "w": 245,
+      "h": 110,
+      "type": "bounty_board",
+      "message": "Wanted Board: bounty contracts will appear here."
+    },
+    {
+      "id": "deskTerminal",
+      "label": "Desk Terminal",
+      "x": 560,
+      "y": 78,
+      "w": 180,
+      "h": 120,
+      "type": "bounty_terminal",
+      "message": "Desk Terminal: turn in bounties and collect rewards."
+    },
+    {
+      "id": "radioStation",
+      "label": "Space Radio",
+      "x": 323,
+      "y": 70,
+      "w": 135,
+      "h": 115,
+      "type": "radio",
+      "message": "Space Radio: incoming bounty calls and rumors."
+    },
+    {
+      "id": "couchBed",
+      "label": "Bedroll",
+      "x": 42,
+      "y": 305,
+      "w": 220,
+      "h": 115,
+      "type": "rest",
+      "message": "Rested at the office. HP restored."
+    },
+    {
+      "id": "gearLocker",
+      "label": "Gear Locker",
+      "x": 695,
+      "y": 335,
+      "w": 145,
+      "h": 145,
+      "type": "gear",
+      "message": "Gear Locker: bounty gear and suit storage."
+    },
+    {
+      "id": "mapWorkbench",
+      "label": "Dust-9 Map Table",
+      "x": 728,
+      "y": 212,
+      "w": 178,
+      "h": 115,
+      "type": "map",
+      "message": "Dust-9 map table: plan routes and mark bounties."
+    },
+    {
+      "id": "ampCorner",
+      "label": "Amp Corner",
+      "x": 45,
+      "y": 165,
+      "w": 175,
+      "h": 105,
+      "type": "flavor",
+      "message": "Amp corner: Donny's music gear is still working."
+    }
+  ],
+  "bounties": [
+    {
+      "id": "amp_goblin_thief",
+      "name": "Amp Goblin Thief",
+      "status": "available",
+      "location": "0,1",
+      "locationName": "Wrecked Road",
+      "objective": "Recover the stolen Cosmic Spark Plug.",
+      "reward": {
+        "scrap_metal": 3,
+        "star_cash": 25
+      }
+    }
+  ],
+  "category": "shops",
+  "json": "assets/data/planets/dust_9/interiors/shops/bounty_office.json"
+}

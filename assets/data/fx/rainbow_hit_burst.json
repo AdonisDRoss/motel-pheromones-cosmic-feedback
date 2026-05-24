@@ -1,0 +1,38 @@
+{
+  "id": "rainbow_hit_burst",
+  "name": "Rainbow Hit Burst",
+  "type": "impact_burst",
+  "image": "assets/sprites/fx/weapons/rainbow_hit_burst.png",
+  "frameWidth": 320,
+  "frameHeight": 320,
+  "columns": 8,
+  "rows": 1,
+  "frameCount": 8,
+  "transparent": true,
+  "frameRate": 14,
+  "animations": {
+    "play": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "start": [
+      0
+    ],
+    "peak": [
+      4
+    ],
+    "end": [
+      7
+    ]
+  },
+  "notes": [
+    "Use for heavy hits, explosions, and impact flashes.",
+    "Single-row Phaser-ready sprite sheet."
+  ]
+}

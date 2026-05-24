@@ -1,0 +1,35 @@
+{
+  "name": "donny_overhead",
+  "image": "donny_overhead_sheet.png",
+  "frameWidth": 192,
+  "frameHeight": 288,
+  "columns": 4,
+  "rows": 4,
+  "frameTotal": 16,
+  "animations": {
+    "walk_down": {
+      "start": 0,
+      "end": 3,
+      "frameRate": 8,
+      "repeat": -1
+    },
+    "walk_right": {
+      "start": 4,
+      "end": 7,
+      "frameRate": 8,
+      "repeat": -1
+    },
+    "walk_left": {
+      "start": 8,
+      "end": 11,
+      "frameRate": 8,
+      "repeat": -1
+    },
+    "walk_up": {
+      "start": 12,
+      "end": 15,
+      "frameRate": 8,
+      "repeat": -1
+    }
+  }
+}

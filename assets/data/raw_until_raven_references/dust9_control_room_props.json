@@ -1,0 +1,199 @@
+{
+  "key": "dust9_control_room_props",
+  "path": "assets/props/dust9/dust9_control_room_props.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "columns": 6,
+  "rows": 3,
+  "frames": 18,
+  "frameNames": {
+    "main_control_console": 0,
+    "aux_control_terminal": 1,
+    "wall_status_display": 2,
+    "server_rack": 3,
+    "portable_monitor_terminal": 4,
+    "lockdown_panel": 5,
+    "gate_power_switch": 6,
+    "surveillance_monitor_bank": 7,
+    "portable_data_terminal": 8,
+    "red_alarm_beacon": 9,
+    "security_camera": 10,
+    "floor_cable_junction": 11,
+    "power_control_cabinet": 12,
+    "hologram_data_table": 13,
+    "command_chair": 14,
+    "wall_intercom_panel": 15,
+    "secure_data_crate": 16,
+    "speaker_vent_panel": 17
+  },
+  "suggestedPlacements": {
+    "control_room": [
+      {
+        "frame": 0,
+        "name": "main_control_console",
+        "x": 960,
+        "y": 360,
+        "scale": 0.95,
+        "depth": 360,
+        "interactive": true
+      },
+      {
+        "frame": 1,
+        "name": "aux_control_terminal",
+        "x": 785,
+        "y": 325,
+        "scale": 0.8,
+        "depth": 325,
+        "interactive": true
+      },
+      {
+        "frame": 2,
+        "name": "wall_status_display",
+        "x": 960,
+        "y": 185,
+        "scale": 0.9,
+        "depth": 185,
+        "wall": true
+      },
+      {
+        "frame": 3,
+        "name": "server_rack",
+        "x": 1180,
+        "y": 270,
+        "scale": 0.85,
+        "depth": 270
+      },
+      {
+        "frame": 4,
+        "name": "portable_monitor_terminal",
+        "x": 1095,
+        "y": 335,
+        "scale": 0.8,
+        "depth": 335,
+        "interactive": true
+      },
+      {
+        "frame": 5,
+        "name": "lockdown_panel",
+        "x": 1290,
+        "y": 260,
+        "scale": 0.7,
+        "depth": 260,
+        "wall": true,
+        "interactive": true
+      },
+      {
+        "frame": 6,
+        "name": "gate_power_switch",
+        "x": 620,
+        "y": 330,
+        "scale": 0.8,
+        "depth": 330,
+        "interactive": true
+      },
+      {
+        "frame": 7,
+        "name": "surveillance_monitor_bank",
+        "x": 770,
+        "y": 300,
+        "scale": 0.85,
+        "depth": 300,
+        "interactive": true
+      },
+      {
+        "frame": 8,
+        "name": "portable_data_terminal",
+        "x": 1035,
+        "y": 390,
+        "scale": 0.8,
+        "depth": 390,
+        "interactive": true
+      },
+      {
+        "frame": 9,
+        "name": "red_alarm_beacon",
+        "x": 1275,
+        "y": 300,
+        "scale": 0.75,
+        "depth": 300
+      },
+      {
+        "frame": 10,
+        "name": "security_camera",
+        "x": 1355,
+        "y": 245,
+        "scale": 0.7,
+        "depth": 245,
+        "wall": true
+      },
+      {
+        "frame": 11,
+        "name": "floor_cable_junction",
+        "x": 920,
+        "y": 450,
+        "scale": 0.85,
+        "depth": 450
+      },
+      {
+        "frame": 12,
+        "name": "power_control_cabinet",
+        "x": 700,
+        "y": 430,
+        "scale": 0.85,
+        "depth": 430
+      },
+      {
+        "frame": 13,
+        "name": "hologram_data_table",
+        "x": 960,
+        "y": 410,
+        "scale": 0.85,
+        "depth": 410,
+        "interactive": true
+      },
+      {
+        "frame": 14,
+        "name": "command_chair",
+        "x": 1115,
+        "y": 420,
+        "scale": 0.85,
+        "depth": 420
+      },
+      {
+        "frame": 15,
+        "name": "wall_intercom_panel",
+        "x": 1400,
+        "y": 305,
+        "scale": 0.7,
+        "depth": 305,
+        "wall": true
+      },
+      {
+        "frame": 16,
+        "name": "secure_data_crate",
+        "x": 1225,
+        "y": 450,
+        "scale": 0.85,
+        "depth": 450,
+        "interactive": true
+      },
+      {
+        "frame": 17,
+        "name": "speaker_vent_panel",
+        "x": 1450,
+        "y": 305,
+        "scale": 0.7,
+        "depth": 305,
+        "wall": true
+      }
+    ]
+  },
+  "objectiveHooks": {
+    "open_escape_gate": "main_control_console",
+    "disable_lockdown": "lockdown_panel",
+    "unlock_basement_access": "gate_power_switch",
+    "trigger_cask_panic": "red_alarm_beacon",
+    "download_moon_base_intel": "secure_data_crate"
+  },
+  "notes": "Control room prop sheet cleaned/repacked from generated set. Use before the basement prison rescue sequence."
+}

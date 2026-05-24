@@ -1,0 +1,133 @@
+{
+  "id": "dust9_drive_assets_v2_no_extra_vans",
+  "name": "Dust-9 Drive Assets v2 - No Baked Vans",
+  "source": "_references/dust9_drive_raw/dust9_drive_asset_sheet_raw.png",
+  "backgrounds": [
+    {
+      "id": "dust9_road_chunk_01_no_vans",
+      "key": "dust9_road_chunk_01_no_vans",
+      "path": "assets/backgrounds/planets/dust_9/drive/dust9_road_chunk_01_no_vans.png",
+      "type": "image",
+      "width": 960,
+      "height": 540,
+      "phaserLoad": "this.load.image('dust9_road_chunk_01_no_vans', 'assets/backgrounds/planets/dust_9/drive/dust9_road_chunk_01_no_vans.png');",
+      "note": "Baked van removed from the road chunk by patching the road."
+    },
+    {
+      "id": "dust9_road_chunk_01_source_no_vans",
+      "key": "dust9_road_chunk_01_source_no_vans",
+      "path": "assets/backgrounds/planets/dust_9/drive/dust9_road_chunk_01_source_no_vans.png",
+      "type": "image",
+      "width": 511654,
+      "note": "Original aspect no-baked-van road crop."
+    },
+    {
+      "id": "dust9_road_chunk_01_with_baked_van_reference",
+      "key": "dust9_road_chunk_01_with_baked_van_reference",
+      "path": "assets/backgrounds/planets/dust_9/drive/dust9_road_chunk_01_with_baked_van_reference.png",
+      "type": "reference_image",
+      "note": "Reference only; do not use as procedural road chunk unless you want the van baked in."
+    }
+  ],
+  "vehicles": [
+    {
+      "id": "astro_van_side_drive_large_clean",
+      "key": "astro_van_side_drive_large_clean",
+      "path": "assets/sprites/vehicles/astro_van/astro_van_side_drive_large_clean.png",
+      "type": "image",
+      "width": 224,
+      "height": 99,
+      "phaserLoad": "this.load.image('astro_van_side_drive_large_clean', 'assets/sprites/vehicles/astro_van/astro_van_side_drive_large_clean.png');"
+    },
+    {
+      "id": "astro_van_side_drive_far_small",
+      "key": "astro_van_side_drive_far_small",
+      "path": "assets/sprites/vehicles/astro_van/astro_van_side_drive_far_small.png",
+      "type": "image",
+      "width": 140,
+      "height": 80,
+      "phaserLoad": "this.load.image('astro_van_side_drive_far_small', 'assets/sprites/vehicles/astro_van/astro_van_side_drive_far_small.png');"
+    },
+    {
+      "id": "astro_van_side_drive_idle_4f",
+      "key": "astro_van_side_drive_idle_4f",
+      "path": "assets/sprites/vehicles/astro_van/astro_van_side_drive_idle_4f.png",
+      "type": "spritesheet",
+      "frameWidth": 256,
+      "frameHeight": 128,
+      "frameCount": 4,
+      "phaserLoad": "this.load.spritesheet('astro_van_side_drive_idle_4f', 'assets/sprites/vehicles/astro_van/astro_van_side_drive_idle_4f.png', { frameWidth: 256, frameHeight: 128 });",
+      "animations": {
+        "drive_idle": [
+          0,
+          1,
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "id": "astro_van_side_drive_far_small_4f",
+      "key": "astro_van_side_drive_far_small_4f",
+      "path": "assets/sprites/vehicles/astro_van/astro_van_side_drive_far_small_4f.png",
+      "type": "spritesheet",
+      "frameWidth": 160,
+      "frameHeight": 80,
+      "frameCount": 4,
+      "phaserLoad": "this.load.spritesheet('astro_van_side_drive_far_small_4f', 'assets/sprites/vehicles/astro_van/astro_van_side_drive_far_small_4f.png', { frameWidth: 160, frameHeight: 80 });",
+      "animations": {
+        "drive_far": [
+          0,
+          1,
+          2,
+          3
+        ]
+      }
+    }
+  ],
+  "fx": [
+    {
+      "id": "dust9_dust_cloud_01",
+      "key": "dust9_dust_cloud_01",
+      "path": "assets/fx/drive/dust9/dust9_dust_cloud_01.png",
+      "type": "image",
+      "width": 270,
+      "height": 66,
+      "phaserLoad": "this.load.image('dust9_dust_cloud_01', 'assets/fx/drive/dust9/dust9_dust_cloud_01.png');"
+    },
+    {
+      "id": "dust9_dust_cloud_02",
+      "key": "dust9_dust_cloud_02",
+      "path": "assets/fx/drive/dust9/dust9_dust_cloud_02.png",
+      "type": "image",
+      "width": 187,
+      "height": 69,
+      "phaserLoad": "this.load.image('dust9_dust_cloud_02', 'assets/fx/drive/dust9/dust9_dust_cloud_02.png');"
+    },
+    {
+      "id": "dust9_dust_cloud_top_road",
+      "key": "dust9_dust_cloud_top_road",
+      "path": "assets/fx/drive/dust9/dust9_dust_cloud_top_road.png",
+      "type": "image",
+      "width": 100,
+      "height": 60,
+      "phaserLoad": "this.load.image('dust9_dust_cloud_top_road', 'assets/fx/drive/dust9/dust9_dust_cloud_top_road.png');"
+    },
+    {
+      "id": "dust_trail_loop_4f",
+      "key": "dust_trail_loop_4f",
+      "path": "assets/fx/drive/dust9/dust_trail_loop_4f.png",
+      "type": "spritesheet",
+      "frameWidth": 128,
+      "frameHeight": 64,
+      "frameCount": 4,
+      "phaserLoad": "this.load.spritesheet('dust_trail_loop_4f', 'assets/fx/drive/dust9/dust_trail_loop_4f.png', { frameWidth: 128, frameHeight: 64 });"
+    }
+  ],
+  "warnings": [
+    "Source image had baked checkerboard and a sparkle/watermark.",
+    "The top road chunk originally had a van baked into it; v2 removes that van from the playable road background.",
+    "The small top-road van and the large bottom van were extracted as separate transparent sprites.",
+    "The no-van road fill is patched, suitable for testing. A native no-vehicle road export would still be cleaner."
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "id": "cask_veyr",
+  "name": "Cask Veyr",
+  "rank": "Brigadier Warden",
+  "title": "Acting Commandant of Dust-9",
+  "class": "Coward Tank / Control Boss",
+  "stats": {
+    "power": 7,
+    "defense": 9,
+    "speed": 4,
+    "tech": 8,
+    "courage": 2,
+    "control": 10
+  },
+  "sheets": {
+    "movement": "assets/sprites/enemies/red_concord/cask_veyr/cask_veyr_movement.png",
+    "command": "assets/sprites/enemies/red_concord/cask_veyr/cask_veyr_command_actions.png",
+    "melee": "assets/sprites/enemies/red_concord/cask_veyr/cask_veyr_exorig_melee.png",
+    "reactions": "assets/sprites/enemies/red_concord/cask_veyr/cask_veyr_reactions.png",
+    "panicProtocol": "assets/sprites/enemies/red_concord/cask_veyr/cask_veyr_panic_protocol.png"
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Command Coward",
+      "behavior": [
+        "retreat",
+        "call_guards",
+        "activate_alarm"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Exo-Rig Cornered",
+      "behavior": [
+        "heavy_shove",
+        "armored_punch",
+        "short_retreat"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Panic Protocol",
+      "behavior": [
+        "spawn_reinforcements",
+        "laser_barriers",
+        "rush_escape"
+      ]
+    }
+  ],
+  "drops": [
+    "tower_keycard",
+    "collar_control_codes",
+    "moon_base_intel"
+  ]
+}

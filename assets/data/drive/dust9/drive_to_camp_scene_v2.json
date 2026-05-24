@@ -1,0 +1,17 @@
+{
+  "id": "drive_to_camp",
+  "scene": "DriveToCampScene",
+  "backgroundChunks": [
+    "dust9_road_chunk_01_no_vans"
+  ],
+  "vehicleKey": "astro_van_side_drive_idle_4f",
+  "farVehicleKey": "astro_van_side_drive_far_small_4f",
+  "dustFxKey": "dust_trail_loop_4f",
+  "targetDistance": 9000,
+  "driveSpeed": 260,
+  "nextScene": "Dust9CampIntroScene",
+  "notes": [
+    "Use dust9_road_chunk_01_no_vans so the road does not contain a baked-in van.",
+    "Place the van sprite separately on top of the scrolling road."
+  ]
+}

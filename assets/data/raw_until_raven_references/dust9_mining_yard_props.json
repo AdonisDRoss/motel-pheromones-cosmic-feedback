@@ -1,0 +1,179 @@
+{
+  "key": "dust9_mining_yard_props",
+  "path": "assets/props/dust9/dust9_mining_yard_props.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "columns": 6,
+  "rows": 3,
+  "frames": 18,
+  "frameNames": {
+    "ore_cart": 0,
+    "mining_drill": 1,
+    "mine_cart": 2,
+    "portable_generator": 3,
+    "work_floodlight": 4,
+    "cargo_crate": 5,
+    "caution_barrier": 6,
+    "tool_rack": 7,
+    "mining_control_terminal": 8,
+    "scrap_metal_pile": 9,
+    "ore_rock_pile": 10,
+    "fuel_barrel": 11,
+    "warning_beacon": 12,
+    "cable_spool": 13,
+    "broken_machine_panel": 14,
+    "prisoner_tool_bundle": 15,
+    "portable_conveyor_segment": 16,
+    "heavy_chain_hook": 17
+  },
+  "suggestedPlacements": {
+    "mining_yard": [
+      {
+        "frame": 0,
+        "name": "ore_cart",
+        "x": 360,
+        "y": 420,
+        "scale": 0.9,
+        "depth": 420
+      },
+      {
+        "frame": 1,
+        "name": "mining_drill",
+        "x": 620,
+        "y": 390,
+        "scale": 0.85,
+        "depth": 390,
+        "interactive": true
+      },
+      {
+        "frame": 2,
+        "name": "mine_cart",
+        "x": 760,
+        "y": 415,
+        "scale": 0.85,
+        "depth": 415
+      },
+      {
+        "frame": 3,
+        "name": "portable_generator",
+        "x": 1160,
+        "y": 390,
+        "scale": 0.8,
+        "depth": 390
+      },
+      {
+        "frame": 4,
+        "name": "work_floodlight",
+        "x": 1360,
+        "y": 300,
+        "scale": 0.85,
+        "depth": 300
+      },
+      {
+        "frame": 5,
+        "name": "cargo_crate",
+        "x": 1460,
+        "y": 430,
+        "scale": 0.85,
+        "depth": 430
+      },
+      {
+        "frame": 6,
+        "name": "caution_barrier",
+        "x": 520,
+        "y": 455,
+        "scale": 0.9,
+        "depth": 455
+      },
+      {
+        "frame": 7,
+        "name": "tool_rack",
+        "x": 975,
+        "y": 365,
+        "scale": 0.85,
+        "depth": 365
+      },
+      {
+        "frame": 8,
+        "name": "mining_control_terminal",
+        "x": 1090,
+        "y": 345,
+        "scale": 0.8,
+        "depth": 345,
+        "interactive": true
+      },
+      {
+        "frame": 9,
+        "name": "scrap_metal_pile",
+        "x": 875,
+        "y": 445,
+        "scale": 0.85,
+        "depth": 445
+      },
+      {
+        "frame": 10,
+        "name": "ore_rock_pile",
+        "x": 705,
+        "y": 455,
+        "scale": 0.8,
+        "depth": 455
+      },
+      {
+        "frame": 11,
+        "name": "fuel_barrel",
+        "x": 1280,
+        "y": 430,
+        "scale": 0.8,
+        "depth": 430
+      },
+      {
+        "frame": 12,
+        "name": "warning_beacon",
+        "x": 420,
+        "y": 350,
+        "scale": 0.75,
+        "depth": 350
+      },
+      {
+        "frame": 13,
+        "name": "cable_spool",
+        "x": 930,
+        "y": 465,
+        "scale": 0.85,
+        "depth": 465
+      },
+      {
+        "frame": 14,
+        "name": "broken_machine_panel",
+        "x": 1190,
+        "y": 455,
+        "scale": 0.8,
+        "depth": 455
+      },
+      {
+        "frame": 15,
+        "name": "prisoner_tool_bundle",
+        "x": 810,
+        "y": 470,
+        "scale": 0.75,
+        "depth": 470
+      },
+      {
+        "frame": 16,
+        "name": "portable_conveyor_segment",
+        "x": 1015,
+        "y": 455,
+        "scale": 0.85,
+        "depth": 455
+      },
+      {
+        "frame": 17,
+        "name": "heavy_chain_hook",
+        "x": 1325,
+        "y": 455,
+        "scale": 0.75,
+        "depth": 455
+      }
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "key": "dust9_escape_shuttle_landed",
+  "path": "assets/sprites/vehicles/dust9/dust9_escape_shuttle_landed.png",
+  "frameWidth": 512,
+  "frameHeight": 512,
+  "columns": 1,
+  "rows": 1,
+  "frames": 1,
+  "type": "vehicle_sprite",
+  "suggestedPlacement": {
+    "room": "loading_pad_escape_route",
+    "x": 1200,
+    "y": 330,
+    "scale": 0.75,
+    "depth": 330
+  },
+  "interaction": {
+    "name": "Escape Shuttle",
+    "canBoard": true,
+    "requiresDexRescued": true,
+    "objective": "Board the shuttle with Dex"
+  },
+  "notes": "Static landed Red Concord cargo shuttle / escape vehicle. Background cleaned and repacked to 512x512 transparent PNG."
+}

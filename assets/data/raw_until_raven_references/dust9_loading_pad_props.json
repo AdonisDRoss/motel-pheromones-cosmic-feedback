@@ -1,0 +1,179 @@
+{
+  "key": "dust9_loading_pad_props",
+  "path": "assets/props/dust9/dust9_loading_pad_props.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "columns": 6,
+  "rows": 3,
+  "frames": 18,
+  "frameNames": {
+    "cargo_crate": 0,
+    "stacked_supply_crates": 1,
+    "reinforced_red_concord_cargo_case": 2,
+    "fuel_barrel": 3,
+    "hazard_barrel": 4,
+    "portable_floodlight": 5,
+    "red_alarm_beacon": 6,
+    "cargo_control_terminal": 7,
+    "flat_cargo_dolly": 8,
+    "portable_barricade": 9,
+    "portable_fence_section": 10,
+    "landing_pad_light": 11,
+    "compact_generator": 12,
+    "cable_coil": 13,
+    "tool_chest": 14,
+    "pallet_stack": 15,
+    "warning_sign_plate": 16,
+    "cargo_scanner_post": 17
+  },
+  "suggestedPlacements": {
+    "loading_pad_escape_route": [
+      {
+        "frame": 0,
+        "name": "cargo_crate",
+        "x": 465,
+        "y": 420,
+        "scale": 0.85,
+        "depth": 420
+      },
+      {
+        "frame": 1,
+        "name": "stacked_supply_crates",
+        "x": 575,
+        "y": 430,
+        "scale": 0.85,
+        "depth": 430
+      },
+      {
+        "frame": 2,
+        "name": "reinforced_red_concord_cargo_case",
+        "x": 710,
+        "y": 420,
+        "scale": 0.85,
+        "depth": 420
+      },
+      {
+        "frame": 3,
+        "name": "fuel_barrel",
+        "x": 840,
+        "y": 430,
+        "scale": 0.8,
+        "depth": 430
+      },
+      {
+        "frame": 4,
+        "name": "hazard_barrel",
+        "x": 915,
+        "y": 430,
+        "scale": 0.8,
+        "depth": 430
+      },
+      {
+        "frame": 5,
+        "name": "portable_floodlight",
+        "x": 1430,
+        "y": 295,
+        "scale": 0.85,
+        "depth": 295
+      },
+      {
+        "frame": 6,
+        "name": "red_alarm_beacon",
+        "x": 1180,
+        "y": 260,
+        "scale": 0.72,
+        "depth": 260
+      },
+      {
+        "frame": 7,
+        "name": "cargo_control_terminal",
+        "x": 1040,
+        "y": 335,
+        "scale": 0.78,
+        "depth": 335,
+        "interactive": true
+      },
+      {
+        "frame": 8,
+        "name": "flat_cargo_dolly",
+        "x": 1240,
+        "y": 455,
+        "scale": 0.85,
+        "depth": 455
+      },
+      {
+        "frame": 9,
+        "name": "portable_barricade",
+        "x": 760,
+        "y": 455,
+        "scale": 0.9,
+        "depth": 455
+      },
+      {
+        "frame": 10,
+        "name": "portable_fence_section",
+        "x": 1320,
+        "y": 430,
+        "scale": 0.9,
+        "depth": 430
+      },
+      {
+        "frame": 11,
+        "name": "landing_pad_light",
+        "x": 1525,
+        "y": 405,
+        "scale": 0.75,
+        "depth": 405
+      },
+      {
+        "frame": 12,
+        "name": "compact_generator",
+        "x": 980,
+        "y": 455,
+        "scale": 0.82,
+        "depth": 455
+      },
+      {
+        "frame": 13,
+        "name": "cable_coil",
+        "x": 1095,
+        "y": 465,
+        "scale": 0.8,
+        "depth": 465
+      },
+      {
+        "frame": 14,
+        "name": "tool_chest",
+        "x": 635,
+        "y": 455,
+        "scale": 0.8,
+        "depth": 455
+      },
+      {
+        "frame": 15,
+        "name": "pallet_stack",
+        "x": 525,
+        "y": 465,
+        "scale": 0.85,
+        "depth": 465
+      },
+      {
+        "frame": 16,
+        "name": "warning_sign_plate",
+        "x": 675,
+        "y": 345,
+        "scale": 0.75,
+        "depth": 345
+      },
+      {
+        "frame": 17,
+        "name": "cargo_scanner_post",
+        "x": 1565,
+        "y": 350,
+        "scale": 0.78,
+        "depth": 350,
+        "interactive": true
+      }
+    ]
+  }
+}

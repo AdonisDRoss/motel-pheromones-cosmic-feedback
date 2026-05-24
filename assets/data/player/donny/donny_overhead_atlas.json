@@ -1,0 +1,383 @@
+{
+  "frames": [
+    {
+      "filename": "walk_down_0",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 192,
+        "h": 288
+      },
+      "spriteSourceSize": {
+        "x": 5,
+        "y": 30,
+        "w": 181,
+        "h": 263
+      },
+      "sourceSize": {
+        "w": 192,
+        "h": 288
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    {
+      "filename": "walk_down_1",
+      "frame": {
+        "x": 192,
+        "y": 0,
+        "w": 192,
+        "h": 288
+      },
+      "spriteSourceSize": {
+        "x": 6,
+        "y": 30,
+        "w": 179,
+        "h": 263
+      },
+      "sourceSize": {
+        "w": 192,
+        "h": 288
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    {
+      "filename": "walk_down_2",
+      "frame": {
+        "x": 384,
+        "y": 0,
+        "w": 192,
+        "h": 288
+      },
+      "spriteSourceSize": {
+        "x": 6,
+        "y": 30,
+        "w": 179,
+        "h": 263
+      },
+      "sourceSize": {
+        "w": 192,
+        "h": 288
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    {
+      "filename": "walk_down_3",
+      "frame": {
+        "x": 576,
+        "y": 0,
+        "w": 192,
+        "h": 288
+      },
+      "spriteSourceSize": {
+        "x": 7,
+        "y": 30,
+        "w": 178,
+        "h": 263
+      },
+      "sourceSize": {
+        "w": 192,
+        "h": 288
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    {
+      "filename": "walk_right_0",
+      "frame": {
+        "x": 0,
+        "y": 288,
+        "w": 192,
+        "h": 288
+      },
+      "spriteSourceSize": {
+        "x": 21,
+        "y": 44,
+        "w": 150,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 192,
+        "h": 288
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    {
+      "filename": "walk_right_1",
+      "frame": {
+        "x": 192,
+        "y": 288,
+        "w": 192,
+        "h": 288
+      },
+      "spriteSourceSize": {
+        "x": 17,
+        "y": 44,
+        "w": 157,
+        "h": 256
+      },
+      "sourceSize": {
+        "w": 192,
+        "h": 288
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    {
+      "filename": "walk_right_2",
+      "frame": {
+        "x": 384,
+        "y": 288,
+        "w": 192,
+        "h": 288
+      },
+      "spriteSourceSize": {
+        "x": 18,
+        "y": 42,
+        "w": 156,
+        "h": 257
+      },
+      "sourceSize": {
+        "w": 192,
+        "h": 288
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    {
+      "filename": "walk_right_3",
+      "frame": {
+        "x": 576,
+        "y": 288,
+        "w": 192,
+        "h": 288
+      },
+      "spriteSourceSize": {
+        "x": 17,
+        "y": 42,
+        "w": 157,
+        "h": 257
+      },
+      "sourceSize": {
+        "w": 192,
+        "h": 288
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    {
+      "filename": "walk_left_0",
+      "frame": {
+        "x": 0,
+        "y": 576,
+        "w": 192,
+        "h": 288
+      },
+      "spriteSourceSize": {
+        "x": 11,
+        "y": 36,
+        "w": 170,
+        "h": 260
+      },
+      "sourceSize": {
+        "w": 192,
+        "h": 288
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    {
+      "filename": "walk_left_1",
+      "frame": {
+        "x": 192,
+        "y": 576,
+        "w": 192,
+        "h": 288
+      },
+      "spriteSourceSize": {
+        "x": 8,
+        "y": 30,
+        "w": 175,
+        "h": 263
+      },
+      "sourceSize": {
+        "w": 192,
+        "h": 288
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    {
+      "filename": "walk_left_2",
+      "frame": {
+        "x": 384,
+        "y": 576,
+        "w": 192,
+        "h": 288
+      },
+      "spriteSourceSize": {
+        "x": 12,
+        "y": 28,
+        "w": 168,
+        "h": 264
+      },
+      "sourceSize": {
+        "w": 192,
+        "h": 288
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    {
+      "filename": "walk_left_3",
+      "frame": {
+        "x": 576,
+        "y": 576,
+        "w": 192,
+        "h": 288
+      },
+      "spriteSourceSize": {
+        "x": 8,
+        "y": 30,
+        "w": 175,
+        "h": 263
+      },
+      "sourceSize": {
+        "w": 192,
+        "h": 288
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    {
+      "filename": "walk_up_0",
+      "frame": {
+        "x": 0,
+        "y": 864,
+        "w": 192,
+        "h": 288
+      },
+      "spriteSourceSize": {
+        "x": 17,
+        "y": 16,
+        "w": 157,
+        "h": 270
+      },
+      "sourceSize": {
+        "w": 192,
+        "h": 288
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    {
+      "filename": "walk_up_1",
+      "frame": {
+        "x": 192,
+        "y": 864,
+        "w": 192,
+        "h": 288
+      },
+      "spriteSourceSize": {
+        "x": 19,
+        "y": 12,
+        "w": 154,
+        "h": 272
+      },
+      "sourceSize": {
+        "w": 192,
+        "h": 288
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    {
+      "filename": "walk_up_2",
+      "frame": {
+        "x": 384,
+        "y": 864,
+        "w": 192,
+        "h": 288
+      },
+      "spriteSourceSize": {
+        "x": 19,
+        "y": 20,
+        "w": 153,
+        "h": 268
+      },
+      "sourceSize": {
+        "w": 192,
+        "h": 288
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    },
+    {
+      "filename": "walk_up_3",
+      "frame": {
+        "x": 576,
+        "y": 864,
+        "w": 192,
+        "h": 288
+      },
+      "spriteSourceSize": {
+        "x": 17,
+        "y": 16,
+        "w": 157,
+        "h": 270
+      },
+      "sourceSize": {
+        "w": 192,
+        "h": 288
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1.0
+      }
+    }
+  ],
+  "meta": {
+    "app": "OpenAI Phaser packager",
+    "version": "1.0",
+    "image": "donny_overhead_sheet.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 768,
+      "h": 1152
+    },
+    "scale": "1"
+  }
+}

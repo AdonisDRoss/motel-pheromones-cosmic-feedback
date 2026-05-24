@@ -1,0 +1,49 @@
+{
+  "name": "cosmic_feedback_incremental_v5_weapons_donny_riff",
+  "adds": {
+    "donny": {
+      "unarmedPunch": {
+        "image": "assets/sprites/player/donny/combat/donny_unarmed_punch_sheet.png",
+        "compatImage": "assets/sprites/player/donny/donny_unarmed_punch_sheet.png",
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 4,
+        "rows": 4
+      },
+      "crawl": {
+        "image": "assets/sprites/player/donny/donny_crawl_4dir.png",
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 4,
+        "rows": 4
+      },
+      "sit": {
+        "image": "assets/sprites/player/donny/donny_sit_4dir.png",
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 4,
+        "rows": 4
+      },
+      "jumpJson": "assets/data/player/donny/donny_jump_4dir.json",
+      "spacesuitJson": "assets/data/player/donny/donny_spacesuit.json"
+    },
+    "riff": {
+      "json": "assets/data/companions/riff/riff_movement.json",
+      "expectedImage": "assets/sprites/companions/riff/riff_movement.png",
+      "note": "Only JSON was uploaded here; image file still needs to be uploaded if not present in v4/repo."
+    },
+    "weapons": {
+      "laserRevolverPickup": [
+        "assets/sprites/weapons/laser_revolver/laser_revolver_pickup_FIXED.png",
+        "assets/sprites/weapons/laser_revolver_pickup_FIXED.png"
+      ],
+      "weaponFxPackage": "extracted from weapon_fx_phaser_pack_FIXED(1).zip",
+      "donnyWeaponsHolstersPackage": "extracted from donny_weapons_holsters_phaser_package_FIXED.zip"
+    }
+  },
+  "warnings": [
+    "Riff movement PNG was not among this upload; only riff_movement.json was uploaded.",
+    "Donny slide sheet is referenced by the mobility manifest but was not directly uploaded in this message unless it is inside one of the ZIP packages.",
+    "Donny sleep normal sheet is still separate from the uploaded sit/crawl/punch sheets unless already covered by earlier bundles."
+  ]
+}

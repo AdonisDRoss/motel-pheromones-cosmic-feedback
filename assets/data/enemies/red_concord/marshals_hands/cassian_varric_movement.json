@@ -1,0 +1,86 @@
+{
+  "id": "cassian_varric_movement",
+  "name": "Cassian Varric",
+  "publicTitle": "The Marshal\u2019s Hands",
+  "faction": "The Red Concord",
+  "unit": "Supreme Marshal\u2019s Personal Guard",
+  "role": "blade / close-range pressure",
+  "image": "assets/sprites/enemies/red_concord/marshals_hands/cassian_varric_movement.png",
+  "frameWidth": 222,
+  "frameHeight": 222,
+  "columns": 8,
+  "rows": 4,
+  "frameCount": 32,
+  "transparent": true,
+  "rowOrder": [
+    "down",
+    "right",
+    "left",
+    "up"
+  ],
+  "animations": {
+    "walk_down": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "walk_right": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "walk_left": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+    ],
+    "walk_up": [
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "idle_down": [
+      0
+    ],
+    "idle_right": [
+      8
+    ],
+    "idle_left": [
+      16
+    ],
+    "idle_up": [
+      24
+    ]
+  },
+  "frameRate": 8,
+  "phaserLoad": "this.load.spritesheet('cassian_varric_movement', 'assets/sprites/enemies/red_concord/marshals_hands/cassian_varric_movement.png', { frameWidth: 222, frameHeight: 222 });",
+  "notes": [
+    "Source was JPEG with baked checkerboard/white background; converted to transparent PNG.",
+    "Padded to a clean 8 columns x 4 rows Phaser grid.",
+    "Row 1: down/front movement.",
+    "Row 2: right movement.",
+    "Row 3: left movement.",
+    "Row 4: up/back movement.",
+    "Review transparency edges in-game; true transparent export would be cleaner if available."
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "package": "donny_mobility_phaser_package",
+  "version": "1.0.1779499875",
+  "sheets": {
+    "jump": {
+      "image": "assets/sprites/player/donny/donny_jump_4dir.png",
+      "json": "assets/data/player/donny/donny_jump_4dir.json"
+    },
+    "crawl": {
+      "image": "assets/sprites/player/donny/donny_crawl_4dir.png",
+      "json": "assets/data/player/donny/donny_crawl_4dir.json"
+    },
+    "slide": {
+      "image": "assets/sprites/player/donny/donny_slide_4dir.png",
+      "json": "assets/data/player/donny/donny_slide_4dir.json"
+    }
+  },
+  "loaderExamples": [
+    "this.load.spritesheet('donny_jump_4dir', 'assets/sprites/player/donny/donny_jump_4dir.png', { frameWidth: 128, frameHeight: 128 });",
+    "this.load.spritesheet('donny_crawl_4dir', 'assets/sprites/player/donny/donny_crawl_4dir.png', { frameWidth: 128, frameHeight: 128 });",
+    "this.load.spritesheet('donny_slide_4dir', 'assets/sprites/player/donny/donny_slide_4dir.png', { frameWidth: 128, frameHeight: 128 });"
+  ]
+}

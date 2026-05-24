@@ -1,0 +1,22 @@
+{
+  "name": "cosmic_feedback_portraits_v6",
+  "assets": {
+    "d": {
+      "portrait": "assets/portraits/d/d_portrait.png",
+      "type": "character_portrait_reference"
+    },
+    "riff": {
+      "portrait": "assets/portraits/riff/riff_portrait.png",
+      "type": "companion_portrait_reference"
+    },
+    "donny": {
+      "portrait": "assets/portraits/donny/donny_portrait.png",
+      "type": "character_portrait_reference"
+    }
+  },
+  "usageNotes": [
+    "Use these for dialogue boxes, codex/profile screens, mission briefings, or character select portraits.",
+    "Do not load these as spritesheets; they are single portrait images.",
+    "Raw JPEG uploads are preserved under _references/uploaded_raw_portraits/."
+  ]
+}

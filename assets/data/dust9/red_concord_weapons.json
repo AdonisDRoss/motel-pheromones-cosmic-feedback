@@ -1,0 +1,63 @@
+{
+  "overlaySheet": "assets/sprites/weapons/red_concord/red_concord_weapons_4dir_overlay.png",
+  "pickupSheet": "assets/sprites/weapons/red_concord/red_concord_weapon_pickups.png",
+  "fxSheet": "assets/fx/red_concord/red_concord_weapon_fx.png",
+  "directions": [
+    "down",
+    "left",
+    "right",
+    "up"
+  ],
+  "weapons": [
+    {
+      "id": "pistol",
+      "row": 0,
+      "pickupFrame": 0,
+      "damage": 8,
+      "range": 420,
+      "fx": "muzzle_flash"
+    },
+    {
+      "id": "compact_smg",
+      "row": 1,
+      "pickupFrame": 1,
+      "damage": 5,
+      "range": 360,
+      "burst": 3,
+      "fx": "muzzle_flash"
+    },
+    {
+      "id": "assault_rifle",
+      "row": 2,
+      "pickupFrame": 2,
+      "damage": 9,
+      "range": 560,
+      "fx": "muzzle_flash"
+    },
+    {
+      "id": "shotgun",
+      "row": 3,
+      "pickupFrame": 3,
+      "damage": 15,
+      "range": 260,
+      "spread": 3,
+      "fx": "muzzle_flash"
+    },
+    {
+      "id": "scoped_rifle",
+      "row": 4,
+      "pickupFrame": 4,
+      "damage": 18,
+      "range": 760,
+      "fx": "energy_impact"
+    },
+    {
+      "id": "shock_baton",
+      "row": 5,
+      "pickupFrame": 6,
+      "damage": 7,
+      "range": 65,
+      "fx": "stun_electricity"
+    }
+  ]
+}

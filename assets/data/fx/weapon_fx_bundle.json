@@ -1,0 +1,54 @@
+{
+  "neon_slash_arc": {
+    "name": "Neon Slash Arc",
+    "type": "melee_slash",
+    "paths": {
+      "png": "assets/sprites/fx/weapons/neon_slash_arc.png",
+      "json": "assets/data/fx/neon_slash_arc.json",
+      "atlas": "assets/data/fx/neon_slash_arc_atlas.json"
+    },
+    "frameWidth": 320,
+    "frameHeight": 320,
+    "frameCount": 8,
+    "frameRate": 12
+  },
+  "muzzle_flash_burst": {
+    "name": "Muzzle Flash Burst",
+    "type": "muzzle_flash",
+    "paths": {
+      "png": "assets/sprites/fx/weapons/muzzle_flash_burst.png",
+      "json": "assets/data/fx/muzzle_flash_burst.json",
+      "atlas": "assets/data/fx/muzzle_flash_burst_atlas.json"
+    },
+    "frameWidth": 320,
+    "frameHeight": 320,
+    "frameCount": 8,
+    "frameRate": 16
+  },
+  "rainbow_hit_burst": {
+    "name": "Rainbow Hit Burst",
+    "type": "impact_burst",
+    "paths": {
+      "png": "assets/sprites/fx/weapons/rainbow_hit_burst.png",
+      "json": "assets/data/fx/rainbow_hit_burst.json",
+      "atlas": "assets/data/fx/rainbow_hit_burst_atlas.json"
+    },
+    "frameWidth": 320,
+    "frameHeight": 320,
+    "frameCount": 8,
+    "frameRate": 14
+  },
+  "plasma_ring_blast": {
+    "name": "Plasma Ring Blast",
+    "type": "energy_blast",
+    "paths": {
+      "png": "assets/sprites/fx/weapons/plasma_ring_blast.png",
+      "json": "assets/data/fx/plasma_ring_blast.json",
+      "atlas": "assets/data/fx/plasma_ring_blast_atlas.json"
+    },
+    "frameWidth": 320,
+    "frameHeight": 320,
+    "frameCount": 8,
+    "frameRate": 12
+  }
+}

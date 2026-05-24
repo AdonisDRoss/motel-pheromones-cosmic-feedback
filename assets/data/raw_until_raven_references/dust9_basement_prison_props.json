@@ -1,0 +1,185 @@
+{
+  "key": "dust9_basement_prison_props",
+  "path": "assets/props/dust9/dust9_basement_prison_props.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "columns": 6,
+  "rows": 3,
+  "frames": 18,
+  "frameNames": {
+    "restraint_chair": 0,
+    "cell_control_terminal": 1,
+    "collar_control_terminal": 2,
+    "security_camera": 3,
+    "red_alarm_beacon": 4,
+    "laser_barrier_emitter": 5,
+    "evidence_crate": 6,
+    "medical_tray": 7,
+    "prisoner_cot": 8,
+    "floor_drain_grate": 9,
+    "portable_generator": 10,
+    "wall_control_box": 11,
+    "interrogation_light": 12,
+    "security_locker": 13,
+    "data_terminal": 14,
+    "broken_shackles": 15,
+    "cell_door_switch": 16,
+    "rescue_objective_crate": 17
+  },
+  "suggestedPlacements": {
+    "basement_prison": [
+      {
+        "frame": 0,
+        "name": "restraint_chair",
+        "x": 360,
+        "y": 390,
+        "scale": 0.85,
+        "depth": 390
+      },
+      {
+        "frame": 1,
+        "name": "cell_control_terminal",
+        "x": 705,
+        "y": 315,
+        "scale": 0.75,
+        "depth": 315,
+        "interactive": true
+      },
+      {
+        "frame": 2,
+        "name": "collar_control_terminal",
+        "x": 845,
+        "y": 315,
+        "scale": 0.8,
+        "depth": 315,
+        "interactive": true
+      },
+      {
+        "frame": 3,
+        "name": "security_camera",
+        "x": 1175,
+        "y": 225,
+        "scale": 0.7,
+        "depth": 225,
+        "wall": true
+      },
+      {
+        "frame": 4,
+        "name": "red_alarm_beacon",
+        "x": 1245,
+        "y": 260,
+        "scale": 0.7,
+        "depth": 260
+      },
+      {
+        "frame": 5,
+        "name": "laser_barrier_emitter",
+        "x": 1420,
+        "y": 380,
+        "scale": 0.85,
+        "depth": 380,
+        "interactive": true
+      },
+      {
+        "frame": 6,
+        "name": "evidence_crate",
+        "x": 480,
+        "y": 440,
+        "scale": 0.8,
+        "depth": 440
+      },
+      {
+        "frame": 7,
+        "name": "medical_tray",
+        "x": 620,
+        "y": 420,
+        "scale": 0.8,
+        "depth": 420
+      },
+      {
+        "frame": 8,
+        "name": "prisoner_cot",
+        "x": 320,
+        "y": 440,
+        "scale": 0.9,
+        "depth": 440
+      },
+      {
+        "frame": 9,
+        "name": "floor_drain_grate",
+        "x": 900,
+        "y": 465,
+        "scale": 0.75,
+        "depth": 465
+      },
+      {
+        "frame": 10,
+        "name": "portable_generator",
+        "x": 1120,
+        "y": 435,
+        "scale": 0.8,
+        "depth": 435
+      },
+      {
+        "frame": 11,
+        "name": "wall_control_box",
+        "x": 1330,
+        "y": 295,
+        "scale": 0.7,
+        "depth": 295,
+        "wall": true
+      },
+      {
+        "frame": 12,
+        "name": "interrogation_light",
+        "x": 530,
+        "y": 400,
+        "scale": 0.75,
+        "depth": 400
+      },
+      {
+        "frame": 13,
+        "name": "security_locker",
+        "x": 1510,
+        "y": 360,
+        "scale": 0.85,
+        "depth": 360
+      },
+      {
+        "frame": 14,
+        "name": "data_terminal",
+        "x": 760,
+        "y": 350,
+        "scale": 0.75,
+        "depth": 350,
+        "interactive": true
+      },
+      {
+        "frame": 15,
+        "name": "broken_shackles",
+        "x": 1020,
+        "y": 460,
+        "scale": 0.75,
+        "depth": 460
+      },
+      {
+        "frame": 16,
+        "name": "cell_door_switch",
+        "x": 1375,
+        "y": 320,
+        "scale": 0.7,
+        "depth": 320,
+        "interactive": true
+      },
+      {
+        "frame": 17,
+        "name": "rescue_objective_crate",
+        "x": 1580,
+        "y": 430,
+        "scale": 0.8,
+        "depth": 430,
+        "interactive": true
+      }
+    ]
+  }
+}

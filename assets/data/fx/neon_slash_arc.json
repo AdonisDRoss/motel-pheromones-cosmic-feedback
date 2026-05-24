@@ -1,0 +1,38 @@
+{
+  "id": "neon_slash_arc",
+  "name": "Neon Slash Arc",
+  "type": "melee_slash",
+  "image": "assets/sprites/fx/weapons/neon_slash_arc.png",
+  "frameWidth": 320,
+  "frameHeight": 320,
+  "columns": 8,
+  "rows": 1,
+  "frameCount": 8,
+  "transparent": true,
+  "frameRate": 12,
+  "animations": {
+    "play": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "start": [
+      0
+    ],
+    "peak": [
+      4
+    ],
+    "end": [
+      7
+    ]
+  },
+  "notes": [
+    "Great for guitar/wrench/melee arc effects.",
+    "Single-row Phaser-ready sprite sheet."
+  ]
+}

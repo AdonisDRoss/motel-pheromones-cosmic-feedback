@@ -1,0 +1,2488 @@
+{
+  "generatedFrom": "chatgpt_assets_until_raven_exact_raw_package.zip",
+  "purpose": "Screenshot-filtered Phaser-ready asset manifest.",
+  "rules": {
+    "screenshotsRemoved": true,
+    "imagesConvertedTo": "RGBA PNG",
+    "rootIndexOverwrite": false,
+    "safeInstall": "installer copies only missing files"
+  },
+  "counts": {
+    "processedImages": 165,
+    "removedScreenshotsOrUnsupported": 0,
+    "referenceFilesPreserved": 67
+  },
+  "assets": [
+    {
+      "key": "008eda89_c4bb_46d4_9ff8_a3773318f20c",
+      "sourceFile": "008EDA89-C4BB-46D4-9FF8-A3773318F20C.jpeg",
+      "path": "assets/sprites/misc/008eda89_c4bb_46d4_9ff8_a3773318f20c.png",
+      "width": 1408,
+      "height": 768,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/sprites/misc",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 11,
+        "rows": 6,
+        "frames": 66
+      }
+    },
+    {
+      "key": "055bdd7c_622a_45f0_8a1b_691d4d0181c0",
+      "sourceFile": "055BDD7C-622A-45F0-8A1B-691D4D0181C0.png",
+      "path": "assets/backgrounds/misc/055bdd7c_622a_45f0_8a1b_691d4d0181c0.png",
+      "width": 1170,
+      "height": 2532,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "064d297a_e03f_4758_8076_a1a25c6adfb5",
+      "sourceFile": "064D297A-E03F-4758-8076-A1A25C6ADFB5.png",
+      "path": "assets/props/misc/064d297a_e03f_4758_8076_a1a25c6adfb5.png",
+      "width": 1024,
+      "height": 285,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "07f83fcb_3c68_4572_8f88_424284cb939a",
+      "sourceFile": "07F83FCB-3C68-4572-8F88-424284CB939A.png",
+      "path": "assets/backgrounds/misc/07f83fcb_3c68_4572_8f88_424284cb939a.png",
+      "width": 1170,
+      "height": 2532,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "08b2e175_a4a7_4ba0_9248_8fef5a83dd86",
+      "sourceFile": "08B2E175-A4A7-4BA0-9248-8FEF5A83DD86.jpeg",
+      "path": "assets/props/misc/08b2e175_a4a7_4ba0_9248_8fef5a83dd86.png",
+      "width": 1024,
+      "height": 559,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "0b5e84fb_72a5_4723_adb4_4e68e3aef77d",
+      "sourceFile": "0B5E84FB-72A5-4723-ADB4-4E68E3AEF77D.png",
+      "path": "assets/props/misc/0b5e84fb_72a5_4723_adb4_4e68e3aef77d.png",
+      "width": 1024,
+      "height": 506,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "0e6fdd01_2a1d_4d61_9234_d1a2ddda8127",
+      "sourceFile": "0E6FDD01-2A1D-4D61-9234-D1A2DDDA8127.jpeg",
+      "path": "assets/sprites/misc/0e6fdd01_2a1d_4d61_9234_d1a2ddda8127.png",
+      "width": 1024,
+      "height": 1024,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/sprites/misc",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 8,
+        "rows": 8,
+        "frames": 64
+      }
+    },
+    {
+      "key": "10cb93ab_8d14_44c1_9991_a0d353331309",
+      "sourceFile": "10CB93AB-8D14-44C1-9991-A0D353331309.jpeg",
+      "path": "assets/props/misc/10cb93ab_8d14_44c1_9991_a0d353331309.png",
+      "width": 1024,
+      "height": 506,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "11071a62_6779_4fe2_9bc4_a005ef57e2ee",
+      "sourceFile": "11071A62-6779-4FE2-9BC4-A005EF57E2EE.jpeg",
+      "path": "assets/props/misc/11071a62_6779_4fe2_9bc4_a005ef57e2ee.png",
+      "width": 1024,
+      "height": 559,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "1130db7e_b035_437c_aea5_6185714fd60f",
+      "sourceFile": "1130DB7E-B035-437C-AEA5-6185714FD60F.jpeg",
+      "path": "assets/props/misc/1130db7e_b035_437c_aea5_6185714fd60f.png",
+      "width": 1024,
+      "height": 687,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "131acede_7d5c_42e2_a266_dc8c49c9c255",
+      "sourceFile": "131ACEDE-7D5C-42E2-A266-DC8C49C9C255.jpeg",
+      "path": "assets/props/misc/131acede_7d5c_42e2_a266_dc8c49c9c255.png",
+      "width": 1024,
+      "height": 617,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "14695166_b429_4a9c_aea9_8d066e05d7dd",
+      "sourceFile": "14695166-B429-4A9C-AEA9-8D066E05D7DD.png",
+      "path": "assets/props/misc/14695166_b429_4a9c_aea9_8d066e05d7dd.png",
+      "width": 1024,
+      "height": 506,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "1b0d3e50_5efc_4deb_b714_2378b0641341",
+      "sourceFile": "1B0D3E50-5EFC-4DEB-B714-2378B0641341.png",
+      "path": "assets/props/misc/1b0d3e50_5efc_4deb_b714_2378b0641341.png",
+      "width": 1024,
+      "height": 572,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "1b69644f_8726_4d69_849c_604cf3dd1bec",
+      "sourceFile": "1B69644F-8726-4D69-849C-604CF3DD1BEC.png",
+      "path": "assets/props/misc/1b69644f_8726_4d69_849c_604cf3dd1bec.png",
+      "width": 1024,
+      "height": 506,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "2feaa085_0eb8_4941_90fe_de5a390130df",
+      "sourceFile": "2FEAA085-0EB8-4941-90FE-DE5A390130DF.png",
+      "path": "assets/props/misc/2feaa085_0eb8_4941_90fe_de5a390130df.png",
+      "width": 1024,
+      "height": 559,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "32f8cd6b_76e1_41f4_9e1e_89507aa2c386",
+      "sourceFile": "32F8CD6B-76E1-41F4-9E1E-89507AA2C386.jpeg",
+      "path": "assets/props/misc/32f8cd6b_76e1_41f4_9e1e_89507aa2c386.png",
+      "width": 1024,
+      "height": 765,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "3651bc0d_b3c6_41ba_a034_cf6573814c6b",
+      "sourceFile": "3651BC0D-B3C6-41BA-A034-CF6573814C6B.png",
+      "path": "assets/props/misc/3651bc0d_b3c6_41ba_a034_cf6573814c6b.png",
+      "width": 1024,
+      "height": 506,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "36f9221b_54ea_4225_98a7_b340bbff737b",
+      "sourceFile": "36F9221B-54EA-4225-98A7-B340BBFF737B.png",
+      "path": "assets/props/misc/36f9221b_54ea_4225_98a7_b340bbff737b.png",
+      "width": 1024,
+      "height": 559,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "4025597f_a00f_4689_bbe3_8c51c66d1a14",
+      "sourceFile": "4025597F-A00F-4689-BBE3-8C51C66D1A14.png",
+      "path": "assets/props/misc/4025597f_a00f_4689_bbe3_8c51c66d1a14.png",
+      "width": 1024,
+      "height": 338,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "41e4b074_3086_4223_82e0_c4c7bb0934f3",
+      "sourceFile": "41E4B074-3086-4223-82E0-C4C7BB0934F3.jpeg",
+      "path": "assets/props/misc/41e4b074_3086_4223_82e0_c4c7bb0934f3.png",
+      "width": 1024,
+      "height": 687,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "446f832b_adf5_40e8_b195_a499466c2072",
+      "sourceFile": "446F832B-ADF5-40E8-B195-A499466C2072.png",
+      "path": "assets/props/misc/446f832b_adf5_40e8_b195_a499466c2072.png",
+      "width": 1024,
+      "height": 506,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "44d76911_2d76_41e7_811c_269e19df0831",
+      "sourceFile": "44D76911-2D76-41E7-811C-269E19DF0831.png",
+      "path": "assets/props/misc/44d76911_2d76_41e7_811c_269e19df0831.png",
+      "width": 412,
+      "height": 1024,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "45ea097e_00e2_4358_8d66_827f13ae709d",
+      "sourceFile": "45EA097E-00E2-4358-8D66-827F13AE709D.jpeg",
+      "path": "assets/props/misc/45ea097e_00e2_4358_8d66_827f13ae709d.png",
+      "width": 1024,
+      "height": 559,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "45fadcb5_74f7_4ccf_8912_3b2d8deaea05",
+      "sourceFile": "45FADCB5-74F7-4CCF-8912-3B2D8DEAEA05.jpeg",
+      "path": "assets/backgrounds/misc/45fadcb5_74f7_4ccf_8912_3b2d8deaea05.png",
+      "width": 1170,
+      "height": 2532,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "4697f36b_7a4b_4e31_8c2f_de119ad84814",
+      "sourceFile": "4697F36B-7A4B-4E31-8C2F-DE119AD84814.jpeg",
+      "path": "assets/props/misc/4697f36b_7a4b_4e31_8c2f_de119ad84814.png",
+      "width": 1024,
+      "height": 765,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "49ab470a_5b5c_4836_9ec2_433c9a8f3501",
+      "sourceFile": "49AB470A-5B5C-4836-9EC2-433C9A8F3501.png",
+      "path": "assets/props/misc/49ab470a_5b5c_4836_9ec2_433c9a8f3501.png",
+      "width": 1024,
+      "height": 506,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "50e0aff6_59d6_4dab_b17f_af20ef353d04",
+      "sourceFile": "50E0AFF6-59D6-4DAB-B17F-AF20EF353D04.png",
+      "path": "assets/props/misc/50e0aff6_59d6_4dab_b17f_af20ef353d04.png",
+      "width": 1024,
+      "height": 559,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "50fafc92_ad5d_4e64_bd3e_89218aaaa990",
+      "sourceFile": "50FAFC92-AD5D-4E64-BD3E-89218AAAA990.jpeg",
+      "path": "assets/sprites/misc/50fafc92_ad5d_4e64_bd3e_89218aaaa990.png",
+      "width": 1024,
+      "height": 1024,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/sprites/misc",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 8,
+        "rows": 8,
+        "frames": 64
+      }
+    },
+    {
+      "key": "517b3115_4eb1_4660_876e_d602f834cfa2",
+      "sourceFile": "517B3115-4EB1-4660-876E-D602F834CFA2.jpeg",
+      "path": "assets/props/misc/517b3115_4eb1_4660_876e_d602f834cfa2.png",
+      "width": 1024,
+      "height": 765,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "525d4124_26b9_4b7e_b902_9b5fb3166241",
+      "sourceFile": "525D4124-26B9-4B7E-B902-9B5FB3166241.png",
+      "path": "assets/props/misc/525d4124_26b9_4b7e_b902_9b5fb3166241.png",
+      "width": 1024,
+      "height": 617,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "56c4bdd7_14d7_4f7e_9108_3294d7430471",
+      "sourceFile": "56C4BDD7-14D7-4F7E-9108-3294D7430471.jpeg",
+      "path": "assets/props/misc/56c4bdd7_14d7_4f7e_9108_3294d7430471.png",
+      "width": 1024,
+      "height": 572,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "586ce030_506e_455e_973f_c73f12379fd5",
+      "sourceFile": "586CE030-506E-455E-973F-C73F12379FD5.jpeg",
+      "path": "assets/backgrounds/misc/586ce030_506e_455e_973f_c73f12379fd5.png",
+      "width": 1456,
+      "height": 720,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "5dea79f0_3d6f_41be_b924_d11815949dcf",
+      "sourceFile": "5DEA79F0-3D6F-41BE-B924-D11815949DCF.png",
+      "path": "assets/props/misc/5dea79f0_3d6f_41be_b924_d11815949dcf.png",
+      "width": 1024,
+      "height": 559,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "5ed32a35_213d_4b31_ad09_22bae658c50f",
+      "sourceFile": "5ED32A35-213D-4B31-AD09-22BAE658C50F.jpeg",
+      "path": "assets/props/misc/5ed32a35_213d_4b31_ad09_22bae658c50f.png",
+      "width": 1024,
+      "height": 687,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "63d158b1_dfad_4e63_a29f_a8575696802d",
+      "sourceFile": "63D158B1-DFAD-4E63-A29F-A8575696802D.png",
+      "path": "assets/props/misc/63d158b1_dfad_4e63_a29f_a8575696802d.png",
+      "width": 1024,
+      "height": 506,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "6a52b298_8569_48d0_9ccc_87cd57de9a21",
+      "sourceFile": "6A52B298-8569-48D0-9CCC-87CD57DE9A21.jpeg",
+      "path": "assets/backgrounds/misc/6a52b298_8569_48d0_9ccc_87cd57de9a21.png",
+      "width": 1328,
+      "height": 800,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "7e5baf71_ff11_47a1_954a_9c95e18396bf",
+      "sourceFile": "7E5BAF71-FF11-47A1-954A-9C95E18396BF.png",
+      "path": "assets/backgrounds/misc/7e5baf71_ff11_47a1_954a_9c95e18396bf.png",
+      "width": 1170,
+      "height": 2532,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "812daf0d_5660_4ddd_b1c6_44189cbe3426",
+      "sourceFile": "812DAF0D-5660-4DDD-B1C6-44189CBE3426.jpeg",
+      "path": "assets/props/misc/812daf0d_5660_4ddd_b1c6_44189cbe3426.png",
+      "width": 1024,
+      "height": 617,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "86cc3651_d08d_42b5_8d94_bbf8fc997890",
+      "sourceFile": "86CC3651-D08D-42B5-8D94-BBF8FC997890.jpeg",
+      "path": "assets/props/misc/86cc3651_d08d_42b5_8d94_bbf8fc997890.png",
+      "width": 1024,
+      "height": 765,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "8950e115_e859_467c_96fa_477b252df8e4",
+      "sourceFile": "8950E115-E859-467C-96FA-477B252DF8E4.png",
+      "path": "assets/props/misc/8950e115_e859_467c_96fa_477b252df8e4.png",
+      "width": 1024,
+      "height": 506,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "8a1c311e_bce4_40bf_9949_7d3b780cdd6b",
+      "sourceFile": "8A1C311E-BCE4-40BF-9949-7D3B780CDD6B.jpeg",
+      "path": "assets/props/misc/8a1c311e_bce4_40bf_9949_7d3b780cdd6b.png",
+      "width": 1024,
+      "height": 617,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "8a396534_bc1c_4667_84a2_97d242ca72f8",
+      "sourceFile": "8A396534-BC1C-4667-84A2-97D242CA72F8.jpeg",
+      "path": "assets/props/misc/8a396534_bc1c_4667_84a2_97d242ca72f8.png",
+      "width": 1024,
+      "height": 559,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "8aafc3ca_1911_4215_b7bc_cba384b865b2",
+      "sourceFile": "8AAFC3CA-1911-4215-B7BC-CBA384B865B2.png",
+      "path": "assets/props/misc/8aafc3ca_1911_4215_b7bc_cba384b865b2.png",
+      "width": 1024,
+      "height": 506,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "8c8bd0a4_5383_4b74_8bf1_65e50d4d6a8d",
+      "sourceFile": "8C8BD0A4-5383-4B74-8BF1-65E50D4D6A8D.png",
+      "path": "assets/props/misc/8c8bd0a4_5383_4b74_8bf1_65e50d4d6a8d.png",
+      "width": 1024,
+      "height": 412,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "8eef417d_e794_4aa2_a114_9832d17a1443",
+      "sourceFile": "8EEF417D-E794-4AA2-A114-9832D17A1443.png",
+      "path": "assets/backgrounds/misc/8eef417d_e794_4aa2_a114_9832d17a1443.png",
+      "width": 1170,
+      "height": 2532,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "909487fd_439b_4971_9135_530a308dc434",
+      "sourceFile": "909487FD-439B-4971-9135-530A308DC434.jpeg",
+      "path": "assets/backgrounds/misc/909487fd_439b_4971_9135_530a308dc434.png",
+      "width": 1086,
+      "height": 1448,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "927dd441_bc38_4576_9198_21c96c198ec4",
+      "sourceFile": "927DD441-BC38-4576-9198-21C96C198EC4.jpeg",
+      "path": "assets/props/misc/927dd441_bc38_4576_9198_21c96c198ec4.png",
+      "width": 1024,
+      "height": 765,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "96d60bb5_32fa_4b84_b3d4_29e2ff1abef8",
+      "sourceFile": "96D60BB5-32FA-4B84-B3D4-29E2FF1ABEF8.jpeg",
+      "path": "assets/props/misc/96d60bb5_32fa_4b84_b3d4_29e2ff1abef8.png",
+      "width": 1024,
+      "height": 559,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "9aa9b975_3b59_4b61_9fb8_c7a56a4ac3c8",
+      "sourceFile": "9AA9B975-3B59-4B61-9FB8-C7A56A4AC3C8.png",
+      "path": "assets/props/misc/9aa9b975_3b59_4b61_9fb8_c7a56a4ac3c8.png",
+      "width": 1024,
+      "height": 285,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "9c3cc71c_d35a_45db_954f_2874af3674b4",
+      "sourceFile": "9C3CC71C-D35A-45DB-954F-2874AF3674B4.jpeg",
+      "path": "assets/props/misc/9c3cc71c_d35a_45db_954f_2874af3674b4.png",
+      "width": 1024,
+      "height": 617,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "a1dc3fdc_0003_4376_94fd_c7884dd06c24",
+      "sourceFile": "A1DC3FDC-0003-4376-94FD-C7884DD06C24.jpeg",
+      "path": "assets/props/misc/a1dc3fdc_0003_4376_94fd_c7884dd06c24.png",
+      "width": 1024,
+      "height": 559,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "a55f31c8_9f2f_456e_a925_4ad37dc5dde4",
+      "sourceFile": "A55F31C8-9F2F-456E-A925-4AD37DC5DDE4.jpeg",
+      "path": "assets/props/misc/a55f31c8_9f2f_456e_a925_4ad37dc5dde4.png",
+      "width": 1024,
+      "height": 617,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "a67cae76_6a5e_4266_bdbd_bf3a6862bc17",
+      "sourceFile": "A67CAE76-6A5E-4266-BDBD-BF3A6862BC17.jpeg",
+      "path": "assets/backgrounds/misc/a67cae76_6a5e_4266_bdbd_bf3a6862bc17.png",
+      "width": 1456,
+      "height": 720,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "a7cc0e81_4845_450d_9eaa_4dde5d745700",
+      "sourceFile": "A7CC0E81-4845-450D-9EAA-4DDE5D745700.png",
+      "path": "assets/backgrounds/misc/a7cc0e81_4845_450d_9eaa_4dde5d745700.png",
+      "width": 1170,
+      "height": 2532,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "a83a18b9_70a0_4303_8570_2b1ca61187d9",
+      "sourceFile": "A83A18B9-70A0-4303-8570-2B1CA61187D9.png",
+      "path": "assets/props/misc/a83a18b9_70a0_4303_8570_2b1ca61187d9.png",
+      "width": 1024,
+      "height": 559,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "af823d3f_bfe1_431a_bda3_edf75897eb6c",
+      "sourceFile": "AF823D3F-BFE1-431A-BDA3-EDF75897EB6C.png",
+      "path": "assets/props/misc/af823d3f_bfe1_431a_bda3_edf75897eb6c.png",
+      "width": 1024,
+      "height": 506,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "b4206fe4_f60a_4c15_9c72_167ebf9613fa",
+      "sourceFile": "B4206FE4-F60A-4C15-9C72-167EBF9613FA.png",
+      "path": "assets/props/misc/b4206fe4_f60a_4c15_9c72_167ebf9613fa.png",
+      "width": 1024,
+      "height": 617,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "b88ce2e1_b8ca_4852_9e68_ef8287c19759",
+      "sourceFile": "B88CE2E1-B8CA-4852-9E68-EF8287C19759.png",
+      "path": "assets/props/misc/b88ce2e1_b8ca_4852_9e68_ef8287c19759.png",
+      "width": 1024,
+      "height": 506,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "b8ae82d5_5303_4fdb_ae90_763fb693bf6e",
+      "sourceFile": "B8AE82D5-5303-4FDB-AE90-763FB693BF6E.png",
+      "path": "assets/props/misc/b8ae82d5_5303_4fdb_ae90_763fb693bf6e.png",
+      "width": 1024,
+      "height": 506,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "bdf62e0b_e010_441e_8dc2_6fea8cd579f4",
+      "sourceFile": "BDF62E0B-E010-441E-8DC2-6FEA8CD579F4.png",
+      "path": "assets/props/misc/bdf62e0b_e010_441e_8dc2_6fea8cd579f4.png",
+      "width": 1024,
+      "height": 285,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "c0db271d_6aec_49b9_b3e3_18e6cde0f3a5",
+      "sourceFile": "C0DB271D-6AEC-49B9-B3E3-18E6CDE0F3A5.jpeg",
+      "path": "assets/backgrounds/misc/c0db271d_6aec_49b9_b3e3_18e6cde0f3a5.png",
+      "width": 1456,
+      "height": 720,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "c189cc3d_7d3f_4597_ace0_a1399aaf4711",
+      "sourceFile": "C189CC3D-7D3F-4597-ACE0-A1399AAF4711.png",
+      "path": "assets/props/misc/c189cc3d_7d3f_4597_ace0_a1399aaf4711.png",
+      "width": 1024,
+      "height": 506,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "c2a42a16_de99_473f_88af_edd6184f82b8",
+      "sourceFile": "C2A42A16-DE99-473F-88AF-EDD6184F82B8.png",
+      "path": "assets/props/misc/c2a42a16_de99_473f_88af_edd6184f82b8.png",
+      "width": 1024,
+      "height": 506,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "c3f52226_aa88_4c54_a0b7_dd30e9b4b9af",
+      "sourceFile": "C3F52226-AA88-4C54-A0B7-DD30E9B4B9AF.jpeg",
+      "path": "assets/props/misc/c3f52226_aa88_4c54_a0b7_dd30e9b4b9af.png",
+      "width": 1024,
+      "height": 687,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "c5a40cc8_9e3b_46d9_8a5e_e9bd92c8c298",
+      "sourceFile": "C5A40CC8-9E3B-46D9-8A5E-E9BD92C8C298.png",
+      "path": "assets/props/misc/c5a40cc8_9e3b_46d9_8a5e_e9bd92c8c298.png",
+      "width": 512,
+      "height": 382,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "c91a5ae8_8d3d_47a0_9af7_dc4cfcdb0863",
+      "sourceFile": "C91A5AE8-8D3D-47A0-9AF7-DC4CFCDB0863.png",
+      "path": "assets/props/misc/c91a5ae8_8d3d_47a0_9af7_dc4cfcdb0863.png",
+      "width": 1024,
+      "height": 285,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "c9c56d1f_909a_47dd_8e17_dfd16b830f02",
+      "sourceFile": "C9C56D1F-909A-47DD-8E17-DFD16B830F02.png",
+      "path": "assets/props/misc/c9c56d1f_909a_47dd_8e17_dfd16b830f02.png",
+      "width": 1024,
+      "height": 506,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "d1110c99_9ac8_4005_9cd3_214819ac6b4c",
+      "sourceFile": "D1110C99-9AC8-4005-9CD3-214819AC6B4C.jpeg",
+      "path": "assets/props/misc/d1110c99_9ac8_4005_9cd3_214819ac6b4c.png",
+      "width": 1024,
+      "height": 506,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "dd991187_8784_48cb_8002_cd90e0245b60",
+      "sourceFile": "DD991187-8784-48CB-8002-CD90E0245B60.png",
+      "path": "assets/props/misc/dd991187_8784_48cb_8002_cd90e0245b60.png",
+      "width": 1024,
+      "height": 617,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "ddcaf26d_f856_4bff_a3a4_086175edc8c6",
+      "sourceFile": "DDCAF26D-F856-4BFF-A3A4-086175EDC8C6.png",
+      "path": "assets/props/misc/ddcaf26d_f856_4bff_a3a4_086175edc8c6.png",
+      "width": 1024,
+      "height": 285,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "e0beea01_1b00_4949_9505_2200b44e1388",
+      "sourceFile": "E0BEEA01-1B00-4949-9505-2200B44E1388.jpeg",
+      "path": "assets/props/misc/e0beea01_1b00_4949_9505_2200b44e1388.png",
+      "width": 1024,
+      "height": 559,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "e0cd0dbf_cbb4_4da3_99bc_295427bedf7c",
+      "sourceFile": "E0CD0DBF-CBB4-4DA3-99BC-295427BEDF7C.jpeg",
+      "path": "assets/props/e0cd0dbf_cbb4_4da3_99bc_295427bedf7c.png",
+      "width": 1024,
+      "height": 765,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props",
+      "phaserType": "image"
+    },
+    {
+      "key": "e29625a6_41f1_4c59_ab3c_3da9bf114b85",
+      "sourceFile": "E29625A6-41F1-4C59-AB3C-3DA9BF114B85.jpeg",
+      "path": "assets/props/misc/e29625a6_41f1_4c59_ab3c_3da9bf114b85.png",
+      "width": 1024,
+      "height": 687,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "e3d7be34_49f8_42d2_a76d_1a43da5cee5e",
+      "sourceFile": "E3D7BE34-49F8-42D2-A76D-1A43DA5CEE5E.jpeg",
+      "path": "assets/backgrounds/misc/e3d7be34_49f8_42d2_a76d_1a43da5cee5e.png",
+      "width": 1952,
+      "height": 544,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "e8d6f2c5_5c15_469d_ad0b_ebd25890ecc8",
+      "sourceFile": "E8D6F2C5-5C15-469D-AD0B-EBD25890ECC8.jpeg",
+      "path": "assets/props/misc/e8d6f2c5_5c15_469d_ad0b_ebd25890ecc8.png",
+      "width": 1024,
+      "height": 687,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "e95ace22_d3d7_4c3f_b9ae_7cde627bc437",
+      "sourceFile": "E95ACE22-D3D7-4C3F-B9AE-7CDE627BC437.png",
+      "path": "assets/props/misc/e95ace22_d3d7_4c3f_b9ae_7cde627bc437.png",
+      "width": 512,
+      "height": 286,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "ebdda459_4e7a_4e49_9091_a4b72ebc6e29",
+      "sourceFile": "EBDDA459-4E7A-4E49-9091-A4B72EBC6E29.jpeg",
+      "path": "assets/backgrounds/misc/ebdda459_4e7a_4e49_9091_a4b72ebc6e29.png",
+      "width": 1952,
+      "height": 544,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "ed10aaf5_2ee6_4ad4_a541_6a4f347e6b1c",
+      "sourceFile": "ED10AAF5-2EE6-4AD4-A541-6A4F347E6B1C.png",
+      "path": "assets/props/misc/ed10aaf5_2ee6_4ad4_a541_6a4f347e6b1c.png",
+      "width": 1024,
+      "height": 506,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "f1928cf6_46f8_486e_ae78_09780a1ef04b",
+      "sourceFile": "F1928CF6-46F8-486E-AE78-09780A1EF04B.png",
+      "path": "assets/props/misc/f1928cf6_46f8_486e_ae78_09780a1ef04b.png",
+      "width": 1024,
+      "height": 559,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "f450da8c_3800_4032_8869_758875cbfca3",
+      "sourceFile": "F450DA8C-3800-4032-8869-758875CBFCA3.jpeg",
+      "path": "assets/props/misc/f450da8c_3800_4032_8869_758875cbfca3.png",
+      "width": 1024,
+      "height": 617,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "fa54d940_2bee_40f1_a041_dcc7f96a715a",
+      "sourceFile": "FA54D940-2BEE-40F1-A041-DCC7F96A715A.jpeg",
+      "path": "assets/props/misc/fa54d940_2bee_40f1_a041_dcc7f96a715a.png",
+      "width": 1024,
+      "height": 617,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "fab4f2de_0990_4b9b_804e_6ac84cfb5c2d",
+      "sourceFile": "FAB4F2DE-0990-4B9B-804E-6AC84CFB5C2D.jpeg",
+      "path": "assets/props/misc/fab4f2de_0990_4b9b_804e_6ac84cfb5c2d.png",
+      "width": 1024,
+      "height": 559,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "ff657b3a_57d8_4e40_a323_6e2cde40450d",
+      "sourceFile": "FF657B3A-57D8-4E40-A323-6E2CDE40450D.png",
+      "path": "assets/props/misc/ff657b3a_57d8_4e40_a323_6e2cde40450d.png",
+      "width": 1024,
+      "height": 617,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "a_2d_pixel_art_sprite_sheet_displays_red_concord_w",
+      "sourceFile": "a_2d_pixel_art_sprite_sheet_displays_red_concord_w.png",
+      "path": "assets/sprites/characters/a_2d_pixel_art_sprite_sheet_displays_red_concord_w.png",
+      "width": 1024,
+      "height": 1536,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.884,
+      "category": "assets/sprites/characters",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 8,
+        "rows": 12,
+        "frames": 96
+      }
+    },
+    {
+      "key": "a_2d_sprite_sheet_in_32_bit_pixel_art_style_displa",
+      "sourceFile": "a_2d_sprite_sheet_in_32_bit_pixel_art_style_displa.png",
+      "path": "assets/sprites/misc/a_2d_sprite_sheet_in_32_bit_pixel_art_style_displa.png",
+      "width": 1536,
+      "height": 1024,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.7056,
+      "category": "assets/sprites/misc",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 12,
+        "rows": 8,
+        "frames": 96
+      }
+    },
+    {
+      "key": "a_wide_2d_pixel_art_scene_cinematic_side_scrollin",
+      "sourceFile": "a_wide_2d_pixel_art_scene_cinematic_side_scrollin.png",
+      "path": "assets/backgrounds/misc/a_wide_2d_pixel_art_scene_cinematic_side_scrollin.png",
+      "width": 1774,
+      "height": 887,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "cask_veyr_command_actions",
+      "sourceFile": "cask_veyr_command_actions.png",
+      "path": "assets/sprites/characters/cask_veyr_command_actions.png",
+      "width": 1024,
+      "height": 512,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.7823,
+      "category": "assets/sprites/characters",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frames": 32
+      }
+    },
+    {
+      "key": "cask_veyr_exorig_melee",
+      "sourceFile": "cask_veyr_exorig_melee.png",
+      "path": "assets/sprites/characters/cask_veyr_exorig_melee.png",
+      "width": 1024,
+      "height": 512,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.6525,
+      "category": "assets/sprites/characters",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frames": 32
+      }
+    },
+    {
+      "key": "cask_veyr_reactions",
+      "sourceFile": "cask_veyr_reactions.png",
+      "path": "assets/sprites/characters/cask_veyr_reactions.png",
+      "width": 1024,
+      "height": 512,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.697,
+      "category": "assets/sprites/characters",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frames": 32
+      }
+    },
+    {
+      "key": "character_sprite_sheet_with_idle_walk_and_kneel",
+      "sourceFile": "character_sprite_sheet_with_idle_walk_and_kneel.png",
+      "path": "assets/sprites/characters/character_sprite_sheet_with_idle_walk_and_kneel.png",
+      "width": 1774,
+      "height": 887,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/sprites/characters",
+      "phaserType": "image"
+    },
+    {
+      "key": "cyberpunk_control_room_furniture_set",
+      "sourceFile": "cyberpunk_control_room_furniture_set.png",
+      "path": "assets/backgrounds/interiors/cyberpunk_control_room_furniture_set.png",
+      "width": 1448,
+      "height": 1086,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/interiors",
+      "phaserType": "image"
+    },
+    {
+      "key": "deserted_frontier_town_in_decay",
+      "sourceFile": "deserted_frontier_town_in_decay.png",
+      "path": "assets/backgrounds/deserted_frontier_town_in_decay.png",
+      "width": 1672,
+      "height": 941,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds",
+      "phaserType": "image"
+    },
+    {
+      "key": "dog_character_walking_sprite_sheet",
+      "sourceFile": "dog_character_walking_sprite_sheet.png",
+      "path": "assets/sprites/characters/dog_character_walking_sprite_sheet.png",
+      "width": 1697,
+      "height": 927,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/sprites/characters",
+      "phaserType": "image"
+    },
+    {
+      "key": "dust9_bartender",
+      "sourceFile": "dust9_bartender.png",
+      "path": "assets/backgrounds/dust9_bartender.png",
+      "width": 1536,
+      "height": 768,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.8063,
+      "category": "assets/backgrounds",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 12,
+        "rows": 6,
+        "frames": 72
+      }
+    },
+    {
+      "key": "dust9_basement_prison_props",
+      "sourceFile": "dust9_basement_prison_props.png",
+      "path": "assets/backgrounds/dust9_basement_prison_props.png",
+      "width": 768,
+      "height": 384,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.9251,
+      "category": "assets/backgrounds",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 6,
+        "rows": 3,
+        "frames": 18
+      }
+    },
+    {
+      "key": "dust9_checkpoint_props",
+      "sourceFile": "dust9_checkpoint_props.png",
+      "path": "assets/backgrounds/dust9_checkpoint_props.png",
+      "width": 768,
+      "height": 384,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.7209,
+      "category": "assets/backgrounds",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 6,
+        "rows": 3,
+        "frames": 18
+      }
+    },
+    {
+      "key": "dust9_clinic_staff_female",
+      "sourceFile": "dust9_clinic_staff_female.png",
+      "path": "assets/backgrounds/interiors/dust9_clinic_staff_female.png",
+      "width": 1280,
+      "height": 768,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.9387,
+      "category": "assets/backgrounds/interiors",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 10,
+        "rows": 6,
+        "frames": 60
+      }
+    },
+    {
+      "key": "dust9_control_room_props",
+      "sourceFile": "dust9_control_room_props.png",
+      "path": "assets/props/interiors/dust9_control_room_props.png",
+      "width": 768,
+      "height": 384,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.4647,
+      "category": "assets/props/interiors",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 6,
+        "rows": 3,
+        "frames": 18
+      }
+    },
+    {
+      "key": "dust9_deputy_01",
+      "sourceFile": "dust9_deputy_01.png",
+      "path": "assets/sprites/characters/dust9_deputy_01.png",
+      "width": 1280,
+      "height": 768,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.886,
+      "category": "assets/sprites/characters",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 10,
+        "rows": 6,
+        "frames": 60
+      }
+    },
+    {
+      "key": "dust9_dock_worker",
+      "sourceFile": "dust9_dock_worker.png",
+      "path": "assets/sprites/characters/dust9_dock_worker.png",
+      "width": 1280,
+      "height": 768,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.864,
+      "category": "assets/sprites/characters",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 10,
+        "rows": 6,
+        "frames": 60
+      }
+    },
+    {
+      "key": "dust9_doctor_female",
+      "sourceFile": "dust9_doctor_female.png",
+      "path": "assets/backgrounds/dust9_doctor_female.png",
+      "width": 1280,
+      "height": 768,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.9387,
+      "category": "assets/backgrounds",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 10,
+        "rows": 6,
+        "frames": 60
+      }
+    },
+    {
+      "key": "dust9_doctor_named_female",
+      "sourceFile": "dust9_doctor_named_female.png",
+      "path": "assets/backgrounds/dust9_doctor_named_female.png",
+      "width": 1280,
+      "height": 768,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.9468,
+      "category": "assets/backgrounds",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 10,
+        "rows": 6,
+        "frames": 60
+      }
+    },
+    {
+      "key": "dust9_escape_shuttle_landed",
+      "sourceFile": "dust9_escape_shuttle_landed.png",
+      "path": "assets/sprites/vehicles/dust9_escape_shuttle_landed.png",
+      "width": 512,
+      "height": 512,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.5869,
+      "category": "assets/sprites/vehicles",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 4,
+        "rows": 4,
+        "frames": 16
+      }
+    },
+    {
+      "key": "dust9_high_command_tower_props",
+      "sourceFile": "dust9_high_command_tower_props.png",
+      "path": "assets/backgrounds/dust9_high_command_tower_props.png",
+      "width": 768,
+      "height": 384,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.6193,
+      "category": "assets/backgrounds",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 6,
+        "rows": 3,
+        "frames": 18
+      }
+    },
+    {
+      "key": "dust9_industrial_utility_props_40",
+      "sourceFile": "dust9_industrial_utility_props_40.png",
+      "path": "assets/backgrounds/dust9_industrial_utility_props_40.png",
+      "width": 1024,
+      "height": 640,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.854,
+      "category": "assets/backgrounds",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 8,
+        "rows": 5,
+        "frames": 40
+      }
+    },
+    {
+      "key": "dust9_loading_pad_props",
+      "sourceFile": "dust9_loading_pad_props.png",
+      "path": "assets/backgrounds/dust9_loading_pad_props.png",
+      "width": 768,
+      "height": 384,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.74,
+      "category": "assets/backgrounds",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 6,
+        "rows": 3,
+        "frames": 18
+      }
+    },
+    {
+      "key": "dust9_mechanic",
+      "sourceFile": "dust9_mechanic.png",
+      "path": "assets/backgrounds/dust9_mechanic.png",
+      "width": 1280,
+      "height": 768,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.9273,
+      "category": "assets/backgrounds",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 10,
+        "rows": 6,
+        "frames": 60
+      }
+    },
+    {
+      "key": "dust9_mining_yard_props",
+      "sourceFile": "dust9_mining_yard_props.png",
+      "path": "assets/backgrounds/dust9_mining_yard_props.png",
+      "width": 768,
+      "height": 384,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.713,
+      "category": "assets/backgrounds",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 6,
+        "rows": 3,
+        "frames": 18
+      }
+    },
+    {
+      "key": "dust9_saloon_large_interior",
+      "sourceFile": "dust9_saloon_large_interior.png",
+      "path": "assets/backgrounds/interiors/dust9_saloon_large_interior.png",
+      "width": 1920,
+      "height": 1080,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/interiors",
+      "phaserType": "image"
+    },
+    {
+      "key": "dust9_saloon_server_female",
+      "sourceFile": "dust9_saloon_server_female.png",
+      "path": "assets/backgrounds/interiors/dust9_saloon_server_female.png",
+      "width": 1280,
+      "height": 768,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.8873,
+      "category": "assets/backgrounds/interiors",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 10,
+        "rows": 6,
+        "frames": 60
+      }
+    },
+    {
+      "key": "dust9_secret_contact_female",
+      "sourceFile": "dust9_secret_contact_female.png",
+      "path": "assets/backgrounds/dust9_secret_contact_female.png",
+      "width": 1280,
+      "height": 768,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.887,
+      "category": "assets/backgrounds",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 10,
+        "rows": 6,
+        "frames": 60
+      }
+    },
+    {
+      "key": "dust9_sheriff_jail_officer_female",
+      "sourceFile": "dust9_sheriff_jail_officer_female.png",
+      "path": "assets/sprites/characters/dust9_sheriff_jail_officer_female.png",
+      "width": 1280,
+      "height": 768,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.8989,
+      "category": "assets/sprites/characters",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 10,
+        "rows": 6,
+        "frames": 60
+      }
+    },
+    {
+      "key": "dust9_shopkeeper",
+      "sourceFile": "dust9_shopkeeper.png",
+      "path": "assets/backgrounds/interiors/dust9_shopkeeper.png",
+      "width": 1536,
+      "height": 768,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.8249,
+      "category": "assets/backgrounds/interiors",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 12,
+        "rows": 6,
+        "frames": 72
+      }
+    },
+    {
+      "key": "dust9_support_block_props",
+      "sourceFile": "dust9_support_block_props.png",
+      "path": "assets/backgrounds/dust9_support_block_props.png",
+      "width": 768,
+      "height": 384,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.6436,
+      "category": "assets/backgrounds",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 6,
+        "rows": 3,
+        "frames": 18
+      }
+    },
+    {
+      "key": "dust9_town_building_shells_a",
+      "sourceFile": "dust9_town_building_shells_A.png",
+      "path": "assets/backgrounds/dust9_town_building_shells_a.png",
+      "width": 2048,
+      "height": 1536,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.9542,
+      "category": "assets/backgrounds",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 16,
+        "rows": 12,
+        "frames": 192
+      }
+    },
+    {
+      "key": "dust9_town_building_shells_b",
+      "sourceFile": "dust9_town_building_shells_B.png",
+      "path": "assets/backgrounds/dust9_town_building_shells_b.png",
+      "width": 2048,
+      "height": 1536,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.9686,
+      "category": "assets/backgrounds",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 16,
+        "rows": 12,
+        "frames": 192
+      }
+    },
+    {
+      "key": "dust9_town_clinic_med_props",
+      "sourceFile": "dust9_town_clinic_med_props.png",
+      "path": "assets/props/interiors/dust9_town_clinic_med_props.png",
+      "width": 768,
+      "height": 512,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.8034,
+      "category": "assets/props/interiors",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 6,
+        "rows": 4,
+        "frames": 24
+      }
+    },
+    {
+      "key": "dust9_town_empty_road_canvas_3072",
+      "sourceFile": "dust9_town_empty_road_canvas_3072.png",
+      "path": "assets/backgrounds/dust9_town_empty_road_canvas_3072.png",
+      "width": 3072,
+      "height": 1728,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 192,
+        "frameHeight": 288,
+        "columns": 16,
+        "rows": 6,
+        "frames": 96
+      }
+    },
+    {
+      "key": "dust9_town_empty_road_canvas_4096",
+      "sourceFile": "dust9_town_empty_road_canvas_4096.png",
+      "path": "assets/backgrounds/dust9_town_empty_road_canvas_4096.png",
+      "width": 4096,
+      "height": 2304,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 256,
+        "frameHeight": 256,
+        "columns": 16,
+        "rows": 9,
+        "frames": 144
+      }
+    },
+    {
+      "key": "dust9_town_food_drinks_credits_chems",
+      "sourceFile": "dust9_town_food_drinks_credits_chems.png",
+      "path": "assets/backgrounds/dust9_town_food_drinks_credits_chems.png",
+      "width": 1024,
+      "height": 768,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.8054,
+      "category": "assets/backgrounds",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 8,
+        "rows": 6,
+        "frames": 48
+      }
+    },
+    {
+      "key": "dust9_town_inmate_01",
+      "sourceFile": "dust9_town_inmate_01.png",
+      "path": "assets/sprites/characters/dust9_town_inmate_01.png",
+      "width": 1280,
+      "height": 768,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.8951,
+      "category": "assets/sprites/characters",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 10,
+        "rows": 6,
+        "frames": 60
+      }
+    },
+    {
+      "key": "dust9_town_interaction_icons",
+      "sourceFile": "dust9_town_interaction_icons.png",
+      "path": "assets/backgrounds/dust9_town_interaction_icons.png",
+      "width": 512,
+      "height": 256,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.5532,
+      "category": "assets/backgrounds",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 4,
+        "rows": 2,
+        "frames": 8
+      }
+    },
+    {
+      "key": "dust9_town_jail_security_props",
+      "sourceFile": "dust9_town_jail_security_props.png",
+      "path": "assets/props/interiors/dust9_town_jail_security_props.png",
+      "width": 768,
+      "height": 512,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.7074,
+      "category": "assets/props/interiors",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 6,
+        "rows": 4,
+        "frames": 24
+      }
+    },
+    {
+      "key": "dust9_town_mechanic_scrap_props",
+      "sourceFile": "dust9_town_mechanic_scrap_props.png",
+      "path": "assets/backgrounds/dust9_town_mechanic_scrap_props.png",
+      "width": 768,
+      "height": 512,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.5896,
+      "category": "assets/backgrounds",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 6,
+        "rows": 4,
+        "frames": 24
+      }
+    },
+    {
+      "key": "dust9_town_multiroom_interiors",
+      "sourceFile": "dust9_town_multiroom_interiors.png",
+      "path": "assets/backgrounds/interiors/dust9_town_multiroom_interiors.png",
+      "width": 3072,
+      "height": 2304,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.586,
+      "category": "assets/backgrounds/interiors",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 192,
+        "frameHeight": 288,
+        "columns": 16,
+        "rows": 8,
+        "frames": 128
+      }
+    },
+    {
+      "key": "dust9_town_outdoor_home_props",
+      "sourceFile": "dust9_town_outdoor_home_props.png",
+      "path": "assets/props/interiors/dust9_town_outdoor_home_props.png",
+      "width": 640,
+      "height": 768,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.6511,
+      "category": "assets/props/interiors",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 5,
+        "rows": 6,
+        "frames": 30
+      }
+    },
+    {
+      "key": "dust9_town_saloon_cantina_props",
+      "sourceFile": "dust9_town_saloon_cantina_props.png",
+      "path": "assets/props/interiors/dust9_town_saloon_cantina_props.png",
+      "width": 768,
+      "height": 512,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.6825,
+      "category": "assets/props/interiors",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 6,
+        "rows": 4,
+        "frames": 24
+      }
+    },
+    {
+      "key": "dust9_town_shop_market_props",
+      "sourceFile": "dust9_town_shop_market_props.png",
+      "path": "assets/props/interiors/dust9_town_shop_market_props.png",
+      "width": 768,
+      "height": 512,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.5405,
+      "category": "assets/props/interiors",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 6,
+        "rows": 4,
+        "frames": 24
+      }
+    },
+    {
+      "key": "dust9_townsfolk_common_01",
+      "sourceFile": "dust9_townsfolk_common_01.png",
+      "path": "assets/backgrounds/dust9_townsfolk_common_01.png",
+      "width": 1280,
+      "height": 768,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.5035,
+      "category": "assets/backgrounds",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 10,
+        "rows": 6,
+        "frames": 60
+      }
+    },
+    {
+      "key": "dust9_townsfolk_common_02",
+      "sourceFile": "dust9_townsfolk_common_02.png",
+      "path": "assets/backgrounds/dust9_townsfolk_common_02.png",
+      "width": 1280,
+      "height": 768,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.8115,
+      "category": "assets/backgrounds",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 10,
+        "rows": 6,
+        "frames": 60
+      }
+    },
+    {
+      "key": "dust9_townsfolk_common_03",
+      "sourceFile": "dust9_townsfolk_common_03.png",
+      "path": "assets/backgrounds/dust9_townsfolk_common_03.png",
+      "width": 1280,
+      "height": 768,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.8918,
+      "category": "assets/backgrounds",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 10,
+        "rows": 6,
+        "frames": 60
+      }
+    },
+    {
+      "key": "futuristic_command_bridge_in_deep_space",
+      "sourceFile": "futuristic_command_bridge_in_deep_space.png",
+      "path": "assets/backgrounds/misc/futuristic_command_bridge_in_deep_space.png",
+      "width": 1672,
+      "height": 941,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "futuristic_soldier_sprite_sheet_sequence",
+      "sourceFile": "futuristic_soldier_sprite_sheet_sequence.png",
+      "path": "assets/backgrounds/misc/futuristic_soldier_sprite_sheet_sequence.png",
+      "width": 1774,
+      "height": 887,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "futuristic_transport_craft_in_pixel_art",
+      "sourceFile": "futuristic_transport_craft_in_pixel_art.png",
+      "path": "assets/backgrounds/misc/futuristic_transport_craft_in_pixel_art.png",
+      "width": 1254,
+      "height": 1254,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "headless_humanoid_walking_animation_sprite_sheet",
+      "sourceFile": "headless_humanoid_walking_animation_sprite_sheet.png",
+      "path": "assets/backgrounds/misc/headless_humanoid_walking_animation_sprite_sheet.png",
+      "width": 1774,
+      "height": 887,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "hut_homes_junkyard_gate",
+      "sourceFile": "hut_homes_junkyard_gate.jpeg",
+      "path": "assets/props/interiors/hut_homes_junkyard_gate.png",
+      "width": 960,
+      "height": 540,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/props/interiors",
+      "phaserType": "image"
+    },
+    {
+      "key": "pixel_art_character_head_sprite_sheet",
+      "sourceFile": "pixel_art_character_head_sprite_sheet.png",
+      "path": "assets/sprites/characters/pixel_art_character_head_sprite_sheet.png",
+      "width": 1774,
+      "height": 887,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/sprites/characters",
+      "phaserType": "image"
+    },
+    {
+      "key": "pixel_art_dog_sprite_sheet",
+      "sourceFile": "pixel_art_dog_sprite_sheet.png",
+      "path": "assets/backgrounds/misc/pixel_art_dog_sprite_sheet.png",
+      "width": 1774,
+      "height": 887,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "pixel_art_furniture_and_household_items_sheet",
+      "sourceFile": "pixel_art_furniture_and_household_items_sheet.png",
+      "path": "assets/backgrounds/misc/pixel_art_furniture_and_household_items_sheet.png",
+      "width": 1531,
+      "height": 1027,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "pixel_art_futuristic_weapon_sprite_sheet",
+      "sourceFile": "pixel_art_futuristic_weapon_sprite_sheet.png",
+      "path": "assets/sprites/weapons/pixel_art_futuristic_weapon_sprite_sheet.png",
+      "width": 1586,
+      "height": 992,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/sprites/weapons",
+      "phaserType": "image"
+    },
+    {
+      "key": "pixel_art_sci_fi_control_room_assets",
+      "sourceFile": "pixel_art_sci_fi_control_room_assets.png",
+      "path": "assets/backgrounds/interiors/pixel_art_sci_fi_control_room_assets.png",
+      "width": 1448,
+      "height": 1086,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/interiors",
+      "phaserType": "image"
+    },
+    {
+      "key": "pixel_art_sci_fi_weaponry_sprite_sheet",
+      "sourceFile": "pixel_art_sci_fi_weaponry_sprite_sheet.png",
+      "path": "assets/sprites/weapons/pixel_art_sci_fi_weaponry_sprite_sheet.png",
+      "width": 1254,
+      "height": 1254,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/sprites/weapons",
+      "phaserType": "image"
+    },
+    {
+      "key": "pixel_art_sprite_sheet_of_character_movement",
+      "sourceFile": "pixel_art_sprite_sheet_of_character_movement.png",
+      "path": "assets/sprites/characters/pixel_art_sprite_sheet_of_character_movement.png",
+      "width": 1774,
+      "height": 887,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/sprites/characters",
+      "phaserType": "image"
+    },
+    {
+      "key": "pixel_art_sprite_sheet_of_walking_woman",
+      "sourceFile": "pixel_art_sprite_sheet_of_walking_woman.png",
+      "path": "assets/backgrounds/misc/pixel_art_sprite_sheet_of_walking_woman.png",
+      "width": 1774,
+      "height": 887,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "pixel_art_sprite_sheet_of_young_woman",
+      "sourceFile": "pixel_art_sprite_sheet_of_young_woman.png",
+      "path": "assets/backgrounds/misc/pixel_art_sprite_sheet_of_young_woman.png",
+      "width": 1774,
+      "height": 887,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "pixel_art_weapon_icons_grid",
+      "sourceFile": "pixel_art_weapon_icons_grid.png",
+      "path": "assets/sprites/weapons/pixel_art_weapon_icons_grid.png",
+      "width": 1983,
+      "height": 793,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/sprites/weapons",
+      "phaserType": "image"
+    },
+    {
+      "key": "pixel_art_weapons_sprite_sheet",
+      "sourceFile": "pixel_art_weapons_sprite_sheet.png",
+      "path": "assets/sprites/weapons/pixel_art_weapons_sprite_sheet.png",
+      "width": 795,
+      "height": 1977,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/sprites/weapons",
+      "phaserType": "image"
+    },
+    {
+      "key": "pixelated_walking_sprite_sheet_character",
+      "sourceFile": "pixelated_walking_sprite_sheet_character.png",
+      "path": "assets/sprites/characters/pixelated_walking_sprite_sheet_character.png",
+      "width": 1774,
+      "height": 887,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/sprites/characters",
+      "phaserType": "image"
+    },
+    {
+      "key": "raven_reactor_orb_pulse_8f_256",
+      "sourceFile": "raven_reactor_orb_pulse_8f_256.png",
+      "path": "assets/sprites/misc/raven_reactor_orb_pulse_8f_256.png",
+      "width": 2048,
+      "height": 256,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.9095,
+      "category": "assets/sprites/misc",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 16,
+        "rows": 2,
+        "frames": 32
+      }
+    },
+    {
+      "key": "red_concord_mech_arms_empty",
+      "sourceFile": "red_concord_mech_arms_empty.png",
+      "path": "assets/sprites/characters/red_concord_mech_arms_empty.png",
+      "width": 1024,
+      "height": 512,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.7204,
+      "category": "assets/sprites/characters",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frames": 32
+      }
+    },
+    {
+      "key": "red_concord_mech_damage_parts",
+      "sourceFile": "red_concord_mech_damage_parts.png",
+      "path": "assets/sprites/characters/red_concord_mech_damage_parts.png",
+      "width": 768,
+      "height": 384,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.7344,
+      "category": "assets/sprites/characters",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 6,
+        "rows": 3,
+        "frames": 18
+      }
+    },
+    {
+      "key": "red_concord_mech_legs_walk",
+      "sourceFile": "red_concord_mech_legs_walk.png",
+      "path": "assets/sprites/characters/red_concord_mech_legs_walk.png",
+      "width": 1024,
+      "height": 512,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.5512,
+      "category": "assets/sprites/characters",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frames": 32
+      }
+    },
+    {
+      "key": "red_concord_mech_weapon_mounts",
+      "sourceFile": "red_concord_mech_weapon_mounts.png",
+      "path": "assets/sprites/characters/red_concord_mech_weapon_mounts.png",
+      "width": 768,
+      "height": 256,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.8764,
+      "category": "assets/sprites/characters",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 6,
+        "rows": 2,
+        "frames": 12
+      }
+    },
+    {
+      "key": "red_concord_weapon_fx",
+      "sourceFile": "red_concord_weapon_fx.png",
+      "path": "assets/sprites/characters/red_concord_weapon_fx.png",
+      "width": 1024,
+      "height": 512,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.8159,
+      "category": "assets/sprites/characters",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frames": 32
+      }
+    },
+    {
+      "key": "red_concord_weapon_pickups",
+      "sourceFile": "red_concord_weapon_pickups.png",
+      "path": "assets/sprites/characters/red_concord_weapon_pickups.png",
+      "width": 640,
+      "height": 256,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.7625,
+      "category": "assets/sprites/characters",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 5,
+        "rows": 2,
+        "frames": 10
+      }
+    },
+    {
+      "key": "sci_fi_soldier_action_sprite_sheet",
+      "sourceFile": "sci_fi_soldier_action_sprite_sheet.png",
+      "path": "assets/backgrounds/misc/sci_fi_soldier_action_sprite_sheet.png",
+      "width": 1774,
+      "height": 887,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "sci_fi_weapons_and_gear_pixel_collection",
+      "sourceFile": "sci_fi_weapons_and_gear_pixel_collection.png",
+      "path": "assets/sprites/weapons/sci_fi_weapons_and_gear_pixel_collection.png",
+      "width": 1254,
+      "height": 1254,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/sprites/weapons",
+      "phaserType": "image"
+    },
+    {
+      "key": "sprite_sheet_of_a_game_character",
+      "sourceFile": "sprite_sheet_of_a_game_character.png",
+      "path": "assets/sprites/characters/sprite_sheet_of_a_game_character.png",
+      "width": 1774,
+      "height": 887,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/sprites/characters",
+      "phaserType": "image"
+    },
+    {
+      "key": "sprite_sheet_of_bald_male_heads",
+      "sourceFile": "sprite_sheet_of_bald_male_heads.png",
+      "path": "assets/backgrounds/misc/sprite_sheet_of_bald_male_heads.png",
+      "width": 1254,
+      "height": 1254,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "sprite_sheet_of_retro_character_portraits",
+      "sourceFile": "sprite_sheet_of_retro_character_portraits.png",
+      "path": "assets/sprites/characters/sprite_sheet_of_retro_character_portraits.png",
+      "width": 1774,
+      "height": 887,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/sprites/characters",
+      "phaserType": "image"
+    },
+    {
+      "key": "walking_animation_reference_sprite_sheet",
+      "sourceFile": "walking_animation_reference_sprite_sheet.png",
+      "path": "assets/backgrounds/misc/walking_animation_reference_sprite_sheet.png",
+      "width": 1774,
+      "height": 887,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/backgrounds/misc",
+      "phaserType": "image"
+    },
+    {
+      "key": "weapon_sprite_sheet_in_pixel_art",
+      "sourceFile": "weapon_sprite_sheet_in_pixel_art.png",
+      "path": "assets/sprites/weapons/weapon_sprite_sheet_in_pixel_art.png",
+      "width": 887,
+      "height": 1774,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.0,
+      "category": "assets/sprites/weapons",
+      "phaserType": "image"
+    },
+    {
+      "key": "workcamp_guard_empty_pistol_phaser",
+      "sourceFile": "workcamp_guard_empty_pistol_phaser.png",
+      "path": "assets/sprites/characters/workcamp_guard_empty_pistol_phaser.png",
+      "width": 1024,
+      "height": 512,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.7548,
+      "category": "assets/sprites/characters",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frames": 32
+      }
+    },
+    {
+      "key": "workcamp_guard_empty_rifle_phaser",
+      "sourceFile": "workcamp_guard_empty_rifle_phaser.png",
+      "path": "assets/sprites/characters/workcamp_guard_empty_rifle_phaser.png",
+      "width": 1024,
+      "height": 512,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.7316,
+      "category": "assets/sprites/characters",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frames": 32
+      }
+    },
+    {
+      "key": "workcamp_guard_movement_phaser",
+      "sourceFile": "workcamp_guard_movement_phaser.png",
+      "path": "assets/sprites/characters/workcamp_guard_movement_phaser.png",
+      "width": 1024,
+      "height": 512,
+      "hasAlpha": true,
+      "transparentPixelRatio": 0.8074,
+      "category": "assets/sprites/characters",
+      "phaserType": "spritesheet",
+      "frame": {
+        "frameWidth": 128,
+        "frameHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frames": 32
+      }
+    }
+  ],
+  "references": [
+    {
+      "source": "cask_veyr_command_actions.json",
+      "path": "assets/data/raw_until_raven_references/cask_veyr_command_actions.json"
+    },
+    {
+      "source": "cask_veyr_exorig_melee.json",
+      "path": "assets/data/raw_until_raven_references/cask_veyr_exorig_melee.json"
+    },
+    {
+      "source": "cask_veyr_reactions.json",
+      "path": "assets/data/raw_until_raven_references/cask_veyr_reactions.json"
+    },
+    {
+      "source": "dust9_assets_manifest.json",
+      "path": "assets/data/raw_until_raven_references/dust9_assets_manifest.json"
+    },
+    {
+      "source": "dust9_bartender.json",
+      "path": "assets/data/raw_until_raven_references/dust9_bartender.json"
+    },
+    {
+      "source": "dust9_basement_prison_props.json",
+      "path": "assets/data/raw_until_raven_references/dust9_basement_prison_props.json"
+    },
+    {
+      "source": "dust9_checkpoint_props.json",
+      "path": "assets/data/raw_until_raven_references/dust9_checkpoint_props.json"
+    },
+    {
+      "source": "dust9_clinic_staff_female.json",
+      "path": "assets/data/raw_until_raven_references/dust9_clinic_staff_female.json"
+    },
+    {
+      "source": "dust9_control_room_props.json",
+      "path": "assets/data/raw_until_raven_references/dust9_control_room_props.json"
+    },
+    {
+      "source": "dust9_deputy_01.json",
+      "path": "assets/data/raw_until_raven_references/dust9_deputy_01.json"
+    },
+    {
+      "source": "dust9_dock_worker.json",
+      "path": "assets/data/raw_until_raven_references/dust9_dock_worker.json"
+    },
+    {
+      "source": "dust9_doctor_female.json",
+      "path": "assets/data/raw_until_raven_references/dust9_doctor_female.json"
+    },
+    {
+      "source": "dust9_doctor_named_female.json",
+      "path": "assets/data/raw_until_raven_references/dust9_doctor_named_female.json"
+    },
+    {
+      "source": "dust9_enemy_spawns.json",
+      "path": "assets/data/raw_until_raven_references/dust9_enemy_spawns.json"
+    },
+    {
+      "source": "dust9_escape_shuttle_landed.json",
+      "path": "assets/data/raw_until_raven_references/dust9_escape_shuttle_landed.json"
+    },
+    {
+      "source": "dust9_high_command_tower_props.json",
+      "path": "assets/data/raw_until_raven_references/dust9_high_command_tower_props.json"
+    },
+    {
+      "source": "dust9_industrial_utility_props_40.json",
+      "path": "assets/data/raw_until_raven_references/dust9_industrial_utility_props_40.json"
+    },
+    {
+      "source": "dust9_loading_pad_props.json",
+      "path": "assets/data/raw_until_raven_references/dust9_loading_pad_props.json"
+    },
+    {
+      "source": "dust9_master_manifest.json",
+      "path": "assets/data/raw_until_raven_references/dust9_master_manifest.json"
+    },
+    {
+      "source": "dust9_mechanic.json",
+      "path": "assets/data/raw_until_raven_references/dust9_mechanic.json"
+    },
+    {
+      "source": "dust9_mining_yard_props.json",
+      "path": "assets/data/raw_until_raven_references/dust9_mining_yard_props.json"
+    },
+    {
+      "source": "dust9_objectives.json",
+      "path": "assets/data/raw_until_raven_references/dust9_objectives.json"
+    },
+    {
+      "source": "dust9_prop_placements.json",
+      "path": "assets/data/raw_until_raven_references/dust9_prop_placements.json"
+    },
+    {
+      "source": "dust9_rooms.json",
+      "path": "assets/data/raw_until_raven_references/dust9_rooms.json"
+    },
+    {
+      "source": "dust9_saloon_large_interior.json",
+      "path": "assets/data/raw_until_raven_references/dust9_saloon_large_interior.json"
+    },
+    {
+      "source": "dust9_saloon_server_female.json",
+      "path": "assets/data/raw_until_raven_references/dust9_saloon_server_female.json"
+    },
+    {
+      "source": "dust9_secret_contact_female.json",
+      "path": "assets/data/raw_until_raven_references/dust9_secret_contact_female.json"
+    },
+    {
+      "source": "dust9_sheriff_jail_officer_female.json",
+      "path": "assets/data/raw_until_raven_references/dust9_sheriff_jail_officer_female.json"
+    },
+    {
+      "source": "dust9_shopkeeper.json",
+      "path": "assets/data/raw_until_raven_references/dust9_shopkeeper.json"
+    },
+    {
+      "source": "dust9_space_repackage_manifest.json",
+      "path": "assets/data/raw_until_raven_references/dust9_space_repackage_manifest.json"
+    },
+    {
+      "source": "dust9_support_block_props.json",
+      "path": "assets/data/raw_until_raven_references/dust9_support_block_props.json"
+    },
+    {
+      "source": "dust9_town_building_placements.json",
+      "path": "assets/data/raw_until_raven_references/dust9_town_building_placements.json"
+    },
+    {
+      "source": "dust9_town_building_shells_A.json",
+      "path": "assets/data/raw_until_raven_references/dust9_town_building_shells_a.json"
+    },
+    {
+      "source": "dust9_town_building_shells_B.json",
+      "path": "assets/data/raw_until_raven_references/dust9_town_building_shells_b.json"
+    },
+    {
+      "source": "dust9_town_clinic_med_props.json",
+      "path": "assets/data/raw_until_raven_references/dust9_town_clinic_med_props.json"
+    },
+    {
+      "source": "dust9_town_dialogue_starters.json",
+      "path": "assets/data/raw_until_raven_references/dust9_town_dialogue_starters.json"
+    },
+    {
+      "source": "dust9_town_door_triggers.json",
+      "path": "assets/data/raw_until_raven_references/dust9_town_door_triggers.json"
+    },
+    {
+      "source": "dust9_town_empty_road_canvas.json",
+      "path": "assets/data/raw_until_raven_references/dust9_town_empty_road_canvas.json"
+    },
+    {
+      "source": "dust9_town_food_drinks_credits_chems.json",
+      "path": "assets/data/raw_until_raven_references/dust9_town_food_drinks_credits_chems.json"
+    },
+    {
+      "source": "dust9_town_inmate_01.json",
+      "path": "assets/data/raw_until_raven_references/dust9_town_inmate_01.json"
+    },
+    {
+      "source": "dust9_town_interaction_icons.json",
+      "path": "assets/data/raw_until_raven_references/dust9_town_interaction_icons.json"
+    },
+    {
+      "source": "dust9_town_interior_links.json",
+      "path": "assets/data/raw_until_raven_references/dust9_town_interior_links.json"
+    },
+    {
+      "source": "dust9_town_jail_security_props.json",
+      "path": "assets/data/raw_until_raven_references/dust9_town_jail_security_props.json"
+    },
+    {
+      "source": "dust9_town_mechanic_scrap_props.json",
+      "path": "assets/data/raw_until_raven_references/dust9_town_mechanic_scrap_props.json"
+    },
+    {
+      "source": "dust9_town_multiroom_interiors.json",
+      "path": "assets/data/raw_until_raven_references/dust9_town_multiroom_interiors.json"
+    },
+    {
+      "source": "dust9_town_npc_spawns.json",
+      "path": "assets/data/raw_until_raven_references/dust9_town_npc_spawns.json"
+    },
+    {
+      "source": "dust9_town_outdoor_home_props.json",
+      "path": "assets/data/raw_until_raven_references/dust9_town_outdoor_home_props.json"
+    },
+    {
+      "source": "dust9_town_saloon_cantina_props.json",
+      "path": "assets/data/raw_until_raven_references/dust9_town_saloon_cantina_props.json"
+    },
+    {
+      "source": "dust9_town_shop_inventory.json",
+      "path": "assets/data/raw_until_raven_references/dust9_town_shop_inventory.json"
+    },
+    {
+      "source": "dust9_town_shop_market_props.json",
+      "path": "assets/data/raw_until_raven_references/dust9_town_shop_market_props.json"
+    },
+    {
+      "source": "dust9_townsfolk_common_01.json",
+      "path": "assets/data/raw_until_raven_references/dust9_townsfolk_common_01.json"
+    },
+    {
+      "source": "dust9_townsfolk_common_02.json",
+      "path": "assets/data/raw_until_raven_references/dust9_townsfolk_common_02.json"
+    },
+    {
+      "source": "dust9_townsfolk_common_03.json",
+      "path": "assets/data/raw_until_raven_references/dust9_townsfolk_common_03.json"
+    },
+    {
+      "source": "dust9_wired_index.html",
+      "path": "assets/data/raw_until_raven_references/dust9_wired_index.html"
+    },
+    {
+      "source": "dust9_world_routes.json",
+      "path": "assets/data/raw_until_raven_references/dust9_world_routes.json"
+    },
+    {
+      "source": "dust9_world_update_index.html",
+      "path": "assets/data/raw_until_raven_references/dust9_world_update_index.html"
+    },
+    {
+      "source": "dust9_world_update_manifest.json",
+      "path": "assets/data/raw_until_raven_references/dust9_world_update_manifest.json"
+    },
+    {
+      "source": "raven_reactor_orb_pulse_8f_256.json",
+      "path": "assets/data/raw_until_raven_references/raven_reactor_orb_pulse_8f_256.json"
+    },
+    {
+      "source": "red_concord_mech_arms_empty.json",
+      "path": "assets/data/raw_until_raven_references/red_concord_mech_arms_empty.json"
+    },
+    {
+      "source": "red_concord_mech_damage_parts.json",
+      "path": "assets/data/raw_until_raven_references/red_concord_mech_damage_parts.json"
+    },
+    {
+      "source": "red_concord_mech_legs_walk.json",
+      "path": "assets/data/raw_until_raven_references/red_concord_mech_legs_walk.json"
+    },
+    {
+      "source": "red_concord_mech_weapon_mounts.json",
+      "path": "assets/data/raw_until_raven_references/red_concord_mech_weapon_mounts.json"
+    },
+    {
+      "source": "red_concord_weapon_fx.json",
+      "path": "assets/data/raw_until_raven_references/red_concord_weapon_fx.json"
+    },
+    {
+      "source": "red_concord_weapon_pickups.json",
+      "path": "assets/data/raw_until_raven_references/red_concord_weapon_pickups.json"
+    },
+    {
+      "source": "workcamp_guard_empty_pistol_phaser.json",
+      "path": "assets/data/raw_until_raven_references/workcamp_guard_empty_pistol_phaser.json"
+    },
+    {
+      "source": "workcamp_guard_empty_rifle_phaser.json",
+      "path": "assets/data/raw_until_raven_references/workcamp_guard_empty_rifle_phaser.json"
+    },
+    {
+      "source": "workcamp_guard_movement_phaser.json",
+      "path": "assets/data/raw_until_raven_references/workcamp_guard_movement_phaser.json"
+    }
+  ],
+  "removed": []
+}

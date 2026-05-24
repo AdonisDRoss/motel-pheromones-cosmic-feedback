@@ -1,0 +1,168 @@
+{
+  "startRoom": "checkpoint",
+  "order": [
+    "checkpoint",
+    "prisoner_housing_yard",
+    "mining_yard",
+    "support_block",
+    "high_command_tower",
+    "control_room",
+    "basement_prison",
+    "loading_pad_escape"
+  ],
+  "rooms": {
+    "checkpoint": {
+      "name": "Outer Checkpoint",
+      "backgroundKey": "dust9_checkpoint",
+      "background": "assets/backgrounds/dust9/dust9_checkpoint_empty_1920x540.png",
+      "spawn": {
+        "x": 170,
+        "y": 410
+      },
+      "walkBounds": {
+        "x": 0,
+        "y": 250,
+        "width": 1920,
+        "height": 250
+      },
+      "exits": {
+        "right": "prisoner_housing_yard"
+      }
+    },
+    "prisoner_housing_yard": {
+      "name": "Prisoner Housing Yard",
+      "backgroundKey": "dust9_prisoner_housing_yard",
+      "background": "assets/backgrounds/dust9/dust9_prisoner_housing_yard_empty_1920x540.png",
+      "spawn": {
+        "x": 140,
+        "y": 405
+      },
+      "walkBounds": {
+        "x": 0,
+        "y": 235,
+        "width": 1920,
+        "height": 280
+      },
+      "exits": {
+        "left": "checkpoint",
+        "right": "mining_yard"
+      }
+    },
+    "mining_yard": {
+      "name": "Outdoor Mining Yard",
+      "backgroundKey": "dust9_mining_yard",
+      "background": "assets/backgrounds/dust9/dust9_mining_yard_empty_1920x540.png",
+      "spawn": {
+        "x": 150,
+        "y": 420
+      },
+      "walkBounds": {
+        "x": 0,
+        "y": 250,
+        "width": 1920,
+        "height": 260
+      },
+      "exits": {
+        "left": "prisoner_housing_yard",
+        "right": "support_block"
+      }
+    },
+    "support_block": {
+      "name": "Support Block",
+      "backgroundKey": "dust9_support_block",
+      "background": "assets/backgrounds/dust9/dust9_support_block_empty_1920x540.png",
+      "spawn": {
+        "x": 160,
+        "y": 405
+      },
+      "walkBounds": {
+        "x": 0,
+        "y": 245,
+        "width": 1920,
+        "height": 275
+      },
+      "exits": {
+        "left": "mining_yard",
+        "right": "high_command_tower"
+      }
+    },
+    "high_command_tower": {
+      "name": "High Command Tower Exterior",
+      "backgroundKey": "dust9_high_command_tower",
+      "background": "assets/backgrounds/dust9/dust9_high_command_tower_exterior_empty_1920x540.png",
+      "spawn": {
+        "x": 150,
+        "y": 410
+      },
+      "walkBounds": {
+        "x": 0,
+        "y": 245,
+        "width": 1920,
+        "height": 275
+      },
+      "exits": {
+        "left": "support_block",
+        "right": "control_room"
+      }
+    },
+    "control_room": {
+      "name": "Camp Control Room",
+      "backgroundKey": "dust9_control_room",
+      "background": "assets/backgrounds/dust9/dust9_control_room_empty_1920x540.png",
+      "spawn": {
+        "x": 180,
+        "y": 385
+      },
+      "walkBounds": {
+        "x": 0,
+        "y": 250,
+        "width": 1920,
+        "height": 250
+      },
+      "exits": {
+        "left": "high_command_tower",
+        "right": "basement_prison"
+      },
+      "objective": "open_escape_gate"
+    },
+    "basement_prison": {
+      "name": "Basement High-Security Prison",
+      "backgroundKey": "dust9_basement_prison",
+      "background": "assets/backgrounds/dust9/dust9_basement_prison_empty_1920x540.png",
+      "spawn": {
+        "x": 160,
+        "y": 390
+      },
+      "walkBounds": {
+        "x": 0,
+        "y": 245,
+        "width": 1920,
+        "height": 280
+      },
+      "exits": {
+        "left": "control_room",
+        "right": "loading_pad_escape"
+      },
+      "objective": "rescue_dex"
+    },
+    "loading_pad_escape": {
+      "name": "Loading Pad / Escape Route",
+      "backgroundKey": "dust9_loading_pad_escape",
+      "background": "assets/backgrounds/dust9/dust9_loading_pad_escape_route_empty_1920x540.png",
+      "spawn": {
+        "x": 180,
+        "y": 400
+      },
+      "walkBounds": {
+        "x": 0,
+        "y": 235,
+        "width": 1920,
+        "height": 290
+      },
+      "exits": {
+        "left": "basement_prison"
+      },
+      "objective": "board_shuttle"
+    }
+  }
+}

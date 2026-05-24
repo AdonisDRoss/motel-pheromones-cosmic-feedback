@@ -1,0 +1,24 @@
+{
+  "id": "cosmic_feedback_v11_riff_robot_patch",
+  "updates": {
+    "riffIdentity": "robot",
+    "movementSheet": "assets/sprites/companions/riff/riff_movement.png",
+    "movementJson": "assets/data/companions/riff/riff_movement.json",
+    "portrait": "assets/portraits/riff/riff_robot_portrait.png",
+    "cutoutReference": "assets/portraits/riff/riff_robot_cutout_reference.png"
+  },
+  "recommendedLoader": [
+    "this.load.spritesheet('riff_movement', 'assets/sprites/companions/riff/riff_movement.png', { frameWidth: 181, frameHeight: 272 });",
+    "this.load.json('riff_movement_json', 'assets/data/companions/riff/riff_movement.json');",
+    "this.load.image('riff_robot_portrait', 'assets/portraits/riff/riff_robot_portrait.png');"
+  ],
+  "manualReview": [
+    "Riff movement sheet has a baked checkerboard background from JPEG upload. If checkerboard appears in game, remake as transparent PNG."
+  ],
+  "phaserFrameConfig": {
+    "columns": 8,
+    "rows": 4,
+    "frameWidth": 181,
+    "frameHeight": 272
+  }
+}

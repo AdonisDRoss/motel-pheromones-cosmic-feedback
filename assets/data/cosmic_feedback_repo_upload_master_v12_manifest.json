@@ -1,0 +1,18 @@
+{
+  "id": "cosmic_feedback_repo_upload_master_v12",
+  "created": "2026-05-24 15:14:42 UTC",
+  "description": "Merged repo-root bundle of Cosmic Feedback assets created in this chat.",
+  "safe_to_unzip_at_repo_root": true,
+  "does_not_replace_root_index": true,
+  "key_asset_groups": {
+    "bounty_office": "assets/backgrounds/planets/dust_9/interiors/shops/ and assets/data/planets/dust_9/interiors/shops/",
+    "astro_van": "assets/backgrounds/vehicles/astro_van, assets/data/vehicles/astro_van, assets/props/vehicles/astro_van, assets/sprites/vehicles/astro_van",
+    "riff_robot": "assets/sprites/companions/riff, assets/portraits/riff, assets/data/companions/riff",
+    "marshals_hands": "assets/sprites/enemies/red_concord/marshals_hands and assets/data/enemies/red_concord/marshals_hands",
+    "dust9_drive": "assets/backgrounds/planets/dust_9/drive, assets/sprites/vehicles/astro_van, assets/fx/drive/dust9, assets/data/drive/dust9",
+    "vela_9": "assets/sprites/npcs/echelon/vela_9 and assets/data/npcs/echelon",
+    "misc_van_props": "assets/props/vehicles/astro_van/misc"
+  },
+  "loader_index": "COSMIC_FEEDBACK_MASTER_LOADER_INDEX.js",
+  "report": "COSMIC_FEEDBACK_REPO_UPLOAD_MASTER_V12_REPORT.json"
+}

@@ -1,0 +1,44 @@
+{
+  "id": "red_concord_medium_mech",
+  "name": "Red Concord Medium Mech",
+  "modular": true,
+  "drawOrder": [
+    "legs",
+    "torso",
+    "arms",
+    "weaponMounts",
+    "fx"
+  ],
+  "parts": {
+    "torso": "assets/sprites/enemies/red_concord/mech/red_concord_mech_torso_core.png",
+    "legs": "assets/sprites/enemies/red_concord/mech/red_concord_mech_legs_walk.png",
+    "arms": "assets/sprites/enemies/red_concord/mech/red_concord_mech_arms_empty.png",
+    "weapons": "assets/sprites/enemies/red_concord/mech/red_concord_mech_weapon_mounts.png",
+    "damageParts": "assets/sprites/enemies/red_concord/mech/red_concord_mech_damage_parts.png"
+  },
+  "partHealth": {
+    "leftArm": 35,
+    "rightArm": 35,
+    "legs": 60,
+    "torso": 120,
+    "weaponMount": 30
+  },
+  "anchors": {
+    "legs": {
+      "x": 0,
+      "y": 0
+    },
+    "torso": {
+      "x": 0,
+      "y": -38
+    },
+    "arms": {
+      "x": 0,
+      "y": -40
+    },
+    "weaponMount": {
+      "x": 18,
+      "y": -42
+    }
+  }
+}

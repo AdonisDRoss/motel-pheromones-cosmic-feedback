@@ -1,0 +1,44 @@
+{
+  "id": "marshal_control_room_interruption",
+  "name": "The Marshal\u2019s Hands",
+  "mission": "Dust-9: Rescue Dex",
+  "location": "Red Concord Control Room",
+  "faction": "The Red Concord",
+  "bossPresent": "The Marshal",
+  "miniBosses": [
+    "cassian_varric_movement",
+    "cael_varric_movement"
+  ],
+  "structure": [
+    {
+      "phase": 1,
+      "name": "Marshal Protected",
+      "description": "The Marshal stays behind Cassian and Cael while Donny pressures the room."
+    },
+    {
+      "phase": 2,
+      "name": "Marshal at 50%",
+      "description": "Donny briefly damages the Marshal to about half health."
+    },
+    {
+      "phase": 3,
+      "name": "The Hands Step In",
+      "description": "Cassian and Cael take over the fight as the main mini-boss duo."
+    },
+    {
+      "phase": 4,
+      "name": "Explosion Interruption",
+      "description": "An explosion interrupts the fight before either bodyguard is defeated. The Marshal and twins escape. Donny continues to find Dex."
+    }
+  ],
+  "winCondition": "Survive and damage the bodyguards enough to trigger the explosion, then continue toward Dex.",
+  "notDefeatedHere": [
+    "The Marshal",
+    "Cassian Varric",
+    "Cael Varric"
+  ],
+  "notes": [
+    "This encounter is an interrupted mini-boss set piece, not a final victory.",
+    "The bodyguards remain recurring enemies."
+  ]
+}
