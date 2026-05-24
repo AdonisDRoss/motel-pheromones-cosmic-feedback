@@ -1,0 +1,1 @@
+Direct merge assets only. Contains no index.html. Extract into repo root only if you are okay merging assets directly. Existing same-path files may be overwritten by some unzip tools; safe installer ZIP is recommended.
