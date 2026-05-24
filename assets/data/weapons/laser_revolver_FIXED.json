@@ -1,0 +1,6 @@
+{
+  "id": "laser_revolver",
+  "name": "Laser Revolver",
+  "damage": 10,
+  "projectileColor": "#36e4ff"
+}

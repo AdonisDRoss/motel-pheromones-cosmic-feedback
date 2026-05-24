@@ -1,0 +1,15 @@
+I uploaded space_game_core_safe_no_overwrite_package.zip.
+
+Please extract it into the project root.
+
+Then run:
+
+python3 install_missing_space_assets_safe.py
+
+Important:
+- Do not overwrite my existing index.html.
+- Do not overwrite existing player/enemy sprites.
+- The installer copies only missing files from space_game_missing_assets_staging/.
+- Existing files are skipped automatically.
+- After install, confirm assets/sprites/player/donny, assets/sprites/vehicles/astro_van, assets/sprites/companions/riff, assets/sprites/planets, assets/sprites/moons, assets/sprites/stations, and assets/backgrounds/planets/dust_9 exist.
+- Do not delete anything.

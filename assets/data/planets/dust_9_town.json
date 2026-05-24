@@ -1,0 +1,180 @@
+{
+  "id": "dust_9_town",
+  "name": "Dustbowl Junction",
+  "planetId": "dust_9",
+  "startChunk": "0,1",
+  "chunks": {
+    "0,0": {
+      "id": "0,0",
+      "name": "Wrecked Road",
+      "background": "assets/backgrounds/planets/dust_9/wrecked_road.png",
+      "walkBounds": {
+        "x": 70,
+        "y": 145,
+        "w": 820,
+        "h": 320
+      },
+      "exits": {
+        "south": "0,1",
+        "east": "1,0"
+      },
+      "pickups": [],
+      "interactZones": []
+    },
+    "1,0": {
+      "id": "1,0",
+      "name": "Punk Rock Saloon",
+      "background": "assets/backgrounds/planets/dust_9/punk_rock_saloon.png",
+      "walkBounds": {
+        "x": 70,
+        "y": 145,
+        "w": 820,
+        "h": 320
+      },
+      "exits": {
+        "west": "0,0",
+        "east": "2,0",
+        "south": "1,1"
+      },
+      "pickups": [],
+      "interactZones": [
+        {
+          "id": "saloonDoor",
+          "label": "The Neon Spur Saloon",
+          "x": 420,
+          "y": 135,
+          "w": 120,
+          "h": 100,
+          "targetScene": "SaloonScene"
+        }
+      ]
+    },
+    "2,0": {
+      "id": "2,0",
+      "name": "Guitar Shop Row",
+      "background": "assets/backgrounds/planets/dust_9/guitar_shop_row.png",
+      "walkBounds": {
+        "x": 70,
+        "y": 145,
+        "w": 820,
+        "h": 320
+      },
+      "exits": {
+        "west": "1,0",
+        "south": "2,1"
+      },
+      "pickups": [],
+      "interactZones": [
+        {
+          "id": "guitarShopDoor",
+          "label": "Dust String Guitars",
+          "x": 420,
+          "y": 135,
+          "w": 120,
+          "h": 100,
+          "targetScene": "GuitarShopScene"
+        }
+      ]
+    },
+    "0,1": {
+      "id": "0,1",
+      "name": "Sand Motel Parking",
+      "background": "assets/backgrounds/planets/dust_9/sand_motel_parking_lot.png",
+      "walkBounds": {
+        "x": 70,
+        "y": 145,
+        "w": 820,
+        "h": 320
+      },
+      "exits": {
+        "north": "0,0",
+        "east": "1,1"
+      },
+      "pickups": [],
+      "interactZones": [
+        {
+          "id": "officeDoor",
+          "label": "Donny's Bounty Hunter Office",
+          "x": 420,
+          "y": 135,
+          "w": 120,
+          "h": 100,
+          "targetScene": "BountyOfficeScene"
+        }
+      ]
+    },
+    "1,1": {
+      "id": "1,1",
+      "name": "Main Street Diner",
+      "background": "assets/backgrounds/planets/dust_9/main_street_diner.png",
+      "walkBounds": {
+        "x": 70,
+        "y": 145,
+        "w": 820,
+        "h": 320
+      },
+      "exits": {
+        "north": "1,0",
+        "west": "0,1",
+        "east": "2,1"
+      },
+      "pickups": [],
+      "interactZones": [
+        {
+          "id": "dinerDoor",
+          "label": "Starbite Diner",
+          "x": 420,
+          "y": 135,
+          "w": 120,
+          "h": 100,
+          "targetScene": "DinerScene"
+        }
+      ]
+    },
+    "2,1": {
+      "id": "2,1",
+      "name": "Hut Homes / Junkyard Gate",
+      "background": "assets/backgrounds/planets/dust_9/hut_homes_junkyard_gate.png",
+      "walkBounds": {
+        "x": 70,
+        "y": 145,
+        "w": 820,
+        "h": 320
+      },
+      "exits": {
+        "north": "2,0",
+        "west": "1,1"
+      },
+      "pickups": [],
+      "interactZones": [
+        {
+          "id": "outpostDoor",
+          "label": "Outpost Home-Shop",
+          "x": 720,
+          "y": 145,
+          "w": 120,
+          "h": 100,
+          "targetScene": "OutpostHomeShopScene"
+        },
+        {
+          "id": "scavengerHutDoor",
+          "label": "Scavenger Hut",
+          "x": 120,
+          "y": 145,
+          "w": 110,
+          "h": 100,
+          "targetScene": "ScavengerHutScene"
+        },
+        {
+          "id": "mechanicHutDoor",
+          "label": "Mechanic Hut",
+          "x": 440,
+          "y": 145,
+          "w": 110,
+          "h": 100,
+          "targetScene": "MechanicHutScene"
+        }
+      ]
+    }
+  }
+}

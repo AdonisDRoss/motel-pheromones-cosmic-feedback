@@ -1,0 +1,2887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Motel Pheromones: Cosmic Feedback - Donny Visible Fallback</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="screen-orientation" content="landscape" />
+<meta name="x5-orientation" content="landscape" />
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js" crossorigin="anonymous"></script>
+<script>
+if(!window.Phaser){
+  document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.70.0/phaser.min.js"><\/script>');
+}
+</script>
+<style>
+*{box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:#000;width:100%;height:100%;overflow:hidden;touch-action:none;overscroll-behavior:none}
+body{position:fixed;inset:0}
+#game{position:fixed;inset:0;width:100vw;height:100vh;overflow:hidden;z-index:1}
+canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+#touchControls{position:fixed;inset:0;z-index:20;pointer-events:none;touch-action:none}
+#stickBase{position:absolute;left:58px;bottom:34px;width:124px;height:124px;border-radius:50%;border:4px solid rgba(255,255,255,.45);background:rgba(0,0,0,.22);box-shadow:0 0 0 2px rgba(255,42,161,.22) inset;pointer-events:auto;touch-action:none}
+#stickRing{position:absolute;left:16px;top:16px;width:84px;height:84px;border-radius:50%;border:2px solid rgba(255,42,161,.45)}
+#stickKnob{position:absolute;left:38px;top:38px;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.28);border:2px solid rgba(255,255,255,.65)}
+#moveLabel{position:absolute;left:0;right:0;bottom:-24px;text-align:center;font:700 12px Arial,sans-serif;color:rgba(255,255,255,.72);letter-spacing:1px}
+.touchBtn{position:absolute;border-radius:50%;border:3px solid rgba(255,255,255,.78);color:#fff;font:800 22px Arial,sans-serif;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;box-shadow:0 0 18px rgba(255,255,255,.08)}
+.touchBtn:active{transform:scale(.96)}
+#btnY{right:86px;bottom:150px;width:62px;height:62px;background:rgba(255,42,161,.42);font-size:18px}
+#btnA{right:22px;bottom:88px;width:62px;height:62px;background:rgba(33,215,255,.34);font-size:18px}
+#btnX{right:150px;bottom:88px;width:62px;height:62px;background:rgba(255,180,45,.38);font-size:18px}
+#btnB{right:86px;bottom:26px;width:62px;height:62px;background:rgba(70,255,135,.32);font-size:18px}
+#btnStart{position:fixed;left:50vw;bottom:max(8px,env(safe-area-inset-bottom));transform:translateX(-50%);width:126px;height:34px;border-radius:18px;background:rgba(0,0,0,.58);border:2px solid rgba(255,255,255,.58);color:#fff;font:800 13px Arial,sans-serif;letter-spacing:1px;pointer-events:auto;touch-action:none;display:flex;align-items:center;justify-content:center;z-index:40}
+#btnStart:active{transform:translateX(-50%) scale(.96)}
+#bootError{position:fixed;left:10px;top:10px;z-index:99998;max-width:72vw;background:rgba(0,0,0,.86);border:2px solid #ff2aa1;color:#fff;font:700 13px Arial,sans-serif;line-height:1.35;padding:10px 12px;border-radius:10px;display:none;white-space:pre-wrap;pointer-events:none}
+#rotateNotice{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;text-align:center;background:#050612;color:#fff;font-family:Arial,sans-serif;padding:28px;line-height:1.35}
+#rotateNotice .box{border:2px solid #ff2aa1;border-radius:18px;background:rgba(0,0,0,.55);padding:22px;max-width:360px}
+#rotateNotice .big{font-size:24px;font-weight:800;margin-bottom:10px}
+@media (orientation: portrait){#rotateNotice{display:flex}#touchControls{display:none}}
+</style>
+</head>
+<body>
+<div id="rotateNotice"><div class="box"><div class="big">Rotate Phone</div><div>This build is landscape only.</div><div>Turn your phone sideways to play.</div></div></div>
+<div id="game"></div>
+<div id="touchControls">
+  <div id="stickBase"><div id="stickRing"></div><div id="stickKnob"></div><div id="moveLabel">MOVE</div></div>
+  <div id="btnY" class="touchBtn">Y</div>
+  <div id="btnA" class="touchBtn">A</div>
+  <div id="btnX" class="touchBtn">X</div>
+  <div id="btnB" class="touchBtn">B</div>
+  <div id="btnStart">START</div>
+</div>
+<div id="bootError"></div>
+
+<script>
+function showBootError(message){
+  const box=document.getElementById('bootError');
+  if(!box) return;
+  box.style.display='block';
+  box.textContent=message;
+}
+window.addEventListener('error', e => {
+  showBootError('GAME ERROR: ' + (e.message || 'unknown error'));
+});
+window.addEventListener('unhandledrejection', e => {
+  showBootError('GAME ERROR: ' + ((e.reason && (e.reason.message || e.reason)) || 'unhandled promise rejection'));
+});
+window.addEventListener('contextmenu', e => e.preventDefault());
+window.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('touchmove', e => e.preventDefault(), { passive:false });
+
+const W = 960;
+const H = 540;
+const VERSION = '0.2.39-ship-props-layout';
+
+const ASSETS = {
+  shipInterior: 'assets/backgrounds/ship/astro_van_interior_empty_phaser_ready_1779530865.png',
+  orbitBackground: 'assets/backgrounds/space/dust9_orbit_space_bg_1779505747.png',
+  dust9Planet: 'assets/sprites/planets/dust_9_planet_space_1779504946.png',
+  dust9Moon: 'assets/sprites/moons/dust9_dead_moon_TRANSPARENT_FIXED_1779506413.png',
+  spaceStation: 'assets/sprites/stations/neon_space_station/neon_space_station_TRANSPARENT_FIXED_1779506413.png',
+  donnyNormal: 'assets/sprites/player/donny/donny_overhead_noguitar_phaser_ready_1779508629.png',
+  donnySpace: 'assets/sprites/player/donny/spacesuit/donny_spacesuit_walk_heavy_8f.png',
+  van: 'assets/sprites/vehicles/astro_van/astro_van_v1_sheet.png',
+  riff: 'assets/sprites/companions/riff/riff_movement.png',
+  riffSpace: 'assets/sprites/companions/riff/riff_spacesuit_movement.png',
+  riffBed: 'assets/sprites/companions/riff/riff_bed.png',
+
+  donnyEmptyPistol: 'assets/sprites/player/donny/donny_empty_pistol_pose_sheet.png',
+  donnyUnarmedPunch: 'assets/sprites/player/donny/donny_unarmed_punch_sheet.png',
+  donnyJump: 'assets/sprites/player/donny/donny_jump_4dir_1779501362.png',
+  donnyCrawl: 'assets/sprites/player/donny/donny_crawl_4dir_1779501362.png',
+  donnySlide: 'assets/sprites/player/donny/donny_slide_4dir_1779501362.png',
+  donnySit: null,
+  donnySleep: null,
+
+  donnySpaceEmptyPistol: 'assets/sprites/player/donny/spacesuit/donny_spacesuit_empty_pistol_4dir.png',
+  donnySpaceUnarmedPunch: 'assets/sprites/player/donny/spacesuit/donny_spacesuit_unarmed_punch_4dir.png',
+  donnySpaceJump: 'assets/sprites/player/donny/spacesuit/donny_spacesuit_jump_4dir.png',
+  donnySpaceCrawl: 'assets/sprites/player/donny/spacesuit/donny_spacesuit_crawl_heavy_8f.png',
+  donnySpaceSlide: 'assets/sprites/player/donny/spacesuit/donny_spacesuit_slide_butt_8f.png',
+  donnySpaceSit: 'assets/sprites/player/donny/spacesuit/donny_spacesuit_sit_4dir.png',
+  donnySpaceSleep: 'assets/sprites/player/donny/spacesuit/donny_spacesuit_sleep_4dir.png',
+
+  donnyHolster: 'assets/sprites/equipment/holsters/donny_tight_holster_brown_4dir_1779504330.png'
+};
+
+function withVersion(path){
+  if(!path) return path;
+  return `${path}${path.includes('?') ? '&' : '?'}v=${VERSION}`;
+}
+
+// Van interior is now built from an EMPTY Astro Van background plus separate furniture sprites.
+// This build checks the common GitHub Pages asset locations used by this project.
+// If no empty background file exists at those paths, it draws a clean empty van base instead of showing the old baked-furniture interior.
+function makeImageCandidates(prefix, folders, names){
+  const out=[];
+  const used=new Set();
+  folders.forEach(folder=>{
+    names.forEach(name=>{
+      const cleanFolder = String(folder || '').replace(/\/$/, '');
+      const cleanName = String(name || '').replace(/^\//, '').replace(/\.png$/i, '');
+      const path = `${cleanFolder}/${cleanName}.png`;
+      if(used.has(path)) return;
+      used.add(path);
+      out.push({ key:`${prefix}_${out.length}`, path });
+    });
+  });
+  return out;
+}
+
+const SHIP_INTERIOR_EMPTY_EXACT_CANDIDATES = [
+  // Exact repo location from GitHub compare: assets/backgrounds/ship/astro_van_interior_empty_phaser_ready_1779530865.png
+  { key:'shipInteriorEmpty_exact_phaser_ready_1779530865', path:'assets/backgrounds/ship/astro_van_interior_empty_phaser_ready_1779530865.png' },
+  { key:'shipInteriorEmpty_exact_phaser_ready', path:'assets/backgrounds/ship/astro_van_interior_empty_phaser_ready.png' },
+  { key:'shipInteriorEmpty_exact_phaser_ready_v1', path:'assets/backgrounds/ship/astro_van_interior_empty_phaser_ready_v1.png' },
+  { key:'shipInteriorEmpty_exact_phaser', path:'assets/backgrounds/ship/astro_van_interior_empty_phaser.png' },
+  { key:'shipInteriorEmpty_exact_pixel', path:'assets/backgrounds/ship/astro_van_interior_empty_pixel.png' },
+  { key:'shipInteriorEmpty_exact_png', path:'assets/backgrounds/ship/astro_van_interior_empty_png.png' }
+];
+
+const SHIP_INTERIOR_EMPTY_CANDIDATES = SHIP_INTERIOR_EMPTY_EXACT_CANDIDATES.concat(makeImageCandidates(
+  'shipInteriorEmpty',
+  [
+    'assets/backgrounds/ship',
+    'assets/backgrounds/ship/empty',
+    'assets/backgrounds/ship/interior',
+    'assets/backgrounds/ship/astro_van',
+    'assets/backgrounds/ship/astro_van/interior',
+    'assets/sprites/vehicles/astro_van',
+    'assets/sprites/vehicles/astro_van/interior'
+  ],
+  [
+    'astro_van_interior_empty',
+    'astro_van_interior_empty_v1',
+    'astro_van_empty_interior',
+    'astro_van_empty_interior_v1',
+    'astro_van_empty',
+    'astro_van_empty_v1',
+    'astro_van_floor',
+    'astro_van_floor_v1',
+    'astro_van_interior_floor',
+    'astro_van_interior_floor_v1',
+    'empty_van_interior',
+    'empty_van_interior_v1',
+    'empty_van',
+    'empty_van_v1',
+    'van_empty_interior',
+    'van_empty',
+    'ship_interior_empty',
+    'ship_empty',
+    'ship_empty_v1',
+    'interior_empty',
+    'interior_empty_v1'
+  ]
+));
+
+const SHIP_FURNITURE_FOLDERS = [
+  // Exact repo location shown in GitHub screenshots.
+  'assets/props/ships',
+  'assets/backgrounds/ship/furniture',
+  'assets/backgrounds/ship/interior/furniture',
+  'assets/backgrounds/ship/astro_van/furniture',
+  'assets/backgrounds/ship/astro_van/interior',
+  'assets/backgrounds/ship/astro_van/interior/furniture',
+  'assets/sprites/ship/furniture',
+  'assets/sprites/ship/interior',
+  'assets/sprites/ship/interior/furniture',
+  'assets/sprites/vehicles/astro_van/furniture',
+  'assets/sprites/vehicles/astro_van/interior',
+  'assets/sprites/vehicles/astro_van/interior/furniture'
+];
+
+function furnitureCandidates(kind, names){
+  return makeImageCandidates(`shipFurniture_${kind}`, SHIP_FURNITURE_FOLDERS, names);
+}
+
+const SHIP_FURNITURE_ASSET_CANDIDATES = {
+  cockpitChair: [{ key:'ship_prop_cockpit_chair', path:'assets/props/ships/cockpit_chair.png' }],
+  cockpitChairForeground: [{ key:'ship_prop_cockpit_chair_foreground', path:'assets/props/ships/cockpit_chair_foreground.png' }],
+  shipBed: [{ key:'ship_prop_ship_bed', path:'assets/props/ships/ship_bed.png' }],
+  shipBedForeground: [{ key:'ship_prop_ship_bed_foreground', path:'assets/props/ships/ship_bed_foreground.png' }],
+  shipBunkBed: [{ key:'ship_prop_ship_bunk_bed', path:'assets/props/ships/ship_bunk_bed.png' }],
+  shipTable: [{ key:'ship_prop_ship_table', path:'assets/props/ships/ship_table.png' }],
+  shipTableForeground: [{ key:'ship_prop_ship_table_foreground', path:'assets/props/ships/ship_table_foreground.png' }]
+};
+
+const SHIP_FURNITURE_LAYOUT = [
+  // Exact Phaser layout from assets/data/ship/astro_van_props_layout_v1.json.
+  // These are the real files currently uploaded under assets/props/ships/.
+  { id:'shipBed', kind:'shipBed', texture:'ship_bed', x:170, y:160, displayW:240, displayH:170, depth:180, solid:true },
+  { id:'shipBunkBed', kind:'shipBunkBed', texture:'ship_bunk_bed', x:205, y:175, displayW:300, displayH:210, depth:190, solid:true },
+  { id:'pilotChair', kind:'cockpitChair', texture:'cockpit_chair', x:735, y:246, displayW:180, displayH:180, depth:235, solid:true, cockpit:true },
+  { id:'shipTable', kind:'shipTable', texture:'ship_table', x:360, y:314, displayW:220, displayH:160, depth:315, solid:true },
+
+  // Foreground overlays sit above Donny so the table/chair/bed can cover his legs correctly.
+  { id:'pilotChairForeground', kind:'cockpitChairForeground', texture:'cockpit_chair_foreground', x:735, y:260, displayW:180, displayH:180, depth:920, foreground:true, optional:true },
+  { id:'shipTableForeground', kind:'shipTableForeground', texture:'ship_table_foreground', x:360, y:344, displayW:320, displayH:96, depth:930, foreground:true, optional:true },
+  { id:'shipBedForeground', kind:'shipBedForeground', texture:'ship_bed_foreground', x:170, y:185, displayW:320, displayH:220, depth:940, foreground:true, optional:true }
+];
+
+function flattenShipFurnitureCandidates(){
+  return Object.values(SHIP_FURNITURE_ASSET_CANDIDATES).flat();
+}
+
+const WEAPON_ASSETS = {
+  black_guitar_hold: 'assets/sprites/weapons/black_guitar/black_guitar_hold.png',
+  space_wrench_hold: 'assets/sprites/weapons/space_wrench/space_wrench_hold.png',
+  scrap_revolver_hold: 'assets/sprites/weapons/scrap_revolver/scrap_revolver_hold.png',
+  junkyard_rifle_hold: 'assets/sprites/weapons/junkyard_rifle/junkyard_rifle_hold.png',
+  feedback_cannon_hold: 'assets/sprites/weapons/feedback_cannon/feedback_cannon_hold.png',
+  laser_revolver_hold_4dir: 'assets/sprites/weapons/laser_revolver/laser_revolver_hold_4dir_FIXED.png'
+};
+
+const WEAPON_FX_ASSETS = {
+  neon_slash_arc: 'assets/sprites/fx/weapons/neon_slash_arc.png',
+  muzzle_flash_burst: 'assets/sprites/fx/weapons/muzzle_flash_burst.png',
+  rainbow_hit_burst: 'assets/sprites/fx/weapons/rainbow_hit_burst.png',
+  plasma_ring_blast: 'assets/sprites/fx/weapons/plasma_ring_blast.png'
+};
+
+const CHUNK_BG = {
+  '0,0': { key:'bg_wrecked_road', path:'assets/backgrounds/planets/dust_9/wrecked_road.png' },
+  '1,0': { key:'bg_punk_rock_saloon', path:'assets/backgrounds/planets/dust_9/punk_rock_saloon.png' },
+  '2,0': { key:'bg_guitar_shop_row', path:'assets/backgrounds/planets/dust_9/guitar_shop_row.png' },
+  '0,1': { key:'bg_sand_motel_parking_lot', path:'assets/backgrounds/planets/dust_9/sand_motel_parking_lot.png' },
+  '1,1': { key:'bg_main_street_diner', path:'assets/backgrounds/planets/dust_9/main_street_diner.png' },
+  '2,1': { key:'bg_hut_homes_junkyard_gate', path:'assets/backgrounds/planets/dust_9/hut_homes_junkyard_gate.png' }
+};
+
+const INTERIOR_DATA = {
+  bounty_office: {
+    id:'bounty_office',
+    name:"Donny's Bounty Hunter Office",
+    scene:'BountyOfficeScene',
+    parentChunk:'0,1',
+    bgKey:'int_bounty_office',
+    background:'assets/backgrounds/planets/dust_9/interiors/shops/bounty_office_interior.png',
+    spawn:{x:480,y:430,dir:'up'},
+    walkBounds:{x:70,y:145,w:820,h:320},
+    exit:{x:425,y:420,w:110,h:95,targetChunkId:'0,1',entrySide:'office'},
+    zones:[
+      {id:'wantedBoard',label:'Wanted Board',x:82,y:62,w:245,h:110,message:'Wanted Board: bounty contracts will appear here.'},
+      {id:'deskTerminal',label:'Desk Terminal',x:560,y:78,w:180,h:120,message:'Desk Terminal: turn in bounties and collect rewards.'},
+      {id:'gearLocker',label:'Gear Locker',x:695,y:335,w:145,h:145,message:'Gear Locker: bounty gear and suit storage.'},
+      {id:'mapTable',label:'Dust-9 Map Table',x:728,y:212,w:178,h:115,message:'Dust-9 map table: plan routes and mark bounties.'},
+      {id:'riffBed',label:"Riff's Bed",x:112,y:330,w:110,h:98,message:"Riff's bed. Looks comfortable enough for a tiny alien roadie."}
+    ]
+  },
+  neon_spur_saloon_interior: {
+    id:'neon_spur_saloon_interior',
+    name:'The Neon Spur Saloon',
+    scene:'SaloonScene',
+    parentChunk:'1,0',
+    bgKey:'int_saloon',
+    background:'assets/backgrounds/planets/dust_9/interiors/shops/neon_spur_saloon_interior.png',
+    spawn:{x:480,y:430,dir:'up'},
+    walkBounds:{x:70,y:145,w:820,h:318},
+    exit:{x:430,y:430,w:100,h:90,targetChunkId:'1,0',entrySide:'interior'},
+    zones:[
+      {id:'barCounter',label:'Bar Counter',x:470,y:105,w:405,h:155,message:'Bar counter: drinks, rumors, and bounty gossip later.'},
+      {id:'stage',label:'Stage',x:45,y:95,w:255,h:170,message:'Stage: punk shows and music quests later.'},
+      {id:'wantedWall',label:'Wanted Posters',x:250,y:58,w:145,h:105,message:'Wanted posters hint at local trouble.'},
+      {id:'jukebox',label:'Jukebox',x:850,y:330,w:75,h:125,message:'Jukebox: set saloon music later.'}
+    ]
+  },
+  dust_string_guitars_interior: {
+    id:'dust_string_guitars_interior',
+    name:'Dust String Guitars',
+    scene:'GuitarShopScene',
+    parentChunk:'2,0',
+    bgKey:'int_guitar_shop',
+    background:'assets/backgrounds/planets/dust_9/interiors/shops/dust_string_guitars_interior.png',
+    spawn:{x:480,y:430,dir:'up'},
+    walkBounds:{x:70,y:145,w:820,h:318},
+    exit:{x:430,y:430,w:100,h:90,targetChunkId:'2,0',entrySide:'interior'},
+    zones:[
+      {id:'guitarWall',label:'Guitar Wall',x:95,y:55,w:510,h:118,message:'Guitar wall: buy and inspect guitars later.'},
+      {id:'repairBench',label:'Repair Bench',x:620,y:120,w:220,h:135,message:'Repair bench: guitar upgrades and mods later.'},
+      {id:'checkout',label:'Checkout Counter',x:590,y:300,w:270,h:120,message:'Checkout counter: shop system goes here.'},
+      {id:'ampRack',label:'Amp Rack',x:255,y:150,w:220,h:90,message:'Amp rack: sound gear and parts.'}
+    ]
+  },
+  starbite_diner_interior: {
+    id:'starbite_diner_interior',
+    name:'Starbite Diner',
+    scene:'DinerScene',
+    parentChunk:'1,1',
+    bgKey:'int_diner',
+    background:'assets/backgrounds/planets/dust_9/interiors/shops/starbite_diner_interior.png',
+    spawn:{x:480,y:430,dir:'up'},
+    walkBounds:{x:70,y:145,w:820,h:318},
+    exit:{x:430,y:430,w:100,h:90,targetChunkId:'1,1',entrySide:'interior'},
+    zones:[
+      {id:'dinerCounter',label:'Diner Counter',x:560,y:110,w:290,h:160,message:'Diner counter: buy food and heal later.'},
+      {id:'booths',label:'Booths',x:45,y:90,w:310,h:280,message:'Booths: NPC conversations and rumors later.'},
+      {id:'jukebox',label:'Jukebox',x:60,y:55,w:70,h:105,message:'A glowing diner jukebox hums softly.'},
+      {id:'kitchenDoor',label:'Kitchen Door',x:780,y:85,w:110,h:125,message:'Kitchen area: staff-only for now.'}
+    ]
+  },
+  outpost_home_shop_interior: {
+    id:'outpost_home_shop_interior',
+    name:'Outpost Home-Shop',
+    scene:'OutpostHomeShopScene',
+    parentChunk:'2,1',
+    bgKey:'int_outpost_shop',
+    background:'assets/backgrounds/planets/dust_9/interiors/shops/outpost_home_shop_interior.png',
+    spawn:{x:480,y:430,dir:'up'},
+    walkBounds:{x:70,y:145,w:820,h:318},
+    exit:{x:430,y:430,w:100,h:90,targetChunkId:'2,1',entrySide:'interior'},
+    zones:[
+      {id:'bed',label:'Bed',x:55,y:135,w:190,h:165,message:'A modest outpost bed.'},
+      {id:'cookStation',label:'Cook Station',x:660,y:90,w:200,h:145,message:'Cook station: supplies and food later.'},
+      {id:'supplyShelf',label:'Supply Shelf',x:90,y:65,w:190,h:125,message:'Supply shelves packed with desert goods.'},
+      {id:'radioWorkbench',label:'Radio Workbench',x:340,y:85,w:210,h:120,message:'Radio workbench: local Dust-9 signals.'}
+    ]
+  },
+  scavenger_hut_interior: {
+    id:'scavenger_hut_interior',
+    name:'Scavenger Hut',
+    scene:'ScavengerHutScene',
+    parentChunk:'2,1',
+    bgKey:'int_scavenger_hut',
+    background:'assets/backgrounds/planets/dust_9/interiors/homes/scavenger_hut_interior.png',
+    spawn:{x:480,y:435,dir:'up'},
+    walkBounds:{x:78,y:150,w:804,h:305},
+    exit:{x:428,y:438,w:104,h:78,targetChunkId:'2,1',entrySide:'hut'},
+    zones:[
+      {id:'scrapBench',label:'Scrap Bench',x:98,y:300,w:180,h:122,message:'Scrap bench: basic salvage crafting later.'},
+      {id:'waterTank',label:'Water Tank',x:48,y:68,w:130,h:160,message:'A recycled water tank hums quietly.'},
+      {id:'cookStation',label:'Cook Station',x:610,y:128,w:170,h:120,message:'Cook station: desert stew and survival meals.'},
+      {id:'bed',label:'Bed',x:710,y:275,w:160,h:165,message:'A rough bed made for a Dust-9 scavenger.'}
+    ]
+  },
+  mechanic_hut_interior: {
+    id:'mechanic_hut_interior',
+    name:'Mechanic Hut',
+    scene:'MechanicHutScene',
+    parentChunk:'2,1',
+    bgKey:'int_mechanic_hut',
+    background:'assets/backgrounds/planets/dust_9/interiors/homes/mechanic_hut_interior.png',
+    spawn:{x:480,y:435,dir:'up'},
+    walkBounds:{x:70,y:145,w:820,h:310},
+    exit:{x:427,y:440,w:106,h:76,targetChunkId:'2,1',entrySide:'hut'},
+    zones:[
+      {id:'engineRig',label:'Engine Rig',x:650,y:295,w:210,h:160,message:'Engine rig: van upgrades and repair work later.'},
+      {id:'toolBench',label:'Tool Bench',x:290,y:98,w:230,h:120,message:'A packed tool bench covered in repairs and schematics.'},
+      {id:'partsShelf',label:'Parts Shelf',x:535,y:88,w:158,h:180,message:'Shelves full of salvaged parts and engine pieces.'},
+      {id:'bedroll',label:'Bed',x:60,y:130,w:145,h:145,message:'A mechanic catches naps here between repair jobs.'}
+    ]
+  },
+  family_hut_interior: {
+    id:'family_hut_interior',
+    name:'Family Hut',
+    scene:'FamilyHutScene',
+    parentChunk:'2,1',
+    bgKey:'int_family_hut',
+    background:'assets/backgrounds/planets/dust_9/interiors/homes/family_hut_interior.png',
+    spawn:{x:480,y:435,dir:'up'},
+    walkBounds:{x:75,y:150,w:810,h:300},
+    exit:{x:430,y:440,w:100,h:74,targetChunkId:'2,1',entrySide:'hut'},
+    zones:[
+      {id:'bunkBeds',label:'Bunk Beds',x:100,y:62,w:175,h:140,message:'A family bunk setup for local townsfolk.'},
+      {id:'mainBed',label:'Main Bed',x:60,y:230,w:165,h:125,message:'A small sleeping corner kept neat and warm.'},
+      {id:'kitchen',label:'Kitchen',x:620,y:100,w:220,h:138,message:'The family kitchen smells like coffee and stew.'},
+      {id:'table',label:'Dining Table',x:575,y:290,w:185,h:140,message:'A table where the family eats and talks.'}
+    ]
+  }
+};
+
+const TARGET_SCENE_TO_INTERIOR = {
+  BountyOfficeScene:'bounty_office',
+  SaloonScene:'neon_spur_saloon_interior',
+  GuitarShopScene:'dust_string_guitars_interior',
+  DinerScene:'starbite_diner_interior',
+  OutpostHomeShopScene:'outpost_home_shop_interior',
+  ScavengerHutScene:'scavenger_hut_interior',
+  MechanicHutScene:'mechanic_hut_interior',
+  FamilyHutScene:'family_hut_interior'
+};
+
+// Donny 8-frame movement sheet layout: row 1 down, row 2 right, row 3 left, row 4 up.
+// Important: 8-frame rows use directionFrame 0/8/16/24, not the old 0/4/8/12 map.
+const DONNY = {
+  frameWidth:192,
+  frameHeight:288,
+  scale:0.32,
+  speed:142,
+  walkFrameRate:8,
+  runFrameRate:10,
+  directionFrame:{down:0,right:8,left:16,up:24},
+  anims:{
+    down:{frames:[0,1,2,3,4,5,6,7]},
+    right:{frames:[8,9,10,11,12,13,14,15]},
+    left:{frames:[16,17,18,19,20,21,22,23]},
+    up:{frames:[24,25,26,27,28,29,30,31]}
+  }
+};
+
+const DONNY_NORMAL_4F = {
+  frameWidth:192,
+  frameHeight:288,
+  scale:0.32,
+  speed:142,
+  walkFrameRate:8,
+  runFrameRate:10,
+  directionFrame:{down:0,right:4,left:8,up:12},
+  anims:{
+    down:{frames:[0,1,2,3]},
+    right:{frames:[4,5,6,7]},
+    left:{frames:[8,9,10,11]},
+    up:{frames:[12,13,14,15]}
+  }
+};
+
+function getDonnyMoveConfig(texture){
+  return texture === 'donny_overhead' ? DONNY_NORMAL_4F : DONNY;
+}
+
+const VAN = { frameWidth:320, frameHeight:320, scale:0.55 };
+const VAN_COLLISION = {
+  chunkId:'0,1',
+  body:{id:'astroVanBody', x:312, y:300, w:175, h:108},
+  roof:{id:'astroVanRoof', x:330, y:285, w:138, h:68, topY:296}
+};
+
+function rectsOverlap(a,b){
+  return a && b &&
+    a.x < b.x + b.w &&
+    a.x + a.w > b.x &&
+    a.y < b.y + b.h &&
+    a.y + a.h > b.y;
+}
+function pointInRect(px,py,r){
+  return r && px >= r.x && px <= r.x+r.w && py >= r.y && py <= r.y+r.h;
+}
+
+
+const DONNY_ACTION = {
+  frameWidth:128,
+  frameHeight:128,
+  scale:0.72,
+  directionFrame:{down:0,right:4,left:8,up:12},
+  crawlDirectionFrame:{down:0,right:4,left:8,up:12},
+  keys:{
+    pistol:'donny_empty_pistol_pose',
+    punch:'donny_unarmed_punch',
+    jump:'donny_jump_4dir',
+    crawl:'donny_crawl_4dir',
+    slide:'donny_slide_4dir'
+  }
+};
+
+const HOLSTER = {
+  key:'donny_holster_brown',
+  frameWidth:128,
+  frameHeight:128,
+  scale:0.72,
+  directionFrame:{down:0,right:4,left:8,up:12},
+  offset:{
+    down:{x:0,y:0},
+    right:{x:0,y:0},
+    left:{x:0,y:0},
+    up:{x:0,y:0}
+  }
+};
+
+const REST_ACTION = {
+  sitTexture:'donny_sit_4dir',
+  sleepTexture:'donny_sleep_4dir',
+  scale:0.60,
+  chairDepthOffset:-6
+};
+
+function isSitZone(zone){
+  if(!zone) return false;
+  const t = `${zone.action || ''} ${zone.id || ''} ${zone.label || ''}`.toLowerCase();
+  return t.includes('sit') || t.includes('chair') || t.includes('booth') || t.includes('stool') || t.includes('cockpit');
+}
+function isLayZone(zone){
+  if(!zone) return false;
+  const t = `${zone.action || ''} ${zone.id || ''} ${zone.label || ''}`.toLowerCase();
+  return t.includes('lay') || t.includes('sleep') || t.includes('bed') || t.includes('bunk');
+}
+
+
+const RIFF = {
+  frameWidth:128,
+  frameHeight:128,
+  scale:0.42,
+  speed:145,
+  followDistance:58,
+  anims:{
+    down:{frames:[0,1,2,3]},
+    right:{frames:[4,5,6,7]},
+    left:{frames:[8,9,10,11]},
+    up:{frames:[12,13,14,15]}
+  }
+};
+
+
+const WEAPON_SLOT_ORDER = ['melee','ranged','heavy'];
+
+const FALLBACK_WEAPONS = {
+  black_guitar: {
+    id:'black_guitar',
+    name:'Black Guitar',
+    type:'melee',
+    slot:'melee',
+    sprite:'black_guitar_hold',
+    icon:'black_guitar_icon',
+    damage:12,
+    range:56,
+    cooldown:360,
+    knockback:120,
+    scale:0.42,
+    offset:{
+      down:{x:8,y:-38,rotation:-0.35},
+      up:{x:6,y:-52,rotation:0.25},
+      left:{x:-18,y:-42,rotation:-1.0},
+      right:{x:18,y:-42,rotation:1.0}
+    }
+  },
+  space_wrench: {
+    id:'space_wrench',
+    name:'Space Wrench',
+    type:'melee',
+    slot:'melee',
+    sprite:'space_wrench_hold',
+    icon:'space_wrench_icon',
+    damage:9,
+    range:46,
+    cooldown:330,
+    knockback:95,
+    scale:0.38,
+    offset:{
+      down:{x:10,y:-36,rotation:-0.25},
+      up:{x:8,y:-50,rotation:0.2},
+      left:{x:-16,y:-42,rotation:-1.0},
+      right:{x:16,y:-42,rotation:1.0}
+    }
+  },
+  scrap_revolver: {
+    id:'scrap_revolver',
+    name:'Scrap Revolver',
+    type:'pistol',
+    slot:'ranged',
+    sprite:'scrap_revolver_hold',
+    icon:'scrap_revolver_icon',
+    damage:8,
+    range:320,
+    cooldown:420,
+    ammoType:'light_cells',
+    clipSize:6,
+    reloadTime:900,
+    spread:4,
+    scale:0.38,
+    offset:{
+      down:{x:12,y:-40,rotation:1.45},
+      up:{x:8,y:-54,rotation:-1.45},
+      left:{x:-18,y:-44,rotation:3.14},
+      right:{x:18,y:-44,rotation:0}
+    },
+    muzzle:{
+      down:{x:12,y:-20},
+      up:{x:8,y:-68},
+      left:{x:-34,y:-44},
+      right:{x:34,y:-44}
+    }
+  },
+  laser_revolver: {
+    id:'laser_revolver',
+    name:'Laser Revolver',
+    type:'pistol',
+    slot:'ranged',
+    sprite:'laser_revolver_hold_4dir',
+    icon:'laser_revolver_icon',
+    pickup:'laser_revolver_pickup',
+    damage:10,
+    range:360,
+    cooldown:390,
+    projectileSpeed:620,
+    ammoType:'light_cells',
+    clipSize:6,
+    reloadTime:850,
+    spread:2,
+    scale:0.40,
+    directionFrame:{down:0,right:1,left:2,up:3},
+    offset:{
+      down:{x:9,y:-39,rotation:0},
+      right:{x:24,y:-44,rotation:0},
+      left:{x:-24,y:-44,rotation:0},
+      up:{x:8,y:-55,rotation:0}
+    },
+    muzzle:{
+      down:{x:11,y:-22},
+      right:{x:52,y:-46},
+      left:{x:-52,y:-46},
+      up:{x:10,y:-78}
+    },
+    fx:{muzzleFlash:'muzzle_flash_burst',impact:'rainbow_hit_burst',projectileColor:'#36e4ff'}
+  },
+  junkyard_rifle: {
+    id:'junkyard_rifle',
+    name:'Junkyard Rifle',
+    type:'rifle',
+    slot:'ranged',
+    sprite:'junkyard_rifle_hold',
+    icon:'junkyard_rifle_icon',
+    damage:14,
+    range:500,
+    cooldown:620,
+    ammoType:'rifle_cells',
+    clipSize:12,
+    reloadTime:1300,
+    spread:1,
+    movementPenalty:0.25,
+    scale:0.42,
+    offset:{
+      down:{x:14,y:-42,rotation:1.42},
+      up:{x:8,y:-58,rotation:-1.42},
+      left:{x:-24,y:-46,rotation:3.14},
+      right:{x:24,y:-46,rotation:0}
+    },
+    muzzle:{
+      down:{x:14,y:-18},
+      up:{x:8,y:-80},
+      left:{x:-64,y:-46},
+      right:{x:64,y:-46}
+    }
+  },
+  feedback_cannon: {
+    id:'feedback_cannon',
+    name:'Feedback Cannon',
+    type:'heavy',
+    slot:'heavy',
+    sprite:'feedback_cannon_hold',
+    icon:'feedback_cannon_icon',
+    damage:35,
+    range:420,
+    cooldown:1800,
+    ammoType:'heavy_cells',
+    ammoCost:1,
+    blastRadius:80,
+    movementPenalty:0.5,
+    scale:0.42,
+    offset:{
+      down:{x:18,y:-44,rotation:1.4},
+      up:{x:8,y:-60,rotation:-1.4},
+      left:{x:-28,y:-48,rotation:3.14},
+      right:{x:28,y:-48,rotation:0}
+    },
+    muzzle:{
+      down:{x:18,y:-10},
+      up:{x:8,y:-86},
+      left:{x:-78,y:-48},
+      right:{x:78,y:-48}
+    }
+  }
+};
+
+const GAME_STATE = {
+  inventory:{
+    items:{ basic_space_suit:1, basic_o2_mask:1, cosmic_spark_plug:0, scrap_metal:0, star_cash:0 },
+    weapons:{ black_guitar:1, space_wrench:1, scrap_revolver:1, laser_revolver:1, junkyard_rifle:1, feedback_cannon:1 },
+    ammo:{ light_cells:24, rifle_cells:18, heavy_cells:3 }
+  },
+  equipment:{
+    suit:null,
+    mask:'basic_o2_mask',
+    melee:'black_guitar',
+    ranged:'laser_revolver',
+    heavy:'feedback_cannon',
+    currentWeaponSlot:'ranged',
+    holster:'donny_tight_holster_brown'
+  },
+  vitals:{ o2:100, maxO2:100 },
+  location:{ planetId:'dust_9', chunkId:'0,1' },
+  flight:{ inSpace:false, driving:false, lastDriveScene:'Dust-9 Orbit' },
+  collected:{},
+  flags:{ hasVisitedAstroVan:true, introSeen:false, o2WarningShown:false }
+};
+
+const EQUIPMENT_DATA = {
+  suits:{
+    basic_space_suit:{
+      id:'basic_space_suit',
+      name:'Basic Space Suit',
+      allowsSpaceWalk:true,
+      stats:{ speedMod:-0.05, oxygenBonus:60, hazardResist:0 }
+    }
+  },
+  masks:{
+    basic_o2_mask:{
+      id:'basic_o2_mask',
+      name:'Basic O2 Mask',
+      allowsThinAtmosphere:true,
+      stats:{ oxygenBonus:30, speedMod:0 }
+    }
+  }
+};
+
+const PLANET_ATMOSPHERES = {
+  dust_9:{
+    id:'dust_9',
+    name:'Dust-9',
+    atmosphere:'Thin oxygen / dusty desert atmosphere',
+    requiresSuit:false,
+    requiresMask:true,
+    safeWith:'O2 mask',
+    outdoorO2DrainNoMask:9,
+    outdoorO2RecoverWithMask:7,
+    interiorFiltered:true
+  }
+};
+
+const SHIP_ZONES = [
+  { id:'bed', label:'Bed', x:92, y:103, w:165, h:88, message:'Rested. HP restored.' },
+  { id:'bunkBed', label:'Bunk Bed', x:95, y:105, w:230, h:120, message:'Bunk bed. Rest point online.' },
+  { id:'table', label:'Table', x:295, y:270, w:135, h:78, message:'Eat, plan quests, and check notes here.' },
+  { id:'riffBed', label:"Riff's Bed", x:218, y:365, w:105, h:92, message:"Riff's bed. Looks comfortable enough for a tiny alien roadie." },
+  { id:'gearLocker', label:'Gear Locker', x:98, y:300, w:150, h:120, message:'Open Gear Locker.' },
+  { id:'cockpit', label:'Cockpit', x:690, y:185, w:90, h:70, message:'Cockpit: sit in the pilot chair, then press Y to lift off or continue driving.' },
+  { id:'medStation', label:'Med Station', x:628, y:348, w:214, h:110, message:'Med station online. HP restored.' },
+  { id:'upgradeStation', label:'Upgrade Station', x:710, y:316, w:128, h:92, message:'Upgrade station: bring Cosmic Spark Plugs and Scrap Metal.' },
+  { id:'airlock', label:'Airlock Exit', x:405, y:486, w:150, h:54, message:'Airlock.' }
+];
+
+const SHIP_REST_ZONES = [
+  // x/y/w/h = invisible trigger box. sitX/sitY = exact anchor where Donny is placed.
+  { id:'shipBedRest', label:'Lay on bed', action:'sleep', x:92, y:103, w:165, h:88, sleepX:170, sleepY:170, dir:'right', bed:true },
+  { id:'shipBunkRest', label:'Lay on bunk bed', action:'sleep', x:95, y:105, w:230, h:120, sleepX:205, sleepY:186, dir:'right', bed:true },
+  { id:'shipTableChair', label:'Sit at table chair', action:'sit', x:295, y:270, w:135, h:78, sitX:360, sitY:344, dir:'up', chair:true },
+  { id:'pilotChair', label:'Sit in pilot chair', action:'sit', x:690, y:185, w:90, h:70, sitX:735, sitY:260, dir:'up', chair:true, cockpit:true }
+];
+
+const SHOW_WALK_BLOCKERS = false;
+
+const WALK_BLOCKERS = {
+  ship:[
+    // Exact collision blockers from assets/data/ship/astro_van_props_layout_v1.json.
+    {id:'pilotChairBlock', x:690,y:185,w:90,h:70},
+    {id:'shipTableBlock', x:295,y:270,w:135,h:78},
+    {id:'shipBedBlock', x:92,y:103,w:165,h:88},
+    {id:'shipBunkBedBlock', x:95,y:105,w:230,h:120},
+    {id:'riffBedBlock', x:205,y:378,w:120,h:76},
+    {id:'gearLockerBlock', x:95,y:300,w:150,h:120},
+    {id:'medStationBlock', x:600,y:340,w:230,h:120}
+  ],
+  planet:{
+    '0,0':[
+      {id:'northRocks',x:0,y:0,w:960,h:135},
+      {id:'wreckLeft',x:72,y:300,w:185,h:92},
+      {id:'wreckRight',x:690,y:295,w:190,h:100},
+      {id:'roadSign',x:410,y:120,w:135,h:75}
+    ],
+    '1,0':[
+      {id:'saloonBuilding',x:0,y:0,w:960,h:168},
+      {id:'saloonPorchRailLeft',x:60,y:168,w:315,h:42},
+      {id:'saloonPorchRailRight',x:585,y:168,w:315,h:42},
+      {id:'waterTrough',x:70,y:318,w:150,h:62},
+      {id:'signCluster',x:760,y:218,w:120,h:90}
+    ],
+    '2,0':[
+      {id:'guitarShopBuilding',x:0,y:0,w:960,h:175},
+      {id:'displayCratesLeft',x:80,y:220,w:150,h:80},
+      {id:'ampStack',x:705,y:210,w:145,h:90},
+      {id:'neonSignBase',x:410,y:168,w:140,h:50}
+    ],
+    '0,1':[
+      {id:'motelOfficeWall',x:0,y:0,w:960,h:160},
+      {id:'officeDoorTrimLeft',x:285,y:160,w:110,h:45},
+      {id:'officeDoorTrimRight',x:565,y:160,w:110,h:45},
+      {id:'brokenSign',x:45,y:190,w:110,h:100},
+      {id:'trashAndMachine',x:775,y:178,w:130,h:95},
+      // Astro Van is solid. Donny cannot walk through it.
+      VAN_COLLISION.body
+    ],
+    '1,1':[
+      {id:'dinerBuilding',x:0,y:0,w:960,h:165},
+      {id:'boothWindowsLeft',x:70,y:165,w:230,h:38},
+      {id:'boothWindowsRight',x:655,y:165,w:230,h:38},
+      {id:'fuelPumpLeft',x:80,y:330,w:105,h:80},
+      {id:'trashClusterRight',x:765,y:330,w:120,h:80}
+    ],
+    '2,1':[
+      {id:'hutLeft',x:38,y:84,w:220,h:150},
+      {id:'hutMiddle',x:363,y:82,w:230,h:150},
+      {id:'hutRight',x:682,y:84,w:235,h:150},
+      {id:'junkyardGate',x:635,y:292,w:285,h:118},
+      {id:'scrapPileLeft',x:65,y:318,w:165,h:95}
+    ]
+  },
+  interiors:{
+    bounty_office:[
+      {id:'upperWall',x:0,y:0,w:960,h:138},
+      {id:'wantedBoardWall',x:70,y:54,w:270,h:92},
+      {id:'ampMicCorner',x:60,y:175,w:160,h:100},
+      {id:'bedrollBlock',x:55,y:305,w:230,h:115},
+      {id:'radioCabinet',x:350,y:75,w:155,h:118},
+      {id:'deskTerminalBlock',x:548,y:92,w:225,h:154},
+      {id:'gearLockerBlock',x:690,y:315,w:170,h:150},
+      {id:'mapTableBlock',x:720,y:210,w:170,h:115}
+    ],
+    neon_spur_saloon_interior:[
+      {id:'upperWall',x:0,y:0,w:960,h:138},
+      {id:'stageBlock',x:42,y:88,w:270,h:170},
+      {id:'barCounterBlock',x:465,y:100,w:420,h:160},
+      {id:'leftTables',x:210,y:285,w:170,h:110},
+      {id:'rightTables',x:545,y:285,w:170,h:110},
+      {id:'jukeboxBlock',x:838,y:320,w:78,h:120}
+    ],
+    dust_string_guitars_interior:[
+      {id:'upperWall',x:0,y:0,w:960,h:138},
+      {id:'displayWallLeft',x:70,y:82,w:240,h:130},
+      {id:'counterBlock',x:520,y:98,w:310,h:130},
+      {id:'ampStackBlock',x:90,y:310,w:160,h:105},
+      {id:'repairBenchBlock',x:330,y:275,w:200,h:100},
+      {id:'guitarRackBlock',x:650,y:275,w:180,h:105}
+    ],
+    starbite_diner_interior:[
+      {id:'upperWall',x:0,y:0,w:960,h:138},
+      {id:'kitchenCounterBlock',x:470,y:90,w:405,h:160},
+      {id:'leftBoothBlock',x:85,y:245,w:185,h:105},
+      {id:'rightBoothBlock',x:700,y:245,w:185,h:105},
+      {id:'middleTableBlock',x:380,y:305,w:205,h:95},
+      {id:'jukeboxBlock',x:835,y:350,w:80,h:100}
+    ],
+    outpost_home_shop_interior:[
+      {id:'upperWall',x:0,y:0,w:960,h:138},
+      {id:'bedBlock',x:80,y:278,w:185,h:120},
+      {id:'shopCounterBlock',x:520,y:85,w:335,h:150},
+      {id:'workBenchBlock',x:560,y:272,w:210,h:100},
+      {id:'shelfBlock',x:70,y:80,w:215,h:120}
+    ],
+    scavenger_hut_interior:[
+      {id:'upperWall',x:0,y:0,w:960,h:138},
+      {id:'bedBlock',x:80,y:292,w:190,h:115},
+      {id:'scrapBenchBlock',x:500,y:270,w:230,h:110},
+      {id:'stoveBlock',x:720,y:165,w:120,h:120},
+      {id:'shelfBlock',x:70,y:90,w:210,h:115}
+    ],
+    mechanic_hut_interior:[
+      {id:'upperWall',x:0,y:0,w:960,h:138},
+      {id:'bedBlock',x:80,y:292,w:190,h:115},
+      {id:'toolBenchBlock',x:520,y:260,w:250,h:120},
+      {id:'engineBlock',x:335,y:250,w:145,h:110},
+      {id:'partsShelf',x:70,y:88,w:230,h:118}
+    ],
+    family_hut_interior:[
+      {id:'upperWall',x:0,y:0,w:960,h:138},
+      {id:'bunkBlock',x:75,y:250,w:200,h:140},
+      {id:'mainBedBlock',x:685,y:250,w:180,h:140},
+      {id:'diningTableBlock',x:385,y:292,w:205,h:110},
+      {id:'kitchenBlock',x:445,y:86,w:290,h:125},
+      {id:'shelfBlock',x:80,y:90,w:185,h:115}
+    ]
+  }
+};
+
+function cloneBlockers(list){
+  return (list || []).map(b => ({...b}));
+}
+function getPlanetBlockers(chunkId){
+  return cloneBlockers(WALK_BLOCKERS.planet[chunkId]);
+}
+function getInteriorBlockers(interiorId){
+  return cloneBlockers(WALK_BLOCKERS.interiors[interiorId]);
+}
+function getShipBlockers(){
+  return cloneBlockers(WALK_BLOCKERS.ship);
+}
+
+
+
+function zoneCenter(z){ return { x:z.x + z.w/2, y:z.y + z.h/2 }; }
+function pointInZone(px, py, z){ return px >= z.x && px <= z.x+z.w && py >= z.y && py <= z.y+z.h; }
+function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+function collectedKey(chunkId, pickupId){ return `${chunkId}:${pickupId}`; }
+function ownsItem(id){ return (GAME_STATE.inventory.items[id] || 0) > 0; }
+function equipSuit(id){ if(!ownsItem(id)) return false; GAME_STATE.equipment.suit = id; return true; }
+function unequipSuit(){ GAME_STATE.equipment.suit = null; }
+function equipMask(id){ if(!ownsItem(id)) return false; GAME_STATE.equipment.mask = id; return true; }
+function unequipMask(){ GAME_STATE.equipment.mask = null; }
+function hasSpaceSuitEquipped(){ return !!(GAME_STATE.equipment.suit && EQUIPMENT_DATA.suits[GAME_STATE.equipment.suit]?.allowsSpaceWalk); }
+function hasO2MaskEquipped(){ return !!(GAME_STATE.equipment.mask && EQUIPMENT_DATA.masks[GAME_STATE.equipment.mask]?.allowsThinAtmosphere); }
+function getEquippedSuitName(){ return GAME_STATE.equipment.suit ? EQUIPMENT_DATA.suits[GAME_STATE.equipment.suit]?.name || GAME_STATE.equipment.suit : 'Normal Clothes'; }
+function getEquippedMaskName(){ return GAME_STATE.equipment.mask ? EQUIPMENT_DATA.masks[GAME_STATE.equipment.mask]?.name || GAME_STATE.equipment.mask : 'None'; }
+function hasHolsterEquipped(){ return !!GAME_STATE.equipment.holster; }
+function getEquippedHolsterName(){ return GAME_STATE.equipment.holster ? 'Tight Brown Holster' : 'None'; }
+function equipHolster(){ GAME_STATE.equipment.holster = 'donny_tight_holster_brown'; return true; }
+function unequipHolster(){ GAME_STATE.equipment.holster = null; }
+function getAtmosphereStatus(planetId='dust_9'){
+  const atm = PLANET_ATMOSPHERES[planetId] || PLANET_ATMOSPHERES.dust_9;
+  if(hasSpaceSuitEquipped()) return `${atm.name}: sealed suit`;
+  if(hasO2MaskEquipped()) return `${atm.name}: O2 mask`;
+  return `${atm.name}: no O2 mask`;
+}
+function canBreatheOnPlanet(planetId='dust_9'){
+  const atm = PLANET_ATMOSPHERES[planetId] || PLANET_ATMOSPHERES.dust_9;
+  if(atm.requiresSuit && !hasSpaceSuitEquipped()) return false;
+  if(atm.requiresMask && !hasSpaceSuitEquipped() && !hasO2MaskEquipped()) return false;
+  return true;
+}
+function getDonnyTextureForArea(area){ return hasSpaceSuitEquipped() ? 'donny_spacesuit' : 'donny_overhead'; }
+function getRiffTextureForArea(area){ return hasSpaceSuitEquipped() ? 'riff_spacesuit' : 'riff'; }
+
+function getWeaponDataMap() {
+  return window.WEAPON_DATA || FALLBACK_WEAPONS;
+}
+function getEquippedWeaponId() {
+  return GAME_STATE.equipment[GAME_STATE.equipment.currentWeaponSlot] || GAME_STATE.equipment.melee || 'black_guitar';
+}
+function getEquippedWeapon() {
+  const id = getEquippedWeaponId();
+  return getWeaponDataMap()[id] || FALLBACK_WEAPONS[id] || FALLBACK_WEAPONS.black_guitar;
+}
+function cycleWeaponSlot() {
+  const current = GAME_STATE.equipment.currentWeaponSlot || 'melee';
+  let idx = WEAPON_SLOT_ORDER.indexOf(current);
+  if (idx < 0) idx = 0;
+  for (let i=1; i<=WEAPON_SLOT_ORDER.length; i++) {
+    const slot = WEAPON_SLOT_ORDER[(idx+i) % WEAPON_SLOT_ORDER.length];
+    const weaponId = GAME_STATE.equipment[slot];
+    if (weaponId && GAME_STATE.inventory.weapons[weaponId]) {
+      GAME_STATE.equipment.currentWeaponSlot = slot;
+      return getEquippedWeapon();
+    }
+  }
+  GAME_STATE.equipment.currentWeaponSlot = 'melee';
+  return getEquippedWeapon();
+}
+function weaponDirVector(dir) {
+  if (dir === 'up') return {x:0,y:-1,angle:-Math.PI/2};
+  if (dir === 'down') return {x:0,y:1,angle:Math.PI/2};
+  if (dir === 'left') return {x:-1,y:0,angle:Math.PI};
+  return {x:1,y:0,angle:0};
+}
+
+const GAME_INPUT = {
+  vx:0,
+  vy:0,
+  moveMag:0,
+  confirm:false,
+  back:false,
+  jump:false,
+  crawl:false,
+  slide:false,
+  punch:false,
+  shoot:false,
+  consumeConfirm(){ const hit=this.confirm; this.confirm=false; return hit; },
+  consumeBack(){ const hit=this.back; this.back=false; return hit; },
+  consumeJump(){ const hit=this.jump; this.jump=false; return hit; },
+  consumeCrawl(){ const hit=this.crawl; this.crawl=false; return hit; },
+  consumeSlide(){ const hit=this.slide; this.slide=false; return hit; },
+  consumePunch(){ const hit=this.punch; this.punch=false; return hit; },
+  consumeShoot(){ const hit=this.shoot; this.shoot=false; return hit; }
+};
+
+(function setupDomControls(){
+  const base=document.getElementById('stickBase'), knob=document.getElementById('stickKnob');
+  const btnY=document.getElementById('btnY'), btnA=document.getElementById('btnA'), btnX=document.getElementById('btnX'), btnB=document.getElementById('btnB'), btnStart=document.getElementById('btnStart');
+  let activePointerId=null; const maxDist=44; let lastBTap=0;
+  function setKnob(dx,dy){
+    const len=Math.max(1,Math.sqrt(dx*dx+dy*dy)), dist=Math.min(maxDist,len);
+    const nx=(dx/len)*dist, ny=(dy/len)*dist;
+    GAME_INPUT.vx=nx/maxDist; GAME_INPUT.vy=ny/maxDist; GAME_INPUT.moveMag=dist/maxDist;
+    knob.style.transform=`translate(${nx}px, ${ny}px)`;
+  }
+  function resetStick(){ activePointerId=null; GAME_INPUT.vx=0; GAME_INPUT.vy=0; GAME_INPUT.moveMag=0; knob.style.transform='translate(0px, 0px)'; }
+  function updateFromPointer(e){ const r=base.getBoundingClientRect(); setKnob(e.clientX-(r.left+r.width/2), e.clientY-(r.top+r.height/2)); }
+  base.addEventListener('pointerdown',e=>{e.preventDefault();activePointerId=e.pointerId;base.setPointerCapture(e.pointerId);updateFromPointer(e);});
+  base.addEventListener('pointermove',e=>{if(e.pointerId!==activePointerId)return;e.preventDefault();updateFromPointer(e);});
+  base.addEventListener('pointerup',e=>{if(e.pointerId!==activePointerId)return;e.preventDefault();resetStick();});
+  base.addEventListener('pointercancel',resetStick); base.addEventListener('lostpointercapture',resetStick);
+
+  btnA.addEventListener('pointerdown',e=>{e.preventDefault();GAME_INPUT.confirm=true;GAME_INPUT.jump=true;});
+  btnY.addEventListener('pointerdown',e=>{e.preventDefault();GAME_INPUT.shoot=true;});
+  btnX.addEventListener('pointerdown',e=>{e.preventDefault();GAME_INPUT.punch=true;});
+  btnB.addEventListener('pointerdown',e=>{
+    e.preventDefault();
+    const now=performance.now();
+    if(now-lastBTap<320) GAME_INPUT.slide=true;
+    else GAME_INPUT.crawl=true;
+    lastBTap=now;
+  });
+  btnStart.addEventListener('pointerdown',e=>{e.preventDefault();GAME_INPUT.back=true;});
+})();
+
+class BaseScene extends Phaser.Scene {
+  createCommonInput(){
+    this.cursors=this.input.keyboard.createCursorKeys();
+    this.keys=this.input.keyboard.addKeys('W,A,S,D,E,Y,ENTER,SPACE,ESC,UP,DOWN,J,K,Q,X,C,SHIFT,L');
+  }
+  getMoveVector(){
+    let vx=0, vy=0;
+    if(this.cursors.left.isDown || this.keys.A.isDown) vx-=1;
+    if(this.cursors.right.isDown || this.keys.D.isDown) vx+=1;
+    if(this.cursors.up.isDown || this.keys.W.isDown) vy-=1;
+    if(this.cursors.down.isDown || this.keys.S.isDown) vy+=1;
+    vx += GAME_INPUT.vx || 0; vy += GAME_INPUT.vy || 0;
+    const len=Math.sqrt(vx*vx+vy*vy); if(len>1){vx/=len;vy/=len;}
+    return {vx,vy};
+  }
+  consumeConfirm(){
+    return Phaser.Input.Keyboard.JustDown(this.keys.E) ||
+      Phaser.Input.Keyboard.JustDown(this.keys.ENTER) ||
+      Phaser.Input.Keyboard.JustDown(this.keys.SPACE) ||
+      GAME_INPUT.consumeConfirm();
+  }
+  consumeBack(){ return Phaser.Input.Keyboard.JustDown(this.keys.ESC) || GAME_INPUT.consumeBack(); }
+  consumeJump(){ return Phaser.Input.Keyboard.JustDown(this.keys.SPACE) || GAME_INPUT.consumeJump(); }
+  consumeCrawl(){ return Phaser.Input.Keyboard.JustDown(this.keys.C) || GAME_INPUT.consumeCrawl(); }
+  consumeSlide(){ return Phaser.Input.Keyboard.JustDown(this.keys.K) || GAME_INPUT.consumeSlide(); }
+  consumePunch(){ return Phaser.Input.Keyboard.JustDown(this.keys.J) || GAME_INPUT.consumePunch(); }
+  consumeShoot(){
+    return Phaser.Input.Keyboard.JustDown(this.keys.X) ||
+      Phaser.Input.Keyboard.JustDown(this.keys.Y) ||
+      Phaser.Input.Keyboard.JustDown(this.keys.L) ||
+      GAME_INPUT.consumeShoot();
+  }
+  wantsRun(){ return this.keys.SHIFT?.isDown || (GAME_INPUT.moveMag || 0) > 0.88; }
+  createDonny(texture,x,y){
+    const p=this.add.sprite(x,y,texture,0).setOrigin(0.5,1).setScale(DONNY.scale).setDepth(20);
+    p.dir='down';
+    p.textureKey=texture;
+    p.walkBobPhase=0;
+    return p;
+  }
+  createDonnyAnimations(texture){
+    const cfg = getDonnyMoveConfig(texture);
+    Object.keys(cfg.anims).forEach(dir=>{
+      const key=`${texture}_${dir}`;
+      if(!this.anims.exists(key)){
+        this.anims.create({ key, frames:cfg.anims[dir].frames.map(frame=>({key:texture,frame})), frameRate:cfg.walkFrameRate || 8, repeat:-1 });
+      }
+    });
+  }
+  refreshDonnyTexture(player,area,forceFrame=false){
+    if(!player) return;
+    const texture=getDonnyTextureForArea(area);
+    const textureChanged = player.textureKey !== texture;
+
+    if(textureChanged){
+      if(player.anims) player.anims.stop();
+      player.setTexture(texture);
+      player.textureKey=texture;
+    }
+
+    /*
+      WALK ANIMATION FIX:
+      Do not call setFrame() every update while Donny is walking.
+      The old version reset Donny to the standing frame before player.play(),
+      so he moved across the screen but looked like he was sliding.
+    */
+    const isPlaying = !!(player.anims && player.anims.isPlaying);
+    if(forceFrame || textureChanged || !isPlaying){
+      const cfg = getDonnyMoveConfig(texture);
+      player.setFrame(cfg.directionFrame[player.dir] || 0);
+    }
+  }
+  playDonnyMoveAnim(player,dir){
+    if(!player) return;
+
+    const animKey = `${player.textureKey}_${dir}`;
+    if(!this.anims.exists(animKey)){
+      const cfg = getDonnyMoveConfig(player.textureKey);
+      player.anims?.stop();
+      player.setFrame(cfg.directionFrame[dir] || 0);
+      return;
+    }
+
+    const currentKey = player.anims?.currentAnim?.key;
+    if(currentKey !== animKey || !player.anims.isPlaying){
+      player.play(animKey, true);
+    }
+  }
+
+  getMoveBlockers(){
+    return this.moveBlockers || [];
+  }
+  collidesWithMoveBlocker(x,y,pad=16, player=null){
+    const px=x;
+    const py=y-12;
+
+    // If Donny is standing on the Astro Van roof, let him move inside the roof platform.
+    if(player && player.onVanRoof && this.chunk && this.chunk.id === VAN_COLLISION.chunkId){
+      if(pointInRect(px, py, VAN_COLLISION.roof)) return false;
+    }
+
+    return this.getMoveBlockers().some(b =>
+      px >= b.x - pad &&
+      px <= b.x + b.w + pad &&
+      py >= b.y - pad &&
+      py <= b.y + b.h + pad
+    );
+  }
+  moveActorWithBlockers(player,nx,ny,bounds){
+    nx=clamp(nx,bounds.x,bounds.x+bounds.w);
+    ny=clamp(ny,bounds.y,bounds.y+bounds.h);
+    const oldX=player.x;
+    const oldY=player.y;
+    if(!this.collidesWithMoveBlocker(nx,oldY,16,player)) player.x=nx;
+    if(!this.collidesWithMoveBlocker(player.x,ny,16,player)) player.y=ny;
+  }
+  findSlideTarget(player,vx,vy,distance,bounds){
+    let lastX=player.x;
+    let lastY=player.y;
+    const steps=10;
+    for(let i=1;i<=steps;i++){
+      const tx=clamp(player.x + vx*distance*(i/steps), bounds.x, bounds.x+bounds.w);
+      const ty=clamp(player.y + vy*distance*(i/steps), bounds.y, bounds.y+bounds.h);
+      if(this.collidesWithMoveBlocker(tx,ty,16,player)) break;
+      lastX=tx; lastY=ty;
+    }
+    return {x:lastX,y:lastY};
+  }
+  drawMoveBlockers(){
+    if(!SHOW_WALK_BLOCKERS) return;
+    this.getMoveBlockers().forEach(b=>{
+      this.add.rectangle(b.x+b.w/2,b.y+b.h/2,b.w,b.h,0xff0000,0.18)
+        .setStrokeStyle(2,0xff0000,0.72)
+        .setDepth(1400);
+      this.add.text(b.x+3,b.y+3,b.id || 'block',{fontFamily:'Arial',fontSize:'10px',color:'#fff',backgroundColor:'rgba(0,0,0,.45)'})
+        .setDepth(1401);
+    });
+  }
+
+  moveDonny(player,bounds,dt,area){
+    if(player.isResting){
+      player.setDepth(20 + player.y);
+      this.updateHolsterSprite(player);
+      this.updateHeldWeaponSprite(player);
+      return;
+    }
+    if(player.actionLocked){
+      this.updateHolsterSprite(player);
+      return;
+    }
+    const {vx,vy}=this.getMoveVector();
+    const moving=Math.abs(vx)>0.08 || Math.abs(vy)>0.08;
+    if(player.isCrawling){
+      const action = this.getDonnyAction('crawl');
+      if(moving){
+        const speed=DONNY.speed*0.48;
+        this.moveActorWithBlockers(player, player.x + vx*speed*dt, player.y + vy*speed*dt, bounds);
+        player.dir = Math.abs(vx)>Math.abs(vy) ? (vx<0?'left':'right') : (vy<0?'up':'down');
+        player.textureKey=action.tex;
+        player.setTexture(action.tex);
+        player.setScale(DONNY_ACTION.scale);
+        player.play(`${action.prefix}_${player.dir}`, true);
+      } else {
+        player.anims.stop();
+        player.textureKey=action.tex;
+        player.setTexture(action.tex);
+        player.setScale(DONNY_ACTION.scale);
+        player.setFrame(this.getActionFrameForDir(action, player.dir));
+      }
+      player.setDepth(20 + player.y);
+      this.updateHolsterSprite(player);
+      return;
+    }
+    if(area) this.refreshDonnyTexture(player,area,false);
+    if(moving){
+      const suitStats=GAME_STATE.equipment.suit ? EQUIPMENT_DATA.suits[GAME_STATE.equipment.suit]?.stats : null;
+      const runBoost=this.wantsRun() ? 1.28 : 1;
+      const speed=DONNY.speed * (1 + (suitStats?.speedMod || 0)) * runBoost;
+      this.moveActorWithBlockers(player, player.x + vx*speed*dt, player.y + vy*speed*dt, bounds);
+
+      player.dir = Math.abs(vx)>Math.abs(vy) ? (vx<0?'left':'right') : (vy<0?'up':'down');
+
+      player.walkBobPhase = (player.walkBobPhase || 0) + dt * 18;
+      const bob = Math.sin(player.walkBobPhase) * 0.012;
+      player.setScale(DONNY.scale + bob, DONNY.scale - bob * 0.35);
+
+      /*
+        WALK ANIMATION FIX:
+        Play the directional loop only when the animation key changes.
+        Do not let idle/setFrame overwrite the walking frames.
+      */
+      this.playDonnyMoveAnim(player,player.dir);
+    } else {
+      player.walkBobPhase = 0;
+      player.setScale(DONNY.scale);
+      player.anims?.stop();
+      if(area) this.refreshDonnyTexture(player,area,true);
+      else {
+        const cfg = getDonnyMoveConfig(player.textureKey);
+        player.setFrame(cfg.directionFrame[player.dir] || 0);
+      }
+    }
+    player.setDepth(20 + player.y);
+    this.updateHolsterSprite(player);
+  }
+  createRiffAnimations(texture){
+    Object.keys(RIFF.anims).forEach(dir=>{
+      const key=`${texture}_${dir}`;
+      if(!this.anims.exists(key)){
+        this.anims.create({ key, frames:RIFF.anims[dir].frames.map(frame=>({key:texture,frame})), frameRate:8, repeat:-1 });
+      }
+    });
+  }
+  createRiff(texture,x,y){
+    const r=this.add.sprite(x,y,texture,0).setOrigin(0.5,1).setScale(RIFF.scale).setDepth(18);
+    r.dir='down'; r.textureKey=texture; return r;
+  }
+  refreshRiffTexture(riff,area,forceFrame=false){
+    if(!riff) return;
+    const texture=getRiffTextureForArea(area);
+    const textureChanged = riff.textureKey !== texture;
+
+    if(textureChanged){
+      if(riff.anims) riff.anims.stop();
+      riff.setTexture(texture);
+      riff.textureKey=texture;
+    }
+
+    if(forceFrame || textureChanged || !(riff.anims && riff.anims.isPlaying)){
+      riff.setFrame({up:12,right:4,left:8,down:0}[riff.dir] || 0);
+    }
+  }
+  updateRiffFollow(riff,player,dt,area){
+    if(!riff || !player) return;
+    this.refreshRiffTexture(riff,area,false);
+    const offset={
+      up:{x:42,y:58,dir:'up'},
+      down:{x:-42,y:-46,dir:'down'},
+      left:{x:58,y:28,dir:'left'},
+      right:{x:-58,y:28,dir:'right'}
+    }[player.dir] || {x:-42,y:34,dir:'down'};
+    const tx=player.x+offset.x;
+    const ty=player.y+offset.y;
+    const dx=tx-riff.x;
+    const dy=ty-riff.y;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist>RIFF.followDistance){
+      const vx=dx/dist, vy=dy/dist;
+      riff.x += vx * RIFF.speed * dt;
+      riff.y += vy * RIFF.speed * dt;
+      riff.dir = Math.abs(vx)>Math.abs(vy) ? (vx<0?'left':'right') : (vy<0?'up':'down');
+      riff.play(`${riff.textureKey}_${riff.dir}`, true);
+    } else {
+      riff.anims.stop();
+      riff.dir = offset.dir || riff.dir;
+      riff.setFrame({up:12,right:4,left:8,down:0}[riff.dir] || 0);
+    }
+    riff.setDepth(18 + riff.y);
+  }
+
+
+  createDonnyActionAnimations(){
+    const map = [
+      {tex:'donny_empty_pistol_pose', prefix:'donny_pistol_empty', fps:10, repeat:0, rows:['down','right','left','up']},
+      {tex:'donny_unarmed_punch', prefix:'donny_punch', fps:10, repeat:0, rows:['down','right','left','up']},
+      {tex:'donny_jump_4dir', prefix:'donny_jump', fps:10, repeat:0, rows:['down','right','left','up']},
+      {tex:'donny_crawl_4dir', prefix:'donny_crawl', fps:7, repeat:-1, rows:['down','right','left','up'], cols:4},
+      {tex:'donny_slide_4dir', prefix:'donny_slide', fps:10, repeat:0, rows:['down','right','left','up']},
+      {tex:'donny_sit_4dir', prefix:'donny_sit', fps:4, repeat:-1, rows:['down','right','left','up']},
+      {tex:'donny_sleep_4dir', prefix:'donny_sleep', fps:4, repeat:-1, rows:['down','right','left','up']},
+
+      {tex:'donny_spacesuit_empty_pistol_4dir', prefix:'donny_spacesuit_pistol_empty', fps:10, repeat:0, rows:['down','right','left','up']},
+      {tex:'donny_spacesuit_unarmed_punch_4dir', prefix:'donny_spacesuit_punch', fps:10, repeat:0, rows:['down','right','left','up']},
+      {tex:'donny_spacesuit_jump_4dir', prefix:'donny_spacesuit_jump', fps:10, repeat:0, rows:['down','right','left','up']},
+      {tex:'donny_spacesuit_crawl_heavy_8f', prefix:'donny_spacesuit_crawl', fps:7, repeat:-1, rows:['down','right','left','up'], cols:8},
+      {tex:'donny_spacesuit_slide_butt_8f', prefix:'donny_spacesuit_slide', fps:10, repeat:0, rows:['down','right','left','up'], cols:8},
+      {tex:'donny_spacesuit_sit_4dir', prefix:'donny_spacesuit_sit', fps:4, repeat:-1, rows:['down','right','left','up']},
+      {tex:'donny_spacesuit_sleep_4dir', prefix:'donny_spacesuit_sleep', fps:4, repeat:-1, rows:['down','right','left','up']}
+    ];
+    map.forEach(def=>{
+      if(!this.textures.exists(def.tex)) return;
+      def.rows.forEach((dir,row)=>{
+        const key=`${def.prefix}_${dir}`;
+        if(!this.anims.exists(key)){
+          this.anims.create({
+            key,
+            frames:this.anims.generateFrameNumbers(def.tex,{start:row*(def.cols||4),end:row*(def.cols||4)+(def.cols||4)-1}),
+            frameRate:def.fps,
+            repeat:def.repeat
+          });
+        }
+      });
+    });
+  }
+  restoreDonnyMovement(player, area){
+    if(!player) return;
+    player.actionLocked=false;
+    player.isCrawling=false;
+    player.setScale(DONNY.scale);
+    this.refreshDonnyTexture(player,area);
+  }
+  getDonnyAction(kind){
+    const suited = hasSpaceSuitEquipped();
+    const actions = {
+      pistol: suited ? {tex:'donny_spacesuit_empty_pistol_4dir', prefix:'donny_spacesuit_pistol_empty', cols:4} : {tex:'donny_empty_pistol_pose', prefix:'donny_pistol_empty', cols:4},
+      punch: suited ? {tex:'donny_spacesuit_unarmed_punch_4dir', prefix:'donny_spacesuit_punch', cols:4} : {tex:'donny_unarmed_punch', prefix:'donny_punch', cols:4},
+      jump: suited ? {tex:'donny_spacesuit_jump_4dir', prefix:'donny_spacesuit_jump', cols:4} : {tex:'donny_jump_4dir', prefix:'donny_jump', cols:4},
+      crawl: suited ? {tex:'donny_spacesuit_crawl_heavy_8f', prefix:'donny_spacesuit_crawl', cols:8} : {tex:'donny_crawl_4dir', prefix:'donny_crawl', cols:4},
+      slide: suited ? {tex:'donny_spacesuit_slide_butt_8f', prefix:'donny_spacesuit_slide', cols:8} : {tex:'donny_slide_4dir', prefix:'donny_slide', cols:4},
+      sit: suited ? {tex:'donny_spacesuit_sit_4dir', prefix:'donny_spacesuit_sit', cols:4} : {tex:'donny_sit_4dir', prefix:'donny_sit', cols:4},
+      sleep: suited ? {tex:'donny_spacesuit_sleep_4dir', prefix:'donny_spacesuit_sleep', cols:4} : {tex:'donny_sleep_4dir', prefix:'donny_sleep', cols:4}
+    };
+    return actions[kind];
+  }
+
+  getActionFrameForDir(action, dir){
+    const cols = action && action.cols ? action.cols : 4;
+    const row = {down:0,right:1,left:2,up:3}[dir || 'down'] || 0;
+    return row * cols;
+  }
+
+  playDonnyAction(player, tex, animPrefix, dir, opts={}){
+    if(!player || !this.textures.exists(tex)) return false;
+    const area = opts.area || 'planet';
+    const animKey = `${animPrefix}_${dir || player.dir || 'down'}`;
+    player.actionLocked = !!opts.lock;
+    player.textureKey = tex;
+    player.setTexture(tex);
+    player.setScale(DONNY_ACTION.scale);
+    const actionCols = (tex.includes('heavy_8f') || tex.includes('slide_butt_8f')) ? 8 : 4;
+    const startAction = {cols:actionCols};
+    player.setFrame(opts.startFrame !== undefined ? opts.startFrame : this.getActionFrameForDir(startAction, dir || player.dir || 'down'));
+    if(this.anims.exists(animKey)){
+      player.play(animKey, true);
+      if(opts.once !== false){
+        player.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => this.restoreDonnyMovement(player, area));
+      }
+    } else if(opts.duration){
+      this.time.delayedCall(opts.duration, () => this.restoreDonnyMovement(player, area));
+    }
+    return true;
+  }
+
+  stopResting(player, area='planet'){
+    if(!player || !player.isResting) return;
+    player.isResting=false;
+    player.restMode=null;
+    player.restZoneId=null;
+    player.restZone=null;
+    player.actionLocked=false;
+    player.setScale(DONNY.scale);
+    this.refreshDonnyTexture(player, area);
+    this.showMessage('Standing up.');
+  }
+  enterRestPose(player, zone, mode, area='planet'){
+    if(!player || !zone) return;
+    player.isCrawling=false;
+    player.actionLocked=false;
+    player.isResting=true;
+    this.weaponVisibleUntil = 0;
+    player.restMode=mode;
+    player.restZoneId = zone.id || null;
+    player.restZone = zone;
+    player.restInputLockUntil = this.time.now + 260;
+
+    const dir = zone.dir || player.dir || 'down';
+    player.dir = dir;
+
+    // Chair anchors: place Donny exactly on the painted chair seat.
+    player.x = zone.sitX !== undefined ? zone.sitX : zone.x + zone.w/2;
+    player.y = zone.sitY !== undefined ? zone.sitY : zone.y + zone.h;
+
+    const restAction = this.getDonnyAction(mode === 'sleep' ? 'sleep' : 'sit');
+    const tex = restAction.tex;
+    const prefix = restAction.prefix;
+    if(this.textures.exists(tex)){
+      player.textureKey = tex;
+      player.setTexture(tex);
+      player.setScale(REST_ACTION.scale);
+      player.setFrame(this.getActionFrameForDir(restAction, dir));
+      const animKey = `${prefix}_${dir}`;
+      if(this.anims.exists(animKey)) player.play(animKey, true);
+    }
+
+    const depthOffset = zone.chair ? REST_ACTION.chairDepthOffset : 0;
+    player.setDepth(20 + player.y + depthOffset);
+    this.updateHolsterSprite(player);
+    this.updateHeldWeaponSprite(player);
+    this.showMessage(mode === 'sleep' ? 'Donny lays down.' : 'Donny sits down.');
+  }
+  sitDonny(player, zone, area='planet'){ this.enterRestPose(player, zone, 'sit', area); }
+  layDonny(player, zone, area='planet'){ this.enterRestPose(player, zone, 'sleep', area); }
+  getFurnitureZonesForInterior(id){
+    const z = {
+      bounty_office:[
+        {id:'officeDeskChair', label:'Sit at desk chair', action:'sit', x:590,y:176,w:94,h:90, sitX:638,sitY:252, dir:'up'},
+        {id:'officeBedroll', label:'Lay down on bedroll', action:'lay', x:90,y:310,w:170,h:120, sitX:170,sitY:405, dir:'right'}
+      ],
+      neon_spur_saloon_interior:[
+        {id:'saloonBarStool1', label:'Sit at bar stool', action:'sit', x:540,y:255,w:70,h:70, sitX:575,sitY:330, dir:'up'},
+        {id:'saloonBarStool2', label:'Sit at bar stool', action:'sit', x:628,y:255,w:70,h:70, sitX:663,sitY:330, dir:'up'},
+        {id:'saloonTableChair1', label:'Sit at table chair', action:'sit', x:330,y:305,w:76,h:76, sitX:368,sitY:380, dir:'down'},
+        {id:'saloonTableChair2', label:'Sit at table chair', action:'sit', x:450,y:305,w:76,h:76, sitX:488,sitY:380, dir:'down'}
+      ],
+      dust_string_guitars_interior:[
+        {id:'guitarShopStool', label:'Sit on shop stool', action:'sit', x:610,y:280,w:80,h:80, sitX:650,sitY:356, dir:'up'},
+        {id:'repairBenchStool', label:'Sit at repair bench', action:'sit', x:350,y:288,w:80,h:80, sitX:390,sitY:362, dir:'up'}
+      ],
+      starbite_diner_interior:[
+        {id:'dinerCounterStool1', label:'Sit at counter stool', action:'sit', x:470,y:255,w:70,h:70, sitX:505,sitY:330, dir:'up'},
+        {id:'dinerCounterStool2', label:'Sit at counter stool', action:'sit', x:555,y:255,w:70,h:70, sitX:590,sitY:330, dir:'up'},
+        {id:'dinerBooth1', label:'Sit in booth', action:'sit', x:120,y:265,w:135,h:90, sitX:190,sitY:348, dir:'right'},
+        {id:'dinerBooth2', label:'Sit in booth', action:'sit', x:730,y:265,w:135,h:90, sitX:795,sitY:348, dir:'left'}
+      ],
+      outpost_home_shop_interior:[
+        {id:'outpostBed', label:'Lay down on bed', action:'lay', x:95,y:285,w:155,h:120, sitX:170,sitY:390, dir:'right'},
+        {id:'outpostWorkChair', label:'Sit at work chair', action:'sit', x:610,y:288,w:80,h:80, sitX:650,sitY:365, dir:'up'}
+      ],
+      scavenger_hut_interior:[
+        {id:'scavengerBed', label:'Lay down on bed', action:'lay', x:90,y:300,w:160,h:110, sitX:170,sitY:395, dir:'right'},
+        {id:'scavengerBenchSeat', label:'Sit at scrap bench', action:'sit', x:520,y:285,w:90,h:80, sitX:565,sitY:360, dir:'up'}
+      ],
+      mechanic_hut_interior:[
+        {id:'mechanicBed', label:'Lay down on bed', action:'lay', x:90,y:300,w:160,h:110, sitX:170,sitY:395, dir:'right'},
+        {id:'mechanicBenchSeat', label:'Sit at tool bench', action:'sit', x:540,y:285,w:90,h:80, sitX:585,sitY:360, dir:'up'}
+      ],
+      family_hut_interior:[
+        {id:'familyBunkBeds', label:'Lay down on bunk bed', action:'lay', x:85,y:260,w:175,h:130, sitX:172,sitY:385, dir:'right'},
+        {id:'familyMainBed', label:'Lay down on main bed', action:'lay', x:700,y:265,w:150,h:125, sitX:775,sitY:390, dir:'left'},
+        {id:'familyDiningChair1', label:'Sit at dining chair', action:'sit', x:400,y:305,w:75,h:75, sitX:438,sitY:380, dir:'down'},
+        {id:'familyDiningChair2', label:'Sit at dining chair', action:'sit', x:500,y:305,w:75,h:75, sitX:538,sitY:380, dir:'down'}
+      ]
+    };
+    return z[id] || [];
+  }
+
+
+  getRestPrompt(player, area='planet'){
+    if(!player || !player.isResting) return '';
+    const isCockpit = area === 'ship' && player.restZone && player.restZone.cockpit;
+    if(isCockpit) return GAME_STATE.flight?.inSpace ? 'A: Get Up    Y: Continue Driving' : 'A: Get Up    Y: Lift Off';
+    return 'A: Get Up';
+  }
+  handleRestingControls(player, area='planet'){
+    if(!player || !player.isResting) return false;
+
+    const isCockpit = area === 'ship' && player.restZone && player.restZone.cockpit;
+    if(this.prompt) this.prompt.setText(this.getRestPrompt(player, area));
+
+    const depthOffset = player.restZone && player.restZone.chair ? REST_ACTION.chairDepthOffset : 0;
+    player.setDepth(20 + player.y + depthOffset);
+    this.updateHolsterSprite(player);
+    this.updateHeldWeaponSprite(player);
+
+    // Prevent the same A press that sat Donny down from instantly standing him back up.
+    if(player.restInputLockUntil && this.time.now < player.restInputLockUntil) return true;
+
+    const move=this.getMoveVector();
+    const wantsMove = Math.abs(move.vx)>0.10 || Math.abs(move.vy)>0.10;
+
+    if(isCockpit && this.consumeShoot()){
+      if(this.startLiftOffFromCockpit) this.startLiftOffFromCockpit();
+      else this.showMessage('Lift-off controls are not wired yet.');
+      return true;
+    }
+
+    const wantsGetUp =
+      wantsMove ||
+      this.consumeConfirm() ||
+      this.consumeJump() ||
+      this.consumeCrawl() ||
+      this.consumeSlide() ||
+      this.consumePunch();
+
+    if(wantsGetUp) this.stopResting(player, area);
+    return true;
+  }
+
+  findVanRoofJumpTarget(player, dir){
+    if(!this.chunk || this.chunk.id !== VAN_COLLISION.chunkId) return null;
+    const roof = VAN_COLLISION.roof;
+    const body = VAN_COLLISION.body;
+    const v = weaponDirVector(dir || player.dir || 'down');
+
+    const start = {x:player.x-10, y:player.y-24, w:20, h:28};
+    const projected = {x:player.x + v.x*72 - 10, y:player.y + v.y*72 - 24, w:20, h:28};
+    const nearVan = rectsOverlap(projected, body) ||
+      Phaser.Math.Distance.Between(player.x, player.y-20, body.x+body.w/2, body.y+body.h/2) < 130;
+
+    if(!nearVan) return null;
+
+    return {
+      x: clamp(player.x + v.x*36, roof.x+18, roof.x+roof.w-18),
+      y: clamp(roof.topY + 28, roof.y+36, roof.y+roof.h-6)
+    };
+  }
+
+  isOnVanRoof(player){
+    if(!this.chunk || this.chunk.id !== VAN_COLLISION.chunkId) return false;
+    return pointInRect(player.x, player.y-20, VAN_COLLISION.roof);
+  }
+
+  updateVanRoofState(player){
+    if(!player || !this.chunk || this.chunk.id !== VAN_COLLISION.chunkId){
+      if(player) player.onVanRoof=false;
+      return;
+    }
+
+    if(player.onVanRoof){
+      const roof = VAN_COLLISION.roof;
+      player.x = clamp(player.x, roof.x+14, roof.x+roof.w-14);
+      player.y = clamp(player.y, roof.y+34, roof.y+roof.h-4);
+      player.setDepth(20 + player.y + 80);
+    }
+  }
+
+  jumpOffVanRoof(player, dir='down'){
+    const v = weaponDirVector(dir);
+    player.onVanRoof = false;
+    const bounds = this.bounds || {x:0,y:0,w:W,h:H};
+    const landing = {
+      x: clamp(player.x + v.x*82, bounds.x, bounds.x+bounds.w),
+      y: clamp(player.y + v.y*82, bounds.y, bounds.y+bounds.h)
+    };
+    if(pointInRect(landing.x, landing.y-12, VAN_COLLISION.body)){
+      landing.x = player.x;
+      landing.y = player.y + 96;
+    }
+    return landing;
+  }
+
+  updateAtmosphere(delta, area='planet'){
+    if(area !== 'planet' || !GAME_STATE.vitals) return;
+    const atm = PLANET_ATMOSPHERES[GAME_STATE.location.planetId || 'dust_9'] || PLANET_ATMOSPHERES.dust_9;
+    const dt = delta / 1000;
+    if(hasSpaceSuitEquipped() || hasO2MaskEquipped()){
+      GAME_STATE.vitals.o2 = Math.min(GAME_STATE.vitals.maxO2, GAME_STATE.vitals.o2 + atm.outdoorO2RecoverWithMask * dt);
+      GAME_STATE.flags.o2WarningShown = false;
+      return;
+    }
+    GAME_STATE.vitals.o2 = Math.max(0, GAME_STATE.vitals.o2 - atm.outdoorO2DrainNoMask * dt);
+    if(GAME_STATE.vitals.o2 <= 35 && !GAME_STATE.flags.o2WarningShown){
+      GAME_STATE.flags.o2WarningShown = true;
+      this.showMessage('Dust-9 has thin air. Equip an O2 mask or return to the Astro Van.');
+    }
+    if(GAME_STATE.vitals.o2 <= 0){
+      GAME_STATE.vitals.o2 = 20;
+      this.showMessage('O2 critical. Donny retreats to the Astro Van.');
+      this.scene.start('ShipHubScene');
+    }
+  }
+
+  useUnarmedPunch(player, area='planet'){
+    this.weaponVisibleUntil = 0;
+    const dir = player.dir || 'down';
+    const action = this.getDonnyAction('punch');
+    this.playDonnyAction(player, action.tex, action.prefix, dir, {area, lock:true, startFrame:this.getActionFrameForDir(action, dir)});
+    const v=weaponDirVector(dir);
+    this.playFx('rainbow_hit_burst','fx_hit',player.x+v.x*52,player.y-46+v.y*42,0.22,0,player.depth+10);
+    this.showMessage('Unarmed punch.');
+  }
+  useJump(player, area='planet'){
+    this.weaponVisibleUntil = 0;
+    if(player.actionLocked) return;
+
+    const dir = player.dir || 'down';
+    const v = weaponDirVector(dir);
+    const isDust9 = area === 'planet' && (GAME_STATE.location.planetId || 'dust_9') === 'dust_9';
+
+    if(!isDust9){
+      const action = this.getDonnyAction('jump');
+      this.playDonnyAction(player, action.tex, action.prefix, dir, {area, lock:true, startFrame:this.getActionFrameForDir(action, dir)});
+      const target = player.onVanRoof ? this.jumpOffVanRoof(player, dir) : (this.findVanRoofJumpTarget(player, dir) || this.findSlideTarget(player,v.x,v.y,34,this.bounds || {x:0,y:0,w:W,h:H}));
+      this.tweens.add({targets:player,x:target.x,y:target.y,duration:280,ease:'Sine.easeOut'});
+      this.showMessage('Jump.');
+      return;
+    }
+
+    // Dust-9 has lighter gravity: longer hang time, softer fall, and a visible hover arc.
+    player.actionLocked = true;
+    player.isJumping = true;
+    const action = this.getDonnyAction('jump');
+    player.textureKey = action.tex;
+    player.setTexture(action.tex);
+    player.setScale(DONNY_ACTION.scale);
+    player.setFrame(this.getActionFrameForDir(action, dir));
+
+    const animKey = `${action.prefix}_${dir}`;
+    if(this.anims.exists(animKey)) player.play(animKey, true);
+
+    const bounds = this.bounds || {x:0,y:0,w:W,h:H};
+    const startX = player.x;
+    const startY = player.y;
+    const roofTarget = player.onVanRoof ? null : this.findVanRoofJumpTarget(player, dir);
+    const target = player.onVanRoof ? this.jumpOffVanRoof(player, dir) : (roofTarget || this.findSlideTarget(player, v.x, v.y, 58, bounds));
+    const floatArc = { t:0 };
+
+    const shadow = this.add.ellipse(startX, startY-4, 42, 14, 0x000000, 0.36)
+      .setDepth(Math.max(1, player.depth - 2));
+
+    this.tweens.add({
+      targets: floatArc,
+      t: 1,
+      duration: 640,
+      ease: 'Sine.easeInOut',
+      onUpdate: () => {
+        const t = floatArc.t;
+        const groundX = Phaser.Math.Linear(startX, target.x, t);
+        const groundY = Phaser.Math.Linear(startY, target.y, t);
+        const height = Math.sin(Math.PI * t) * 44;
+
+        player.x = groundX;
+        player.y = groundY - height;
+        player.setDepth(20 + groundY);
+        player.setScale(DONNY_ACTION.scale + height * 0.0018);
+
+        shadow
+          .setPosition(groundX, groundY - 4)
+          .setScale(1 - height * 0.006, 1 - height * 0.009)
+          .setAlpha(0.36 - height * 0.0045);
+
+        this.updateHolsterSprite(player);
+        this.updateHeldWeaponSprite(player);
+      },
+      onComplete: () => {
+        player.x = target.x;
+        player.y = target.y;
+        player.isJumping = false;
+        player.onVanRoof = !!roofTarget;
+        if(player.onVanRoof) this.showMessage('Landed on Astro Van roof. Jump again to hop down.');
+        if(shadow) shadow.destroy();
+        this.restoreDonnyMovement(player, area);
+      }
+    });
+
+    this.showMessage('Dust-9 low gravity jump.');
+  }
+  useSlide(player, bounds, area='planet'){
+    if(player.actionLocked) return;
+    const dir=player.dir || 'down';
+    const action = this.getDonnyAction('slide');
+    this.playDonnyAction(player, action.tex, action.prefix, dir, {area, lock:true, startFrame:this.getActionFrameForDir(action, dir)});
+    const v=weaponDirVector(dir);
+    const target=this.findSlideTarget(player,v.x,v.y,92,bounds);
+    this.tweens.add({targets:player,x:target.x,y:target.y,duration:260,ease:'Quad.easeOut'});
+    this.showMessage('Slide.');
+  }
+  setCrawling(player, on, area='planet'){
+    if(!player) return;
+    player.isCrawling = on;
+    if(!on){ this.restoreDonnyMovement(player,area); return; }
+    const dir=player.dir || 'down';
+    const action = this.getDonnyAction('crawl');
+    player.actionLocked=false;
+    player.textureKey=action.tex;
+    player.setTexture(action.tex);
+    player.setScale(DONNY_ACTION.scale);
+    player.setFrame(this.getActionFrameForDir(action, dir));
+    player.play(`${action.prefix}_${dir}`, true);
+  }
+  createHolsterSprite(player){
+    if(!this.textures.exists(HOLSTER.key)) return null;
+    const s=this.add.sprite(player.x,player.y,HOLSTER.key,0).setOrigin(0.5,1).setScale(HOLSTER.scale).setDepth(player.depth+1).setVisible(true);
+    this.holsterSprite=s;
+    this.updateHolsterSprite(player);
+    return s;
+  }
+  updateHolsterSprite(player){
+    if(!this.holsterSprite || !player) return;
+    if(!hasHolsterEquipped()){ this.holsterSprite.setVisible(false); return; }
+    const dir=player.dir || 'down';
+    const o=HOLSTER.offset[dir] || {x:0,y:0};
+    const frame=HOLSTER.directionFrame[dir] ?? 0;
+
+    // Holster stays equipped on Donny.
+    // It is intentionally drawn above Donny for now so it cannot disappear behind his body.
+    this.holsterSprite
+      .setPosition(player.x+o.x,player.y+o.y)
+      .setScale(HOLSTER.scale)
+      .setFrame(frame)
+      .setDepth(player.depth+8)
+      .setVisible(true);
+  }
+
+
+  ensureStartEquipmentMenu(){
+    if(this.startMenuReady) return;
+    this.startMenuReady=true;
+    this.startMenuOpen=false;
+    this.startMenuIndex=0;
+    this.startMenuMoveCooldown=0;
+    this.startMenuBg=this.add.rectangle(W/2,H/2,720,390,0x05070c,0.94).setStrokeStyle(3,0x21d7ff,0.92).setDepth(2600).setVisible(false);
+    this.startMenuTitle=this.add.text(W/2,H/2-165,'EQUIPMENT',{fontFamily:'Arial',fontSize:'30px',color:'#fff',fontStyle:'bold'}).setOrigin(0.5).setDepth(2601).setVisible(false);
+    this.startMenuInfo=this.add.text(W/2,H/2-124,'',{fontFamily:'Arial',fontSize:'15px',color:'#cbd4ff',align:'center',wordWrap:{width:630}}).setOrigin(0.5).setDepth(2601).setVisible(false);
+    this.startMenuTexts=[];
+    for(let i=0;i<8;i++){
+      this.startMenuTexts.push(this.add.text(W/2,H/2-78+i*38,'',{fontFamily:'Arial',fontSize:'20px',color:'#fff',align:'center'}).setOrigin(0.5).setDepth(2601).setVisible(false));
+    }
+    this.startMenuHelp=this.add.text(W/2,H/2+164,'Stick/Up/Down = select   A/Space/Enter = choose   START/Esc = close',{fontFamily:'Arial',fontSize:'14px',color:'#fff',align:'center'}).setOrigin(0.5).setDepth(2601).setVisible(false);
+  }
+  buildStartEquipmentOptions(){
+    const weapon = getEquippedWeapon();
+    return [
+      {id:'laser', label: GAME_STATE.equipment.currentWeaponSlot==='ranged' ? 'Laser Revolver Equipped' : 'Equip Laser Revolver'},
+      {id:'guitar', label: GAME_STATE.equipment.currentWeaponSlot==='melee' ? 'Black Guitar Equipped' : 'Equip Black Guitar'},
+      {id:'heavy', label: GAME_STATE.equipment.currentWeaponSlot==='heavy' ? 'Feedback Cannon Equipped' : 'Equip Feedback Cannon'},
+      {id:'holster', label: hasHolsterEquipped() ? 'Remove Holster' : 'Equip Holster'},
+      {id:'mask', label: hasO2MaskEquipped() ? 'Remove O2 Mask' : 'Equip O2 Mask'},
+      {id:'suit', label: hasSpaceSuitEquipped() ? 'Unequip Space Suit' : 'Equip Space Suit'},
+      {id:'close', label:'Close'}
+    ];
+  }
+  openStartEquipmentMenu(){
+    this.ensureStartEquipmentMenu();
+    this.startMenuOpen=true;
+    this.startMenuIndex=0;
+    this.refreshStartEquipmentMenu();
+  }
+  closeStartEquipmentMenu(){
+    if(!this.startMenuReady) return;
+    this.startMenuOpen=false;
+    this.startMenuBg.setVisible(false);
+    this.startMenuTitle.setVisible(false);
+    this.startMenuInfo.setVisible(false);
+    this.startMenuHelp.setVisible(false);
+    this.startMenuTexts.forEach(t=>t.setVisible(false));
+  }
+  refreshStartEquipmentMenu(){
+    this.startMenuOptions=this.buildStartEquipmentOptions();
+    const weapon = getEquippedWeapon();
+    this.startMenuBg.setVisible(true); this.startMenuTitle.setVisible(true); this.startMenuInfo.setVisible(true); this.startMenuHelp.setVisible(true);
+    this.startMenuInfo.setText(`Weapon: ${weapon.name}   Holster: ${getEquippedHolsterName()}\nMask: ${getEquippedMaskName()}   Suit: ${getEquippedSuitName()}\nButtons: A Jump / Confirm   B Crawl, double-tap B Slide   X Punch   Y Shoot   Full Stick/Shift Run`);
+    this.startMenuTexts.forEach((t,i)=>{
+      const opt=this.startMenuOptions[i];
+      if(!opt){ t.setVisible(false); return; }
+      const selected=i===this.startMenuIndex;
+      t.setText(`${selected?'▶ ':'   '}${opt.label}`).setColor(selected?'#46ff87':'#fff').setVisible(true);
+    });
+  }
+  chooseStartEquipmentOption(){
+    const opt=this.startMenuOptions[this.startMenuIndex];
+    if(!opt) return;
+    if(opt.id==='laser'){ GAME_STATE.equipment.ranged='laser_revolver'; GAME_STATE.equipment.currentWeaponSlot='ranged'; this.showMessage('Laser Revolver equipped.'); }
+    else if(opt.id==='guitar'){ GAME_STATE.equipment.melee='black_guitar'; GAME_STATE.equipment.currentWeaponSlot='melee'; this.showMessage('Black Guitar equipped.'); }
+    else if(opt.id==='heavy'){ GAME_STATE.equipment.heavy='feedback_cannon'; GAME_STATE.equipment.currentWeaponSlot='heavy'; this.showMessage('Feedback Cannon equipped.'); }
+    else if(opt.id==='holster'){
+      if(hasHolsterEquipped()){ unequipHolster(); this.showMessage('Holster removed.'); }
+      else { equipHolster(); this.showMessage('Holster equipped.'); }
+    }
+    else if(opt.id==='mask'){
+      if(hasO2MaskEquipped()){ unequipMask(); this.showMessage('O2 mask removed.'); }
+      else { equipMask('basic_o2_mask'); this.showMessage('O2 mask equipped.'); }
+    }
+    else if(opt.id==='suit'){
+      if(hasSpaceSuitEquipped()){ unequipSuit(); this.showMessage('Space suit unequipped.'); }
+      else { equipSuit('basic_space_suit'); this.showMessage('Space suit equipped.'); }
+      if(this.player) this.refreshDonnyTexture(this.player, this.scene.key==='ShipHubScene'?'ship':'planet');
+      if(this.riff) this.refreshRiffTexture(this.riff, this.scene.key==='ShipHubScene'?'ship':'planet');
+    }
+    else if(opt.id==='close'){ this.closeStartEquipmentMenu(); return; }
+    if(this.player){
+      this.weaponVisibleUntil = 0;
+      this.updateHeldWeaponSprite(this.player);
+      this.updateHolsterSprite(this.player);
+    }
+    if(this.updateHud) this.updateHud();
+    this.refreshStartEquipmentMenu();
+  }
+  updateStartEquipmentMenu(delta){
+    this.startMenuMoveCooldown-=delta;
+    const move=this.getMoveVector();
+    if(this.startMenuMoveCooldown<=0){
+      if(move.vy<-0.55 || Phaser.Input.Keyboard.JustDown(this.keys.UP)){
+        this.startMenuIndex=(this.startMenuIndex+this.startMenuOptions.length-1)%this.startMenuOptions.length;
+        this.startMenuMoveCooldown=180;
+        this.refreshStartEquipmentMenu();
+      } else if(move.vy>0.55 || Phaser.Input.Keyboard.JustDown(this.keys.DOWN)){
+        this.startMenuIndex=(this.startMenuIndex+1)%this.startMenuOptions.length;
+        this.startMenuMoveCooldown=180;
+        this.refreshStartEquipmentMenu();
+      }
+    }
+    if(this.consumeBack()){ this.closeStartEquipmentMenu(); return; }
+    if(this.consumeConfirm()) this.chooseStartEquipmentOption();
+  }
+  handleStartEquipmentMenu(delta){
+    this.ensureStartEquipmentMenu();
+    if(this.startMenuOpen){ this.updateStartEquipmentMenu(delta); return true; }
+    if(this.consumeBack()){ this.openStartEquipmentMenu(); return true; }
+    return false;
+  }
+  useRangedWeapon(player){
+    GAME_STATE.equipment.ranged = GAME_STATE.equipment.ranged || 'laser_revolver';
+    GAME_STATE.equipment.currentWeaponSlot = 'ranged';
+    if(this.updateHud) this.updateHud();
+    this.useEquippedWeapon(player);
+  }
+
+  createWeaponFxAnimations(){
+    const defs = [
+      { key:'fx_slash', tex:'neon_slash_arc', fps:12 },
+      { key:'fx_muzzle', tex:'muzzle_flash_burst', fps:16 },
+      { key:'fx_hit', tex:'rainbow_hit_burst', fps:14 },
+      { key:'fx_plasma', tex:'plasma_ring_blast', fps:12 }
+    ];
+    defs.forEach(d=>{
+      if(this.textures.exists(d.tex) && !this.anims.exists(d.key)){
+        this.anims.create({
+          key:d.key,
+          frames:this.anims.generateFrameNumbers(d.tex,{start:0,end:7}),
+          frameRate:d.fps,
+          repeat:0,
+          hideOnComplete:true
+        });
+      }
+    });
+  }
+  createHeldWeaponSprite(player){
+    const weapon = getEquippedWeapon();
+    const spriteKey = weapon.sprite || `${weapon.id}_hold`;
+    if(!this.textures.exists(spriteKey)) return null;
+    const s = this.add.sprite(player.x, player.y-42, spriteKey, 0)
+      .setOrigin(0.5)
+      .setScale(weapon.scale || 0.4)
+      .setDepth(player.depth + 2)
+      .setVisible(false);
+    this.weaponSprite = s;
+    this.updateHeldWeaponSprite(player);
+    return s;
+  }
+  showHeldWeaponFor(player, duration=240){
+    this.weaponVisibleUntil = this.time.now + duration;
+    this.updateHeldWeaponSprite(player);
+  }
+
+  updateHeldWeaponSprite(player){
+    if(!this.weaponSprite || !player) return;
+    const weapon = getEquippedWeapon();
+    const spriteKey = weapon.sprite || `${weapon.id}_hold`;
+    if(this.textures.exists(spriteKey) && this.weaponSprite.texture.key !== spriteKey) {
+      this.weaponSprite.setTexture(spriteKey);
+    }
+    const dir = player.dir || 'down';
+    const o = (weapon.offset && (weapon.offset[dir] || weapon.offset.down)) || {x:0,y:-42,rotation:0};
+    const f = weapon.directionFrame ? (weapon.directionFrame[dir] ?? 0) : null;
+    if(f !== null && this.weaponSprite.setFrame) this.weaponSprite.setFrame(f);
+
+    // Weapons stay hidden while equipped.
+    // The gun only appears during the shot window triggered by Y / shoot.
+    const visible = !!this.weaponVisibleUntil && this.time.now < this.weaponVisibleUntil;
+
+    this.weaponSprite
+      .setPosition(player.x + o.x, player.y + o.y)
+      .setRotation(o.rotation || 0)
+      .setScale(weapon.scale || 0.4)
+      .setDepth(player.depth + 12)
+      .setVisible(visible);
+  }
+  consumeAttack(){
+    return Phaser.Input.Keyboard.JustDown(this.keys.J) ||
+      Phaser.Input.Keyboard.JustDown(this.keys.X);
+  }
+  cycleWeaponAndMessage(){
+    const weapon = cycleWeaponSlot();
+    this.showMessage(`Equipped ${weapon.name}.`);
+    this.updateHeldWeaponSprite(this.player);
+    if(this.updateHud) this.updateHud();
+  }
+  playFx(key, animKey, x, y, scale=0.35, rotation=0, depth=900){
+    if(!this.textures.exists(key)) return null;
+    const fx = this.add.sprite(x, y, key, 0)
+      .setOrigin(0.5)
+      .setScale(scale)
+      .setRotation(rotation)
+      .setDepth(depth);
+    if(this.anims.exists(animKey)) {
+      fx.play(animKey);
+      fx.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => fx.destroy());
+    } else {
+      this.time.delayedCall(160, () => fx.destroy());
+    }
+    return fx;
+  }
+  spawnSimpleProjectile(player, weapon, muzzle){
+    const dir = player.dir || 'right';
+    const v = weaponDirVector(dir);
+    const range = weapon.range || 320;
+    const speed = weapon.type === 'rifle' ? 620 : 500;
+    const color = weapon.type === 'heavy' ? 0xff2aa1 : 0x21d7ff;
+    const bullet = this.add.circle(muzzle.x, muzzle.y, weapon.type === 'heavy' ? 8 : 4, color, 0.95)
+      .setStrokeStyle(2, 0xffffff, 0.7)
+      .setDepth(950);
+    const life = (range / speed) * 1000;
+    this.tweens.add({
+      targets: bullet,
+      x: muzzle.x + v.x * range,
+      y: muzzle.y + v.y * range,
+      duration: life,
+      ease:'Linear',
+      onComplete:()=>bullet.destroy()
+    });
+  }
+  useEquippedWeapon(player){
+    const now = this.time.now;
+    if(this.lastWeaponUse && now - this.lastWeaponUse < 120) return;
+    const weapon = getEquippedWeapon();
+    const cooldown = weapon.cooldown || 400;
+    if(this.weaponCooldownUntil && now < this.weaponCooldownUntil) return;
+    this.lastWeaponUse = now;
+    this.weaponCooldownUntil = now + cooldown;
+
+    const dir = player.dir || 'down';
+    const v = weaponDirVector(dir);
+    const baseX = player.x;
+    const baseY = player.y - 48;
+    const muzzleOffset = weapon.muzzle?.[dir] || {x:v.x*42, y:-42 + v.y*38};
+    const muzzle = { x: player.x + muzzleOffset.x, y: player.y + muzzleOffset.y };
+
+    if(weapon.type === 'melee') {
+      this.showHeldWeaponFor(player, 180);
+      this.playFx('neon_slash_arc', 'fx_slash', baseX + v.x*48, baseY + v.y*40, 0.34, v.angle, player.depth + 10);
+      this.showMessage(`${weapon.name}: ${weapon.damage} damage swing.`);
+    } else if(weapon.type === 'pistol' || weapon.type === 'rifle') {
+      this.showHeldWeaponFor(player, weapon.type === 'rifle' ? 280 : 240);
+      if(weapon.type === 'pistol') {
+        const action = this.getDonnyAction('pistol');
+        this.playDonnyAction(player, action.tex, action.prefix, dir, {area:'planet', lock:true, startFrame:this.getActionFrameForDir(action, dir)});
+      }
+      const ammoType = weapon.ammoType || 'light_cells';
+      if((GAME_STATE.inventory.ammo[ammoType] || 0) <= 0) {
+        this.showMessage(`No ${ammoType.replace('_',' ')} ammo.`);
+        return;
+      }
+      GAME_STATE.inventory.ammo[ammoType] -= 1;
+      this.playFx('muzzle_flash_burst', 'fx_muzzle', muzzle.x, muzzle.y, weapon.type === 'rifle' ? 0.24 : 0.18, v.angle, player.depth + 12);
+      this.spawnSimpleProjectile(player, weapon, muzzle);
+      this.showMessage(`${weapon.name} fired. ${GAME_STATE.inventory.ammo[ammoType]} ${ammoType.replace('_',' ')} left.`);
+      if(this.updateHud) this.updateHud();
+    } else if(weapon.type === 'heavy') {
+      this.showHeldWeaponFor(player, 320);
+      const ammoType = weapon.ammoType || 'heavy_cells';
+      const cost = weapon.ammoCost || 1;
+      if((GAME_STATE.inventory.ammo[ammoType] || 0) < cost) {
+        this.showMessage(`No ${ammoType.replace('_',' ')} ammo.`);
+        return;
+      }
+      GAME_STATE.inventory.ammo[ammoType] -= cost;
+      this.playFx('plasma_ring_blast', 'fx_plasma', baseX + v.x*78, baseY + v.y*66, 0.42, v.angle, player.depth + 12);
+      this.playFx('rainbow_hit_burst', 'fx_hit', baseX + v.x*145, baseY + v.y*120, 0.34, 0, player.depth + 11);
+      this.spawnSimpleProjectile(player, weapon, muzzle);
+      this.showMessage(`${weapon.name}: heavy blast. ${GAME_STATE.inventory.ammo[ammoType]} ${ammoType.replace('_',' ')} left.`);
+      if(this.updateHud) this.updateHud();
+    } else {
+      this.showMessage(`${weapon.name} used.`);
+    }
+    this.updateHeldWeaponSprite(player);
+  }
+
+  makeDialog(){
+    this.dialogBg=this.add.rectangle(W/2,H-36,760,58,0x05070c,0.82).setStrokeStyle(2,0xff2aa1,0.75).setDepth(1500).setVisible(false);
+    this.dialogText=this.add.text(W/2,H-36,'',{fontFamily:'Arial',fontSize:'18px',color:'#ffffff',align:'center',wordWrap:{width:720}}).setOrigin(0.5).setDepth(1501).setVisible(false);
+  }
+  showMessage(msg){
+    if(!this.dialogBg || !this.dialogText) return;
+    this.dialogBg.setVisible(true); this.dialogText.setVisible(true).setText(msg); this.dialogTimer=2000;
+  }
+  updateDialog(delta){
+    if(this.dialogTimer>0){ this.dialogTimer-=delta; if(this.dialogTimer<=0){ this.dialogBg.setVisible(false); this.dialogText.setVisible(false); } }
+  }
+}
+
+class BootScene extends Phaser.Scene {
+  constructor(){ super('BootScene'); }
+  preload(){
+    this.load.on('loaderror', file => console.warn('ASSET LOAD ERROR:', file?.src || file?.url || file?.key));
+    this.load.image('shipInterior', withVersion(ASSETS.shipInterior));
+    this.load.image('orbit_bg', withVersion(ASSETS.orbitBackground));
+    this.load.image('dust9_planet_space', withVersion(ASSETS.dust9Planet));
+    this.load.image('dust9_dead_moon', withVersion(ASSETS.dust9Moon));
+    this.load.image('neon_space_station', withVersion(ASSETS.spaceStation));
+    SHIP_INTERIOR_EMPTY_CANDIDATES.forEach(asset => this.load.image(asset.key, withVersion(asset.path)));
+    flattenShipFurnitureCandidates().forEach(asset => this.load.image(asset.key, withVersion(asset.path)));
+    // Stable exact ship prop keys. These match SHIP_FURNITURE_LAYOUT.texture.
+    this.load.image('cockpit_chair', withVersion('assets/props/ships/cockpit_chair.png'));
+    this.load.image('cockpit_chair_foreground', withVersion('assets/props/ships/cockpit_chair_foreground.png'));
+    this.load.image('ship_bed', withVersion('assets/props/ships/ship_bed.png'));
+    this.load.image('ship_bed_foreground', withVersion('assets/props/ships/ship_bed_foreground.png'));
+    this.load.image('ship_bunk_bed', withVersion('assets/props/ships/ship_bunk_bed.png'));
+    this.load.image('ship_table', withVersion('assets/props/ships/ship_table.png'));
+    this.load.image('ship_table_foreground', withVersion('assets/props/ships/ship_table_foreground.png'));
+    this.load.spritesheet('donny_overhead', ASSETS.donnyNormal, {frameWidth:DONNY.frameWidth, frameHeight:DONNY.frameHeight});
+    this.load.spritesheet('donny_spacesuit', ASSETS.donnySpace, {frameWidth:DONNY.frameWidth, frameHeight:DONNY.frameHeight});
+    this.load.spritesheet('astro_van_v1', ASSETS.van, {frameWidth:VAN.frameWidth, frameHeight:VAN.frameHeight});
+    this.load.spritesheet('riff', ASSETS.riff, {frameWidth:RIFF.frameWidth, frameHeight:RIFF.frameHeight});
+    this.load.spritesheet('riff_spacesuit', ASSETS.riffSpace, {frameWidth:RIFF.frameWidth, frameHeight:RIFF.frameHeight});
+    this.load.image('riff_bed', ASSETS.riffBed);
+
+    // Using FALLBACK_WEAPONS because assets/data/weapons/weapons.json is not currently in GitHub.
+    this.load.json('laser_revolver_data', 'assets/data/weapons/laser_revolver_FIXED.json');
+    // Weapon FX bundle JSON is optional here; FX sprite sheets load directly below.
+    this.load.json('equipment_overlays', 'assets/data/equipment/equipment_overlays_FIXED.json');
+
+    Object.entries(WEAPON_ASSETS).forEach(([key,path]) => {
+      if(key === 'laser_revolver_hold_4dir') this.load.spritesheet(key, path, { frameWidth:128, frameHeight:128 });
+      else this.load.image(key, path);
+    });
+
+    this.load.spritesheet('donny_empty_pistol_pose', ASSETS.donnyEmptyPistol, { frameWidth:128, frameHeight:128 });
+    this.load.spritesheet('donny_unarmed_punch', ASSETS.donnyUnarmedPunch, { frameWidth:128, frameHeight:128 });
+    this.load.spritesheet('donny_jump_4dir', ASSETS.donnyJump, { frameWidth:128, frameHeight:128 });
+    this.load.spritesheet('donny_crawl_4dir', ASSETS.donnyCrawl, { frameWidth:128, frameHeight:128 });
+    this.load.spritesheet('donny_slide_4dir', ASSETS.donnySlide, { frameWidth:128, frameHeight:128 });
+    if(ASSETS.donnySit) this.load.spritesheet('donny_sit_4dir', ASSETS.donnySit, { frameWidth:128, frameHeight:128 });
+    if(ASSETS.donnySleep) this.load.spritesheet('donny_sleep_4dir', ASSETS.donnySleep, { frameWidth:128, frameHeight:128 });
+
+    this.load.spritesheet('donny_spacesuit_empty_pistol_4dir', ASSETS.donnySpaceEmptyPistol, { frameWidth:128, frameHeight:128 });
+    this.load.spritesheet('donny_spacesuit_unarmed_punch_4dir', ASSETS.donnySpaceUnarmedPunch, { frameWidth:128, frameHeight:128 });
+    this.load.spritesheet('donny_spacesuit_jump_4dir', ASSETS.donnySpaceJump, { frameWidth:128, frameHeight:128 });
+    this.load.spritesheet('donny_spacesuit_crawl_heavy_8f', ASSETS.donnySpaceCrawl, { frameWidth:128, frameHeight:128 });
+    this.load.spritesheet('donny_spacesuit_slide_butt_8f', ASSETS.donnySpaceSlide, { frameWidth:128, frameHeight:128 });
+    this.load.spritesheet('donny_spacesuit_sit_4dir', ASSETS.donnySpaceSit, { frameWidth:128, frameHeight:128 });
+    this.load.spritesheet('donny_spacesuit_sleep_4dir', ASSETS.donnySpaceSleep, { frameWidth:128, frameHeight:128 });
+
+    this.load.spritesheet('donny_holster_brown', ASSETS.donnyHolster, { frameWidth:128, frameHeight:128 });
+
+    this.load.spritesheet('neon_slash_arc', WEAPON_FX_ASSETS.neon_slash_arc, { frameWidth:320, frameHeight:320 });
+    this.load.spritesheet('muzzle_flash_burst', WEAPON_FX_ASSETS.muzzle_flash_burst, { frameWidth:320, frameHeight:320 });
+    this.load.spritesheet('rainbow_hit_burst', WEAPON_FX_ASSETS.rainbow_hit_burst, { frameWidth:320, frameHeight:320 });
+    this.load.spritesheet('plasma_ring_blast', WEAPON_FX_ASSETS.plasma_ring_blast, { frameWidth:320, frameHeight:320 });
+
+    this.load.json('dust_9_town', 'assets/data/planets/dust_9_town.json');
+    this.load.json('dust_9_shop_interiors', 'assets/data/planets/dust_9_shop_interiors.json');
+    this.load.json('dust_9_home_interiors', 'assets/data/planets/dust_9_home_interiors.json');
+
+    Object.values(CHUNK_BG).forEach(bg=>this.load.image(bg.key, bg.path));
+    Object.values(INTERIOR_DATA).forEach(i=>this.load.image(i.bgKey, i.background));
+  }
+  create(){
+    const loadedWeapons = this.cache.json.exists('weapons_json') ? this.cache.json.get('weapons_json') : {};
+    const loadedLaser = this.cache.json.get('laser_revolver_data') || {};
+    window.WEAPON_DATA = {...FALLBACK_WEAPONS, ...loadedWeapons, ...loadedLaser};
+    window.DUST_9_TOWN = this.cache.json.get('dust_9_town') || this.makeFallbackTown();
+    GAME_STATE.location.chunkId = window.DUST_9_TOWN.startChunk || '0,1';
+    this.scene.start('PlanetChunkScene', {planetId:'dust_9', chunkId:GAME_STATE.location.chunkId, entrySide:'start'});
+  }
+  makeFallbackTown(){
+    return { id:'dust_9_town', name:'Dustbowl Junction', planetId:'dust_9', startChunk:'0,1', chunks:{
+      '0,1':{id:'0,1',name:'Sand Motel Parking',background:'assets/backgrounds/planets/dust_9/sand_motel_parking_lot.png',walkBounds:{x:70,y:145,w:820,h:320},exits:{north:'0,0',east:'1,1'},pickups:[],interactZones:[]}
+    }};
+  }
+}
+
+class PlanetChunkScene extends BaseScene {
+  constructor(){ super('PlanetChunkScene'); }
+  init(data){ this.planetId=data?.planetId || 'dust_9'; this.chunkId=data?.chunkId || GAME_STATE.location.chunkId || '0,1'; this.entrySide=data?.entrySide || 'start'; }
+  create(){
+    this.createCommonInput();
+    this.town = window.DUST_9_TOWN || this.cache.json.get('dust_9_town');
+    this.chunk = this.town.chunks[this.chunkId] || this.town.chunks[this.town.startChunk];
+    GAME_STATE.location.planetId=this.planetId; GAME_STATE.location.chunkId=this.chunk.id;
+
+    this.drawBackground();
+    this.add.text(W/2,24,`${this.town.name} - ${this.chunk.name}`,{fontFamily:'Arial',fontSize:'20px',color:'#fff',backgroundColor:'rgba(0,0,0,.45)',padding:{x:8,y:4}}).setOrigin(0.5).setDepth(1300);
+    this.add.text(12,12,VERSION,{fontFamily:'Arial',fontSize:'12px',color:'#aab2ff'}).setDepth(1500);
+    this.hud=this.add.text(W-12,12,'',{fontFamily:'Arial',fontSize:'14px',color:'#fff',backgroundColor:'rgba(0,0,0,.48)',padding:{x:8,y:4}}).setOrigin(1,0).setDepth(1500);
+    this.updateHud();
+    this.drawMiniMap();
+
+    this.createDonnyAnimations('donny_spacesuit');
+    this.createDonnyAnimations('donny_overhead');
+    this.createRiffAnimations('riff');
+    this.createRiffAnimations('riff_spacesuit');
+    this.createWeaponFxAnimations();
+    this.createDonnyActionAnimations();
+    const spawn=this.getSpawnPoint();
+    this.player=this.createDonny(getDonnyTextureForArea('planet'), spawn.x, spawn.y); this.player.dir=spawn.dir;
+    this.createHolsterSprite(this.player);
+    this.createHeldWeaponSprite(this.player);
+    this.riff=this.createRiff(getRiffTextureForArea('planet'), spawn.x-52, spawn.y+18); this.riff.dir='down';
+    this.bounds=this.chunk.walkBounds || {x:70,y:145,w:820,h:320};
+    this.moveBlockers=[...getPlanetBlockers(this.chunk.id), ...(this.chunk.blockers || []), ...(this.chunk.obstacles || [])];
+    this.drawMoveBlockers();
+
+    this.pickupSprites=[]; this.createPickups();
+    this.interactZones=this.getInteractZones();
+    this.drawInteractHints();
+    this.createParkedVanIfNeeded();
+
+    this.prompt=this.add.text(W/2,H-18,'Explore Dustbowl Junction. Walk to screen edges to travel.',{fontFamily:'Arial',fontSize:'17px',color:'#fff',backgroundColor:'rgba(0,0,0,.45)',padding:{x:8,y:4}}).setOrigin(0.5).setDepth(1000);
+    this.makeDialog();
+    if(!GAME_STATE.flags.introSeen){ GAME_STATE.flags.introSeen=true; this.showMessage('Donny starts with the Laser Revolver equipped and holster on. Dust-9 has atmosphere, but he still needs an O2 mask outside.'); }
+  }
+  drawBackground(){
+    const bg = CHUNK_BG[this.chunk.id];
+    if(bg && this.textures.exists(bg.key)){
+      this.add.image(W/2,H/2,bg.key).setDisplaySize(W,H).setDepth(0);
+    } else {
+      this.add.rectangle(W/2,H/2,W,H,0x1f1530);
+      this.add.rectangle(W/2,H/2+90,880,355,0xb9783d).setStrokeStyle(4,0xe6b36a);
+    }
+    const exits=this.chunk.exits || {};
+    if(exits.north) this.add.triangle(W/2,145,0,24,48,24,24,0,0x21d7ff,0.5).setDepth(8);
+    if(exits.south) this.add.triangle(W/2,488,0,0,48,0,24,24,0x21d7ff,0.5).setDepth(8);
+    if(exits.west) this.add.triangle(64,318,0,24,24,0,24,48,0x21d7ff,0.5).setDepth(8);
+    if(exits.east) this.add.triangle(896,318,0,0,24,24,0,48,0x21d7ff,0.5).setDepth(8);
+  }
+  drawMiniMap(){
+    const x=W-126,y=78;
+    this.add.rectangle(x,y+36,170,110,0x05070c,0.72).setStrokeStyle(2,0xff2aa1,0.52).setDepth(1200);
+    this.add.text(x,y-8,'DUSTBOWL JUNCTION',{fontFamily:'Arial',fontSize:'11px',color:'#fff'}).setOrigin(0.5).setDepth(1201);
+    const cells=[
+      {id:'0,0',x:x-54,y:y+22,label:'Road'}, {id:'1,0',x:x,y:y+22,label:'Saloon'}, {id:'2,0',x:x+54,y:y+22,label:'Guitar'},
+      {id:'0,1',x:x-54,y:y+52,label:'Motel'}, {id:'1,1',x:x,y:y+52,label:'Diner'}, {id:'2,1',x:x+54,y:y+52,label:'Huts'}
+    ];
+    cells.forEach(c=>{
+      const active=c.id===this.chunk.id;
+      this.add.rectangle(c.x,c.y,50,22,active?0x46ff87:0x22283c,active?0.85:0.75).setStrokeStyle(1,0xffffff,active?0.85:0.25).setDepth(1201);
+      this.add.text(c.x,c.y,c.label,{fontFamily:'Arial',fontSize:'9px',color:active?'#03120a':'#fff'}).setOrigin(0.5).setDepth(1202);
+    });
+  }
+  getSpawnPoint(){
+    if(this.entrySide==='west') return {x:110,y:330,dir:'right'};
+    if(this.entrySide==='east') return {x:850,y:330,dir:'left'};
+    if(this.entrySide==='north') return {x:480,y:170,dir:'down'};
+    if(this.entrySide==='south') return {x:480,y:455,dir:'up'};
+    if(this.entrySide==='ship') return {x:345,y:405,dir:'up'};
+    if(this.entrySide==='office' || this.entrySide==='interior' || this.entrySide==='hut') return {x:480,y:380,dir:'down'};
+    return {x:480,y:420,dir:'up'};
+  }
+  createParkedVanIfNeeded(){
+    if(this.chunk.id !== '0,1') return;
+    this.van=this.add.sprite(340,352,'astro_van_v1',0).setOrigin(0.5).setScale(VAN.scale).setDepth(30);
+
+    // Blue = entry prompt. The van body itself is now solid through VAN_COLLISION.body.
+    this.add.rectangle(340,410,190,46,0x21d7ff,0.12).setStrokeStyle(2,0x21d7ff,0.35).setDepth(7);
+
+    // Subtle roof marker: Donny can jump onto this area, but cannot walk through the van.
+    if(SHOW_WALK_BLOCKERS){
+      const r = VAN_COLLISION.roof;
+      this.add.rectangle(r.x+r.w/2,r.y+r.h/2,r.w,r.h,0x46ff87,0.16).setStrokeStyle(2,0x46ff87,0.7).setDepth(1402);
+      const b = VAN_COLLISION.body;
+      this.add.rectangle(b.x+b.w/2,b.y+b.h/2,b.w,b.h,0xff0000,0.16).setStrokeStyle(2,0xff0000,0.7).setDepth(1402);
+    }
+  }
+  getInteractZones(){
+    const zones=[...(this.chunk.interactZones || [])];
+    if(this.chunk.id==='0,1'){
+      zones.push({id:'astroVan',label:'Astro Van',x:250,y:265,w:185,h:150,targetScene:'ShipHubScene',message:'Enter the Astro Van.'});
+      zones.push({id:'bountyOfficeDoor',label:"Donny's Bounty Office",x:650,y:220,w:145,h:150,targetScene:'BountyOfficeScene',message:"Enter Donny's Bounty Office."});
+    }
+    if(this.chunk.id==='2,1'){
+      zones.push({id:'scavengerHut',label:'Scavenger Hut',x:78,y:150,w:165,h:135,targetScene:'ScavengerHutScene',message:'Enter Scavenger Hut.'});
+      zones.push({id:'mechanicHut',label:'Mechanic Hut',x:330,y:125,w:170,h:135,targetScene:'MechanicHutScene',message:'Enter Mechanic Hut.'});
+      zones.push({id:'familyHut',label:'Family Hut',x:90,y:320,w:180,h:125,targetScene:'FamilyHutScene',message:'Enter Family Hut.'});
+      zones.push({id:'outpostShop',label:'Outpost Home-Shop',x:575,y:305,w:160,h:135,targetScene:'OutpostHomeShopScene',message:'Enter Outpost Home-Shop.'});
+    }
+    return zones;
+  }
+  drawInteractHints(){
+    this.interactZones.forEach(z=>{
+      if(z.id === 'astroVan') return;
+      this.add.rectangle(z.x+z.w/2,z.y+z.h/2,z.w,z.h,0x21d7ff,0.05).setStrokeStyle(1,0x21d7ff,0.22).setDepth(6);
+    });
+  }
+  createPickups(){
+    (this.chunk.pickups || []).forEach(p=>{
+      const key=collectedKey(this.chunk.id,p.id);
+      if(GAME_STATE.collected[key]) return;
+      if(p.type==='cosmic_spark_plug' || p.type==='fuel_cell'){
+        const body=this.add.rectangle(p.x,p.y,18,34,0xe7ecff,1).setStrokeStyle(2,0xffd447,1).setDepth(12);
+        const tip=this.add.circle(p.x,p.y-22,8,p.type==='fuel_cell'?0x46ff87:0x21d7ff,0.9).setDepth(12);
+        this.pickupSprites.push({data:p,sprites:[body,tip],collected:false});
+      } else {
+        const scrap=this.add.rectangle(p.x,p.y,24,24,0xffd447,0.96).setRotation(Math.PI/4).setStrokeStyle(2,0xffffff,0.75).setDepth(12);
+        this.pickupSprites.push({data:p,sprites:[scrap],collected:false});
+      }
+    });
+  }
+  collectPickup(p){
+    if(p.collected) return;
+    p.collected=true; GAME_STATE.collected[collectedKey(this.chunk.id,p.data.id)]=true;
+    p.sprites.forEach(s=>s.destroy());
+    GAME_STATE.inventory.items[p.data.type]=(GAME_STATE.inventory.items[p.data.type]||0)+1;
+    const label={cosmic_spark_plug:'Cosmic Spark Plug',scrap_metal:'Scrap Metal',fuel_cell:'Fuel Cell'}[p.data.type] || p.data.type;
+    this.showMessage(`Collected ${label}.`); this.updateHud();
+  }
+  updateHud(){
+    if(!this.hud) return;
+    const weapon = getEquippedWeapon();
+    const o2 = Math.round(GAME_STATE.vitals?.o2 ?? 100);
+    this.hud.setText(`Dust-9 Air: ${hasO2MaskEquipped() || hasSpaceSuitEquipped() ? 'OK' : 'THIN'}  O2:${o2}%  Mask:${getEquippedMaskName()}  Suit:${getEquippedSuitName()}  Weapon:${weapon.name}`);
+  }
+  nearestZone(){
+    let best=null,bestD=9999;
+    this.interactZones.forEach(z=>{
+      const c=zoneCenter(z), d=Phaser.Math.Distance.Between(this.player.x,this.player.y-35,c.x,c.y);
+      if(d<bestD){bestD=d;best=z;}
+    });
+    return bestD<105 ? best : null;
+  }
+  handleZone(zone){
+    if(zone.targetScene === 'ShipHubScene'){ this.scene.start('ShipHubScene'); return; }
+    const interiorId = TARGET_SCENE_TO_INTERIOR[zone.targetScene];
+    if(interiorId){ this.scene.start('InteriorScene', { interiorId }); return; }
+    this.showMessage(zone.message || zone.label || 'Nothing here yet.');
+  }
+  tryChunkExit(){
+    const edge=6;
+    if(this.player.x<=this.bounds.x+edge) return this.goDirection('west');
+    if(this.player.x>=this.bounds.x+this.bounds.w-edge) return this.goDirection('east');
+    if(this.player.y<=this.bounds.y+edge) return this.goDirection('north');
+    if(this.player.y>=this.bounds.y+this.bounds.h-edge) return this.goDirection('south');
+    return false;
+  }
+  goDirection(dir){
+    const next=this.chunk.exits?.[dir];
+    if(!next){
+      const msg=this.chunk.blocked?.[dir] || 'Route blocked by sandstorm.';
+      this.showMessage(msg);
+      if(dir==='west') this.player.x+=20; if(dir==='east') this.player.x-=20; if(dir==='north') this.player.y+=20; if(dir==='south') this.player.y-=20;
+      return true;
+    }
+    const entrySide={west:'east',east:'west',north:'south',south:'north'}[dir];
+    this.scene.start('PlanetChunkScene', {planetId:this.planetId, chunkId:next, entrySide});
+    return true;
+  }
+  update(time,delta){
+    const dt=delta/1000;
+    if(this.handleStartEquipmentMenu(delta)){ this.updateDialog(delta); return; }
+    this.updateAtmosphere(delta,'planet');
+    if(this.handleRestingControls(this.player,'planet')){ this.updateDialog(delta); return; }
+    this.moveDonny(this.player,this.bounds,dt,'planet');
+    this.updateVanRoofState(this.player);
+    this.updateHolsterSprite(this.player);
+    this.updateHeldWeaponSprite(this.player);
+    this.updateRiffFollow(this.riff,this.player,dt,'planet');
+    this.pickupSprites.forEach(p=>{
+      if(!p.collected && Phaser.Math.Distance.Between(this.player.x,this.player.y-40,p.data.x,p.data.y)<54) this.collectPickup(p);
+    });
+    const zone=this.nearestZone();
+    const weapon = getEquippedWeapon();
+    this.prompt.setText(zone ? `A: ${zone.label}   X:Punch Y:Draw/Shoot B:Crawl 2xB:Slide Full Stick:Run` : `A:Jump  X:Punch  Y:Draw/Shoot ${weapon.name}  B:Crawl 2xB:Slide Full Stick:Run START:Equipment`);
+    const confirmPressed = this.consumeConfirm();
+    const jumpPressed = this.consumeJump();
+    const slidePressed = this.consumeSlide();
+    const crawlPressed = this.consumeCrawl();
+    const punchPressed = this.consumePunch();
+    const shootPressed = this.consumeShoot();
+    if(crawlPressed) this.setCrawling(this.player, !this.player.isCrawling, 'planet');
+    else if(slidePressed) this.useSlide(this.player,this.bounds,'planet');
+    else if(zone && confirmPressed) this.handleZone(zone);
+    else if(jumpPressed && !zone) this.useJump(this.player,'planet');
+    else if(punchPressed) this.useUnarmedPunch(this.player,'planet');
+    else if(shootPressed) this.useRangedWeapon(this.player);
+    this.tryChunkExit();
+    this.updateDialog(delta);
+  }
+}
+
+class InteriorScene extends BaseScene {
+  constructor(){ super('InteriorScene'); }
+  init(data){ this.interiorId=data?.interiorId || 'bounty_office'; }
+  create(){
+    this.createCommonInput();
+    this.dataObj=INTERIOR_DATA[this.interiorId] || INTERIOR_DATA.bounty_office;
+    if(this.textures.exists(this.dataObj.bgKey)) this.add.image(W/2,H/2,this.dataObj.bgKey).setDisplaySize(W,H).setDepth(0);
+    else this.add.rectangle(W/2,H/2,W,H,0x1e1722);
+
+    this.add.text(W/2,24,this.dataObj.name,{fontFamily:'Arial',fontSize:'20px',color:'#fff',backgroundColor:'rgba(0,0,0,.45)',padding:{x:8,y:4}}).setOrigin(0.5).setDepth(1300);
+    this.add.text(12,12,VERSION,{fontFamily:'Arial',fontSize:'12px',color:'#aab2ff'}).setDepth(1500);
+
+    if(this.dataObj.id==='bounty_office' && this.textures.exists('riff_bed')){
+      this.add.image(160,385,'riff_bed').setOrigin(0.5,0.75).setScale(0.44).setDepth(62);
+    }
+
+    this.createDonnyAnimations('donny_spacesuit');
+    this.createDonnyAnimations('donny_overhead');
+    this.createRiffAnimations('riff');
+    this.createRiffAnimations('riff_spacesuit');
+    this.createWeaponFxAnimations();
+    this.createDonnyActionAnimations();
+    const sp=this.dataObj.spawn || {x:480,y:430,dir:'up'};
+    this.player=this.createDonny(getDonnyTextureForArea('planet'),sp.x,sp.y); this.player.dir=sp.dir || 'up';
+    this.createHolsterSprite(this.player);
+    this.createHeldWeaponSprite(this.player);
+    this.riff=this.createRiff(getRiffTextureForArea('planet'),sp.x-50,sp.y+20); this.riff.dir='down';
+    this.bounds=this.dataObj.walkBounds || {x:70,y:145,w:820,h:318};
+    this.moveBlockers=[...getInteriorBlockers(this.dataObj.id), ...(this.dataObj.blockers || []), ...(this.dataObj.obstacles || [])];
+    this.drawMoveBlockers();
+    this.furnitureZones=this.getFurnitureZonesForInterior(this.dataObj.id);
+    this.zones=[this.dataObj.exit, ...(this.dataObj.zones || []), ...this.furnitureZones].filter(Boolean);
+
+    this.zones.forEach(z=>{
+      const color = isSitZone(z) ? 0x21d7ff : (isLayZone(z) ? 0x46ff87 : 0xff2aa1);
+      this.add.rectangle(z.x+z.w/2,z.y+z.h/2,z.w,z.h,color,0.045).setStrokeStyle(1,color,0.18).setDepth(6);
+    });
+
+    this.prompt=this.add.text(W/2,H-18,'Use Y/A near stations. START exits building.',{fontFamily:'Arial',fontSize:'17px',color:'#fff',backgroundColor:'rgba(0,0,0,.45)',padding:{x:8,y:4}}).setOrigin(0.5).setDepth(1000);
+    this.makeDialog();
+  }
+  nearestZone(){
+    let best=null,bestD=9999;
+    this.zones.forEach(z=>{
+      const c=zoneCenter(z), d=Phaser.Math.Distance.Between(this.player.x,this.player.y-35,c.x,c.y);
+      if(d<bestD){bestD=d;best=z;}
+    });
+    return bestD<105 ? best : null;
+  }
+  leave(){
+    const target=this.dataObj.exit?.targetChunkId || this.dataObj.parentChunk || '0,1';
+    const entry=this.dataObj.exit?.entrySide || 'interior';
+    this.scene.start('PlanetChunkScene', {planetId:'dust_9', chunkId:target, entrySide:entry});
+  }
+  update(time,delta){
+    const dt=delta/1000;
+    if(this.handleStartEquipmentMenu(delta)){ this.updateDialog(delta); return; }
+    this.moveDonny(this.player,this.bounds,dt,'planet');
+    this.updateHolsterSprite(this.player);
+    this.updateHeldWeaponSprite(this.player);
+    this.updateRiffFollow(this.riff,this.player,dt,'planet');
+    const zone=this.nearestZone();
+    const zonePrompt = zone ? (isLayZone(zone) ? `A: ${zone.label}   Move: stand up` : (isSitZone(zone) ? `A: ${zone.label}   Move: stand up` : `A: ${zone.label}   X:Punch Y:Draw/Shoot B:Crawl 2xB:Slide`)) : `A:Jump  X:Punch  Y:Draw/Shoot ${getEquippedWeapon().name}  START:Equipment`;
+    this.prompt.setText(zonePrompt);
+    const confirmPressed = this.consumeConfirm();
+    const jumpPressed = this.consumeJump();
+    const slidePressed = this.consumeSlide();
+    const crawlPressed = this.consumeCrawl();
+    const punchPressed = this.consumePunch();
+    const shootPressed = this.consumeShoot();
+    if(crawlPressed) this.setCrawling(this.player, !this.player.isCrawling, 'planet');
+    else if(slidePressed) this.useSlide(this.player,this.bounds,'planet');
+    else if(zone && confirmPressed){
+      if(isLayZone(zone)) this.layDonny(this.player, zone, 'planet');
+      else if(isSitZone(zone)) this.sitDonny(this.player, zone, 'planet');
+      else if(zone.id==='exitDoor') this.leave();
+      else this.showMessage(zone.message || zone.label || 'Nothing here yet.');
+    } else if(jumpPressed && !zone) this.useJump(this.player,'planet');
+    else if(punchPressed) this.useUnarmedPunch(this.player,'planet');
+    else if(shootPressed) this.useRangedWeapon(this.player);
+    this.updateDialog(delta);
+  }
+}
+
+
+class SpaceDriveScene extends BaseScene {
+  constructor(){ super('SpaceDriveScene'); }
+  init(data){
+    this.fromLiftOff = !!(data && data.fromLiftOff);
+  }
+  create(){
+    this.createCommonInput();
+    GAME_STATE.flight.inSpace = true;
+    GAME_STATE.flight.driving = true;
+    GAME_STATE.flight.lastDriveScene = 'Dust-9 Orbit';
+
+    this.starLayers = [];
+    this.orbitFloaters = [];
+    this.add.rectangle(W/2,H/2,W,H,0x01030a).setDepth(0);
+    if(this.textures.exists('orbit_bg')){
+      this.add.image(W/2,H/2,'orbit_bg').setDisplaySize(W,H).setDepth(0);
+    }
+
+    for(let layer=0; layer<4; layer++){
+      const group = [];
+      const count = layer===0 ? 82 : (layer===1 ? 54 : (layer===2 ? 32 : 16));
+      for(let i=0;i<count;i++){
+        const x=Phaser.Math.Between(0,W);
+        const y=Phaser.Math.Between(0,H);
+        const size=layer===0 ? 1 : (layer===1 ? 1 : 2);
+        const alpha=layer===0 ? 0.22 : (layer===1 ? 0.38 : (layer===2 ? 0.58 : 0.78));
+        group.push(this.add.rectangle(x,y,size,size,0xffffff,alpha).setDepth(1+layer));
+      }
+      this.starLayers.push({stars:group,speed:12+layer*18});
+    }
+
+    this.createDust9OrbitBackdrop();
+
+    this.add.text(W/2,24,'Dust-9 Orbit',{fontFamily:'Arial',fontSize:'22px',color:'#fff',backgroundColor:'rgba(0,0,0,.55)',padding:{x:8,y:4}}).setOrigin(0.5).setDepth(1000);
+    this.add.text(12,12,VERSION,{fontFamily:'Arial',fontSize:'12px',color:'#aab2ff'}).setDepth(1000);
+
+    if(this.textures.exists('astro_van_v1')){
+      this.van = this.add.sprite(W/2,H/2+56,'astro_van_v1',0).setOrigin(0.5).setScale(0.42).setDepth(30);
+    } else {
+      this.van = this.add.rectangle(W/2,H/2+56,124,54,0x222a34,1).setStrokeStyle(3,0xff2aa1,0.85).setDepth(30);
+    }
+
+    this.prompt=this.add.text(W/2,H-22,'A: Get up / go inside van   Y: hold Dust-9 orbit   START:Equipment',{fontFamily:'Arial',fontSize:'17px',color:'#fff',backgroundColor:'rgba(0,0,0,.55)',padding:{x:8,y:4}}).setOrigin(0.5).setDepth(1000);
+    this.status=this.add.text(W-12,12,'Location: Dust-9 Orbit   Planet / moon / station in range',{fontFamily:'Arial',fontSize:'14px',color:'#46ff87',backgroundColor:'rgba(0,0,0,.48)',padding:{x:8,y:4}}).setOrigin(1,0).setDepth(1000);
+    this.makeDialog();
+
+    if(this.fromLiftOff){
+      this.showMessage('Lift-off complete. Entering Dust-9 orbit.');
+    }
+  }
+
+  createDust9OrbitBackdrop(){
+    const g=this.add.graphics().setDepth(2);
+
+    // The full Dust-9 orbit art is loaded as orbit_bg. These smaller sprites sit on top as navigable points of interest.
+    if(this.textures.exists('dust9_planet_space')){
+      this.dust9Planet=this.add.image(156,410,'dust9_planet_space')
+        .setOrigin(0.5)
+        .setDisplaySize(118,118)
+        .setDepth(4);
+      this.add.text(156,492,'Dust-9',{fontFamily:'Arial',fontSize:'13px',color:'#ffd09c',backgroundColor:'rgba(0,0,0,.35)',padding:{x:5,y:2}}).setOrigin(0.5).setDepth(5);
+    } else {
+      this.dust9Planet=this.add.container(156,410).setDepth(4);
+      this.dust9Planet.add(this.add.circle(0,0,58,0xb8662d,1));
+      this.dust9Planet.add(this.add.circle(-18,-18,22,0xe5a45f,0.34));
+      this.dust9Planet.add(this.add.ellipse(6,8,112,22,0x6b351d,0.22));
+      this.dust9Planet.add(this.add.ellipse(-8,-20,88,14,0xffd08a,0.16));
+      this.dust9Planet.add(this.add.circle(24,24,13,0x3b2317,0.24));
+      this.dust9Planet.add(this.add.text(0,82,'Dust-9',{fontFamily:'Arial',fontSize:'13px',color:'#ffd09c',backgroundColor:'rgba(0,0,0,.35)',padding:{x:5,y:2}}).setOrigin(0.5));
+    }
+
+    // Thin orbit lines kept faint so the planet feels distant.
+    g.lineStyle(1,0x7fa7ff,0.14);
+    g.strokeEllipse(156,410,245,76);
+    g.lineStyle(1,0xff2aa1,0.10);
+    g.strokeEllipse(156,410,330,102);
+
+    if(this.textures.exists('dust9_dead_moon')){
+      this.dust9Moon=this.add.image(748,100,'dust9_dead_moon')
+        .setOrigin(0.5)
+        .setDisplaySize(42,42)
+        .setDepth(5);
+      this.add.text(748,131,'Moon',{fontFamily:'Arial',fontSize:'11px',color:'#dfe8ff',backgroundColor:'rgba(0,0,0,.32)',padding:{x:4,y:1}}).setOrigin(0.5).setDepth(6);
+    } else {
+      this.dust9Moon=this.add.container(748,100).setDepth(5);
+      this.dust9Moon.add(this.add.circle(0,0,16,0xb8c3d6,1));
+      this.dust9Moon.add(this.add.circle(-5,-4,5,0x6f7888,0.35));
+      this.dust9Moon.add(this.add.circle(6,5,3,0x6f7888,0.28));
+      this.dust9Moon.add(this.add.text(0,31,'Moon',{fontFamily:'Arial',fontSize:'11px',color:'#dfe8ff',backgroundColor:'rgba(0,0,0,.32)',padding:{x:4,y:1}}).setOrigin(0.5));
+    }
+
+    if(this.textures.exists('neon_space_station')){
+      this.spaceStation=this.add.image(742,244,'neon_space_station')
+        .setOrigin(0.5)
+        .setDisplaySize(128,72)
+        .setDepth(7);
+      this.add.text(742,292,'Station',{fontFamily:'Arial',fontSize:'11px',color:'#dfe8ff',backgroundColor:'rgba(0,0,0,.32)',padding:{x:4,y:1}}).setOrigin(0.5).setDepth(8);
+    } else {
+      this.spaceStation=this.add.container(742,244).setDepth(7);
+      this.spaceStation.add(this.add.rectangle(0,0,54,14,0xb8c7d9,0.88).setStrokeStyle(1,0xffffff,0.45));
+      this.spaceStation.add(this.add.rectangle(-46,0,34,9,0x3e86ff,0.72).setStrokeStyle(1,0xaed1ff,0.35));
+      this.spaceStation.add(this.add.rectangle(46,0,34,9,0x3e86ff,0.72).setStrokeStyle(1,0xaed1ff,0.35));
+      this.spaceStation.add(this.add.rectangle(0,-18,10,26,0xced8e8,0.88).setStrokeStyle(1,0xffffff,0.42));
+      this.spaceStation.add(this.add.rectangle(0,21,14,22,0xa6b1c4,0.85).setStrokeStyle(1,0xffffff,0.38));
+      this.spaceStation.add(this.add.circle(0,0,7,0xfff0a8,0.9));
+      this.spaceStation.add(this.add.text(0,48,'Station',{fontFamily:'Arial',fontSize:'11px',color:'#dfe8ff',backgroundColor:'rgba(0,0,0,.32)',padding:{x:4,y:1}}).setOrigin(0.5));
+      this.spaceStation.setScale(0.68);
+    }
+
+    // Distant nebula haze only; no giant foreground objects.
+    this.add.ellipse(250,120,280,58,0xff8a2b,0.045).setDepth(1);
+    this.add.ellipse(775,380,310,62,0xff2aa1,0.042).setDepth(1);
+
+    this.orbitFloaters.push({obj:this.spaceStation,baseX:742,baseY:244,ampX:8,ampY:5,speed:0.0009});
+    this.orbitFloaters.push({obj:this.dust9Moon,baseX:748,baseY:100,ampX:5,ampY:3,speed:0.00055});
+  }
+
+  openInteriorFromDrive(){
+    GAME_STATE.flight.driving = false;
+    this.showMessage('Auto-pilot holds Dust-9 orbit. Camera returning inside van.');
+    this.time.delayedCall(180,()=>this.scene.start('ShipHubScene',{spaceMode:true,fromDrive:true}));
+  }
+  update(time,delta){
+    const dt=delta/1000;
+    this.starLayers.forEach(layer=>{
+      layer.stars.forEach(star=>{
+        star.y += layer.speed * dt;
+        if(star.y > H+4){
+          star.y = -4;
+          star.x = Phaser.Math.Between(0,W);
+        }
+      });
+    });
+
+    this.orbitFloaters.forEach(f=>{
+      if(!f.obj) return;
+      f.obj.x = f.baseX + Math.sin(time*f.speed) * f.ampX;
+      f.obj.y = f.baseY + Math.cos(time*f.speed*0.85) * f.ampY;
+    });
+
+    if(this.spaceStation) this.spaceStation.setAngle(Math.sin(time*0.0008)*2.5);
+    if(this.van && this.van.setAngle) this.van.setAngle(Math.sin(time*0.0012)*1.7);
+
+    if(this.handleStartEquipmentMenu(delta)){ this.updateDialog(delta); return; }
+
+    const getUp = this.consumeConfirm() || this.consumeJump();
+    const keepDriving = this.consumeShoot();
+
+    if(getUp) this.openInteriorFromDrive();
+    else if(keepDriving) this.showMessage('Holding course in Dust-9 orbit.');
+
+    this.updateDialog(delta);
+  }
+}
+
+class ShipHubScene extends BaseScene {
+  constructor(){ super('ShipHubScene'); }
+  init(data){
+    this.spaceMode = !!(data && data.spaceMode) || !!(GAME_STATE.flight && GAME_STATE.flight.inSpace);
+    this.fromDrive = !!(data && data.fromDrive);
+  }
+  create(){
+    this.createCommonInput();
+    this.createShipInteriorBackground();
+    this.addShipFurnitureFromAssets();
+    this.createVanInteriorOrbitOverlay();
+    const title = this.spaceMode ? 'Astro Van Interior - Dust-9 Orbit / Auto Pilot' : 'Astro Van Interior - Dust-9 field base';
+    this.add.text(W/2,24,title,{fontFamily:'Arial',fontSize:'18px',color:'#fff',backgroundColor:'rgba(0,0,0,.45)',padding:{x:8,y:4}}).setOrigin(0.5).setDepth(1300);
+    this.add.text(12,12,VERSION,{fontFamily:'Arial',fontSize:'12px',color:'#aab2ff'}).setDepth(1500);
+    if(this.textures.exists('riff_bed')){
+      this.add.image(265,420,'riff_bed').setOrigin(0.5,0.75).setScale(0.42).setDepth(62);
+    }
+    this.createDonnyAnimations('donny_overhead'); this.createDonnyAnimations('donny_spacesuit');
+    this.createRiffAnimations('riff'); this.createRiffAnimations('riff_spacesuit');
+    this.createWeaponFxAnimations();
+    this.createDonnyActionAnimations();
+    const spawn = this.fromDrive ? {x:735,y:304,dir:'up'} : {x:480,y:488,dir:'up'};
+    this.player=this.createDonny(getDonnyTextureForArea('ship'),spawn.x,spawn.y); this.player.dir=spawn.dir;
+    this.createHolsterSprite(this.player);
+    this.createHeldWeaponSprite(this.player);
+    this.riff=this.createRiff(getRiffTextureForArea('ship'),430,500); this.riff.dir='up';
+    this.bounds={x:88,y:190,w:785,h:318};
+    this.moveBlockers=getShipBlockers();
+    this.drawMoveBlockers();
+    const promptText = this.spaceMode
+      ? 'In space. Walk around van, then sit in cockpit chair and press Y to continue driving.'
+      : 'A near chairs/stations. Cockpit chair: Sit, then Y = Lift Off';
+    this.prompt=this.add.text(W/2,H-18,promptText,{fontFamily:'Arial',fontSize:'17px',color:'#fff',backgroundColor:'rgba(0,0,0,.45)',padding:{x:8,y:4}}).setOrigin(0.5).setDepth(1000);
+    this.makeDialog(); this.createGearLockerMenu(); this.updateHud();
+  }
+  getFirstLoadedTexture(candidates){
+    const list = Array.isArray(candidates) ? candidates : [];
+    for(const item of list){
+      const key = typeof item === 'string' ? item : item.key;
+      if(key && this.textures.exists(key)) return key;
+    }
+    return null;
+  }
+  createShipInteriorBackground(){
+    if(this.textures.exists('shipInterior')){
+      this.add.image(W/2,H/2,'shipInterior').setDisplaySize(W,H).setDepth(0);
+      return;
+    }
+
+    const emptyKey = this.getFirstLoadedTexture(SHIP_INTERIOR_EMPTY_CANDIDATES);
+
+    if(emptyKey){
+      this.add.image(W/2,H/2,emptyKey).setDisplaySize(W,H).setDepth(0);
+      return;
+    }
+
+    // Do NOT show the old baked-furniture background here. If the empty van PNG is missing,
+    // draw a clean empty interior so the separate furniture layer is still obvious.
+    this.drawGeneratedEmptyShipInterior();
+    console.warn('EMPTY VAN BACKGROUND NOT FOUND. Generated empty van base is being used. Checked:', SHIP_INTERIOR_EMPTY_CANDIDATES.map(a=>a.path));
+  }
+  drawGeneratedEmptyShipInterior(){
+    this.add.rectangle(W/2,H/2,W,H,0x03040a,1).setDepth(0);
+
+    // Outer van shell.
+    this.add.rectangle(W/2,270,790,390,0x10141e,1)
+      .setStrokeStyle(5,0x2a3142,1)
+      .setDepth(0);
+    this.add.rectangle(W/2,270,750,350,0x151a24,1)
+      .setStrokeStyle(2,0x343d52,0.9)
+      .setDepth(0);
+
+    // Back wall, floor panels, and walkway.
+    this.add.rectangle(W/2,128,738,86,0x202637,0.92).setDepth(0);
+    this.add.rectangle(W/2,338,738,226,0x242833,0.96).setDepth(0);
+    this.add.rectangle(W/2,430,720,84,0x1a1e2a,0.95).setDepth(0);
+
+    for(let x=150;x<=810;x+=82){
+      this.add.line(0,0,x,188,x,482,0x3a4254,0.26).setOrigin(0,0).setDepth(1);
+    }
+    for(let y=205;y<=470;y+=54){
+      this.add.line(0,0,110,y,850,y,0x3a4254,0.22).setOrigin(0,0).setDepth(1);
+    }
+
+    // Windows / cockpit glass area.
+    this.add.rectangle(725,84,262,70,0x040915,0.92)
+      .setStrokeStyle(2,0x46e4ff,0.28)
+      .setDepth(1);
+    this.add.rectangle(235,86,180,62,0x050817,0.82)
+      .setStrokeStyle(2,0xff2aa1,0.22)
+      .setDepth(1);
+
+    // Airlock / door indicators.
+    this.add.rectangle(480,510,150,28,0x0b111f,0.82).setStrokeStyle(2,0x46e4ff,0.25).setDepth(1);
+    this.add.text(W/2,510,'AIRLOCK',{fontFamily:'Arial Black',fontSize:'11px',color:'#6fdfff'}).setOrigin(0.5).setDepth(2);
+
+    this.add.text(W/2,52,'EMPTY VAN BASE GENERATED - EXACT BACKGROUND FILE NOT FOUND',{fontFamily:'Arial',fontSize:'11px',color:'#9be7ff',backgroundColor:'rgba(0,0,0,.45)',padding:{x:6,y:3}}).setOrigin(0.5).setDepth(1400);
+  }
+  addShipFurnitureFromAssets(){
+    this.shipFurnitureSprites = [];
+
+    SHIP_FURNITURE_LAYOUT.forEach(item=>{
+      const candidates = SHIP_FURNITURE_ASSET_CANDIDATES[item.kind] || [];
+      const loadedKey = this.getFirstLoadedTexture(candidates);
+      const key = (item.texture && this.textures.exists(item.texture)) ? item.texture : loadedKey;
+
+      if(!key){
+        console.warn('SHIP PROP NOT FOUND:', item.id, candidates.map(c=>c.path));
+        return;
+      }
+
+      const obj = this.add.image(item.x,item.y,key)
+        .setOrigin(0.5,0.5)
+        .setDisplaySize(item.displayW,item.displayH)
+        .setDepth(typeof item.depth === 'number' ? item.depth : (item.foreground ? 1250 : 20 + item.y));
+
+      this.shipFurnitureSprites.push(obj);
+    });
+  }
+  drawFurnitureFallback(item){
+    const f = item.fallback || {w:96,h:64,color:0x333333,stroke:0xffffff};
+    const c = this.add.container(item.x,item.y).setDepth(20 + item.y);
+    const body = this.add.rectangle(0,0,f.w,f.h,f.color || 0x333333,0.92)
+      .setStrokeStyle(2,f.stroke || 0xffffff,0.7);
+    c.add(body);
+
+    if(item.kind === 'cockpitConsole'){
+      c.add(this.add.rectangle(0,-18,f.w-28,24,0x02040d,0.9).setStrokeStyle(1,0x46e4ff,0.38));
+      c.add(this.add.circle(-48,10,6,0x46ff87,0.75));
+      c.add(this.add.circle(-24,10,6,0xffd447,0.75));
+      c.add(this.add.circle(0,10,6,0xff2aa1,0.75));
+      c.add(this.add.rectangle(42,12,52,10,0x21d7ff,0.5));
+    } else if(item.kind === 'leftBed'){
+      c.add(this.add.rectangle(-22,-12,f.w*0.45,22,0x1b2030,0.85).setStrokeStyle(1,0xffffff,0.28));
+      c.add(this.add.rectangle(32,8,f.w*0.38,34,0x713f8f,0.7));
+    } else if(item.kind === 'kitchenCounter'){
+      c.add(this.add.rectangle(-42,-10,46,20,0xa0c8dc,0.55));
+      c.add(this.add.rectangle(34,-12,72,14,0xffd447,0.35));
+      c.add(this.add.rectangle(0,18,f.w-34,8,0x111722,0.55));
+    } else if(item.kind === 'table'){
+      c.add(this.add.ellipse(0,0,f.w*0.82,f.h*0.58,0x8a5c32,0.95).setStrokeStyle(2,0xffd447,0.45));
+      c.add(this.add.rectangle(-42,38,28,14,0x2b1d15,0.85));
+      c.add(this.add.rectangle(42,38,28,14,0x2b1d15,0.85));
+    } else if(item.kind === 'gearLocker' || item.kind === 'storageCabinet'){
+      c.add(this.add.rectangle(-22,0,3,f.h-18,0xffffff,0.18));
+      c.add(this.add.circle(-10,4,3,0xffd447,0.8));
+      c.add(this.add.circle(24,4,3,0xffd447,0.8));
+    } else if(item.kind === 'medStation'){
+      c.add(this.add.rectangle(0,0,f.w-36,28,0x78e6ff,0.18).setStrokeStyle(1,0x78e6ff,0.5));
+      c.add(this.add.rectangle(0,-2,14,48,0xffffff,0.72));
+      c.add(this.add.rectangle(0,-2,48,14,0xffffff,0.72));
+    } else if(item.kind === 'upgradeStation'){
+      c.add(this.add.circle(0,0,18,0xff2aa1,0.35).setStrokeStyle(2,0xff2aa1,0.6));
+      c.add(this.add.circle(0,0,7,0x46e4ff,0.8));
+    } else if(item.kind === 'guitarRack'){
+      c.add(this.add.rectangle(-28,0,12,58,0xffd447,0.5));
+      c.add(this.add.rectangle(0,0,12,58,0xff2aa1,0.45));
+      c.add(this.add.rectangle(28,0,12,58,0x46e4ff,0.45));
+    }
+
+    return c;
+  }
+  createVanInteriorOrbitOverlay(){
+    this.spaceInteriorFloaters=[];
+
+    // Always mark the cockpit as usable. In orbit, draw a visible asset-based space view over the van windows.
+    const stateLabel = this.spaceMode ? 'DUST-9 ORBIT' : 'DUST-9 SURFACE';
+    const statusColor = this.spaceMode ? '#46e4ff' : '#ffd447';
+
+    this.add.rectangle(724,72,264,92,0x02040d,this.spaceMode ? 0.80 : 0.28)
+      .setStrokeStyle(2,this.spaceMode ? 0x46e4ff : 0xffd447,this.spaceMode ? 0.45 : 0.24)
+      .setDepth(4);
+
+    if(this.spaceMode){
+      const win=this.add.container(0,0).setDepth(5);
+      win.add(this.add.rectangle(724,72,246,76,0x00020a,0.74).setStrokeStyle(1,0x9be7ff,0.25));
+
+      for(let i=0;i<34;i++){
+        const sx=Phaser.Math.Between(612,838);
+        const sy=Phaser.Math.Between(40,104);
+        const alpha=Phaser.Math.FloatBetween(0.25,0.82);
+        win.add(this.add.rectangle(sx,sy,1,1,0xffffff,alpha));
+      }
+
+      let planet;
+      if(this.textures.exists('dust9_planet_space')){
+        planet=this.add.image(644,94,'dust9_planet_space').setDisplaySize(38,38).setDepth(5);
+      } else {
+        planet=this.add.container(644,94);
+        planet.add(this.add.circle(0,0,19,0xb8662d,1));
+        planet.add(this.add.circle(-6,-6,7,0xe4a35e,0.35));
+        planet.add(this.add.ellipse(2,4,35,7,0x6b351d,0.24));
+        planet.add(this.add.circle(8,8,4,0x2b170d,0.22));
+      }
+      win.add(planet);
+
+      let moon;
+      if(this.textures.exists('dust9_dead_moon')){
+        moon=this.add.image(776,47,'dust9_dead_moon').setDisplaySize(14,14).setDepth(5);
+      } else {
+        moon=this.add.container(776,47);
+        moon.add(this.add.circle(0,0,6,0xc7d2e6,0.92));
+        moon.add(this.add.circle(-2,-1,2,0x6f7888,0.32));
+      }
+      win.add(moon);
+
+      let station;
+      if(this.textures.exists('neon_space_station')){
+        station=this.add.image(810,78,'neon_space_station').setDisplaySize(44,25).setDepth(5);
+      } else {
+        station=this.add.container(810,78);
+        station.add(this.add.rectangle(0,0,25,6,0xb8c7d9,0.86).setStrokeStyle(1,0xffffff,0.34));
+        station.add(this.add.rectangle(-22,0,16,4,0x3e86ff,0.68));
+        station.add(this.add.rectangle(22,0,16,4,0x3e86ff,0.68));
+        station.add(this.add.rectangle(0,-8,4,12,0xd8e1ef,0.72));
+        station.add(this.add.circle(0,0,3,0xfff0a8,0.86));
+        station.setScale(0.72);
+      }
+      win.add(station);
+
+      this.spaceInteriorFloaters.push({obj:planet,baseX:644,baseY:94,ampX:4,ampY:2,speed:0.0011});
+      this.spaceInteriorFloaters.push({obj:moon,baseX:776,baseY:47,ampX:3,ampY:2,speed:0.0008});
+      this.spaceInteriorFloaters.push({obj:station,baseX:810,baseY:78,ampX:5,ampY:3,speed:0.0014});
+
+      this.add.rectangle(724,128,254,30,0x001622,0.72).setDepth(6).setStrokeStyle(1,0x46e4ff,0.28);
+      this.add.text(724,127,'AUTO-PILOT HOLDING DUST-9 ORBIT',{fontFamily:'Arial',fontSize:'12px',color:'#bff6ff',align:'center'}).setOrigin(0.5).setDepth(7);
+      this.add.text(724,151,'Sit in cockpit chair + press Y to keep driving',{fontFamily:'Arial',fontSize:'11px',color:'#ffffff',backgroundColor:'rgba(0,0,0,.36)',padding:{x:5,y:2}}).setOrigin(0.5).setDepth(7);
+      this.add.ellipse(480,512,420,34,0x46e4ff,0.07).setDepth(3);
+    } else {
+      this.add.text(724,78,'COCKPIT READY',{fontFamily:'Arial',fontSize:'14px',color:'#ffd447',backgroundColor:'rgba(0,0,0,.38)',padding:{x:6,y:3}}).setOrigin(0.5).setDepth(6);
+      this.add.text(724,104,'Sit in pilot chair + press Y for lift-off',{fontFamily:'Arial',fontSize:'12px',color:'#ffffff',backgroundColor:'rgba(0,0,0,.32)',padding:{x:5,y:2}}).setOrigin(0.5).setDepth(6);
+    }
+
+    this.add.text(92,72,stateLabel,{fontFamily:'Arial Black',fontSize:'15px',color:statusColor,backgroundColor:'rgba(0,0,0,.52)',padding:{x:8,y:4}}).setDepth(8);
+  }
+  updateVanInteriorOrbitOverlay(time){
+    if(!this.spaceInteriorFloaters) return;
+    this.spaceInteriorFloaters.forEach(f=>{
+      if(!f.obj) return;
+      f.obj.x = f.baseX + Math.sin(time*f.speed) * f.ampX;
+      f.obj.y = f.baseY + Math.cos(time*f.speed*0.9) * f.ampY;
+    });
+  }
+  updateHud(){
+    if(this.hudText) this.hudText.destroy();
+    const flightText = GAME_STATE.flight?.inSpace ? '   Flight: In Space' : '';
+    this.hudText=this.add.text(W-12,12,`Suit: ${getEquippedSuitName()}   Mask: ${getEquippedMaskName()}   Weapon: ${getEquippedWeapon().name}   O2:${Math.round(GAME_STATE.vitals?.o2 ?? 100)}%${flightText}`,{fontFamily:'Arial',fontSize:'14px',color:(hasO2MaskEquipped()||hasSpaceSuitEquipped())?'#46ff87':'#ffd447',backgroundColor:'rgba(0,0,0,.48)',padding:{x:8,y:4}}).setOrigin(1,0).setDepth(1500);
+  }
+  nearestZone(){
+    let best=null,bestD=9999;
+    [...SHIP_ZONES, ...SHIP_REST_ZONES].forEach(z=>{const c=zoneCenter(z),d=Phaser.Math.Distance.Between(this.player.x,this.player.y-35,c.x,c.y);if(d<bestD){bestD=d;best=z;}});
+    return bestD<95 ? best : null;
+  }
+  createGearLockerMenu(){
+    this.menuOpen=false; this.menuIndex=0; this.menuMoveCooldown=0;
+    this.menuBg=this.add.rectangle(W/2,H/2,650,330,0x05070c,0.93).setStrokeStyle(3,0xff2aa1,0.9).setDepth(2200).setVisible(false);
+    this.menuTitle=this.add.text(W/2,H/2-135,'GEAR LOCKER',{fontFamily:'Arial',fontSize:'30px',color:'#fff',fontStyle:'bold'}).setOrigin(0.5).setDepth(2201).setVisible(false);
+    this.menuInfo=this.add.text(W/2,H/2-94,'',{fontFamily:'Arial',fontSize:'16px',color:'#cbd4ff',align:'center',wordWrap:{width:560}}).setOrigin(0.5).setDepth(2201).setVisible(false);
+    this.menuOptions=['Equip O2 Mask','Remove O2 Mask','Equip Basic Space Suit','Unequip Space Suit','Close'];
+    this.menuTexts=this.menuOptions.map((label,i)=>this.add.text(W/2,H/2-34+i*48,label,{fontFamily:'Arial',fontSize:'22px',color:'#fff',align:'center'}).setOrigin(0.5).setDepth(2201).setVisible(false));
+    this.menuHelp=this.add.text(W/2,H/2+130,'Left stick / Up Down = select    A = choose    START/Esc = close',{fontFamily:'Arial',fontSize:'14px',color:'#fff',align:'center'}).setOrigin(0.5).setDepth(2201).setVisible(false);
+  }
+  openGearLockerMenu(){ this.menuOpen=true; this.menuIndex=GAME_STATE.equipment.mask?1:0; this.refreshGearLockerMenu(); }
+  closeGearLockerMenu(){ this.menuOpen=false; this.menuBg.setVisible(false); this.menuTitle.setVisible(false); this.menuInfo.setVisible(false); this.menuHelp.setVisible(false); this.menuTexts.forEach(t=>t.setVisible(false)); }
+  refreshGearLockerMenu(){
+    const suitEquipped=GAME_STATE.equipment.suit==='basic_space_suit';
+    const maskEquipped=GAME_STATE.equipment.mask==='basic_o2_mask';
+    this.menuBg.setVisible(true); this.menuTitle.setVisible(true); this.menuInfo.setVisible(true); this.menuHelp.setVisible(true);
+    this.menuInfo.setText(`Dust-9: atmosphere present, O2 mask required outside.\nSuit: ${getEquippedSuitName()}   Mask: ${getEquippedMaskName()}\nOwned: ${ownsItem('basic_space_suit')?'Basic Space Suit':'No Suit'} / ${ownsItem('basic_o2_mask')?'Basic O2 Mask':'No Mask'}`);
+    this.menuTexts.forEach((t,i)=>{
+      let label=this.menuOptions[i];
+      if(i===0) label=maskEquipped?'O2 Mask Equipped':'Equip O2 Mask';
+      if(i===1) label=maskEquipped?'Remove O2 Mask':'Remove O2 Mask (none equipped)';
+      if(i===2) label=suitEquipped?'Basic Space Suit Equipped':'Equip Basic Space Suit';
+      if(i===3) label=suitEquipped?'Unequip Space Suit':'Unequip Space Suit (none equipped)';
+      if(i===4) label='Close';
+      const selected=i===this.menuIndex; t.setText(`${selected?'▶ ':'   '}${label}`).setColor(selected?'#46ff87':'#fff').setVisible(true);
+    });
+  }
+  chooseGearLockerOption(){
+    if(this.menuIndex===0){
+      if(equipMask('basic_o2_mask')) this.showMessage('O2 mask equipped. Dust-9 surface travel ready.');
+      else this.showMessage('No O2 mask in inventory.');
+      this.updateHud();
+    }
+    if(this.menuIndex===1){
+      if(!GAME_STATE.equipment.mask){this.showMessage('No O2 mask equipped.');return;}
+      unequipMask(); this.showMessage('O2 mask removed. Do not go outside on Dust-9.');
+      this.updateHud();
+    }
+    if(this.menuIndex===2){
+      equipSuit('basic_space_suit'); this.showMessage('Basic Space Suit equipped.');
+      this.refreshDonnyTexture(this.player,'ship'); this.refreshRiffTexture(this.riff,'ship'); this.updateHud();
+    }
+    if(this.menuIndex===3){
+      if(!GAME_STATE.equipment.suit){this.showMessage('No suit equipped.');return;}
+      unequipSuit(); this.showMessage('Space suit unequipped. Normal clothes restored.');
+      this.refreshDonnyTexture(this.player,'ship'); this.refreshRiffTexture(this.riff,'ship'); this.updateHud();
+    }
+    if(this.menuIndex===4){ this.closeGearLockerMenu(); return; }
+    this.refreshGearLockerMenu();
+  }
+  updateGearLockerMenu(delta){
+    this.menuMoveCooldown-=delta; const move=this.getMoveVector();
+    if(this.menuMoveCooldown<=0){
+      if(move.vy<-0.55 || Phaser.Input.Keyboard.JustDown(this.keys.UP)){this.menuIndex=(this.menuIndex+this.menuOptions.length-1)%this.menuOptions.length;this.menuMoveCooldown=180;this.refreshGearLockerMenu();}
+      else if(move.vy>0.55 || Phaser.Input.Keyboard.JustDown(this.keys.DOWN)){this.menuIndex=(this.menuIndex+1)%this.menuOptions.length;this.menuMoveCooldown=180;this.refreshGearLockerMenu();}
+    }
+    if(this.consumeBack()){this.closeGearLockerMenu();return;}
+    if(this.consumeConfirm()) this.chooseGearLockerOption();
+  }
+  startLiftOffFromCockpit(){
+    GAME_STATE.flight.inSpace = true;
+    GAME_STATE.flight.driving = true;
+    GAME_STATE.flight.lastDriveScene = 'Dust-9 Orbit';
+    this.showMessage(this.spaceMode ? 'Returning to space driving.' : 'Lift-off sequence started.');
+    this.time.delayedCall(180,()=>this.scene.start('SpaceDriveScene',{fromLiftOff:true,orbit:'dust_9'}));
+  }
+  tryUseAirlock(){
+    if(GAME_STATE.flight?.inSpace){
+      this.showMessage('Airlock locked during space flight. Sit in the cockpit and press Y to keep driving.');
+      return;
+    }
+    if(!canBreatheOnPlanet('dust_9')){
+      this.showMessage('Dust-9 has thin atmosphere. Equip the O2 mask or a space suit before leaving.');
+      return;
+    }
+    const mode = hasSpaceSuitEquipped() ? 'space suit sealed' : 'O2 mask active';
+    this.showMessage(`Airlock opened. Dust-9 atmosphere detected — ${mode}.`);
+    this.time.delayedCall(260,()=>this.scene.start('PlanetChunkScene',{planetId:'dust_9',chunkId:GAME_STATE.location.chunkId || '0,1',entrySide:'ship'}));
+  }
+  update(time,delta){
+    this.updateVanInteriorOrbitOverlay(time);
+    if(this.menuOpen){ this.updateGearLockerMenu(delta); this.updateDialog(delta); return; }
+    if(this.handleStartEquipmentMenu(delta)){ this.updateDialog(delta); return; }
+    const dt=delta/1000;
+    if(this.handleRestingControls(this.player,'ship')){ this.updateDialog(delta); return; }
+    this.moveDonny(this.player,this.bounds,dt,'ship');
+    this.updateHolsterSprite(this.player);
+    this.updateHeldWeaponSprite(this.player);
+    this.updateRiffFollow(this.riff,this.player,dt,'ship');
+    const jumpPressed = this.consumeJump();
+    const slidePressed = this.consumeSlide();
+    const crawlPressed = this.consumeCrawl();
+    const punchPressed = this.consumePunch();
+    const shootPressed = this.consumeShoot();
+    if(crawlPressed) this.setCrawling(this.player, !this.player.isCrawling, 'ship');
+    else if(slidePressed) this.useSlide(this.player,this.bounds,'ship');
+    else if(jumpPressed) this.useJump(this.player,'ship');
+    else if(punchPressed) this.useUnarmedPunch(this.player,'ship');
+    else if(shootPressed) this.useRangedWeapon(this.player);
+    const zone=this.nearestZone();
+    let zoneLabel = zone ? zone.label : '';
+    if(zone && zone.cockpit && this.spaceMode) zoneLabel = 'Sit in cockpit chair / continue driving';
+    this.prompt.setText(zone ? `A: ${zoneLabel}` : (this.spaceMode ? 'Walk around the van. Sit in cockpit chair to continue driving. START:Equipment' : 'A:Jump  B:Crawl  2xB:Slide  X:Punch  Y:Draw/Shoot  START:Equipment'));
+    if(zone && this.consumeConfirm()){
+      if(isLayZone(zone)) this.layDonny(this.player, zone, 'ship');
+      else if(isSitZone(zone)) this.sitDonny(this.player, zone, 'ship');
+      else if(zone.id==='gearLocker') this.openGearLockerMenu();
+      else if(zone.id==='airlock') this.tryUseAirlock();
+      else this.showMessage(zone.message);
+    }
+    this.updateDialog(delta);
+  }
+}
+
+new Phaser.Game({
+  type: Phaser.AUTO,
+  parent:'game',
+  width:W,
+  height:H,
+  backgroundColor:'#000000',
+  pixelArt:true,
+  roundPixels:true,
+  scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH,width:W,height:H},
+  scene:[BootScene, PlanetChunkScene, InteriorScene, ShipHubScene, SpaceDriveScene]
+});
+</script>
+</body>
+</html>

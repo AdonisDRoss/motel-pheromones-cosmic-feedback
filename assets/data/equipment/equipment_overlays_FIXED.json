@@ -1,0 +1,9 @@
+{
+  "overlays": {
+    "donny_holster_brown": {
+      "path": "assets/sprites/equipment/holsters/donny_tight_holster_brown_4dir_1779504330.png",
+      "frameWidth": 128,
+      "frameHeight": 128
+    }
+  }
+}
