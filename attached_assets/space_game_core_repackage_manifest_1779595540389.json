@@ -1,0 +1,12 @@
+{
+  "zips": [
+    {
+      "file": "space_game_core_safe_no_overwrite_package.zip",
+      "size_mb": 0.31
+    },
+    {
+      "file": "space_game_core_direct_assets_no_index.zip",
+      "size_mb": 0.28
+    }
+  ]
+}
