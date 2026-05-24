@@ -1,83 +1,264 @@
-class Title extends Phaser.Scene{constructor(){super('Title')}create(){
-const bg=this.add.rectangle(0,0,W,H,0x07050a).setOrigin(0);
-this.add.text(W/2,110,'MOTEL PHEROMONES',{fontFamily:'monospace',fontSize:'42px',color:'#f4e7ff',stroke:'#000',strokeThickness:5}).setOrigin(.5);
-this.add.text(W/2,165,'COSMIC FEEDBACK',{fontFamily:'monospace',fontSize:'28px',color:'#86f7ff',stroke:'#000',strokeThickness:4}).setOrigin(.5);
-this.add.text(W/2,230,'— a forgotten signal from the Outer Rim —',{fontFamily:'monospace',fontSize:'14px',color:'#7a6b8a'}).setOrigin(.5);
-const btn=(y,label,cb)=>{const t=this.add.text(W/2,y,label,{fontFamily:'monospace',fontSize:'20px',color:'#fff',backgroundColor:'#371c55',padding:{x:22,y:13}}).setOrigin(.5).setInteractive();t.on('pointerover',()=>t.setStyle({backgroundColor:'#5a2e8a'}));t.on('pointerout',()=>t.setStyle({backgroundColor:'#371c55'}));t.on('pointerdown',cb);return t;};
-const b1=btn(330,'[ START STORY ]',()=>this.scene.start('Opening'));
-const b2=btn(400,'[ TEST DUST-9 ROAD WORLD ]',()=>this.scene.start('Game',{startRoom:'drive_to_camp'}));
-this.input.keyboard.once('keydown-ENTER',()=>this.scene.start('Opening'));
-this.add.text(W/2,490,'ENTER = Start Story',{fontFamily:'monospace',fontSize:'11px',color:'#443355'}).setOrigin(.5);
-}}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Motel Pheromones: Cosmic Feedback</title>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+<style>
+html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#000;touch-action:none;-webkit-user-select:none;user-select:none}
+#game{position:fixed;inset:0}
+canvas{image-rendering:pixelated;image-rendering:crisp-edges}
+</style>
+</head>
+<body><div id="game"></div>
+<script>
+(()=>{
+'use strict';
+const W=960,H=540;
 
-class Opening extends Phaser.Scene{constructor(){super('Opening')}create(){
-this.cameras.main.setBackgroundColor('#07050a');
-this.idx=0;
-this.slides=[
-{title:'THE INNER SYSTEMS',body:'Nova.\n\nA beautiful city-world at the center of everything.\nCapital of the inner systems.\nCrossroads of every route, gate, and lane that kept the galaxy fed.',color:'#86f7ff'},
-{title:'THE MERIDIAN WAR',body:'The war lasted a generation.\n\nThe Red Concord fought for control — not of worlds,\nbut of the things that feed them.\n\nRoutes. Gates. Fuel. Food. Medicine.\nDebt records. Supply lanes.',color:'#ff9966'},
-{title:'THE RED CONCORD CLAIMED VICTORY',body:'Subprime Emperor Cassian Veyr stood before Nova and declared peace.\n\nHis court gathered beneath him:\nEmpress Seraline. Prince Malrec. Princess Cyra.\nCaptain Draeven. Lady Sylene. Dowager Ilyra.\n\nThe court smiled. The Outer Rim went quiet.',color:'#cc4444'},
-{title:'THE OUTER RIM',body:'They called it peace.\n\nThe Outer Rim called it occupation.\n\nMarshal Voss controlled the roads.\nDirector Kade controlled resources.\nMother Rusk enforced compliance.\nThe Pale Captain enforced everything else.',color:'#9966cc'},
-{title:'DUST-9',body:'A small forgotten world.\nAt the edge of nothing.\n\nThe kind of place where someone goes\nwhen the center has too many eyes\nand the rim has holes where a person can disappear.\n\nDonny disappeared here four years ago.\nHis Astro Van is his ship on wheels.\n\nRiff keeps the lights on.',color:'#66cc99'},
-{title:'TONIGHT',body:'A signal came in.\n\nOuter Rim encryption.\nBroken. Repeating. Scared.',color:'#f4e7ff'}
+const ROOMS=[
+  {id:'drive_to_camp',name:'Road to Red Concord Camp',bg:'bg_drive',
+   path:'assets/backgrounds/planets/dust_9/drive/dust9_road_chunk_01_no_vans.png',
+   spawn:[480,400],bounds:[100,125,760,385],
+   exits:[
+     ['to_camp','Camp Perimeter',390,35,180,90,null,'Reach Camp'],
+     ['to_van','Back to Van',420,455,130,70,null,'Return']
+   ]},
+  {id:'camp_checkpoint',name:'Red Concord Camp Checkpoint',bg:'bg_camp',
+   path:'assets/backgrounds/dust9/dust9_checkpoint_empty_1920x540.png',
+   spawn:[180,390],bounds:[50,210,860,300],
+   exits:[
+     ['road','Back to Road',20,420,100,100,'drive_to_camp','Return to Road']
+   ]}
 ];
-this.titleTxt=this.add.text(W/2,120,'',{fontFamily:'monospace',fontSize:'26px',color:'#86f7ff',stroke:'#000',strokeThickness:3}).setOrigin(.5);
-this.bodyTxt=this.add.text(W/2,280,'',{fontFamily:'monospace',fontSize:'15px',color:'#d4c8e8',wordWrap:{width:720},align:'center',lineSpacing:6}).setOrigin(.5);
-this.hintTxt=this.add.text(W/2,505,'click or press ENTER to continue',{fontFamily:'monospace',fontSize:'11px',color:'#443355'}).setOrigin(.5);
-this.showSlide(0);
-this.input.on('pointerdown',()=>this.advance());
-this.input.keyboard.on('keydown-ENTER',()=>this.advance());
-this.input.keyboard.on('keydown-SPACE',()=>this.advance());
-}
-showSlide(i){
-const s=this.slides[i];
-this.titleTxt.setText(s.title).setStyle({color:s.color});
-this.bodyTxt.setText(s.body);
-this.hintTxt.setText(i===this.slides.length-1?'click or press ENTER to continue…':'click or press ENTER to continue');
-}
-advance(){
-this.idx++;
-if(this.idx>=this.slides.length){this.scene.start('Cutscene');return;}
-this.showSlide(this.idx);
-}}
 
-class Cutscene extends Phaser.Scene{constructor(){super('Cutscene')}create(){
-this.cameras.main.setBackgroundColor('#0a0810');
-this.beats=[
-{speaker:'',text:'Dust storm. Night. Donny\'s office above a repair garage on Dust-9.\nRiff rolls in carrying a blinking signal receiver.'},
-{speaker:'RIFF',text:'Donny. Wake up.'},
-{speaker:'DONNY',text:'Riff, if this is about the toaster learning swear words again, let it grow.'},
-{speaker:'RIFF',text:'Not toaster. Signal. Outer Rim encryption. Dex signature. Broken. Repeating. Scared.'},
-{speaker:'DEX [SIGNAL]',text:'"Donny...\nThis is not a storm. It is feedback.\nIt starts under Dust-9.\nRed Concord knows.\nNova is listening.\nBring the van.\nTrust Riff.\nDo not answer the return signal."'},
-{speaker:'DONNY',text:'Show me where it came from.'},
-{speaker:'RIFF',text:'Old relay station. East road.\nThree checkpoints. Two turret nests.\nOne very bad probability curve.'},
-{speaker:'DONNY',text:'Good. Means they\'re worried.'},
-{speaker:'',text:'Donny picks up his coat.\nThe Astro Van starts below.\nDust-9 keeps its secrets for now.'}
-];
-this.bidx=0;
-const boxH=180;
-this.add.rectangle(0,H-boxH,W,boxH,0x0f0a18).setOrigin(0).setAlpha(.95);
-this.add.graphics().lineStyle(1,0x5533aa,.6).strokeRect(0,H-boxH,W,boxH);
-this.spkTxt=this.add.text(36,H-boxH+18,'',{fontFamily:'monospace',fontSize:'14px',color:'#86f7ff',stroke:'#000',strokeThickness:2});
-this.dlgTxt=this.add.text(36,H-boxH+46,'',{fontFamily:'monospace',fontSize:'16px',color:'#f4e7ff',wordWrap:{width:W-72},lineSpacing:5});
-this.hintTxt=this.add.text(W-20,H-14,'▶ click / ENTER',{fontFamily:'monospace',fontSize:'11px',color:'#443355'}).setOrigin(1,1);
-this.locTxt=this.add.text(W/2,60,'DUST-9 — Donny\'s Office',{fontFamily:'monospace',fontSize:'13px',color:'#7a6b8a',stroke:'#000',strokeThickness:2}).setOrigin(.5);
-this.showBeat(0);
-this.input.on('pointerdown',()=>this.advance());
-this.input.keyboard.on('keydown-ENTER',()=>this.advance());
-this.input.keyboard.on('keydown-SPACE',()=>this.advance());
+/* ─── BOOT ─────────────────────────────────────────────────────────── */
+class Boot extends Phaser.Scene {
+  constructor(){super('Boot')}
+
+  preload(){
+    this.load.on('loaderror', f => console.warn('Asset missing (ok):', f.key, f.url));
+
+    // Title video — muted so autoplay works on mobile
+    this.load.video('title_video','assets/cosmic-feedback/video/title_intro.mp4','loadeddata',false,true);
+
+    // Room backgrounds
+    ROOMS.forEach(r => this.load.image(r.bg, r.path));
+
+    // Player sprite
+    this.load.spritesheet('donny1',
+      'assets/sprites/player/donny/donny_empty_pistol_pose_sheet.png',
+      {frameWidth:128,frameHeight:128});
+
+    // Van sprite
+    this.load.spritesheet('van_drive',
+      'assets/sprites/vehicles/astro_van/astro_van_side_drive_idle_4f.png',
+      {frameWidth:256,frameHeight:128});
+  }
+
+  create(){
+    // Placeholder textures if assets failed to load
+    const mk=(k,w,h,c)=>{
+      if(this.textures.exists(k)) return;
+      const g=this.add.graphics();
+      g.fillStyle(c,1).fillRect(0,0,w,h)
+       .lineStyle(2,0xffffff,.5).strokeRect(1,1,w-2,h-2)
+       .generateTexture(k,w,h);
+      g.destroy();
+    };
+    mk('ph_bg',960,540,0x17131c);
+    mk('ph_player',46,82,0x314dff);
+
+    this.scene.start('Title');
+  }
 }
-showBeat(i){
-const b=this.beats[i];
-this.spkTxt.setText(b.speaker?`[ ${b.speaker} ]`:'');
-this.dlgTxt.setText(b.text);
+
+/* ─── TITLE ─────────────────────────────────────────────────────────── */
+class Title extends Phaser.Scene {
+  constructor(){super('Title')}
+
+  create(){
+    // ── Video background ──────────────────────────────────────────────
+    const vid = this.add.video(W/2, H/2, 'title_video');
+
+    // Scale to cover the full canvas (crop if aspect ratio differs)
+    const vw = vid.width  || W;
+    const vh = vid.height || H;
+    const scale = Math.max(W/vw, H/vh);
+    vid.setScale(scale);
+    vid.setDepth(0);
+
+    // Muted loop — safe on all browsers including mobile
+    vid.setMute(true);
+    vid.setLoop(true);
+    vid.play();
+
+    // If video fails (e.g. GitHub Pages hasn't deployed it yet) fall back to solid bg
+    vid.on('error', () => {
+      this.add.rectangle(0,0,W,H,0x07050a).setOrigin(0).setDepth(0);
+    });
+
+    // ── Dark overlay so text is readable ──────────────────────────────
+    this.add.rectangle(0,0,W,H,0x000000,0.52).setOrigin(0).setDepth(1);
+
+    // ── Title text ────────────────────────────────────────────────────
+    this.add.text(W/2,100,'MOTEL PHEROMONES',{
+      fontFamily:'monospace',fontSize:'44px',color:'#f4e7ff',
+      stroke:'#000',strokeThickness:6
+    }).setOrigin(.5).setDepth(2);
+
+    this.add.text(W/2,158,'COSMIC FEEDBACK',{
+      fontFamily:'monospace',fontSize:'28px',color:'#86f7ff',
+      stroke:'#000',strokeThickness:4
+    }).setOrigin(.5).setDepth(2);
+
+    this.add.text(W/2,210,'— a forgotten signal from the Outer Rim —',{
+      fontFamily:'monospace',fontSize:'13px',color:'#7a6b8a'
+    }).setOrigin(.5).setDepth(2);
+
+    // ── Menu buttons ──────────────────────────────────────────────────
+    const btn=(y,label,cb)=>{
+      const t=this.add.text(W/2,y,label,{
+        fontFamily:'monospace',fontSize:'22px',color:'#fff',
+        backgroundColor:'#2a1040',padding:{x:28,y:14},
+        stroke:'#000',strokeThickness:2
+      }).setOrigin(.5).setInteractive().setDepth(2);
+      t.on('pointerover', ()=>t.setStyle({backgroundColor:'#5a2e8a'}));
+      t.on('pointerout',  ()=>t.setStyle({backgroundColor:'#2a1040'}));
+      t.on('pointerdown', cb);
+      return t;
+    };
+
+    btn(310,'[ START GAME ]', ()=>{
+      // Stop video before leaving to avoid memory leaks
+      vid.stop();
+      this.scene.start('Game',{startRoom:'drive_to_camp'});
+    });
+
+    btn(390,'[ TEST DUST-9 ROAD WORLD ]', ()=>{
+      vid.stop();
+      this.scene.start('Game',{startRoom:'drive_to_camp'});
+    });
+
+    this.add.text(W/2,490,'ENTER = Start Game',{
+      fontFamily:'monospace',fontSize:'11px',color:'#443355'
+    }).setOrigin(.5).setDepth(2);
+
+    this.input.keyboard.once('keydown-ENTER', ()=>{
+      vid.stop();
+      this.scene.start('Game',{startRoom:'drive_to_camp'});
+    });
+  }
 }
-advance(){
-this.bidx++;
-if(this.bidx>=this.beats.length){this.scene.start('Game',{startRoom:'bounty_office'});return;}
-this.showBeat(this.bidx);
-}}
-Game.prototype.init=function(data){if(data&&data.startRoom)this.roomId=data.startRoom;};
-new Phaser.Game({type:Phaser.AUTO,parent:'game',width:W,height:H,backgroundColor:'#000',pixelArt:true,roundPixels:true,scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},input:{activePointers:3},scene:[Boot,Title,Opening,Cutscene,Game]});
+
+/* ─── GAME (Dust-9 Road World) ──────────────────────────────────────── */
+class Game extends Phaser.Scene {
+  constructor(){super('Game');this.roomId='drive_to_camp';this.exitBoxes=[];}
+
+  init(data){if(data&&data.startRoom) this.roomId=data.startRoom;}
+
+  create(){
+    this.keys=this.input.keyboard.addKeys('W,A,S,D');
+    this.cursors=this.input.keyboard.createCursorKeys();
+    this.loadRoom(this.roomId||'drive_to_camp');
+    this.makePlayer(...(ROOMS.find(r=>r.id===this.roomId)||ROOMS[0]).spawn);
+
+    // HUD
+    this.add.text(10,10,'DUST-9',{
+      fontFamily:'monospace',fontSize:'13px',color:'#86f7ff',
+      stroke:'#000',strokeThickness:2
+    }).setDepth(100);
+
+    this.add.text(10,28,'WASD / Arrows = move   walk into exit zones to change rooms',{
+      fontFamily:'monospace',fontSize:'10px',color:'#998899',stroke:'#000',strokeThickness:1
+    }).setDepth(100);
+
+    // Back link
+    this.add.text(W-10,10,'← Main Menu',{
+      fontFamily:'monospace',fontSize:'12px',color:'#86f7ff',
+      stroke:'#000',strokeThickness:1
+    }).setOrigin(1,0).setDepth(100).setInteractive()
+      .on('pointerdown',()=>this.scene.start('Title'));
+  }
+
+  tex(k){return this.textures.exists(k)}
+
+  loadRoom(id){
+    const r=ROOMS.find(x=>x.id===id)||ROOMS[0];
+    this.room=r; this.roomId=r.id;
+
+    if(this.bg) this.bg.destroy();
+    this.bg=this.add.image(W/2,H/2,this.tex(r.bg)?r.bg:'ph_bg')
+      .setDisplaySize(W,H).setDepth(0);
+
+    this.exitBoxes.forEach(x=>x.destroy());
+    this.exitBoxes=[];
+    (r.exits||[]).forEach(e=>{
+      const g=this.add.graphics().setDepth(8);
+      g.lineStyle(1,0x86f7ff,.35).strokeRect(e[2],e[3],e[4],e[5]);
+      const lbl=this.add.text(e[2]+e[4]/2,e[3]+e[5]/2,e[7]||e[1],{
+        fontFamily:'monospace',fontSize:'10px',color:'#86f7ff',stroke:'#000',strokeThickness:1
+      }).setOrigin(.5).setDepth(9).setAlpha(.7);
+      this.exitBoxes.push(g,lbl);
+      g._exit=e; lbl._exit=e;
+    });
+
+    if(this.player){
+      this.player.x=r.spawn[0];
+      this.player.y=r.spawn[1];
+    }
+  }
+
+  makePlayer(x,y){
+    const key=this.tex('donny1')?'donny1':'ph_player';
+    this.player=this.add.image(x,y,key).setDepth(20).setScale(0.8);
+    if(key==='donny1') this.player.setFrame(0);
+  }
+
+  checkExits(){
+    const px=this.player.x, py=this.player.y;
+    for(const e of (this.room.exits||[])){
+      if(px>=e[2]&&px<=e[2]+e[4]&&py>=e[3]&&py<=e[3]+e[5]){
+        const dest=e[6];
+        if(dest&&ROOMS.find(x=>x.id===dest)) this.loadRoom(dest);
+        return;
+      }
+    }
+  }
+
+  update(){
+    if(!this.player) return;
+    const spd=3;
+    const L=this.cursors.left.isDown ||this.keys.A.isDown;
+    const R=this.cursors.right.isDown||this.keys.D.isDown;
+    const U=this.cursors.up.isDown   ||this.keys.W.isDown;
+    const D=this.cursors.down.isDown ||this.keys.S.isDown;
+    if(L) this.player.x-=spd;
+    if(R) this.player.x+=spd;
+    if(U) this.player.y-=spd;
+    if(D) this.player.y+=spd;
+    const b=this.room.bounds;
+    this.player.x=Math.max(b[0],Math.min(b[0]+b[2],this.player.x));
+    this.player.y=Math.max(b[1],Math.min(b[1]+b[3],this.player.y));
+    this.checkExits();
+  }
+}
+
+/* ─── LAUNCH ────────────────────────────────────────────────────────── */
+new Phaser.Game({
+  type:Phaser.AUTO,
+  parent:'game',
+  width:W,
+  height:H,
+  backgroundColor:'#000000',
+  pixelArt:true,
+  roundPixels:true,
+  scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},
+  input:{activePointers:3},
+  scene:[Boot,Title,Game]
+});
 })();
-</script></body></html>
+</script>
+</body>
+</html>
