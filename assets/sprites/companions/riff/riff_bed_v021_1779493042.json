@@ -1,0 +1,40 @@
+{
+  "id": "riff_bed",
+  "name": "Riff's Bed",
+  "type": "placeable_sprite",
+  "image": "assets/sprites/companions/riff/riff_bed.png",
+  "width": 192,
+  "height": 192,
+  "origin": {
+    "x": 0.5,
+    "y": 0.75
+  },
+  "defaultScale": 0.42,
+  "placements": {
+    "ShipHubScene": {
+      "x": 265,
+      "y": 420,
+      "scale": 0.42,
+      "depth": 62,
+      "interactZone": {
+        "x": 218,
+        "y": 365,
+        "w": 105,
+        "h": 92
+      }
+    },
+    "BountyOfficeScene": {
+      "x": 160,
+      "y": 385,
+      "scale": 0.44,
+      "depth": 62,
+      "interactZone": {
+        "x": 112,
+        "y": 330,
+        "w": 110,
+        "h": 98
+      }
+    }
+  },
+  "message": "Riff's bed. Looks comfortable enough for a tiny alien roadie."
+}
