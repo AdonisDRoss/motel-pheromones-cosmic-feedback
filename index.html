@@ -17,511 +17,367 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 'use strict';
 const W=960,H=540,WORLD_W=1920;
 
-/* ─── Asset paths ────────────────────────────────────────────────────── */
 const A={
-  video       :'assets/cosmic-feedback/video/title_intro.mp4',
-  titleBg     :'assets/backgrounds/dust9/dust9_checkpoint_empty_1920x540.png',
-  // Donny new walk sheet — 8 frames per direction, 181×272
-  donnyWalk   :'assets/sprites/player/donny/donny_movement_walk_8x4_181x272.png',
-  donnyCrawl  :'assets/sprites/player/donny/donny_crawl_8x4_181x272.png',
-  donnySlide  :'assets/sprites/player/donny/donny_slide_sitting_8x4_222x222.png',
-  holster     :'assets/sprites/equipment/holsters/donny_tight_holster_brown_4dir_1779504330.png',
-  van         :'assets/sprites/vehicles/astro_van/astro_van_side_drive_idle_4f.png',
-  weaponsJson :'assets/data/dust9/red_concord_weapons.json',
-  // weapon/riff — non-blocking loads for later
-  weaponOverlay:'assets/sprites/weapons/red_concord/red_concord_weapons_4dir_overlay.png',
-  weaponPickup :'assets/sprites/weapons/red_concord/red_concord_weapon_pickups.png',
-  weaponFx     :'assets/fx/red_concord/red_concord_weapon_fx.png',
-  riff         :'assets/sprites/companions/riff/riff_movement.png',
+  video:'assets/cosmic-feedback/video/title_intro.mp4',
+  titleBg:'assets/backgrounds/dust9/dust9_checkpoint_empty_1920x540.png',
+  donnyWalk:'assets/sprites/player/donny/donny_movement_walk_8x4_181x272.png',
+  donnyCrawl:'assets/sprites/player/donny/donny_crawl_8x4_181x272.png',
+  donnySlide:'assets/sprites/player/donny/donny_slide_sitting_8x4_222x222.png',
+  holster:'assets/sprites/equipment/holsters/donny_tight_holster_brown_4dir_1779504330.png',
+  van:'assets/sprites/vehicles/astro_van/astro_van_side_drive_idle_4f.png',
+  riff:'assets/sprites/companions/riff/riff_movement.png'
 };
 
-/* ─── Walk animation frame map  (down 0-7 | right 8-15 | left 16-23 | up 24-31) ── */
-const WALK_ANIMS={
-  down :{start:0 ,end:7 },
-  right:{start:8 ,end:15},
-  left :{start:16,end:23},
-  up   :{start:24,end:31},
+/*
+Donny's uploaded movement art is not an exact 8-column grid.
+These crop rectangles isolate the real sprites, remove the checker/white background,
+and anchor each frame by feet so Donny stops sliding inside his frame box.
+*/
+const DONNY_RECTS={
+  down:[[50,10,145,259],[259,11,143,258],[460,13,145,256],[655,12,143,257],[844,10,142,259],[1041,10,144,259],[1245,11,141,258],[50,10,145,259]],
+  right:[[54,278,146,269],[267,279,147,268],[469,279,132,268],[666,279,139,268],[855,279,135,268],[1042,279,145,268],[1249,279,139,268],[54,278,146,269]],
+  left:[[45,539,139,279],[251,539,137,279],[464,539,130,279],[648,539,132,279],[845,539,131,279],[1031,539,135,279],[1234,539,135,279],[45,539,139,279]],
+  up:[[48,810,146,246],[252,810,143,245],[454,810,145,246],[646,810,143,241],[836,810,143,245],[1034,810,144,245],[1242,810,144,246],[48,810,146,246]]
 };
-
-/* ─── Holster overlay frame map  (128×128, same 4-dir layout) ────────── */
 const HOLSTER_F={down:0,right:4,left:8,up:12};
-// pixel offset of holster relative to Donny (origin=bottom-centre)
-const HOLSTER_OFF={
-  down :{x: 14,y:-80},
-  right:{x: 20,y:-78},
-  left :{x:-20,y:-78},
-  up   :{x:-12,y:-86},
-};
+const HOLSTER_OFF={down:{x:12,y:-75},right:{x:20,y:-74},left:{x:-20,y:-74},up:{x:-12,y:-78}};
 
-/* ─── Room definitions ───────────────────────────────────────────────── */
 const ROOMS={
-  // ── Story start ──────────────────────────────────────────────────────
-  donny_office:{
-    name:"Donny's Office",
-    key:'bg_office',
-    background:'assets/backgrounds/planets/dust_9/interiors/shops/bounty_office_interior.png',
-    spawn:{x:960,y:400},
-    walk:{x:0,y:200,width:1920,height:330},
-    exits:{right:'sand_motel_lot'},
-    label:'Exit to Sand Motel Lot →',
-  },
-  sand_motel_lot:{
-    name:'Sand Motel Parking Lot',
-    key:'bg_sand_motel',
-    background:'assets/backgrounds/planets/dust_9/drive/dust9_road_chunk_01_no_vans.png',
-    spawn:{x:200,y:400},
-    walk:{x:0,y:240,width:1920,height:270},
-    exits:{left:'donny_office'},
-    vanX:680,vanY:435,
-    label:'← Back to Office',
-  },
-  // ── Red Concord route (reached via Astro Van) ─────────────────────────
-  checkpoint:{
-    name:'Outer Red Concord Checkpoint',
-    key:'bg_checkpoint',
-    background:'assets/backgrounds/dust9/dust9_checkpoint_empty_1920x540.png',
-    spawn:{x:170,y:410},
-    walk:{x:0,y:250,width:1920,height:250},
-    exits:{right:'prisoner_housing_yard'},
-  },
-  prisoner_housing_yard:{
-    name:'Prisoner Housing Yard',
-    key:'bg_prison_yard',
-    background:'assets/backgrounds/dust9/dust9_prisoner_housing_yard_empty_1920x540.png',
-    spawn:{x:140,y:405},
-    walk:{x:0,y:235,width:1920,height:280},
-    exits:{left:'checkpoint',right:'mining_yard'},
-  },
-  mining_yard:{
-    name:'Outdoor Mining Yard',
-    key:'bg_mining',
-    background:'assets/backgrounds/dust9/dust9_mining_yard_empty_1920x540.png',
-    spawn:{x:150,y:420},
-    walk:{x:0,y:250,width:1920,height:260},
-    exits:{left:'prisoner_housing_yard',right:'support_block'},
-  },
-  support_block:{
-    name:'Support Block',
-    key:'bg_support',
-    background:'assets/backgrounds/dust9/dust9_support_block_empty_1920x540.png',
-    spawn:{x:160,y:405},
-    walk:{x:0,y:245,width:1920,height:275},
-    exits:{left:'mining_yard',right:'high_command_tower'},
-  },
-  high_command_tower:{
-    name:'High Command Tower',
-    key:'bg_hq_tower',
-    background:'assets/backgrounds/dust9/dust9_high_command_tower_exterior_empty_1920x540.png',
-    spawn:{x:150,y:410},
-    walk:{x:0,y:245,width:1920,height:275},
-    exits:{left:'support_block',right:'control_room'},
-  },
-  control_room:{
-    name:'Camp Control Room',
-    key:'bg_control',
-    background:'assets/backgrounds/dust9/dust9_control_room_empty_1920x540.png',
-    spawn:{x:180,y:385},
-    walk:{x:0,y:250,width:1920,height:250},
-    exits:{left:'high_command_tower',right:'basement_prison'},
-  },
-  basement_prison:{
-    name:'Basement Prison — Find Dex',
-    key:'bg_prison',
-    background:'assets/backgrounds/dust9/dust9_basement_prison_empty_1920x540.png',
-    spawn:{x:160,y:390},
-    walk:{x:0,y:245,width:1920,height:280},
-    exits:{left:'control_room',right:'loading_pad'},
-    dexMarker:true,
-  },
-  loading_pad:{
-    name:'Loading Pad — Escape Route',
-    key:'bg_loading',
-    background:'assets/backgrounds/dust9/dust9_loading_pad_escape_route_empty_1920x540.png',
-    spawn:{x:180,y:400},
-    walk:{x:0,y:235,width:1920,height:290},
-    exits:{left:'basement_prison'},
-  },
+  donny_office:{name:"Donny's Office",key:'bg_office',background:'assets/backgrounds/planets/dust_9/interiors/shops/bounty_office_interior.png',spawn:{x:960,y:402},walk:{x:0,y:200,width:1920,height:330},exits:{right:'sand_motel_lot'}},
+  sand_motel_lot:{name:'Sand Motel Parking Lot / Dustbowl Junction Edge',key:'bg_sand_motel',background:'assets/backgrounds/planets/dust_9/drive/dust9_road_chunk_01_no_vans.png',spawn:{x:210,y:402},walk:{x:0,y:240,width:1920,height:270},exits:{left:'donny_office'},vanX:680,vanY:435},
+  checkpoint:{name:'Hidden Red Concord Checkpoint',key:'bg_checkpoint',background:'assets/backgrounds/dust9/dust9_checkpoint_empty_1920x540.png',spawn:{x:170,y:410},walk:{x:0,y:250,width:1920,height:250},exits:{right:'prisoner_housing_yard'}},
+  prisoner_housing_yard:{name:'Prisoner Housing Yard',key:'bg_prison_yard',background:'assets/backgrounds/dust9/dust9_prisoner_housing_yard_empty_1920x540.png',spawn:{x:140,y:405},walk:{x:0,y:235,width:1920,height:280},exits:{left:'checkpoint',right:'mining_yard'}},
+  mining_yard:{name:'Outdoor Mining Yard',key:'bg_mining',background:'assets/backgrounds/dust9/dust9_mining_yard_empty_1920x540.png',spawn:{x:150,y:420},walk:{x:0,y:250,width:1920,height:260},exits:{left:'prisoner_housing_yard',right:'support_block'}},
+  support_block:{name:'Support Block',key:'bg_support',background:'assets/backgrounds/dust9/dust9_support_block_empty_1920x540.png',spawn:{x:160,y:405},walk:{x:0,y:245,width:1920,height:275},exits:{left:'mining_yard',right:'high_command_tower'}},
+  high_command_tower:{name:'High Command Tower',key:'bg_hq_tower',background:'assets/backgrounds/dust9/dust9_high_command_tower_exterior_empty_1920x540.png',spawn:{x:150,y:410},walk:{x:0,y:245,width:1920,height:275},exits:{left:'support_block',right:'control_room'}},
+  control_room:{name:'Camp Control Room',key:'bg_control',background:'assets/backgrounds/dust9/dust9_control_room_empty_1920x540.png',spawn:{x:180,y:385},walk:{x:0,y:250,width:1920,height:250},exits:{left:'high_command_tower',right:'basement_prison'}},
+  basement_prison:{name:'Basement Prison — Find Dex',key:'bg_prison',background:'assets/backgrounds/dust9/dust9_basement_prison_empty_1920x540.png',spawn:{x:160,y:390},walk:{x:0,y:245,width:1920,height:280},exits:{left:'control_room',right:'loading_pad'},dexMarker:true},
+  loading_pad:{name:'Loading Pad — Escape Route',key:'bg_loading',background:'assets/backgrounds/dust9/dust9_loading_pad_escape_route_empty_1920x540.png',spawn:{x:180,y:400},walk:{x:0,y:235,width:1920,height:290},exits:{left:'basement_prison'}}
 };
 
-/* ─── Utility ────────────────────────────────────────────────────────── */
-function lbl(sc,x,y,txt,sz=14,col='#d9f7ff'){
-  return sc.add.text(x,y,txt,{fontFamily:'monospace',fontSize:sz+'px',color:col,stroke:'#000',strokeThickness:3});
+function txt(sc,x,y,t,s=14,c='#d9f7ff'){
+  return sc.add.text(x,y,t,{fontFamily:'monospace',fontSize:s+'px',color:c,stroke:'#000',strokeThickness:3,wordWrap:{width:870}});
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   BOOT
-══════════════════════════════════════════════════════════════════════════ */
 class Boot extends Phaser.Scene{
   constructor(){super('Boot')}
-
   preload(){
-    this.load.on('loaderror',f=>console.warn('[asset missing — ok]',f.key,f.url));
-
-    // Video + fallback bg
+    this.load.on('loaderror',f=>console.warn('[asset missing]',f.key,f.url));
     this.load.video('title_video',A.video,'loadeddata',false,true);
     this.load.image('title_bg',A.titleBg);
-
-    // Room backgrounds
     Object.values(ROOMS).forEach(r=>this.load.image(r.key,r.background));
-
-    // Donny walk — 181×272, 8 frames/dir
-    this.load.spritesheet('donny_walk',A.donnyWalk,{frameWidth:181,frameHeight:272});
-    // Donny crawl — 181×272 (reserve for later)
-    this.load.spritesheet('donny_crawl',A.donnyCrawl,{frameWidth:181,frameHeight:272});
-    // Donny slide/sit — 222×222 (reserve for later)
-    this.load.spritesheet('donny_slide',A.donnySlide,{frameWidth:222,frameHeight:222});
-
-    // Holster overlay — 128×128
+    this.load.image('donny_raw',A.donnyWalk);
+    this.load.image('donny_crawl_raw',A.donnyCrawl);
+    this.load.image('donny_slide_raw',A.donnySlide);
     this.load.spritesheet('holster',A.holster,{frameWidth:128,frameHeight:128});
-
-    // Astro Van
     this.load.spritesheet('astro_van',A.van,{frameWidth:256,frameHeight:128});
-
-    // Riff (non-blocking)
-    this.load.spritesheet('riff',A.riff,{frameWidth:128,frameHeight:128});
-
-    // Weapons data
-    this.load.json('weapons_json',A.weaponsJson);
-
-    // Weapon visuals (non-blocking, for later)
-    this.load.image('weapon_overlay',A.weaponOverlay);
-    this.load.image('weapon_pickup', A.weaponPickup);
-    this.load.image('weapon_fx',     A.weaponFx);
+    this.load.spritesheet('riff',A.riff,{frameWidth:181,frameHeight:272});
   }
-
   create(){
-    // Placeholder textures (used if real asset is missing)
     const mk=(k,w,h,c)=>{
       if(this.textures.exists(k))return;
       const g=this.add.graphics();
       g.fillStyle(c,1).fillRect(0,0,w,h);
       g.lineStyle(2,0xffffff,.5).strokeRect(1,1,w-2,h-2);
-      g.generateTexture(k,w,h);g.destroy();
+      g.generateTexture(k,w,h);
+      g.destroy();
     };
     mk('ph_bg',WORLD_W,H,0x17131c);
-    mk('ph_player',50,88,0x314dff);
+    mk('ph_player',50,90,0x314dff);
     mk('ph_holster',32,32,0x8b6914);
     mk('ph_van',200,100,0x3a2d1a);
-
-    // Build walk animations if sheet loaded
-    if(this.textures.exists('donny_walk')){
-      Object.entries(WALK_ANIMS).forEach(([dir,fr])=>{
-        this.anims.create({key:'walk_'+dir,
-          frames:this.anims.generateFrameNumbers('donny_walk',fr),
-          frameRate:8,repeat:-1});
-        // Idle = freeze on first frame of that direction
-        this.anims.create({key:'idle_'+dir,
-          frames:this.anims.generateFrameNumbers('donny_walk',{start:fr.start,end:fr.start}),
-          frameRate:1,repeat:0});
+    this.makeCleanDonnyTexture();
+    this.makeAnims();
+    this.scene.start('Title');
+  }
+  makeCleanDonnyTexture(){
+    if(!this.textures.exists('donny_raw'))return;
+    const src=this.textures.get('donny_raw').getSourceImage();
+    const ct=this.textures.createCanvas('donny_clean',src.width,src.height);
+    const ctx=ct.getContext();
+    ctx.drawImage(src,0,0);
+    const img=ctx.getImageData(0,0,src.width,src.height);
+    const d=img.data;
+    for(let i=0;i<d.length;i+=4){
+      const r=d[i],g=d[i+1],b=d[i+2],mx=Math.max(r,g,b),mn=Math.min(r,g,b);
+      if(r>224&&g>224&&b>224&&(mx-mn)<32)d[i+3]=0;
+    }
+    ctx.putImageData(img,0,0);
+    ct.refresh();
+    const tex=this.textures.get('donny_clean');
+    Object.entries(DONNY_RECTS).forEach(([dir,arr])=>arr.forEach((r,i)=>tex.add(dir+'_'+i,0,r[0],r[1],r[2],r[3])));
+  }
+  makeAnims(){
+    if(this.textures.exists('donny_clean')){
+      ['down','right','left','up'].forEach(dir=>{
+        this.anims.create({
+          key:'walk_'+dir,
+          frames:Array.from({length:8},(_,i)=>({key:'donny_clean',frame:dir+'_'+i})),
+          frameRate:8,
+          repeat:-1
+        });
       });
     }
-
-    this.scene.start('Title');
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   TITLE
-══════════════════════════════════════════════════════════════════════════ */
 class Title extends Phaser.Scene{
   constructor(){super('Title')}
-
   create(){
-    // Video background
     if(this.cache.video.exists('title_video')){
-      this.vid=this.add.video(W/2,H/2,'title_video').setDepth(0);
-      this.vid.setMute(true);this.vid.setLoop(true);this.vid.play(true);
+      this.vid=this.add.video(W/2,H/2,'title_video');
+      this.vid.setMute(true);
+      this.vid.setLoop(true);
+      this.vid.play(true);
       this.vid.once('play',()=>{
         const vw=this.vid.video.videoWidth||W,vh=this.vid.video.videoHeight||H;
         this.vid.setScale(Math.max(W/vw,H/vh));
       });
     } else {
-      this.add.image(W/2,H/2,this.textures.exists('title_bg')?'title_bg':'ph_bg')
-        .setDisplaySize(W,H).setDepth(0);
+      this.add.image(W/2,H/2,this.textures.exists('title_bg')?'title_bg':'ph_bg').setDisplaySize(W,H);
     }
+    this.add.rectangle(0,0,W,H,0x000000,.52).setOrigin(0);
+    txt(this,W/2,70,'COSMIC FEEDBACK',44,'#fff').setOrigin(.5);
+    txt(this,W/2,123,'The signal starts on Dust-9',17,'#8ff9ff').setOrigin(.5);
 
-    this.add.rectangle(0,0,W,H,0x000000,.48).setOrigin(0).setDepth(1);
-    lbl(this,W/2,70,'COSMIC FEEDBACK',44,'#ffffff').setOrigin(.5).setDepth(2);
-    lbl(this,W/2,123,'The signal starts on Dust-9',17,'#8ff9ff').setOrigin(.5).setDepth(2);
-
-    const btn=(y,txt,cb)=>{
-      const t=this.add.text(W/2,y,txt,{
+    const btn=(y,t,cb)=>{
+      const b=this.add.text(W/2,y,t,{
         fontFamily:'monospace',fontSize:'22px',color:'#fff',
         backgroundColor:'#3b145c',padding:{x:26,y:14},
         stroke:'#000',strokeThickness:2
-      }).setOrigin(.5).setDepth(3).setInteractive({useHandCursor:true});
-      t.on('pointerover',()=>t.setStyle({backgroundColor:'#7a1f9a'}));
-      t.on('pointerout', ()=>t.setStyle({backgroundColor:'#3b145c'}));
-      t.on('pointerdown',cb);
+      }).setOrigin(.5).setInteractive({useHandCursor:true});
+      b.on('pointerover',()=>b.setStyle({backgroundColor:'#7a1f9a'}));
+      b.on('pointerout',()=>b.setStyle({backgroundColor:'#3b145c'}));
+      b.on('pointerdown',cb);
     };
-
-    btn(288,'START GAME',            ()=>this._go('donny_office'));
-    btn(363,'TEST DUST-9 ROAD WORLD',()=>this._go('checkpoint'));
-    btn(438,'DIRECT ROAD TEST PAGE', ()=>{window.location.href='dust9-road-test.html';});
-
-    this.input.keyboard.once('keydown-ENTER',()=>this._go('donny_office'));
+    btn(288,'START STORY',()=>this.goStory());
+    btn(363,'TEST DUST-9 ROAD WORLD',()=>this.goRoom('checkpoint'));
+    btn(438,'DIRECT ROAD TEST PAGE',()=>{location.href='dust9-road-test.html'});
+    this.input.keyboard.once('keydown-ENTER',()=>this.goStory());
   }
+  stopVid(){if(this.vid)this.vid.stop();}
+  goStory(){this.stopVid();this.scene.start('SignalIntro');}
+  goRoom(r){this.stopVid();this.scene.start('Dust9',{room:r});}
+}
 
-  _go(room){
-    if(this.vid) this.vid.stop();
-    this.scene.start('Dust9',{room});
+class SignalIntro extends Phaser.Scene{
+  constructor(){super('SignalIntro')}
+  create(){
+    this.lines=[
+      ['RIFF','Signal found. Outer Rim encryption. Dex signature. Broken. Repeating. Scared.'],
+      ['RIFF','Donny. Wake up.'],
+      ['DONNY','Riff, if this is about the toaster learning swear words again, let it grow.'],
+      ['RIFF','Not toaster. Signal. It came through the old relay net under Dust-9.'],
+      ['DEX / BROKEN MESSAGE','Donny... this is not a storm. It is feedback. It starts under Dust-9. Red Concord knows. Nova is listening. Bring the van. Trust Riff. Do not answer the return signal.'],
+      ['OBJECTIVE','Leave Donny’s office, reach the Astro Van in the sand motel lot, and drive toward the hidden Red Concord camp to rescue Dex.']
+    ];
+    this.i=0;
+    this.add.image(W/2,H/2,this.textures.exists('bg_office')?'bg_office':'ph_bg').setDisplaySize(W,H);
+    this.add.rectangle(0,0,W,H,0x000000,.45).setOrigin(0);
+    this.box=this.add.rectangle(W/2,H-100,W-70,165,0x0d0717,.94).setStrokeStyle(2,0x86f7ff,.5);
+    this.speaker=txt(this,55,H-168,'',13,'#86f7ff');
+    this.body=txt(this,55,H-138,'',16,'#f4e7ff');
+    txt(this,W-45,H-32,'click / tap / ENTER',11,'#8b6eb0').setOrigin(1,.5);
+    this.show();
+    this.input.on('pointerdown',()=>this.next());
+    this.input.keyboard.on('keydown-ENTER',()=>this.next());
+    this.input.keyboard.on('keydown-SPACE',()=>this.next());
+  }
+  show(){
+    const l=this.lines[this.i];
+    this.speaker.setText('[ '+l[0]+' ]');
+    this.body.setText(l[1]);
+  }
+  next(){
+    this.i++;
+    if(this.i>=this.lines.length)this.scene.start('Dust9',{room:'donny_office'});
+    else this.show();
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   DUST-9
-══════════════════════════════════════════════════════════════════════════ */
 class Dust9 extends Phaser.Scene{
   constructor(){
     super('Dust9');
     this.roomId='donny_office';
     this.facing='down';
     this.touch={left:false,right:false,up:false,down:false};
-    this._fWasDown=false;
-    this._eWasDown=false;
-    this.pistol={owned:true,state:'holstered',ammo:12,equipped:'pistol'};
+    this.pistol={state:'holstered',ammo:12};
+    this.day=0;
   }
-
   init(d){if(d&&d.room)this.roomId=d.room;}
-
   create(){
     this.cameras.main.setBounds(0,0,WORLD_W,H);
-    this.keys=this.input.keyboard.addKeys('W,A,S,D,F,E');
+    this.keys=this.input.keyboard.addKeys('W,A,S,D,F,E,I');
     this.cursors=this.input.keyboard.createCursorKeys();
-
     this.drawRoom(this.roomId);
     this.makePlayer();
     this.makeHud();
     this.makeMobileControls();
   }
-
-  has(k){return this.textures.exists(k);}
-  hasAnim(k){return this.anims.exists(k);}
-
-  /* ── Room ─────────────────────────────────────────────────────────── */
+  has(k){return this.textures.exists(k)}
   drawRoom(id){
     const r=ROOMS[id]||ROOMS.donny_office;
-    this.roomId=id; this.room=r;
-
-    // Destroy old objects
-    ['bg','roomTxt','vanSprite','vanPrompt','dexMarker','riftSignalTxt'].forEach(k=>{
-      if(this[k]){this[k].destroy();this[k]=null;}
-    });
-
-    this.bg=this.add.image(0,0,this.has(r.key)?r.key:'ph_bg')
-      .setOrigin(0,0).setDepth(0).setDisplaySize(WORLD_W,H);
-
-    this.roomTxt=lbl(this,16,12,'DUST-9 / '+r.name,13,'#86f7ff')
-      .setScrollFactor(0).setDepth(100);
-
-    // Riff signal in office
+    this.roomId=id;
+    this.room=r;
+    ['bg','roomTxt','vanSprite','vanPrompt','dexMarker','notice'].forEach(k=>{if(this[k]){this[k].destroy();this[k]=null;}});
+    this.bg=this.add.image(0,0,this.has(r.key)?r.key:'ph_bg').setOrigin(0).setDepth(0).setDisplaySize(WORLD_W,H);
+    this.roomTxt=txt(this,16,12,'DUST-9 / '+r.name,13,'#86f7ff').setScrollFactor(0).setDepth(100);
     if(id==='donny_office'){
-      this.riftSignalTxt=lbl(this,W/2,56,
-        'Riff: "Signal detected. Outer Rim. Dex signature. Move right to exit."',
-        12,'#ffe97a').setOrigin(.5,0).setScrollFactor(0).setDepth(101);
+      this.notice=txt(this,W/2,56,'Riff found Dex’s signal. Move right to leave Donny’s office.',12,'#ffe97a').setOrigin(.5,0).setScrollFactor(0).setDepth(101);
     }
-
-    // Red Concord entry warning
-    if(id==='checkpoint'){
-      lbl(this,W/2,56,'RED CONCORD TERRITORY — move right to advance',12,'#ff6633')
-        .setOrigin(.5,0).setScrollFactor(0).setDepth(101);
-    }
-
-    // Astro Van in sand motel lot
     if(id==='sand_motel_lot'){
-      const vx=r.vanX||680,vy=r.vanY||435;
-      this.vanSprite=this.add.sprite(vx,vy,this.has('astro_van')?'astro_van':'ph_van',0)
-        .setOrigin(.5,1).setScale(.78).setDepth(10);
-      this.vanPrompt=lbl(this,vx,vy-108,'[E / BOARD] Board Van → Red Concord Route',13,'#ffe97a')
-        .setOrigin(.5,1).setDepth(15).setAlpha(0);
+      const vx=r.vanX,vy=r.vanY;
+      this.vanSprite=this.add.sprite(vx,vy,this.has('astro_van')?'astro_van':'ph_van',0).setOrigin(.5,1).setScale(.78).setDepth(10);
+      this.vanPrompt=txt(this,vx,vy-108,'[E / A] Board Astro Van → hidden Red Concord route',13,'#ffe97a').setOrigin(.5,1).setDepth(15).setAlpha(0);
     }
-
-    // Dex rescue marker
+    if(id==='checkpoint'){
+      this.notice=txt(this,W/2,56,'The camp is hidden far from Dustbowl Junction. Dex is deeper inside.',12,'#ff6633').setOrigin(.5,0).setScrollFactor(0).setDepth(101);
+    }
     if(r.dexMarker){
-      this.dexMarker=lbl(this,WORLD_W/2,300,'★  DEX IS HERE  ★\nRescue objective',16,'#ff6699')
-        .setOrigin(.5).setDepth(50);
+      this.dexMarker=txt(this,WORLD_W/2,300,'★ DEX IS HERE ★\nRescue objective marker',16,'#ff6699').setOrigin(.5).setDepth(50);
     }
   }
-
-  /* ── Player + holster ─────────────────────────────────────────────── */
   makePlayer(){
     const s=this.room.spawn;
-    const hasWalk=this.has('donny_walk');
-    this.player=this.add.sprite(s.x,s.y,hasWalk?'donny_walk':'ph_player')
-      .setOrigin(.5,1).setDepth(20)
-      .setScale(hasWalk?0.44:1);   // 181*0.44 ≈ 80px wide on screen
-
-    if(hasWalk&&this.hasAnim('idle_down')) this.player.play('idle_down');
-
-    // Holster overlay
-    this.holsterSprite=this.add.sprite(s.x,s.y,this.has('holster')?'holster':'ph_holster',0)
-      .setDepth(21).setScale(0.44);
-
-    this.cameras.main.startFollow(this.player,true,.08,.08);
+    this.playerBody=this.add.zone(s.x,s.y,42,26).setOrigin(.5,.5); // invisible stable body / feet anchor
+    this.playerSprite=this.add.sprite(
+      s.x,s.y,
+      this.has('donny_clean')?'donny_clean':'ph_player',
+      this.has('donny_clean')?'down_0':undefined
+    ).setOrigin(.5,1).setDepth(20).setScale(this.has('donny_clean')?.46:1);
+    this.holsterSprite=this.add.sprite(s.x,s.y,this.has('holster')?'holster':'ph_holster',0).setDepth(21).setScale(.46);
+    this.cameras.main.startFollow(this.playerBody,true,.08,.08);
+    this.updateVisuals(false);
   }
-
-  /* ── HUD ──────────────────────────────────────────────────────────── */
   makeHud(){
-    lbl(this,16,500,'HP: 100   VAN: OK   CREDITS: 25',12,'#f4e7ff')
-      .setScrollFactor(0).setDepth(100);
-
-    this.hudPistol=lbl(this,W-16,500,this._pistolLbl(),13,'#ffe97a')
-      .setOrigin(1,0).setScrollFactor(0).setDepth(100);
-    lbl(this,W-16,517,'AMMO: '+this.pistol.ammo,12,'#ffd46a')
-      .setOrigin(1,0).setScrollFactor(0).setDepth(100);
-
-    lbl(this,W-16,12,'← Menu',12,'#86f7ff')
-      .setOrigin(1,0).setScrollFactor(0).setDepth(100)
-      .setInteractive({useHandCursor:true})
-      .on('pointerdown',()=>this.scene.start('Title'));
-
-    lbl(this,W/2,H-18,'[F] Draw/Holster   [E] Interact',11,'#8888aa')
-      .setOrigin(.5,1).setScrollFactor(0).setDepth(100);
+    this.hpHud=txt(this,16,500,'HP: 100   VAN: OK   CREDITS: 25   INV: van keys, signal',12,'#f4e7ff').setScrollFactor(0).setDepth(100);
+    this.pHud=txt(this,W-16,500,this.pistolText(),13,'#ffe97a').setOrigin(1,0).setScrollFactor(0).setDepth(100);
+    this.ammoHud=txt(this,W-16,517,'AMMO: '+this.pistol.ammo,12,'#ffd46a').setOrigin(1,0).setScrollFactor(0).setDepth(100);
+    txt(this,W-16,12,'← Menu',12,'#86f7ff').setOrigin(1,0).setScrollFactor(0).setDepth(100).setInteractive({useHandCursor:true}).on('pointerdown',()=>this.scene.start('Title'));
+    this.dayOverlay=this.add.rectangle(0,0,WORLD_W,H,0x00113a,0).setOrigin(0).setScrollFactor(0).setDepth(90);
+    this.invText=txt(this,W/2,92,'INVENTORY: van keys / signal device / diner cash / repair kit',13,'#fff4aa').setOrigin(.5,0).setScrollFactor(0).setDepth(130).setVisible(false);
   }
-
-  _pistolLbl(){return 'PISTOL: '+(this.pistol.state==='drawn'?'DRAWN':'HOLSTERED');}
-
-  /* ── SNES-style mobile controls ───────────────────────────────────── */
+  pistolText(){return 'PISTOL: '+(this.pistol.state==='drawn'?'DRAWN':'HOLSTERED')}
   makeMobileControls(){
-    // ── D-pad (lower-left) ──────────────────────────────────────────
-    const dpadX=96,dpadY=H-70;
-    const dpBtn=(ox,oy,txt,flag)=>{
-      const b=this.add.text(dpadX+ox,dpadY+oy,txt,{
-        fontFamily:'monospace',fontSize:'22px',color:'#eeeeee',
-        backgroundColor:'rgba(30,12,55,.72)',padding:{x:13,y:9},
-        stroke:'#000',strokeThickness:3
-      }).setOrigin(.5).setScrollFactor(0).setDepth(200).setInteractive();
-      b.on('pointerdown',()=>this.touch[flag]=true);
-      ['pointerup','pointerout','pointerupoutside'].forEach(e=>b.on(e,()=>this.touch[flag]=false));
+    const baseX=112,baseY=H-98,rad=58;
+    this.stickBase=this.add.circle(baseX,baseY,rad,0x1d1230,.55).setStrokeStyle(3,0xaaaaff,.5).setScrollFactor(0).setDepth(200).setInteractive();
+    this.stickDot=this.add.circle(baseX,baseY,18,0xddddff,.65).setScrollFactor(0).setDepth(201);
+    const reset=()=>{this.touch.left=this.touch.right=this.touch.up=this.touch.down=false;this.stickDot.setPosition(baseX,baseY)};
+    const apply=p=>{
+      const dx=p.x-baseX,dy=p.y-baseY,len=Math.max(1,Math.hypot(dx,dy)),cl=Math.min(rad,len),nx=dx/len,ny=dy/len;
+      this.stickDot.setPosition(baseX+nx*cl,baseY+ny*cl);
+      this.touch.left=dx<-18;this.touch.right=dx>18;this.touch.up=dy<-18;this.touch.down=dy>18;
     };
-    dpBtn(  0,-46,'▲','up');
-    dpBtn(  0,  0,'▼','down');
-    dpBtn(-48,-23,'◀','left');
-    dpBtn( 48,-23,'▶','right');
+    this.stickBase.on('pointerdown',p=>apply(p));
+    this.stickBase.on('pointermove',p=>{if(p.isDown)apply(p)});
+    ['pointerup','pointerout','pointerupoutside'].forEach(e=>this.stickBase.on(e,reset));
 
-    // ── Action buttons — SNES diamond (lower-right) ────────────────
-    // A (right) = DRAW/HOLSTER, B (bottom) = reserved, X (top) = reserved, Y (left) = reserved
-    const acX=W-88,acY=H-70;
-    const acBtn=(ox,oy,txt,bgCol,lbl2,cb)=>{
-      const b=this.add.text(acX+ox,acY+oy,txt,{
-        fontFamily:'monospace',fontSize:'17px',color:'#fff',
-        backgroundColor:bgCol,padding:{x:11,y:8},
+    const acX=W-94,acY=H-90;
+    const btn=(ox,oy,t,lab,cb)=>{
+      const b=this.add.text(acX+ox,acY+oy,t,{
+        fontFamily:'monospace',fontSize:'18px',color:'#fff',
+        backgroundColor:'rgba(35,25,65,.78)',padding:{x:13,y:9},
         stroke:'#000',strokeThickness:2
       }).setOrigin(.5).setScrollFactor(0).setDepth(200).setInteractive();
       b.on('pointerdown',cb);
-      if(lbl2) lbl(this,acX+ox,acY+oy-34,lbl2,9,'#ffdd88')
-        .setOrigin(.5).setScrollFactor(0).setDepth(200);
-      return b;
+      if(lab)txt(this,acX+ox,acY+oy-31,lab,9,'#ffdd88').setOrigin(.5).setScrollFactor(0).setDepth(200);
     };
-    acBtn( 46,-23,'A','rgba(160,30,30,.75)','DRAW',()=>this._togglePistol());
-    acBtn(  0,-46,'X','rgba(60,60,180,.65)','',   ()=>{});  // reserved
-    acBtn(  0,  0,'B','rgba(30,110,30,.65)', '',   ()=>{});  // reserved
-    acBtn(-46,-23,'Y','rgba(130,90,0,.65)',  '',   ()=>{});  // reserved
-
-    // ── Board Van button (shows when near van) ─────────────────────
-    this._boardBtn=this.add.text(W/2,H-22,'[ BOARD VAN ]',{
-      fontFamily:'monospace',fontSize:'14px',color:'#ffe97a',
-      backgroundColor:'rgba(60,30,100,.8)',padding:{x:16,y:8},
+    btn( 48,-24,'A','USE',()=>this.actionA());
+    btn(0,-50,'X','DRAW',()=>this.togglePistol());
+    btn(0,2,'B','BACK',()=>{});
+    btn(-48,-24,'Y','MENU',()=>this.toggleInventory());
+    this.menuBtn=this.add.text(W/2,H-20,'MENU',{
+      fontFamily:'monospace',fontSize:'13px',color:'#fff',
+      backgroundColor:'rgba(20,20,20,.7)',padding:{x:18,y:7},
       stroke:'#000',strokeThickness:2
-    }).setOrigin(.5,1).setScrollFactor(0).setDepth(200).setInteractive().setVisible(false);
-    this._boardBtn.on('pointerdown',()=>this._boardVan());
+    }).setOrigin(.5,1).setScrollFactor(0).setDepth(200).setInteractive().on('pointerdown',()=>this.toggleInventory());
   }
-
-  /* ── Pistol toggle ────────────────────────────────────────────────── */
-  _togglePistol(){
+  togglePistol(){
     this.pistol.state=this.pistol.state==='holstered'?'drawn':'holstered';
-    this.hudPistol.setText(this._pistolLbl());
-    if(this.holsterSprite) this.holsterSprite.setAlpha(this.pistol.state==='drawn'?0.35:1);
+    this.pHud.setText(this.pistolText());
+    if(this.holsterSprite)this.holsterSprite.setAlpha(this.pistol.state==='drawn'?.35:1);
   }
-
-  /* ── Van boarding ─────────────────────────────────────────────────── */
-  _boardVan(){
-    if(this.roomId==='sand_motel_lot') this.changeRoom('checkpoint','left');
+  toggleInventory(){this.invText.setVisible(!this.invText.visible)}
+  actionA(){if(this.roomId==='sand_motel_lot'&&this.nearVan())this.boardVan();}
+  boardVan(){this.changeRoom('checkpoint','left')}
+  nearVan(){
+    return this.vanSprite&&Math.abs(this.playerBody.x-this.vanSprite.x)<170&&Math.abs(this.playerBody.y-this.vanSprite.y)<130;
   }
-
-  /* ── Update loop ──────────────────────────────────────────────────── */
   update(){
-    if(!this.player||!this.room) return;
+    if(!this.playerBody||!this.room)return;
+    if(Phaser.Input.Keyboard.JustDown(this.keys.F))this.togglePistol();
+    if(Phaser.Input.Keyboard.JustDown(this.keys.I))this.toggleInventory();
+    if(Phaser.Input.Keyboard.JustDown(this.keys.E))this.actionA();
 
-    // F key
-    const fDown=this.keys.F.isDown;
-    if(fDown&&!this._fWasDown) this._togglePistol();
-    this._fWasDown=fDown;
+    const L=this.cursors.left.isDown||this.keys.A.isDown||this.touch.left;
+    const R=this.cursors.right.isDown||this.keys.D.isDown||this.touch.right;
+    const U=this.cursors.up.isDown||this.keys.W.isDown||this.touch.up;
+    const D=this.cursors.down.isDown||this.keys.S.isDown||this.touch.down;
+    let moving=false;
+    if(L){this.playerBody.x-=3.2;this.facing='left';moving=true}
+    if(R){this.playerBody.x+=3.2;this.facing='right';moving=true}
+    if(U){this.playerBody.y-=3.2;this.facing='up';moving=true}
+    if(D){this.playerBody.y+=3.2;this.facing='down';moving=true}
 
-    // E key
-    const eDown=this.keys.E.isDown;
-    if(eDown&&!this._eWasDown) this._boardVan();
-    this._eWasDown=eDown;
-
-    // Movement
-    const L=this.cursors.left.isDown  ||this.keys.A.isDown||this.touch.left;
-    const R=this.cursors.right.isDown ||this.keys.D.isDown||this.touch.right;
-    const U=this.cursors.up.isDown    ||this.keys.W.isDown||this.touch.up;
-    const D=this.cursors.down.isDown  ||this.keys.S.isDown||this.touch.down;
-
-    let prevFacing=this.facing,moving=false;
-    if(L){this.player.x-=3.2;this.facing='left'; moving=true;}
-    if(R){this.player.x+=3.2;this.facing='right';moving=true;}
-    if(U){this.player.y-=3.2;this.facing='up';   moving=true;}
-    if(D){this.player.y+=3.2;this.facing='down';  moving=true;}
-
-    // Animate Donny
-    if(this.has('donny_walk')){
-      const wKey='walk_'+this.facing, iKey='idle_'+this.facing;
-      const cur=this.player.anims.currentAnim?.key;
-      if(moving){if(cur!==wKey)this.player.play(wKey,true);}
-      else      {if(cur!==iKey)this.player.play(iKey,true);}
-    }
-
-    // Bounds
     const b=this.room.walk;
-    this.player.x=Phaser.Math.Clamp(this.player.x,b.x+22,b.x+b.width-22);
-    this.player.y=Phaser.Math.Clamp(this.player.y,b.y+44,b.y+b.height-5);
+    this.playerBody.x=Phaser.Math.Clamp(this.playerBody.x,b.x+22,b.x+b.width-22);
+    this.playerBody.y=Phaser.Math.Clamp(this.playerBody.y,b.y+44,b.y+b.height-5);
 
-    // Holster tracks Donny
-    if(this.holsterSprite){
-      const off=HOLSTER_OFF[this.facing];
-      this.holsterSprite.x=this.player.x+off.x;
-      this.holsterSprite.y=this.player.y+off.y;
-      this.holsterSprite.setFrame(HOLSTER_F[this.facing]);
-    }
+    this.updateVisuals(moving);
 
-    // Van proximity in sand_motel_lot
-    if(this.roomId==='sand_motel_lot'&&this.vanSprite){
-      const near=Math.abs(this.player.x-this.vanSprite.x)<170&&
-                 Math.abs(this.player.y-this.vanSprite.y)<130;
-      if(this.vanPrompt) this.vanPrompt.setAlpha(near?1:0);
-      if(this._boardBtn) this._boardBtn.setVisible(near);
-    } else {
-      if(this._boardBtn) this._boardBtn.setVisible(false);
-    }
+    if(this.vanPrompt)this.vanPrompt.setAlpha(this.nearVan()?1:0);
 
-    // Room exits (walk to edge)
     const ex=this.room.exits||{};
-    if(this.player.x>WORLD_W-36&&ex.right) this.changeRoom(ex.right,'left');
-    if(this.player.x<36         &&ex.left)  this.changeRoom(ex.left,'right');
-  }
+    if(this.playerBody.x>WORLD_W-36&&ex.right)this.changeRoom(ex.right,'left');
+    if(this.playerBody.x<36&&ex.left)this.changeRoom(ex.left,'right');
 
+    this.day=(this.day+.00045)%1;
+    const night=Math.max(0,Math.sin(this.day*Math.PI*2)*.28);
+    this.dayOverlay.setAlpha(night);
+  }
+  updateVisuals(moving){
+    this.playerSprite.x=this.playerBody.x;
+    this.playerSprite.y=this.playerBody.y;
+    this.playerSprite.setDepth(20+this.playerBody.y/1000);
+    if(this.has('donny_clean')){
+      const walk='walk_'+this.facing;
+      if(moving){
+        if(this.playerSprite.anims.currentAnim?.key!==walk)this.playerSprite.play(walk,true);
+      }else{
+        this.playerSprite.anims.stop();
+        this.playerSprite.setFrame(this.facing+'_0');
+      }
+    }
+    if(this.holsterSprite){
+      const o=HOLSTER_OFF[this.facing];
+      this.holsterSprite.x=this.playerBody.x+o.x;
+      this.holsterSprite.y=this.playerBody.y+o.y;
+      this.holsterSprite.setFrame(HOLSTER_F[this.facing]);
+      this.holsterSprite.setDepth(this.playerSprite.depth+.01);
+    }
+  }
   changeRoom(id,enterFrom){
-    const r=ROOMS[id]; if(!r) return;
+    const r=ROOMS[id];
+    if(!r)return;
     this.drawRoom(id);
-    this.player.x=enterFrom==='left'?72:WORLD_W-72;
-    this.player.y=r.spawn.y;
+    this.playerBody.x=enterFrom==='left'?72:WORLD_W-72;
+    this.playerBody.y=r.spawn.y;
     this.room=r;
-    if(this.holsterSprite)
-      this.holsterSprite.setAlpha(this.pistol.state==='drawn'?0.35:1);
+    this.updateVisuals(false);
   }
 }
 
-/* ─── Launch ─────────────────────────────────────────────────────────── */
 new Phaser.Game({
-  type:Phaser.AUTO,parent:'game',
-  width:W,height:H,
+  type:Phaser.AUTO,
+  parent:'game',
+  width:W,
+  height:H,
   backgroundColor:'#000',
-  pixelArt:true,roundPixels:true,
+  pixelArt:true,
+  roundPixels:true,
   scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},
-  input:{activePointers:5},
-  scene:[Boot,Title,Dust9]
+  input:{activePointers:8},
+  scene:[Boot,Title,SignalIntro,Dust9]
 });
 })();
 </script>
