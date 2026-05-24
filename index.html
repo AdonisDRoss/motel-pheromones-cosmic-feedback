@@ -11,10 +11,12 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
 canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 </style>
 </head>
-<body><div id="game"></div>
+<body>
+<div id="game"></div>
 <script>
 (()=>{
 'use strict';
+
 const W=960,H=540,WORLD_W=1920;
 
 const A={
@@ -23,40 +25,119 @@ const A={
   donnyWalk:'assets/sprites/player/donny/donny_movement_walk_8x4_181x272.png',
   donnyCrawl:'assets/sprites/player/donny/donny_crawl_8x4_181x272.png',
   donnySlide:'assets/sprites/player/donny/donny_slide_sitting_8x4_222x222.png',
-  holster:'assets/sprites/equipment/holsters/donny_tight_holster_brown_4dir_1779504330.png',
   van:'assets/sprites/vehicles/astro_van/astro_van_side_drive_idle_4f.png',
   riff:'assets/sprites/companions/riff/riff_movement.png'
 };
 
-/*
-Donny's uploaded movement art is not an exact 8-column grid.
-These crop rectangles isolate the real sprites, remove the checker/white background,
-and anchor each frame by feet so Donny stops sliding inside his frame box.
+/* Exact usable frame boxes from the current Donny movement sheet.
+   Rows in the uploaded art:
+   row 1 = DOWN / front
+   row 2 = LEFT
+   row 3 = RIGHT
+   row 4 = UP / back
 */
-const DONNY_RECTS={
-  down:[[50,10,145,259],[259,11,143,258],[460,13,145,256],[655,12,143,257],[844,10,142,259],[1041,10,144,259],[1245,11,141,258],[50,10,145,259]],
-  right:[[54,278,146,269],[267,279,147,268],[469,279,132,268],[666,279,139,268],[855,279,135,268],[1042,279,145,268],[1249,279,139,268],[54,278,146,269]],
-  left:[[45,539,139,279],[251,539,137,279],[464,539,130,279],[648,539,132,279],[845,539,131,279],[1031,539,135,279],[1234,539,135,279],[45,539,139,279]],
-  up:[[48,810,146,246],[252,810,143,245],[454,810,145,246],[646,810,143,241],[836,810,143,245],[1034,810,144,245],[1242,810,144,246],[48,810,146,246]]
+const DONNY_FRAMES={
+  down:[[49,14,144,251],[260,15,140,250],[462,16,140,249],[656,14,140,251],[844,14,140,251],[1040,14,141,251],[1246,15,137,250]],
+  left:[[54,282,139,233],[269,282,137,233],[471,282,129,233],[664,282,135,233],[853,283,131,232],[1043,282,138,233],[1251,282,132,233]],
+  right:[[49,539,134,231],[256,539,129,231],[464,539,128,231],[650,539,129,231],[847,539,125,231],[1037,539,125,231],[1238,539,127,231]],
+  up:[[50,782,143,270],[256,782,136,270],[458,782,141,270],[650,782,138,270],[840,783,136,269],[1037,783,140,269],[1241,783,142,269]]
 };
-const HOLSTER_F={down:0,right:4,left:8,up:12};
-const HOLSTER_OFF={down:{x:12,y:-75},right:{x:20,y:-74},left:{x:-20,y:-74},up:{x:-12,y:-78}};
 
 const ROOMS={
-  donny_office:{name:"Donny's Office",key:'bg_office',background:'assets/backgrounds/planets/dust_9/interiors/shops/bounty_office_interior.png',spawn:{x:960,y:402},walk:{x:0,y:200,width:1920,height:330},exits:{right:'sand_motel_lot'}},
-  sand_motel_lot:{name:'Sand Motel Parking Lot / Dustbowl Junction Edge',key:'bg_sand_motel',background:'assets/backgrounds/planets/dust_9/drive/dust9_road_chunk_01_no_vans.png',spawn:{x:210,y:402},walk:{x:0,y:240,width:1920,height:270},exits:{left:'donny_office'},vanX:680,vanY:435},
-  checkpoint:{name:'Hidden Red Concord Checkpoint',key:'bg_checkpoint',background:'assets/backgrounds/dust9/dust9_checkpoint_empty_1920x540.png',spawn:{x:170,y:410},walk:{x:0,y:250,width:1920,height:250},exits:{right:'prisoner_housing_yard'}},
-  prisoner_housing_yard:{name:'Prisoner Housing Yard',key:'bg_prison_yard',background:'assets/backgrounds/dust9/dust9_prisoner_housing_yard_empty_1920x540.png',spawn:{x:140,y:405},walk:{x:0,y:235,width:1920,height:280},exits:{left:'checkpoint',right:'mining_yard'}},
-  mining_yard:{name:'Outdoor Mining Yard',key:'bg_mining',background:'assets/backgrounds/dust9/dust9_mining_yard_empty_1920x540.png',spawn:{x:150,y:420},walk:{x:0,y:250,width:1920,height:260},exits:{left:'prisoner_housing_yard',right:'support_block'}},
-  support_block:{name:'Support Block',key:'bg_support',background:'assets/backgrounds/dust9/dust9_support_block_empty_1920x540.png',spawn:{x:160,y:405},walk:{x:0,y:245,width:1920,height:275},exits:{left:'mining_yard',right:'high_command_tower'}},
-  high_command_tower:{name:'High Command Tower',key:'bg_hq_tower',background:'assets/backgrounds/dust9/dust9_high_command_tower_exterior_empty_1920x540.png',spawn:{x:150,y:410},walk:{x:0,y:245,width:1920,height:275},exits:{left:'support_block',right:'control_room'}},
-  control_room:{name:'Camp Control Room',key:'bg_control',background:'assets/backgrounds/dust9/dust9_control_room_empty_1920x540.png',spawn:{x:180,y:385},walk:{x:0,y:250,width:1920,height:250},exits:{left:'high_command_tower',right:'basement_prison'}},
-  basement_prison:{name:'Basement Prison — Find Dex',key:'bg_prison',background:'assets/backgrounds/dust9/dust9_basement_prison_empty_1920x540.png',spawn:{x:160,y:390},walk:{x:0,y:245,width:1920,height:280},exits:{left:'control_room',right:'loading_pad'},dexMarker:true},
-  loading_pad:{name:'Loading Pad — Escape Route',key:'bg_loading',background:'assets/backgrounds/dust9/dust9_loading_pad_escape_route_empty_1920x540.png',spawn:{x:180,y:400},walk:{x:0,y:235,width:1920,height:290},exits:{left:'basement_prison'}}
+  donny_office:{
+    name:"Donny's Office",
+    key:'bg_office',
+    background:'assets/backgrounds/planets/dust_9/interiors/shops/bounty_office_interior.png',
+    spawn:{x:960,y:414},
+    walk:{x:0,y:228,width:1920,height:270},
+    exits:{right:'sand_motel_lot'}
+  },
+  sand_motel_lot:{
+    name:'Sand Motel Parking Lot / Dustbowl Junction Edge',
+    key:'bg_sand_motel',
+    background:'assets/backgrounds/planets/dust_9/drive/dust9_road_chunk_01_no_vans.png',
+    spawn:{x:220,y:416},
+    walk:{x:0,y:250,width:1920,height:240},
+    exits:{left:'donny_office'},
+    vanX:700,
+    vanY:440
+  },
+  checkpoint:{
+    name:'Hidden Red Concord Checkpoint',
+    key:'bg_checkpoint',
+    background:'assets/backgrounds/dust9/dust9_checkpoint_empty_1920x540.png',
+    spawn:{x:170,y:418},
+    walk:{x:0,y:250,width:1920,height:250},
+    exits:{right:'prisoner_housing_yard'}
+  },
+  prisoner_housing_yard:{
+    name:'Prisoner Housing Yard',
+    key:'bg_prison_yard',
+    background:'assets/backgrounds/dust9/dust9_prisoner_housing_yard_empty_1920x540.png',
+    spawn:{x:140,y:412},
+    walk:{x:0,y:238,width:1920,height:270},
+    exits:{left:'checkpoint',right:'mining_yard'}
+  },
+  mining_yard:{
+    name:'Outdoor Mining Yard',
+    key:'bg_mining',
+    background:'assets/backgrounds/dust9/dust9_mining_yard_empty_1920x540.png',
+    spawn:{x:150,y:420},
+    walk:{x:0,y:250,width:1920,height:250},
+    exits:{left:'prisoner_housing_yard',right:'support_block'}
+  },
+  support_block:{
+    name:'Support Block',
+    key:'bg_support',
+    background:'assets/backgrounds/dust9/dust9_support_block_empty_1920x540.png',
+    spawn:{x:160,y:410},
+    walk:{x:0,y:245,width:1920,height:260},
+    exits:{left:'mining_yard',right:'high_command_tower'}
+  },
+  high_command_tower:{
+    name:'High Command Tower',
+    key:'bg_hq_tower',
+    background:'assets/backgrounds/dust9/dust9_high_command_tower_exterior_empty_1920x540.png',
+    spawn:{x:150,y:410},
+    walk:{x:0,y:245,width:1920,height:260},
+    exits:{left:'support_block',right:'control_room'}
+  },
+  control_room:{
+    name:'Camp Control Room',
+    key:'bg_control',
+    background:'assets/backgrounds/dust9/dust9_control_room_empty_1920x540.png',
+    spawn:{x:180,y:395},
+    walk:{x:0,y:250,width:1920,height:240},
+    exits:{left:'high_command_tower',right:'basement_prison'}
+  },
+  basement_prison:{
+    name:'Basement Prison — Find Dex',
+    key:'bg_prison',
+    background:'assets/backgrounds/dust9/dust9_basement_prison_empty_1920x540.png',
+    spawn:{x:160,y:400},
+    walk:{x:0,y:245,width:1920,height:255},
+    exits:{left:'control_room',right:'loading_pad'},
+    dexMarker:true
+  },
+  loading_pad:{
+    name:'Loading Pad — Escape Route',
+    key:'bg_loading',
+    background:'assets/backgrounds/dust9/dust9_loading_pad_escape_route_empty_1920x540.png',
+    spawn:{x:180,y:405},
+    walk:{x:0,y:240,width:1920,height:260},
+    exits:{left:'basement_prison'}
+  }
 };
 
 function txt(sc,x,y,t,s=14,c='#d9f7ff'){
-  return sc.add.text(x,y,t,{fontFamily:'monospace',fontSize:s+'px',color:c,stroke:'#000',strokeThickness:3,wordWrap:{width:870}});
+  return sc.add.text(x,y,t,{
+    fontFamily:'monospace',
+    fontSize:s+'px',
+    color:c,
+    stroke:'#000',
+    strokeThickness:3,
+    wordWrap:{width:870}
+  });
 }
 
 class Boot extends Phaser.Scene{
@@ -69,7 +150,6 @@ class Boot extends Phaser.Scene{
     this.load.image('donny_raw',A.donnyWalk);
     this.load.image('donny_crawl_raw',A.donnyCrawl);
     this.load.image('donny_slide_raw',A.donnySlide);
-    this.load.spritesheet('holster',A.holster,{frameWidth:128,frameHeight:128});
     this.load.spritesheet('astro_van',A.van,{frameWidth:256,frameHeight:128});
     this.load.spritesheet('riff',A.riff,{frameWidth:181,frameHeight:272});
   }
@@ -78,16 +158,15 @@ class Boot extends Phaser.Scene{
       if(this.textures.exists(k))return;
       const g=this.add.graphics();
       g.fillStyle(c,1).fillRect(0,0,w,h);
-      g.lineStyle(2,0xffffff,.5).strokeRect(1,1,w-2,h-2);
+      g.lineStyle(2,0xffffff,.4).strokeRect(1,1,w-2,h-2);
       g.generateTexture(k,w,h);
       g.destroy();
     };
     mk('ph_bg',WORLD_W,H,0x17131c);
-    mk('ph_player',50,90,0x314dff);
-    mk('ph_holster',32,32,0x8b6914);
-    mk('ph_van',200,100,0x3a2d1a);
+    mk('ph_player',64,96,0x314dff);
+    mk('ph_van',220,110,0x3a2d1a);
     this.makeCleanDonnyTexture();
-    this.makeAnims();
+    this.makeDonnyAnims();
     this.scene.start('Title');
   }
   makeCleanDonnyTexture(){
@@ -96,28 +175,35 @@ class Boot extends Phaser.Scene{
     const ct=this.textures.createCanvas('donny_clean',src.width,src.height);
     const ctx=ct.getContext();
     ctx.drawImage(src,0,0);
+
+    // Remove white / checkerboard-ish background.
     const img=ctx.getImageData(0,0,src.width,src.height);
     const d=img.data;
     for(let i=0;i<d.length;i+=4){
-      const r=d[i],g=d[i+1],b=d[i+2],mx=Math.max(r,g,b),mn=Math.min(r,g,b);
-      if(r>224&&g>224&&b>224&&(mx-mn)<32)d[i+3]=0;
+      const r=d[i],g=d[i+1],b=d[i+2];
+      const mx=Math.max(r,g,b), mn=Math.min(r,g,b);
+      if(r>228 && g>228 && b>228 && (mx-mn)<28) d[i+3]=0;
     }
     ctx.putImageData(img,0,0);
     ct.refresh();
+
     const tex=this.textures.get('donny_clean');
-    Object.entries(DONNY_RECTS).forEach(([dir,arr])=>arr.forEach((r,i)=>tex.add(dir+'_'+i,0,r[0],r[1],r[2],r[3])));
-  }
-  makeAnims(){
-    if(this.textures.exists('donny_clean')){
-      ['down','right','left','up'].forEach(dir=>{
-        this.anims.create({
-          key:'walk_'+dir,
-          frames:Array.from({length:8},(_,i)=>({key:'donny_clean',frame:dir+'_'+i})),
-          frameRate:8,
-          repeat:-1
-        });
+    for(const dir of ['down','left','right','up']){
+      DONNY_FRAMES[dir].forEach((r,i)=>{
+        tex.add(dir+'_'+i,0,r[0],r[1],r[2],r[3]);
       });
     }
+  }
+  makeDonnyAnims(){
+    if(!this.textures.exists('donny_clean')) return;
+    ['down','left','right','up'].forEach(dir=>{
+      this.anims.create({
+        key:'walk_'+dir,
+        frames:Array.from({length:DONNY_FRAMES[dir].length},(_,i)=>({key:'donny_clean',frame:dir+'_'+i})),
+        frameRate:10,
+        repeat:-1
+      });
+    });
   }
 }
 
@@ -130,29 +216,37 @@ class Title extends Phaser.Scene{
       this.vid.setLoop(true);
       this.vid.play(true);
       this.vid.once('play',()=>{
-        const vw=this.vid.video.videoWidth||W,vh=this.vid.video.videoHeight||H;
+        const vw=this.vid.video.videoWidth||W;
+        const vh=this.vid.video.videoHeight||H;
         this.vid.setScale(Math.max(W/vw,H/vh));
       });
-    } else {
+    }else{
       this.add.image(W/2,H/2,this.textures.exists('title_bg')?'title_bg':'ph_bg').setDisplaySize(W,H);
     }
+
     this.add.rectangle(0,0,W,H,0x000000,.52).setOrigin(0);
     txt(this,W/2,70,'COSMIC FEEDBACK',44,'#fff').setOrigin(.5);
     txt(this,W/2,123,'The signal starts on Dust-9',17,'#8ff9ff').setOrigin(.5);
 
     const btn=(y,t,cb)=>{
       const b=this.add.text(W/2,y,t,{
-        fontFamily:'monospace',fontSize:'22px',color:'#fff',
-        backgroundColor:'#3b145c',padding:{x:26,y:14},
-        stroke:'#000',strokeThickness:2
+        fontFamily:'monospace',
+        fontSize:'22px',
+        color:'#fff',
+        backgroundColor:'#3b145c',
+        padding:{x:26,y:14},
+        stroke:'#000',
+        strokeThickness:2
       }).setOrigin(.5).setInteractive({useHandCursor:true});
       b.on('pointerover',()=>b.setStyle({backgroundColor:'#7a1f9a'}));
       b.on('pointerout',()=>b.setStyle({backgroundColor:'#3b145c'}));
       b.on('pointerdown',cb);
     };
+
     btn(288,'START STORY',()=>this.goStory());
     btn(363,'TEST DUST-9 ROAD WORLD',()=>this.goRoom('checkpoint'));
-    btn(438,'DIRECT ROAD TEST PAGE',()=>{location.href='dust9-road-test.html'});
+    btn(438,'DIRECT ROAD TEST PAGE',()=>{location.href='dust9-road-test.html';});
+
     this.input.keyboard.once('keydown-ENTER',()=>this.goStory());
   }
   stopVid(){if(this.vid)this.vid.stop();}
@@ -174,7 +268,7 @@ class SignalIntro extends Phaser.Scene{
     this.i=0;
     this.add.image(W/2,H/2,this.textures.exists('bg_office')?'bg_office':'ph_bg').setDisplaySize(W,H);
     this.add.rectangle(0,0,W,H,0x000000,.45).setOrigin(0);
-    this.box=this.add.rectangle(W/2,H-100,W-70,165,0x0d0717,.94).setStrokeStyle(2,0x86f7ff,.5);
+    this.add.rectangle(W/2,H-100,W-70,165,0x0d0717,.94).setStrokeStyle(2,0x86f7ff,.5);
     this.speaker=txt(this,55,H-168,'',13,'#86f7ff');
     this.body=txt(this,55,H-138,'',16,'#f4e7ff');
     txt(this,W-45,H-32,'click / tap / ENTER',11,'#8b6eb0').setOrigin(1,.5);
@@ -190,7 +284,7 @@ class SignalIntro extends Phaser.Scene{
   }
   next(){
     this.i++;
-    if(this.i>=this.lines.length)this.scene.start('Dust9',{room:'donny_office'});
+    if(this.i>=this.lines.length) this.scene.start('Dust9',{room:'donny_office'});
     else this.show();
   }
 }
@@ -204,7 +298,9 @@ class Dust9 extends Phaser.Scene{
     this.pistol={state:'holstered',ammo:12};
     this.day=0;
   }
-  init(d){if(d&&d.room)this.roomId=d.room;}
+  init(d){
+    if(d && d.room) this.roomId=d.room;
+  }
   create(){
     this.cameras.main.setBounds(0,0,WORLD_W,H);
     this.keys=this.input.keyboard.addKeys('W,A,S,D,F,E,I');
@@ -214,151 +310,217 @@ class Dust9 extends Phaser.Scene{
     this.makeHud();
     this.makeMobileControls();
   }
-  has(k){return this.textures.exists(k)}
+  has(k){ return this.textures.exists(k); }
+
   drawRoom(id){
-    const r=ROOMS[id]||ROOMS.donny_office;
+    const r=ROOMS[id] || ROOMS.donny_office;
     this.roomId=id;
     this.room=r;
-    ['bg','roomTxt','vanSprite','vanPrompt','dexMarker','notice'].forEach(k=>{if(this[k]){this[k].destroy();this[k]=null;}});
-    this.bg=this.add.image(0,0,this.has(r.key)?r.key:'ph_bg').setOrigin(0).setDepth(0).setDisplaySize(WORLD_W,H);
+
+    ['bg','roomTxt','vanSprite','vanPrompt','dexMarker','notice'].forEach(k=>{
+      if(this[k]){ this[k].destroy(); this[k]=null; }
+    });
+
+    this.bg=this.add.image(0,0,this.has(r.key)?r.key:'ph_bg')
+      .setOrigin(0).setDepth(0).setDisplaySize(WORLD_W,H);
+
     this.roomTxt=txt(this,16,12,'DUST-9 / '+r.name,13,'#86f7ff').setScrollFactor(0).setDepth(100);
+
     if(id==='donny_office'){
-      this.notice=txt(this,W/2,56,'Riff found Dex’s signal. Move right to leave Donny’s office.',12,'#ffe97a').setOrigin(.5,0).setScrollFactor(0).setDepth(101);
+      this.notice=txt(this,W/2,56,'Riff found Dex’s signal. Move right to leave Donny’s office.',12,'#ffe97a')
+        .setOrigin(.5,0).setScrollFactor(0).setDepth(101);
     }
     if(id==='sand_motel_lot'){
       const vx=r.vanX,vy=r.vanY;
-      this.vanSprite=this.add.sprite(vx,vy,this.has('astro_van')?'astro_van':'ph_van',0).setOrigin(.5,1).setScale(.78).setDepth(10);
-      this.vanPrompt=txt(this,vx,vy-108,'[E / A] Board Astro Van → hidden Red Concord route',13,'#ffe97a').setOrigin(.5,1).setDepth(15).setAlpha(0);
+      this.vanSprite=this.add.sprite(vx,vy,this.has('astro_van')?'astro_van':'ph_van',0)
+        .setOrigin(.5,1).setScale(.78).setDepth(10);
+      this.vanPrompt=txt(this,vx,vy-108,'[E / A] Board Astro Van → hidden Red Concord route',13,'#ffe97a')
+        .setOrigin(.5,1).setDepth(15).setAlpha(0);
     }
     if(id==='checkpoint'){
-      this.notice=txt(this,W/2,56,'The camp is hidden far from Dustbowl Junction. Dex is deeper inside.',12,'#ff6633').setOrigin(.5,0).setScrollFactor(0).setDepth(101);
+      this.notice=txt(this,W/2,56,'The camp is hidden far from Dustbowl Junction. Dex is deeper inside.',12,'#ff6633')
+        .setOrigin(.5,0).setScrollFactor(0).setDepth(101);
     }
     if(r.dexMarker){
-      this.dexMarker=txt(this,WORLD_W/2,300,'★ DEX IS HERE ★\nRescue objective marker',16,'#ff6699').setOrigin(.5).setDepth(50);
+      this.dexMarker=txt(this,WORLD_W/2,300,'★ DEX IS HERE ★\nRescue objective marker',16,'#ff6699')
+        .setOrigin(.5).setDepth(50);
     }
   }
+
   makePlayer(){
     const s=this.room.spawn;
-    this.playerBody=this.add.zone(s.x,s.y,42,26).setOrigin(.5,.5); // invisible stable body / feet anchor
+    this.playerBody=this.add.zone(s.x,s.y,44,28).setOrigin(.5,.5);
     this.playerSprite=this.add.sprite(
       s.x,s.y,
       this.has('donny_clean')?'donny_clean':'ph_player',
       this.has('donny_clean')?'down_0':undefined
-    ).setOrigin(.5,1).setDepth(20).setScale(this.has('donny_clean')?.46:1);
-    this.holsterSprite=this.add.sprite(s.x,s.y,this.has('holster')?'holster':'ph_holster',0).setDepth(21).setScale(.46);
+    ).setOrigin(.5,1).setScale(this.has('donny_clean')?.52:1).setDepth(20);
+
     this.cameras.main.startFollow(this.playerBody,true,.08,.08);
     this.updateVisuals(false);
   }
+
   makeHud(){
-    this.hpHud=txt(this,16,500,'HP: 100   VAN: OK   CREDITS: 25   INV: van keys, signal',12,'#f4e7ff').setScrollFactor(0).setDepth(100);
-    this.pHud=txt(this,W-16,500,this.pistolText(),13,'#ffe97a').setOrigin(1,0).setScrollFactor(0).setDepth(100);
-    this.ammoHud=txt(this,W-16,517,'AMMO: '+this.pistol.ammo,12,'#ffd46a').setOrigin(1,0).setScrollFactor(0).setDepth(100);
-    txt(this,W-16,12,'← Menu',12,'#86f7ff').setOrigin(1,0).setScrollFactor(0).setDepth(100).setInteractive({useHandCursor:true}).on('pointerdown',()=>this.scene.start('Title'));
+    this.hpHud=txt(this,16,500,'HP: 100   VAN: OK   CREDITS: 25   INV: van keys, signal',12,'#f4e7ff')
+      .setScrollFactor(0).setDepth(100);
+    this.pHud=txt(this,W-16,500,this.pistolText(),13,'#ffe97a')
+      .setOrigin(1,0).setScrollFactor(0).setDepth(100);
+    this.ammoHud=txt(this,W-16,517,'AMMO: '+this.pistol.ammo,12,'#ffd46a')
+      .setOrigin(1,0).setScrollFactor(0).setDepth(100);
+    txt(this,W-16,12,'← Menu',12,'#86f7ff')
+      .setOrigin(1,0).setScrollFactor(0).setDepth(100)
+      .setInteractive({useHandCursor:true})
+      .on('pointerdown',()=>this.scene.start('Title'));
+
     this.dayOverlay=this.add.rectangle(0,0,WORLD_W,H,0x00113a,0).setOrigin(0).setScrollFactor(0).setDepth(90);
-    this.invText=txt(this,W/2,92,'INVENTORY: van keys / signal device / diner cash / repair kit',13,'#fff4aa').setOrigin(.5,0).setScrollFactor(0).setDepth(130).setVisible(false);
+
+    this.invText=txt(this,W/2,92,'INVENTORY: van keys / signal device / diner cash / repair kit',13,'#fff4aa')
+      .setOrigin(.5,0).setScrollFactor(0).setDepth(130).setVisible(false);
   }
-  pistolText(){return 'PISTOL: '+(this.pistol.state==='drawn'?'DRAWN':'HOLSTERED')}
+
+  pistolText(){
+    return 'PISTOL: '+(this.pistol.state==='drawn'?'DRAWN':'HOLSTERED');
+  }
+
   makeMobileControls(){
-    const baseX=112,baseY=H-98,rad=58;
-    this.stickBase=this.add.circle(baseX,baseY,rad,0x1d1230,.55).setStrokeStyle(3,0xaaaaff,.5).setScrollFactor(0).setDepth(200).setInteractive();
-    this.stickDot=this.add.circle(baseX,baseY,18,0xddddff,.65).setScrollFactor(0).setDepth(201);
-    const reset=()=>{this.touch.left=this.touch.right=this.touch.up=this.touch.down=false;this.stickDot.setPosition(baseX,baseY)};
-    const apply=p=>{
-      const dx=p.x-baseX,dy=p.y-baseY,len=Math.max(1,Math.hypot(dx,dy)),cl=Math.min(rad,len),nx=dx/len,ny=dy/len;
-      this.stickDot.setPosition(baseX+nx*cl,baseY+ny*cl);
-      this.touch.left=dx<-18;this.touch.right=dx>18;this.touch.up=dy<-18;this.touch.down=dy>18;
+    const baseX=124, baseY=H-104, rad=70;
+    this.stickBase=this.add.circle(baseX,baseY,rad,0x241544,.52)
+      .setStrokeStyle(4,0xbdb8ff,.55).setScrollFactor(0).setDepth(200).setInteractive();
+    this.stickRing=this.add.circle(baseX,baseY,rad-18,0x000000,0)
+      .setStrokeStyle(2,0x86f7ff,.25).setScrollFactor(0).setDepth(200);
+    this.stickDot=this.add.circle(baseX,baseY,26,0xe9e8ff,.72)
+      .setStrokeStyle(2,0xffffff,.5).setScrollFactor(0).setDepth(201);
+
+    const reset=()=>{
+      this.touch.left=this.touch.right=this.touch.up=this.touch.down=false;
+      this.stickDot.setPosition(baseX,baseY);
+    };
+    const apply=(p)=>{
+      const dx=p.x-baseX, dy=p.y-baseY;
+      const len=Math.max(1,Math.hypot(dx,dy));
+      const clamp=Math.min(rad-12,len);
+      const nx=dx/len, ny=dy/len;
+      this.stickDot.setPosition(baseX+nx*clamp,baseY+ny*clamp);
+      this.touch.left=dx<-20; this.touch.right=dx>20;
+      this.touch.up=dy<-20;   this.touch.down=dy>20;
     };
     this.stickBase.on('pointerdown',p=>apply(p));
-    this.stickBase.on('pointermove',p=>{if(p.isDown)apply(p)});
+    this.stickBase.on('pointermove',p=>{ if(p.isDown) apply(p); });
     ['pointerup','pointerout','pointerupoutside'].forEach(e=>this.stickBase.on(e,reset));
 
-    const acX=W-94,acY=H-90;
-    const btn=(ox,oy,t,lab,cb)=>{
-      const b=this.add.text(acX+ox,acY+oy,t,{
-        fontFamily:'monospace',fontSize:'18px',color:'#fff',
-        backgroundColor:'rgba(35,25,65,.78)',padding:{x:13,y:9},
-        stroke:'#000',strokeThickness:2
-      }).setOrigin(.5).setScrollFactor(0).setDepth(200).setInteractive();
-      b.on('pointerdown',cb);
-      if(lab)txt(this,acX+ox,acY+oy-31,lab,9,'#ffdd88').setOrigin(.5).setScrollFactor(0).setDepth(200);
+    const groupX=W-114, groupY=H-102, btnR=31;
+
+    const snesBtn=(x,y,label,sub,color,cb)=>{
+      const c=this.add.circle(x,y,btnR,color,.8)
+        .setStrokeStyle(3,0xffffff,.35)
+        .setScrollFactor(0).setDepth(200).setInteractive({useHandCursor:true});
+      c.on('pointerdown',cb);
+      this.add.text(x,y,label,{
+        fontFamily:'monospace',fontSize:'28px',fontStyle:'bold',color:'#fff',
+        stroke:'#000',strokeThickness:4
+      }).setOrigin(.5).setScrollFactor(0).setDepth(201);
+      if(sub){
+        txt(this,x,y-btnR-16,sub,9,'#ffe7a3').setOrigin(.5).setScrollFactor(0).setDepth(201);
+      }
     };
-    btn( 48,-24,'A','USE',()=>this.actionA());
-    btn(0,-50,'X','DRAW',()=>this.togglePistol());
-    btn(0,2,'B','BACK',()=>{});
-    btn(-48,-24,'Y','MENU',()=>this.toggleInventory());
-    this.menuBtn=this.add.text(W/2,H-20,'MENU',{
-      fontFamily:'monospace',fontSize:'13px',color:'#fff',
-      backgroundColor:'rgba(20,20,20,.7)',padding:{x:18,y:7},
-      stroke:'#000',strokeThickness:2
-    }).setOrigin(.5,1).setScrollFactor(0).setDepth(200).setInteractive().on('pointerdown',()=>this.toggleInventory());
+
+    snesBtn(groupX+52,groupY,'A','USE',0x5f57d6,()=>this.actionA());
+    snesBtn(groupX,groupY-50,'X','DRAW',0x7360db,()=>this.togglePistol());
+    snesBtn(groupX,groupY+50,'B','BACK',0x4d3dbb,()=>{});
+    snesBtn(groupX-52,groupY,'Y','MENU',0x5a49cc,()=>this.toggleInventory());
+
+    this.menuBtn=this.add.text(W/2,H-16,'MENU',{
+      fontFamily:'monospace',
+      fontSize:'14px',
+      color:'#fff',
+      backgroundColor:'rgba(20,20,20,.7)',
+      padding:{x:20,y:8},
+      stroke:'#000',
+      strokeThickness:2
+    }).setOrigin(.5,1).setScrollFactor(0).setDepth(200)
+      .setInteractive().on('pointerdown',()=>this.toggleInventory());
   }
+
   togglePistol(){
     this.pistol.state=this.pistol.state==='holstered'?'drawn':'holstered';
     this.pHud.setText(this.pistolText());
-    if(this.holsterSprite)this.holsterSprite.setAlpha(this.pistol.state==='drawn'?.35:1);
   }
-  toggleInventory(){this.invText.setVisible(!this.invText.visible)}
-  actionA(){if(this.roomId==='sand_motel_lot'&&this.nearVan())this.boardVan();}
-  boardVan(){this.changeRoom('checkpoint','left')}
-  nearVan(){
-    return this.vanSprite&&Math.abs(this.playerBody.x-this.vanSprite.x)<170&&Math.abs(this.playerBody.y-this.vanSprite.y)<130;
-  }
-  update(){
-    if(!this.playerBody||!this.room)return;
-    if(Phaser.Input.Keyboard.JustDown(this.keys.F))this.togglePistol();
-    if(Phaser.Input.Keyboard.JustDown(this.keys.I))this.toggleInventory();
-    if(Phaser.Input.Keyboard.JustDown(this.keys.E))this.actionA();
 
-    const L=this.cursors.left.isDown||this.keys.A.isDown||this.touch.left;
-    const R=this.cursors.right.isDown||this.keys.D.isDown||this.touch.right;
-    const U=this.cursors.up.isDown||this.keys.W.isDown||this.touch.up;
-    const D=this.cursors.down.isDown||this.keys.S.isDown||this.touch.down;
+  toggleInventory(){
+    this.invText.setVisible(!this.invText.visible);
+  }
+
+  actionA(){
+    if(this.roomId==='sand_motel_lot' && this.nearVan()) this.boardVan();
+  }
+
+  boardVan(){
+    this.changeRoom('checkpoint','left');
+  }
+
+  nearVan(){
+    return this.vanSprite &&
+      Math.abs(this.playerBody.x-this.vanSprite.x)<170 &&
+      Math.abs(this.playerBody.y-this.vanSprite.y)<130;
+  }
+
+  update(){
+    if(!this.playerBody || !this.room) return;
+
+    if(Phaser.Input.Keyboard.JustDown(this.keys.F)) this.togglePistol();
+    if(Phaser.Input.Keyboard.JustDown(this.keys.I)) this.toggleInventory();
+    if(Phaser.Input.Keyboard.JustDown(this.keys.E)) this.actionA();
+
+    const L=this.cursors.left.isDown || this.keys.A.isDown || this.touch.left;
+    const R=this.cursors.right.isDown || this.keys.D.isDown || this.touch.right;
+    const U=this.cursors.up.isDown || this.keys.W.isDown || this.touch.up;
+    const D=this.cursors.down.isDown || this.keys.S.isDown || this.touch.down;
+
     let moving=false;
-    if(L){this.playerBody.x-=3.2;this.facing='left';moving=true}
-    if(R){this.playerBody.x+=3.2;this.facing='right';moving=true}
-    if(U){this.playerBody.y-=3.2;this.facing='up';moving=true}
-    if(D){this.playerBody.y+=3.2;this.facing='down';moving=true}
+
+    if(L){ this.playerBody.x-=3.2; this.facing='left'; moving=true; }
+    else if(R){ this.playerBody.x+=3.2; this.facing='right'; moving=true; }
+
+    if(U){ this.playerBody.y-=3.2; this.facing='up'; moving=true; }
+    else if(D){ this.playerBody.y+=3.2; this.facing='down'; moving=true; }
 
     const b=this.room.walk;
     this.playerBody.x=Phaser.Math.Clamp(this.playerBody.x,b.x+22,b.x+b.width-22);
     this.playerBody.y=Phaser.Math.Clamp(this.playerBody.y,b.y+44,b.y+b.height-5);
 
     this.updateVisuals(moving);
+    if(this.vanPrompt) this.vanPrompt.setAlpha(this.nearVan()?1:0);
 
-    if(this.vanPrompt)this.vanPrompt.setAlpha(this.nearVan()?1:0);
-
-    const ex=this.room.exits||{};
-    if(this.playerBody.x>WORLD_W-36&&ex.right)this.changeRoom(ex.right,'left');
-    if(this.playerBody.x<36&&ex.left)this.changeRoom(ex.left,'right');
+    const ex=this.room.exits || {};
+    if(this.playerBody.x>WORLD_W-36 && ex.right) this.changeRoom(ex.right,'left');
+    if(this.playerBody.x<36 && ex.left) this.changeRoom(ex.left,'right');
 
     this.day=(this.day+.00045)%1;
     const night=Math.max(0,Math.sin(this.day*Math.PI*2)*.28);
     this.dayOverlay.setAlpha(night);
   }
+
   updateVisuals(moving){
     this.playerSprite.x=this.playerBody.x;
     this.playerSprite.y=this.playerBody.y;
-    this.playerSprite.setDepth(20+this.playerBody.y/1000);
+    this.playerSprite.setDepth(20 + this.playerBody.y/1000);
+
     if(this.has('donny_clean')){
       const walk='walk_'+this.facing;
       if(moving){
-        if(this.playerSprite.anims.currentAnim?.key!==walk)this.playerSprite.play(walk,true);
+        if(this.playerSprite.anims.currentAnim?.key!==walk || !this.playerSprite.anims.isPlaying){
+          this.playerSprite.play(walk,true);
+        }
       }else{
         this.playerSprite.anims.stop();
         this.playerSprite.setFrame(this.facing+'_0');
       }
     }
-    if(this.holsterSprite){
-      const o=HOLSTER_OFF[this.facing];
-      this.holsterSprite.x=this.playerBody.x+o.x;
-      this.holsterSprite.y=this.playerBody.y+o.y;
-      this.holsterSprite.setFrame(HOLSTER_F[this.facing]);
-      this.holsterSprite.setDepth(this.playerSprite.depth+.01);
-    }
   }
+
   changeRoom(id,enterFrom){
     const r=ROOMS[id];
-    if(!r)return;
+    if(!r) return;
     this.drawRoom(id);
     this.playerBody.x=enterFrom==='left'?72:WORLD_W-72;
     this.playerBody.y=r.spawn.y;
