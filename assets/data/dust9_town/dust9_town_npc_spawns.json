@@ -1,0 +1,141 @@
+[
+  {
+    "id": "npc_bartender",
+    "sprite": "dust9_bartender",
+    "name": "Bartender",
+    "scene": "saloon_large",
+    "x": 560,
+    "y": 300,
+    "facing": "down",
+    "behavior": "stationary_vendor",
+    "shop": "saloon_menu"
+  },
+  {
+    "id": "npc_server",
+    "sprite": "dust9_saloon_server_female",
+    "name": "Saloon Server",
+    "scene": "saloon_large",
+    "x": 850,
+    "y": 610,
+    "facing": "down",
+    "behavior": "walk_table_route"
+  },
+  {
+    "id": "npc_shopkeeper",
+    "sprite": "dust9_shopkeeper",
+    "name": "Shopkeeper",
+    "scene": "general_store",
+    "x": 420,
+    "y": 330,
+    "facing": "down",
+    "behavior": "stationary_vendor",
+    "shop": "general_store"
+  },
+  {
+    "id": "npc_mechanic",
+    "sprite": "dust9_mechanic",
+    "name": "Mechanic",
+    "scene": "repair_shop",
+    "x": 460,
+    "y": 390,
+    "facing": "down",
+    "behavior": "upgrade_vendor"
+  },
+  {
+    "id": "npc_doctor",
+    "sprite": "dust9_doctor_named_female",
+    "name": "Dr. Vale Rusk",
+    "scene": "clinic",
+    "x": 450,
+    "y": 330,
+    "facing": "down",
+    "behavior": "healing_vendor"
+  },
+  {
+    "id": "npc_clinic_staff",
+    "sprite": "dust9_clinic_staff_female",
+    "name": "Clinic Staff",
+    "scene": "clinic",
+    "x": 620,
+    "y": 380,
+    "facing": "down",
+    "behavior": "assistant_vendor"
+  },
+  {
+    "id": "npc_sheriff",
+    "sprite": "dust9_sheriff_jail_officer_female",
+    "name": "Marshal Tessa Rook",
+    "scene": "security_office",
+    "x": 460,
+    "y": 360,
+    "facing": "down",
+    "behavior": "law_quest_npc"
+  },
+  {
+    "id": "npc_deputy",
+    "sprite": "dust9_deputy_01",
+    "name": "Deputy",
+    "scene": "jail_cell_block",
+    "x": 520,
+    "y": 300,
+    "facing": "down",
+    "behavior": "patrol"
+  },
+  {
+    "id": "npc_inmate",
+    "sprite": "dust9_town_inmate_01",
+    "name": "Town Inmate",
+    "scene": "jail_cell_block",
+    "x": 360,
+    "y": 420,
+    "facing": "down",
+    "behavior": "cell_npc"
+  },
+  {
+    "id": "npc_dock_worker",
+    "sprite": "dust9_dock_worker",
+    "name": "Dock Worker",
+    "scene": "docking_office",
+    "x": 530,
+    "y": 380,
+    "facing": "down",
+    "behavior": "route_hint_npc"
+  },
+  {
+    "id": "npc_secret_contact",
+    "sprite": "dust9_secret_contact_female",
+    "name": "Sable Venn",
+    "scene": "saloon_large",
+    "x": 1420,
+    "y": 310,
+    "facing": "down",
+    "behavior": "night_only_secret_contact"
+  },
+  {
+    "id": "npc_townsfolk_01",
+    "sprite": "dust9_townsfolk_common_01",
+    "scene": "town",
+    "x": 1200,
+    "y": 1030,
+    "facing": "down",
+    "behavior": "wander"
+  },
+  {
+    "id": "npc_townsfolk_02",
+    "sprite": "dust9_townsfolk_common_02",
+    "scene": "town",
+    "x": 1780,
+    "y": 1160,
+    "facing": "left",
+    "behavior": "wander"
+  },
+  {
+    "id": "npc_townsfolk_03",
+    "sprite": "dust9_townsfolk_common_03",
+    "scene": "town",
+    "x": 2530,
+    "y": 1290,
+    "facing": "right",
+    "behavior": "wander"
+  }
+]

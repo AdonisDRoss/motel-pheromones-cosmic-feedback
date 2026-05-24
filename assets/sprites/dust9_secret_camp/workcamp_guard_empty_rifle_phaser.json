@@ -1,0 +1,68 @@
+{
+  "key": "workcamp_guard_empty_rifle",
+  "path": "assets/sprites/enemies/red_concord/workcamp_guard_empty_rifle.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "columns": 8,
+  "rows": 4,
+  "frames": 32,
+  "animations": {
+    "rifle_down": {
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "rifle_left": {
+      "frames": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "rifle_right": {
+      "frames": [
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23
+      ],
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "rifle_up": {
+      "frames": [
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31
+      ],
+      "frameRate": 8,
+      "repeat": 0
+    }
+  },
+  "notes": "Cleaned/repacked from raw generated sheet. Hands remain empty for future rifle overlay placement."
+}

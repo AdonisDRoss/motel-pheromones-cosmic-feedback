@@ -1,0 +1,77 @@
+{
+  "key": "red_concord_mech_arms_empty",
+  "path": "assets/sprites/enemies/red_concord/mech/red_concord_mech_arms_empty.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "columns": 8,
+  "rows": 4,
+  "frames": 32,
+  "animations": {
+    "arms_idle_down": {
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "frameRate": 8,
+      "repeat": -1
+    },
+    "arms_idle_left": {
+      "frames": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "frameRate": 8,
+      "repeat": -1
+    },
+    "arms_idle_right": {
+      "frames": [
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23
+      ],
+      "frameRate": 8,
+      "repeat": -1
+    },
+    "arms_idle_up": {
+      "frames": [
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31
+      ],
+      "frameRate": 8,
+      "repeat": -1
+    }
+  },
+  "layering": {
+    "drawOrder": [
+      "legs",
+      "torso_core",
+      "arms",
+      "weapon_mounts"
+    ],
+    "notes": "This is a combined empty arm sheet. For true destructible limbs, split into left-arm and right-arm sheets later or mask/detach the matching side at runtime."
+  },
+  "notes": "Green-screen background removed and repacked to exact Phaser 8x4 128x128 format."
+}

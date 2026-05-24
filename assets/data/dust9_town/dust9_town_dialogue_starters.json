@@ -1,0 +1,11 @@
+{
+  "npc_bartender": "Town talks louder after sundown. Buy a drink if you want names.",
+  "npc_server": "Rooms in back are rented by the hour. Some folks use them to hide.",
+  "npc_shopkeeper": "People buy water before they disappear. That is all I know.",
+  "npc_mechanic": "The road east eats engines. Not from sand. From patrol interference.",
+  "npc_doctor": "I treat miners who claim they were never at a mine.",
+  "npc_sheriff": "My jail is public. Whatever is out past the ridge is not mine to name.",
+  "npc_dock_worker": "Freight logs show roads that do not exist on town maps.",
+  "npc_secret_contact": "The camp is real. Dex is alive if you move before the storm clears.",
+  "npc_inmate": "I saw black-red vehicles past the dry wash. Sheriff says I saw dust."
+}

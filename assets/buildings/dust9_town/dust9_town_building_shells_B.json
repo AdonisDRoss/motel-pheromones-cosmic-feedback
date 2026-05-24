@@ -1,0 +1,23 @@
+{
+  "key": "dust9_town_building_shells_B",
+  "path": "assets/buildings/dust9_town/dust9_town_building_shells_B.png",
+  "frameWidth": 512,
+  "frameHeight": 512,
+  "columns": 4,
+  "rows": 3,
+  "frames": 12,
+  "frameNames": {
+    "scrap_shack_home": 0,
+    "long_trailer_home": 1,
+    "shop_front_awning": 2,
+    "industrial_garage": 3,
+    "cantina_front": 4,
+    "small_office_block": 5,
+    "town_sheriff_building": 6,
+    "metal_storage_barn": 7,
+    "tent_market_stall": 8,
+    "two_story_corner_boarding_house": 9,
+    "water_tower_alt": 10,
+    "small_storefront_alt": 11
+  }
+}

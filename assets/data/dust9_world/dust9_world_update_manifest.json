@@ -1,0 +1,59 @@
+{
+  "version": "dust9_world_update_2026_05_24",
+  "entryIndex": "index.html",
+  "categories": {
+    "townBackgrounds": [
+      "assets/backgrounds/dust9_town/dust9_town_empty_road_canvas_4096.png",
+      "assets/backgrounds/dust9_town/dust9_town_empty_road_canvas_3072.png"
+    ],
+    "townBuildingSheets": [
+      "assets/buildings/dust9_town/dust9_town_building_shells_A.png",
+      "assets/buildings/dust9_town/dust9_town_building_shells_B.png"
+    ],
+    "townInteriors": [
+      "assets/backgrounds/dust9_town/interiors/dust9_saloon_large_interior.png",
+      "assets/backgrounds/dust9_town/interiors/dust9_town_multiroom_interiors.png"
+    ],
+    "townProps": [
+      "assets/props/dust9_town/dust9_town_clinic_med_props.png",
+      "assets/props/dust9_town/dust9_town_food_drinks_credits_chems.png",
+      "assets/props/dust9_town/dust9_town_jail_security_props.png",
+      "assets/props/dust9_town/dust9_town_mechanic_scrap_props.png",
+      "assets/props/dust9_town/dust9_town_outdoor_home_props.png",
+      "assets/props/dust9_town/dust9_town_saloon_cantina_props.png",
+      "assets/props/dust9_town/dust9_town_shop_market_props.png"
+    ],
+    "townUI": [
+      "assets/ui/dust9_town/dust9_town_interaction_icons.png"
+    ],
+    "townNPCs": [
+      "assets/sprites/npcs/dust9_town/dust9_bartender.png",
+      "assets/sprites/npcs/dust9_town/dust9_clinic_staff_female.png",
+      "assets/sprites/npcs/dust9_town/dust9_deputy_01.png",
+      "assets/sprites/npcs/dust9_town/dust9_dock_worker.png",
+      "assets/sprites/npcs/dust9_town/dust9_doctor_named_female.png",
+      "assets/sprites/npcs/dust9_town/dust9_mechanic.png",
+      "assets/sprites/npcs/dust9_town/dust9_saloon_server_female.png",
+      "assets/sprites/npcs/dust9_town/dust9_secret_contact_female.png",
+      "assets/sprites/npcs/dust9_town/dust9_sheriff_jail_officer_female.png",
+      "assets/sprites/npcs/dust9_town/dust9_shopkeeper.png",
+      "assets/sprites/npcs/dust9_town/dust9_town_inmate_01.png",
+      "assets/sprites/npcs/dust9_town/dust9_townsfolk_common_01.png",
+      "assets/sprites/npcs/dust9_town/dust9_townsfolk_common_02.png",
+      "assets/sprites/npcs/dust9_town/dust9_townsfolk_common_03.png"
+    ],
+    "ravenCarriedForward": [
+      "assets/data/raven_carried_forward/dust9_raven_wired_package.zip",
+      "assets/data/raven_carried_forward/raven_phaser_complete_package.zip"
+    ],
+    "secretCampCarriedForward": [
+      "assets/data/dust9_secret_camp/dust9_assets_manifest.json",
+      "assets/data/dust9_secret_camp/dust9_enemy_spawns.json",
+      "assets/data/dust9_secret_camp/dust9_master_manifest.json",
+      "assets/data/dust9_secret_camp/dust9_objectives.json",
+      "assets/data/dust9_secret_camp/dust9_prop_placements.json",
+      "assets/data/dust9_secret_camp/dust9_rooms.json",
+      "assets/data/dust9_secret_camp/dust9_wired_index.html"
+    ]
+  }
+}

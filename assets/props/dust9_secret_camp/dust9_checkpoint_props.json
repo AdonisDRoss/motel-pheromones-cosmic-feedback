@@ -1,0 +1,174 @@
+{
+  "key": "dust9_checkpoint_props",
+  "path": "assets/props/dust9/dust9_checkpoint_props.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "columns": 6,
+  "rows": 3,
+  "frames": 18,
+  "frameNames": {
+    "security_camera": 0,
+    "red_alarm_beacon": 1,
+    "portable_floodlight": 2,
+    "checkpoint_terminal": 3,
+    "portable_scanner_post": 4,
+    "traffic_barricade": 5,
+    "reinforced_crate": 6,
+    "cargo_crate": 7,
+    "fuel_drum": 8,
+    "hazard_barrel": 9,
+    "small_cargo_trolley": 10,
+    "portable_fence_barrier": 11,
+    "checkpoint_sign_plate": 12,
+    "searchlight_base": 13,
+    "wall_control_box": 14,
+    "compact_generator": 15,
+    "weapon_locker": 16,
+    "surveillance_monitor": 17
+  },
+  "suggestedPlacements": {
+    "checkpoint": [
+      {
+        "frame": 0,
+        "name": "security_camera",
+        "x": 1330,
+        "y": 165,
+        "scale": 0.8,
+        "depth": 165,
+        "wall": true
+      },
+      {
+        "frame": 1,
+        "name": "red_alarm_beacon",
+        "x": 1120,
+        "y": 215,
+        "scale": 0.75,
+        "depth": 215
+      },
+      {
+        "frame": 2,
+        "name": "portable_floodlight",
+        "x": 520,
+        "y": 315,
+        "scale": 0.8,
+        "depth": 315
+      },
+      {
+        "frame": 3,
+        "name": "checkpoint_terminal",
+        "x": 745,
+        "y": 300,
+        "scale": 0.75,
+        "depth": 300,
+        "interactive": true
+      },
+      {
+        "frame": 4,
+        "name": "portable_scanner_post",
+        "x": 875,
+        "y": 305,
+        "scale": 0.75,
+        "depth": 305,
+        "interactive": true
+      },
+      {
+        "frame": 5,
+        "name": "traffic_barricade",
+        "x": 1030,
+        "y": 380,
+        "scale": 0.9,
+        "depth": 380
+      },
+      {
+        "frame": 6,
+        "name": "reinforced_crate",
+        "x": 365,
+        "y": 405,
+        "scale": 0.85,
+        "depth": 405
+      },
+      {
+        "frame": 7,
+        "name": "cargo_crate",
+        "x": 450,
+        "y": 420,
+        "scale": 0.85,
+        "depth": 420
+      },
+      {
+        "frame": 8,
+        "name": "fuel_drum",
+        "x": 620,
+        "y": 425,
+        "scale": 0.8,
+        "depth": 425
+      },
+      {
+        "frame": 9,
+        "name": "hazard_barrel",
+        "x": 675,
+        "y": 425,
+        "scale": 0.8,
+        "depth": 425
+      },
+      {
+        "frame": 10,
+        "name": "small_cargo_trolley",
+        "x": 1560,
+        "y": 405,
+        "scale": 0.8,
+        "depth": 405
+      },
+      {
+        "frame": 11,
+        "name": "portable_fence_barrier",
+        "x": 1650,
+        "y": 390,
+        "scale": 0.85,
+        "depth": 390
+      },
+      {
+        "frame": 13,
+        "name": "searchlight_base",
+        "x": 1710,
+        "y": 250,
+        "scale": 0.7,
+        "depth": 250
+      },
+      {
+        "frame": 14,
+        "name": "wall_control_box",
+        "x": 1265,
+        "y": 235,
+        "scale": 0.75,
+        "depth": 235,
+        "wall": true
+      },
+      {
+        "frame": 15,
+        "name": "compact_generator",
+        "x": 555,
+        "y": 440,
+        "scale": 0.75,
+        "depth": 440
+      },
+      {
+        "frame": 16,
+        "name": "weapon_locker",
+        "x": 1450,
+        "y": 310,
+        "scale": 0.8,
+        "depth": 310
+      },
+      {
+        "frame": 17,
+        "name": "surveillance_monitor",
+        "x": 1190,
+        "y": 270,
+        "scale": 0.7,
+        "depth": 270,
+        "interactive": true
+      }
+    ]
+  }
+}

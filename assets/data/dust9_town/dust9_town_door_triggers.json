@@ -1,0 +1,72 @@
+[
+  {
+    "id": "door_saloon",
+    "from": "town",
+    "to": "saloon_large",
+    "x": 980,
+    "y": 870,
+    "w": 180,
+    "h": 120,
+    "requires": null
+  },
+  {
+    "id": "door_general_store",
+    "from": "town",
+    "to": "general_store",
+    "x": 1500,
+    "y": 740,
+    "w": 160,
+    "h": 120,
+    "requires": null
+  },
+  {
+    "id": "door_repair_shop",
+    "from": "town",
+    "to": "repair_shop",
+    "x": 2760,
+    "y": 860,
+    "w": 190,
+    "h": 120,
+    "requires": null
+  },
+  {
+    "id": "door_clinic",
+    "from": "town",
+    "to": "clinic",
+    "x": 3060,
+    "y": 1600,
+    "w": 170,
+    "h": 120,
+    "requires": null
+  },
+  {
+    "id": "door_sheriff",
+    "from": "town",
+    "to": "security_office",
+    "x": 2210,
+    "y": 1590,
+    "w": 170,
+    "h": 120,
+    "requires": null
+  },
+  {
+    "id": "door_docking",
+    "from": "town",
+    "to": "docking_office",
+    "x": 3450,
+    "y": 690,
+    "w": 180,
+    "h": 120,
+    "requires": null
+  },
+  {
+    "id": "door_hidden_route",
+    "from": "town",
+    "to": "secret_camp_checkpoint",
+    "x": 3970,
+    "y": 2100,
+    "w": 220,
+    "h": 180,
+    "requires": "sable_route_chip"
+  }
+]

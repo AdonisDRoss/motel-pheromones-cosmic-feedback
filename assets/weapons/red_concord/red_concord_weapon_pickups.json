@@ -1,0 +1,40 @@
+{
+  "key": "red_concord_weapon_pickups",
+  "path": "assets/sprites/weapons/red_concord/red_concord_weapon_pickups.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "columns": 5,
+  "rows": 2,
+  "frames": 10,
+  "frameNames": {
+    "pistol_pickup": 0,
+    "compact_smg_pickup": 1,
+    "assault_rifle_pickup": 2,
+    "shotgun_pickup": 3,
+    "scoped_rifle_pickup": 4,
+    "heavy_carbine_pickup": 5,
+    "stun_baton_pickup": 6,
+    "shock_rifle_pickup": 7,
+    "grenade_launcher_pickup": 8,
+    "elite_officer_pistol_pickup": 9
+  },
+  "frameMap": {
+    "0": "pistol_pickup",
+    "1": "compact_smg_pickup",
+    "2": "assault_rifle_pickup",
+    "3": "shotgun_pickup",
+    "4": "scoped_rifle_pickup",
+    "5": "heavy_carbine_pickup",
+    "6": "stun_baton_pickup",
+    "7": "shock_rifle_pickup",
+    "8": "grenade_launcher_pickup",
+    "9": "elite_officer_pistol_pickup"
+  },
+  "recommendedUse": {
+    "pickupSystem": true,
+    "droppedByRedConcordGuards": true,
+    "usableByPlayer": true,
+    "canSpawnOnWeaponDrop": true
+  },
+  "notes": "Cleaned/repacked Red Concord weapon pickup sheet. These are floor/ground pickup sprites, not hand overlays."
+}

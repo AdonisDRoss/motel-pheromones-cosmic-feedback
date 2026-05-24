@@ -1,10 +1,15 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
+import path from "path";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
+
+const GAME_ROOT = path.resolve("/home/runner/workspace");
+
+app.use(express.static(GAME_ROOT, { index: "index.html" }));
 
 app.use(
   pinoHttp({

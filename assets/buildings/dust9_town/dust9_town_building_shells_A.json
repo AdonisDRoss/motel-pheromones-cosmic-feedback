@@ -1,0 +1,23 @@
+{
+  "key": "dust9_town_building_shells_A",
+  "path": "assets/buildings/dust9_town/dust9_town_building_shells_A.png",
+  "frameWidth": 512,
+  "frameHeight": 512,
+  "columns": 4,
+  "rows": 3,
+  "frames": 12,
+  "frameNames": {
+    "small_shack_home": 0,
+    "bunkhouse_trailer_home": 1,
+    "general_store": 2,
+    "mechanic_repair_garage": 3,
+    "saloon_cantina": 4,
+    "clinic_med_shack": 5,
+    "security_office_sheriff_post": 6,
+    "storage_shed_warehouse": 7,
+    "market_stall_trader_booth": 8,
+    "corner_building_hotel_boarding_house": 9,
+    "water_tower": 10,
+    "docking_office_freight_office": 11
+  }
+}

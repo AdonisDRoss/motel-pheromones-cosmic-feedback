@@ -1,0 +1,78 @@
+{
+  "key": "dust9_town_empty_road_canvas",
+  "type": "background",
+  "recommendedPathLarge": "assets/backgrounds/dust9_town/dust9_town_empty_road_canvas_4096x2304.png",
+  "recommendedPathMobile": "assets/backgrounds/dust9_town/dust9_town_empty_road_canvas_3072x1728.png",
+  "sourceSize": {
+    "width": 512,
+    "height": 286
+  },
+  "largeSize": {
+    "width": 4096,
+    "height": 2304
+  },
+  "mobileSize": {
+    "width": 3072,
+    "height": 1728
+  },
+  "perspective": "top-down / semi-isometric",
+  "purpose": "Public Dust-9 town base canvas with roads and empty lots only.",
+  "notes": [
+    "Use this as the public town hub canvas, separate from the secret Red Concord camp.",
+    "Place modular building shells, street props, home props, shop props, NPCs, and vehicles on top in Phaser.",
+    "Do not bake Red Concord prison-camp assets into this public-town map."
+  ],
+  "suggestedZones": {
+    "central_crossroads": {
+      "x": 2048,
+      "y": 1120,
+      "w": 760,
+      "h": 520,
+      "use": "town hub events / meeting point"
+    },
+    "northwest_lots": {
+      "x": 760,
+      "y": 560,
+      "w": 820,
+      "h": 520,
+      "use": "cantina / general store / homes"
+    },
+    "northeast_lots": {
+      "x": 2840,
+      "y": 560,
+      "w": 820,
+      "h": 520,
+      "use": "docking office / freight / repair yard"
+    },
+    "southwest_lots": {
+      "x": 760,
+      "y": 1640,
+      "w": 860,
+      "h": 520,
+      "use": "residential shacks / bunkhouse"
+    },
+    "southeast_lots": {
+      "x": 2840,
+      "y": 1640,
+      "w": 860,
+      "h": 520,
+      "use": "market stalls / clinic / storage"
+    },
+    "hidden_route_hint": {
+      "x": 3920,
+      "y": 2100,
+      "w": 160,
+      "h": 160,
+      "use": "future route toward secret camp"
+    }
+  },
+  "recommendedCamera": {
+    "phaserWorldWidth": 4096,
+    "phaserWorldHeight": 2304,
+    "cameraZoomRange": [
+      0.5,
+      1.0
+    ],
+    "playerScaleNote": "Use smaller top-down sprites than side-view brawler sprites or scale existing sprites down."
+  }
+}

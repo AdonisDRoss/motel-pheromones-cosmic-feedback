@@ -1,0 +1,264 @@
+{
+  "checkpoint": [
+    {
+      "sheet": "dust9_checkpoint_props",
+      "frame": 0,
+      "x": 1320,
+      "y": 165,
+      "scale": 0.8
+    },
+    {
+      "sheet": "dust9_checkpoint_props",
+      "frame": 3,
+      "x": 720,
+      "y": 330,
+      "scale": 0.8,
+      "interactive": "checkpoint_terminal"
+    },
+    {
+      "sheet": "dust9_checkpoint_props",
+      "frame": 5,
+      "x": 980,
+      "y": 420,
+      "scale": 0.9
+    },
+    {
+      "sheet": "dust9_checkpoint_props",
+      "frame": 7,
+      "x": 430,
+      "y": 430,
+      "scale": 0.85
+    }
+  ],
+  "prisoner_housing_yard": [
+    {
+      "sheet": "dust9_industrial_utility_props",
+      "frame": 1,
+      "x": 520,
+      "y": 420,
+      "scale": 0.8
+    },
+    {
+      "sheet": "dust9_industrial_utility_props",
+      "frame": 4,
+      "x": 650,
+      "y": 435,
+      "scale": 0.75
+    },
+    {
+      "sheet": "dust9_industrial_utility_props",
+      "frame": 10,
+      "x": 880,
+      "y": 400,
+      "scale": 0.85
+    },
+    {
+      "sheet": "dust9_industrial_utility_props",
+      "frame": 29,
+      "x": 1310,
+      "y": 410,
+      "scale": 0.85
+    }
+  ],
+  "mining_yard": [
+    {
+      "sheet": "dust9_mining_yard_props",
+      "frame": 0,
+      "x": 360,
+      "y": 425,
+      "scale": 0.9
+    },
+    {
+      "sheet": "dust9_mining_yard_props",
+      "frame": 1,
+      "x": 640,
+      "y": 390,
+      "scale": 0.85
+    },
+    {
+      "sheet": "dust9_mining_yard_props",
+      "frame": 8,
+      "x": 1090,
+      "y": 345,
+      "scale": 0.8,
+      "interactive": "mining_terminal"
+    },
+    {
+      "sheet": "dust9_mining_yard_props",
+      "frame": 10,
+      "x": 760,
+      "y": 455,
+      "scale": 0.8
+    }
+  ],
+  "support_block": [
+    {
+      "sheet": "dust9_support_block_props",
+      "frame": 0,
+      "x": 520,
+      "y": 405,
+      "scale": 0.85
+    },
+    {
+      "sheet": "dust9_support_block_props",
+      "frame": 6,
+      "x": 850,
+      "y": 330,
+      "scale": 0.75,
+      "interactive": "guard_terminal"
+    },
+    {
+      "sheet": "dust9_support_block_props",
+      "frame": 9,
+      "x": 1040,
+      "y": 445,
+      "scale": 0.9
+    },
+    {
+      "sheet": "dust9_support_block_props",
+      "frame": 11,
+      "x": 1500,
+      "y": 345,
+      "scale": 0.8
+    }
+  ],
+  "high_command_tower": [
+    {
+      "sheet": "dust9_high_command_tower_props",
+      "frame": 3,
+      "x": 890,
+      "y": 335,
+      "scale": 0.8,
+      "interactive": "tower_access"
+    },
+    {
+      "sheet": "dust9_high_command_tower_props",
+      "frame": 4,
+      "x": 1045,
+      "y": 325,
+      "scale": 0.8,
+      "interactive": "collar_control"
+    },
+    {
+      "sheet": "dust9_high_command_tower_props",
+      "frame": 7,
+      "x": 760,
+      "y": 410,
+      "scale": 0.9
+    },
+    {
+      "sheet": "dust9_high_command_tower_props",
+      "frame": 17,
+      "x": 1615,
+      "y": 335,
+      "scale": 0.75,
+      "interactive": "basement_switch"
+    }
+  ],
+  "control_room": [
+    {
+      "sheet": "dust9_control_room_props",
+      "frame": 0,
+      "x": 960,
+      "y": 365,
+      "scale": 0.95,
+      "interactive": "main_control_console"
+    },
+    {
+      "sheet": "dust9_control_room_props",
+      "frame": 5,
+      "x": 1290,
+      "y": 260,
+      "scale": 0.7,
+      "interactive": "lockdown_panel"
+    },
+    {
+      "sheet": "dust9_control_room_props",
+      "frame": 13,
+      "x": 960,
+      "y": 420,
+      "scale": 0.85,
+      "interactive": "hologram_data_table"
+    },
+    {
+      "sheet": "dust9_control_room_props",
+      "frame": 16,
+      "x": 1225,
+      "y": 450,
+      "scale": 0.85,
+      "interactive": "moon_base_intel"
+    }
+  ],
+  "basement_prison": [
+    {
+      "sheet": "dust9_basement_prison_props",
+      "frame": 1,
+      "x": 705,
+      "y": 315,
+      "scale": 0.75,
+      "interactive": "cell_control_terminal"
+    },
+    {
+      "sheet": "dust9_basement_prison_props",
+      "frame": 2,
+      "x": 845,
+      "y": 315,
+      "scale": 0.8,
+      "interactive": "collar_control_terminal"
+    },
+    {
+      "sheet": "dust9_basement_prison_props",
+      "frame": 8,
+      "x": 320,
+      "y": 440,
+      "scale": 0.9
+    },
+    {
+      "sheet": "dust9_basement_prison_props",
+      "frame": 15,
+      "x": 1010,
+      "y": 460,
+      "scale": 0.75
+    }
+  ],
+  "loading_pad_escape": [
+    {
+      "sheet": "dust9_loading_pad_props",
+      "frame": 0,
+      "x": 465,
+      "y": 420,
+      "scale": 0.85
+    },
+    {
+      "sheet": "dust9_loading_pad_props",
+      "frame": 7,
+      "x": 1040,
+      "y": 335,
+      "scale": 0.78,
+      "interactive": "cargo_control_terminal"
+    },
+    {
+      "sheet": "dust9_loading_pad_props",
+      "frame": 11,
+      "x": 1525,
+      "y": 405,
+      "scale": 0.75
+    },
+    {
+      "sheet": "dust9_loading_pad_props",
+      "frame": 17,
+      "x": 1565,
+      "y": 350,
+      "scale": 0.78,
+      "interactive": "cargo_scanner_post"
+    },
+    {
+      "sheet": "dust9_escape_shuttle_landed",
+      "frame": 0,
+      "x": 1250,
+      "y": 330,
+      "scale": 0.72,
+      "interactive": "escape_shuttle"
+    }
+  ]
+}

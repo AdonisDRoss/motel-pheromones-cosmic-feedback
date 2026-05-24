@@ -1,0 +1,108 @@
+{
+  "checkpoint": [
+    {
+      "type": "guard",
+      "x": 870,
+      "y": 410,
+      "facing": "left"
+    },
+    {
+      "type": "guard",
+      "x": 1180,
+      "y": 390,
+      "facing": "down"
+    }
+  ],
+  "prisoner_housing_yard": [
+    {
+      "type": "guard",
+      "x": 720,
+      "y": 410,
+      "facing": "down"
+    },
+    {
+      "type": "guard",
+      "x": 1320,
+      "y": 390,
+      "facing": "left"
+    }
+  ],
+  "mining_yard": [
+    {
+      "type": "guard",
+      "x": 650,
+      "y": 420,
+      "facing": "right"
+    },
+    {
+      "type": "mech",
+      "x": 1220,
+      "y": 400,
+      "loadout": "light_cannon"
+    }
+  ],
+  "support_block": [
+    {
+      "type": "guard",
+      "x": 1020,
+      "y": 405,
+      "facing": "left"
+    }
+  ],
+  "high_command_tower": [
+    {
+      "type": "guard",
+      "x": 870,
+      "y": 405,
+      "facing": "down"
+    },
+    {
+      "type": "mech",
+      "x": 1280,
+      "y": 400,
+      "loadout": "riot_shield"
+    }
+  ],
+  "control_room": [
+    {
+      "type": "cask_veyr",
+      "x": 1120,
+      "y": 385,
+      "phase": 1
+    },
+    {
+      "type": "guard",
+      "x": 770,
+      "y": 395,
+      "facing": "right"
+    }
+  ],
+  "basement_prison": [
+    {
+      "type": "guard",
+      "x": 850,
+      "y": 395,
+      "facing": "left"
+    },
+    {
+      "type": "dex_prisoner",
+      "x": 1430,
+      "y": 390,
+      "state": "locked"
+    }
+  ],
+  "loading_pad_escape": [
+    {
+      "type": "guard",
+      "x": 760,
+      "y": 405,
+      "facing": "right"
+    },
+    {
+      "type": "guard",
+      "x": 910,
+      "y": 425,
+      "facing": "right"
+    }
+  ]
+}

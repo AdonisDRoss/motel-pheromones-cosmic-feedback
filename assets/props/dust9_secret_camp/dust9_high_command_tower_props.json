@@ -1,0 +1,187 @@
+{
+  "key": "dust9_high_command_tower_props",
+  "path": "assets/props/dust9/dust9_high_command_tower_props.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "columns": 6,
+  "rows": 3,
+  "frames": 18,
+  "frameNames": {
+    "security_camera": 0,
+    "searchlight": 1,
+    "red_alarm_beacon": 2,
+    "tower_access_terminal": 3,
+    "collar_control_terminal": 4,
+    "keycard_reader": 5,
+    "reinforced_barricade": 6,
+    "laser_barrier_emitter": 7,
+    "security_crate": 8,
+    "comms_relay_box": 9,
+    "wall_control_box": 10,
+    "floor_scanner_plate": 11,
+    "guard_post_console": 12,
+    "restricted_sign_plate": 13,
+    "portable_generator": 14,
+    "surveillance_monitor": 15,
+    "evidence_data_crate": 16,
+    "basement_access_switch": 17
+  },
+  "suggestedPlacements": {
+    "high_command_tower_exterior": [
+      {
+        "frame": 0,
+        "name": "security_camera",
+        "x": 1240,
+        "y": 225,
+        "scale": 0.75,
+        "depth": 225,
+        "wall": true
+      },
+      {
+        "frame": 1,
+        "name": "searchlight",
+        "x": 1450,
+        "y": 285,
+        "scale": 0.85,
+        "depth": 285
+      },
+      {
+        "frame": 2,
+        "name": "red_alarm_beacon",
+        "x": 1325,
+        "y": 260,
+        "scale": 0.75,
+        "depth": 260
+      },
+      {
+        "frame": 3,
+        "name": "tower_access_terminal",
+        "x": 890,
+        "y": 335,
+        "scale": 0.8,
+        "depth": 335,
+        "interactive": true
+      },
+      {
+        "frame": 4,
+        "name": "collar_control_terminal",
+        "x": 1045,
+        "y": 325,
+        "scale": 0.8,
+        "depth": 325,
+        "interactive": true
+      },
+      {
+        "frame": 5,
+        "name": "keycard_reader",
+        "x": 1180,
+        "y": 285,
+        "scale": 0.65,
+        "depth": 285,
+        "interactive": true
+      },
+      {
+        "frame": 6,
+        "name": "reinforced_barricade",
+        "x": 650,
+        "y": 430,
+        "scale": 0.9,
+        "depth": 430
+      },
+      {
+        "frame": 7,
+        "name": "laser_barrier_emitter",
+        "x": 760,
+        "y": 410,
+        "scale": 0.9,
+        "depth": 410,
+        "interactive": true
+      },
+      {
+        "frame": 8,
+        "name": "security_crate",
+        "x": 1415,
+        "y": 440,
+        "scale": 0.85,
+        "depth": 440
+      },
+      {
+        "frame": 9,
+        "name": "comms_relay_box",
+        "x": 1515,
+        "y": 415,
+        "scale": 0.85,
+        "depth": 415
+      },
+      {
+        "frame": 10,
+        "name": "wall_control_box",
+        "x": 1260,
+        "y": 300,
+        "scale": 0.7,
+        "depth": 300,
+        "wall": true
+      },
+      {
+        "frame": 11,
+        "name": "floor_scanner_plate",
+        "x": 970,
+        "y": 455,
+        "scale": 0.85,
+        "depth": 455,
+        "interactive": true
+      },
+      {
+        "frame": 12,
+        "name": "guard_post_console",
+        "x": 820,
+        "y": 405,
+        "scale": 0.8,
+        "depth": 405,
+        "interactive": true
+      },
+      {
+        "frame": 13,
+        "name": "restricted_sign_plate",
+        "x": 610,
+        "y": 330,
+        "scale": 0.75,
+        "depth": 330
+      },
+      {
+        "frame": 14,
+        "name": "portable_generator",
+        "x": 1130,
+        "y": 455,
+        "scale": 0.8,
+        "depth": 455
+      },
+      {
+        "frame": 15,
+        "name": "surveillance_monitor",
+        "x": 1330,
+        "y": 355,
+        "scale": 0.8,
+        "depth": 355,
+        "interactive": true
+      },
+      {
+        "frame": 16,
+        "name": "evidence_data_crate",
+        "x": 1535,
+        "y": 455,
+        "scale": 0.8,
+        "depth": 455
+      },
+      {
+        "frame": 17,
+        "name": "basement_access_switch",
+        "x": 1615,
+        "y": 335,
+        "scale": 0.75,
+        "depth": 335,
+        "interactive": true
+      }
+    ]
+  }
+}

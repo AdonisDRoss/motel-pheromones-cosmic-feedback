@@ -1,0 +1,110 @@
+[
+  {
+    "id": "bld_saloon",
+    "sheet": "dust9_town_building_shells_A",
+    "frame": 4,
+    "name": "Dust-9 Saloon/Cantina",
+    "x": 980,
+    "y": 780,
+    "enter": "saloon_large"
+  },
+  {
+    "id": "bld_general_store",
+    "sheet": "dust9_town_building_shells_A",
+    "frame": 2,
+    "name": "General Store",
+    "x": 1500,
+    "y": 650,
+    "enter": "general_store"
+  },
+  {
+    "id": "bld_repair_shop",
+    "sheet": "dust9_town_building_shells_A",
+    "frame": 3,
+    "name": "Mechanic / Repair Garage",
+    "x": 2760,
+    "y": 770,
+    "enter": "repair_shop"
+  },
+  {
+    "id": "bld_clinic",
+    "sheet": "dust9_town_building_shells_A",
+    "frame": 5,
+    "name": "Clinic / Med Shack",
+    "x": 3060,
+    "y": 1510,
+    "enter": "clinic"
+  },
+  {
+    "id": "bld_sheriff",
+    "sheet": "dust9_town_building_shells_A",
+    "frame": 6,
+    "name": "Sheriff / Jail",
+    "x": 2210,
+    "y": 1500,
+    "enter": "security_office"
+  },
+  {
+    "id": "bld_docking",
+    "sheet": "dust9_town_building_shells_A",
+    "frame": 11,
+    "name": "Docking Office / Freight",
+    "x": 3450,
+    "y": 600,
+    "enter": "docking_office"
+  },
+  {
+    "id": "bld_boarding",
+    "sheet": "dust9_town_building_shells_A",
+    "frame": 9,
+    "name": "Boarding House",
+    "x": 1110,
+    "y": 1640,
+    "enter": "boarding_house"
+  },
+  {
+    "id": "bld_market",
+    "sheet": "dust9_town_building_shells_A",
+    "frame": 8,
+    "name": "Market Stall",
+    "x": 2860,
+    "y": 1730,
+    "enter": "market_stall"
+  },
+  {
+    "id": "bld_water_tower",
+    "sheet": "dust9_town_building_shells_A",
+    "frame": 10,
+    "name": "Water Tower",
+    "x": 520,
+    "y": 540,
+    "enter": null
+  },
+  {
+    "id": "bld_shack_1",
+    "sheet": "dust9_town_building_shells_B",
+    "frame": 0,
+    "name": "Residential Shack",
+    "x": 700,
+    "y": 1350,
+    "enter": "simple_home"
+  },
+  {
+    "id": "bld_trailer",
+    "sheet": "dust9_town_building_shells_B",
+    "frame": 1,
+    "name": "Trailer Home",
+    "x": 540,
+    "y": 1780,
+    "enter": "residential_shack"
+  },
+  {
+    "id": "bld_corner_store",
+    "sheet": "dust9_town_building_shells_B",
+    "frame": 9,
+    "name": "Corner Building",
+    "x": 1770,
+    "y": 1710,
+    "enter": "boarding_house"
+  }
+]

@@ -1,0 +1,66 @@
+{
+  "missionId": "dust9_rescue_dex",
+  "title": "Dust-9: Rescue Dex",
+  "player": "Donny",
+  "stateFlags": {
+    "escapeGateOpen": false,
+    "basementUnlocked": false,
+    "dexRescued": false,
+    "moonBaseIntelFound": false,
+    "shuttleBoarded": false
+  },
+  "steps": [
+    {
+      "id": "infiltrate_checkpoint",
+      "room": "checkpoint",
+      "text": "Infiltrate the Red Concord checkpoint."
+    },
+    {
+      "id": "reach_tower",
+      "room": "high_command_tower",
+      "text": "Reach the High Command Tower."
+    },
+    {
+      "id": "open_escape_gate",
+      "room": "control_room",
+      "text": "Open the loading pad escape gate before rescuing Dex.",
+      "interaction": "main_control_console",
+      "sets": [
+        "escapeGateOpen",
+        "basementUnlocked"
+      ]
+    },
+    {
+      "id": "defeat_or_evade_cask",
+      "room": "control_room",
+      "text": "Survive Cask Veyr's Panic Protocol.",
+      "boss": "cask_veyr"
+    },
+    {
+      "id": "rescue_dex",
+      "room": "basement_prison",
+      "text": "Open the cell and rescue Dex.",
+      "interaction": "cell_control_terminal",
+      "requires": [
+        "basementUnlocked"
+      ],
+      "sets": [
+        "dexRescued"
+      ]
+    },
+    {
+      "id": "extract",
+      "room": "loading_pad_escape",
+      "text": "Board the escape shuttle with Dex.",
+      "interaction": "escape_shuttle",
+      "requires": [
+        "escapeGateOpen",
+        "dexRescued"
+      ],
+      "sets": [
+        "shuttleBoarded"
+      ]
+    }
+  ],
+  "nextStoryLead": "Dex reveals the moon base lead and the path toward recovering D and the Raven."
+}

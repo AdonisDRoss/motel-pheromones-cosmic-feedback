@@ -1,0 +1,68 @@
+{
+  "key": "cask_veyr_reactions",
+  "path": "assets/sprites/enemies/red_concord/cask_veyr/cask_veyr_reactions.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "columns": 8,
+  "rows": 4,
+  "frames": 32,
+  "animations": {
+    "hurt_hit_reaction": {
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "knockback_stagger": {
+      "frames": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "panic_stunned": {
+      "frames": [
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23
+      ],
+      "frameRate": 8,
+      "repeat": 0
+    },
+    "fall_downed_defeated": {
+      "frames": [
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31
+      ],
+      "frameRate": 8,
+      "repeat": 0
+    }
+  },
+  "notes": "Cask Veyr reactions sheet. Includes hurt, knockback/stagger, panic/stunned, and fall/downed poses. Some red gauntlet glow frames can also support panic/collar-control feedback."
+}

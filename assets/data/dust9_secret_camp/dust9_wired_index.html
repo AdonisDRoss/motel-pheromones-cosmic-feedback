@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>Dust-9 Rescue Dex - Wired Build</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+<style>
+html,body{margin:0;padding:0;background:#000;width:100%;height:100%;overflow:hidden;touch-action:none;}
+#game{width:100vw;height:100vh;}
+canvas{image-rendering:pixelated;}
+</style>
+</head>
+<body>
+<div id="game"></div>
+<script>
+const GAME_W = 960;
+const GAME_H = 540;
+
+class BootScene extends Phaser.Scene {
+  constructor(){ super("BootScene"); }
+  preload(){
+    this.load.json("assetManifest","assets/data/dust9/dust9_assets_manifest.json");
+    this.load.json("rooms","assets/data/dust9/dust9_rooms.json");
+    this.load.json("placements","assets/data/dust9/dust9_prop_placements.json");
+    this.load.json("spawns","assets/data/dust9/dust9_enemy_spawns.json");
+    this.load.json("objectives","assets/data/dust9/dust9_objectives.json");
+  }
+  create(){ this.scene.start("GameScene"); }
+}
+
+class GameScene extends Phaser.Scene {
+  constructor(){ super("GameScene"); }
+
+  preload(){
+    const manifest = this.cache.json.get("assetManifest");
+    manifest.backgrounds.forEach(a => this.load.image(a.key, a.path));
+    manifest.images.forEach(a => this.load.image(a.key, a.path));
+    manifest.spritesheets.forEach(a => this.load.spritesheet(a.key, a.path, { frameWidth:a.frameWidth, frameHeight:a.frameHeight }));
+  }
+
+  create(){
+    this.roomsData = this.cache.json.get("rooms");
+    this.placements = this.cache.json.get("placements");
+    this.spawns = this.cache.json.get("spawns");
+    this.objectives = this.cache.json.get("objectives");
+    this.flags = {...this.objectives.stateFlags};
+
+    this.currentRoom = this.roomsData.startRoom;
+    this.roomLayer = this.add.container(0,0);
+
+    this.player = this.add.rectangle(180,400,28,58,0x57b8ff).setStrokeStyle(2,0xffffff);
+    this.physics.add.existing(this.player);
+    this.player.body.setCollideWorldBounds(false);
+    this.player.depth = 9999;
+
+    this.keys = this.input.keyboard.addKeys({
+      up:"W", down:"S", left:"A", right:"D",
+      up2:"UP", down2:"DOWN", left2:"LEFT", right2:"RIGHT",
+      interact:"E"
+    });
+
+    this.hud = this.add.text(12,10,"",{
+      fontFamily:"monospace",
+      fontSize:"14px",
+      color:"#ffffff",
+      backgroundColor:"rgba(0,0,0,0.45)",
+      padding:{x:8,y:6}
+    }).setScrollFactor(0).setDepth(20000);
+
+    this.createAnimations();
+    this.loadRoom(this.currentRoom, "start");
+  }
+
+  createAnimations(){
+    const anim = (key, sheet, start, end, rate=8, repeat=-1) => {
+      if (!this.anims.exists(key)) {
+        this.anims.create({ key, frames:this.anims.generateFrameNumbers(sheet,{start,end}), frameRate:rate, repeat });
+      }
+    };
+    anim("guard_walk_down","workcamp_guard_movement",0,7);
+    anim("guard_walk_left","workcamp_guard_movement",8,15);
+    anim("guard_walk_right","workcamp_guard_movement",16,23);
+    anim("guard_walk_up","workcamp_guard_movement",24,31);
+
+    anim("cask_walk_down","cask_veyr_movement",0,7);
+    anim("cask_command_down","cask_veyr_command_actions",0,7,8,0);
+    anim("cask_melee_down","cask_veyr_exorig_melee",0,7,8,0);
+
+    anim("dex_walk_down","prisoner_dex_movement",0,7);
+    anim("mech_legs_walk_down","red_concord_mech_legs_walk",0,7);
+    anim("red_fx_muzzle","red_concord_weapon_fx",0,7,14,0);
+  }
+
+  clearRoom(){
+    this.roomLayer.removeAll(true);
+    if (this.roomBg) this.roomBg.destroy();
+    if (this.roomObjects) this.roomObjects.forEach(o=>o.destroy());
+    this.roomObjects = [];
+    this.interactables = [];
+  }
+
+  loadRoom(roomId, entrySide){
+    this.clearRoom();
+    const room = this.roomsData.rooms[roomId];
+    this.currentRoom = roomId;
+
+    this.roomBg = this.add.image(0,0,room.backgroundKey).setOrigin(0,0);
+    this.roomBg.displayWidth = 1920;
+    this.roomBg.displayHeight = 540;
+    this.roomBg.setDepth(-1000);
+
+    this.cameras.main.setBounds(0,0,1920,540);
+    this.physics.world.setBounds(0,0,1920,540);
+
+    if (entrySide === "fromLeft") this.player.x = 120;
+    else if (entrySide === "fromRight") this.player.x = 1800;
+    else this.player.x = room.spawn.x;
+    this.player.y = room.spawn.y;
+
+    (this.placements[roomId] || []).forEach(p => {
+      const obj = this.add.sprite(p.x,p.y,p.sheet,p.frame || 0).setScale(p.scale || 1);
+      obj.depth = p.y;
+      if (p.interactive) {
+        obj.setData("interactive", p.interactive);
+        this.interactables.push(obj);
+        obj.setTint(0xffffff);
+      }
+      this.roomObjects.push(obj);
+    });
+
+    (this.spawns[roomId] || []).forEach(s => this.spawnEntity(s));
+
+    this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+    this.updateHud();
+  }
+
+  spawnEntity(s){
+    let obj;
+    if (s.type === "guard") {
+      obj = this.add.sprite(s.x,s.y,"workcamp_guard_movement",0).setScale(1.0);
+      obj.play("guard_walk_down");
+      obj.setData("enemyType","guard");
+    } else if (s.type === "cask_veyr") {
+      obj = this.add.sprite(s.x,s.y,"cask_veyr_movement",0).setScale(1.05);
+      obj.play("cask_walk_down");
+      obj.setData("enemyType","cask_veyr");
+      obj.setTint(0xffdddd);
+    } else if (s.type === "dex_prisoner") {
+      obj = this.add.sprite(s.x,s.y,"prisoner_dex_movement",0).setScale(0.92);
+      obj.play("dex_walk_down");
+      obj.setData("interactive","dex_cell");
+      this.interactables.push(obj);
+    } else if (s.type === "mech") {
+      // Fast test assembly: draw legs + torso + arms as separate sprites.
+      const legs = this.add.sprite(s.x,s.y,"red_concord_mech_legs_walk",0).setScale(1.05).play("mech_legs_walk_down");
+      const torso = this.add.sprite(s.x,s.y-42,"red_concord_mech_torso_core",0).setScale(1.05);
+      const arms = this.add.sprite(s.x,s.y-42,"red_concord_mech_arms_empty",0).setScale(1.05);
+      [legs,torso,arms].forEach(part => { part.depth = s.y; this.roomObjects.push(part); });
+      return;
+    }
+    if (obj) {
+      obj.depth = s.y;
+      this.roomObjects.push(obj);
+    }
+  }
+
+  update(time, delta){
+    const speed = 190;
+    const body = this.player.body;
+    body.setVelocity(0);
+
+    if (this.keys.left.isDown || this.keys.left2.isDown) body.setVelocityX(-speed);
+    if (this.keys.right.isDown || this.keys.right2.isDown) body.setVelocityX(speed);
+    if (this.keys.up.isDown || this.keys.up2.isDown) body.setVelocityY(-speed);
+    if (this.keys.down.isDown || this.keys.down2.isDown) body.setVelocityY(speed);
+
+    const room = this.roomsData.rooms[this.currentRoom];
+    const b = room.walkBounds;
+    this.player.x = Phaser.Math.Clamp(this.player.x, b.x, b.x + b.width);
+    this.player.y = Phaser.Math.Clamp(this.player.y, b.y, b.y + b.height);
+
+    if (Phaser.Input.Keyboard.JustDown(this.keys.interact)) this.tryInteract();
+
+    if (this.player.x > 1888 && room.exits && room.exits.right) this.loadRoom(room.exits.right, "fromLeft");
+    if (this.player.x < 32 && room.exits && room.exits.left) this.loadRoom(room.exits.left, "fromRight");
+
+    this.player.depth = this.player.y + 20;
+    this.updateHud();
+  }
+
+  tryInteract(){
+    let nearest = null, best = 999999;
+    this.interactables.forEach(o => {
+      const d = Phaser.Math.Distance.Between(this.player.x,this.player.y,o.x,o.y);
+      if (d < best) { best = d; nearest = o; }
+    });
+    if (!nearest || best > 95) return;
+
+    const id = nearest.getData("interactive");
+    if (id === "main_control_console") {
+      this.flags.escapeGateOpen = true;
+      this.flags.basementUnlocked = true;
+      this.flashMessage("Escape gate opened. Basement access unlocked. Cask is panicking.");
+    } else if (id === "moon_base_intel") {
+      this.flags.moonBaseIntelFound = true;
+      this.flashMessage("Moon base intel recovered.");
+    } else if (id === "cell_control_terminal" || id === "dex_cell") {
+      if (!this.flags.basementUnlocked) this.flashMessage("Basement locks need control-room access first.");
+      else {
+        this.flags.dexRescued = true;
+        this.flashMessage("Dex rescued. Get to the loading pad.");
+      }
+    } else if (id === "escape_shuttle") {
+      if (this.flags.escapeGateOpen && this.flags.dexRescued) {
+        this.flags.shuttleBoarded = true;
+        this.flashMessage("Mission clear: Donny and Dex escaped Dust-9.");
+      } else {
+        this.flashMessage("Need Dex and the escape gate open first.");
+      }
+    } else {
+      this.flashMessage("Interacted: " + id);
+    }
+  }
+
+  flashMessage(msg){
+    this.lastMsg = msg;
+    this.time.delayedCall(2600,()=>{ if (this.lastMsg === msg) this.lastMsg = ""; });
+  }
+
+  updateHud(){
+    const room = this.roomsData.rooms[this.currentRoom];
+    const msg = this.lastMsg ? "\n" + this.lastMsg : "";
+    this.hud.setText(
+      `Dust-9 Rescue Dex\nRoom: ${room.name}\nE: interact | WASD/arrows: move\n`+
+      `Gate:${this.flags.escapeGateOpen?"OPEN":"LOCKED"} Basement:${this.flags.basementUnlocked?"OPEN":"LOCKED"} Dex:${this.flags.dexRescued?"RESCUED":"LOCKED"}` + msg
+    );
+  }
+}
+
+const config = {
+  type: Phaser.AUTO,
+  parent: "game",
+  width: GAME_W,
+  height: GAME_H,
+  backgroundColor: "#000000",
+  pixelArt: true,
+  physics: { default:"arcade", arcade:{ debug:false } },
+  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  scene: [BootScene, GameScene]
+};
+new Phaser.Game(config);
+</script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+{
+  "key": "red_concord_mech_weapon_mounts",
+  "path": "assets/sprites/enemies/red_concord/mech/red_concord_mech_weapon_mounts.png",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "columns": 6,
+  "rows": 2,
+  "frames": 12,
+  "frameNames": {
+    "light_arm_cannon": 0,
+    "heavy_arm_cannon": 1,
+    "stun_emitter": 2,
+    "riot_shield_mount": 3,
+    "claw_gripper": 4,
+    "missile_pod": 5,
+    "shock_baton_attachment": 6,
+    "drill_attachment": 7,
+    "flamethrower_nozzle": 8,
+    "laser_barrel": 9,
+    "shoulder_mini_pod": 10,
+    "destroyed_weapon_mount": 11
+  },
+  "recommendedUse": {
+    "attachTo": "red_concord_mech_arms_empty",
+    "drawOrder": [
+      "legs",
+      "torso_core",
+      "arms",
+      "weapon_mounts"
+    ],
+    "destructible": true
+  },
+  "attachmentNotes": {
+    "forearmWeapons": [
+      0,
+      1,
+      2,
+      4,
+      6,
+      7,
+      8,
+      9,
+      11
+    ],
+    "shoulderWeapons": [
+      5,
+      10
+    ],
+    "defensiveMounts": [
+      3
+    ]
+  },
+  "notes": "Cleaned/repacked modular Red Concord mech weapon mount sheet. No firing effects included."
+}

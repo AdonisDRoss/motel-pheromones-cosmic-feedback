@@ -1,0 +1,16 @@
+{
+  "flow": [
+    "raven_ship",
+    "dust9_orbit",
+    "dust9_public_town",
+    "saloon_contact",
+    "hidden_route",
+    "secret_red_concord_camp",
+    "control_room_gate",
+    "basement_prison_dex",
+    "loading_pad_escape"
+  ],
+  "publicTownPurpose": "Safe-ish hub, vendors, rumors, resources, public jail, secret contact.",
+  "secretCampPurpose": "Hidden Red Concord prison/workcamp most off-world people do not believe exists.",
+  "ravenCarryForward": "Raven and earlier Dust-9 secret camp assets are included as carried-forward modules."
+}

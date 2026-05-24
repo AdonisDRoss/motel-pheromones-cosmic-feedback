@@ -1,0 +1,49 @@
+{
+  "key": "dust9_town_multiroom_interiors",
+  "path": "assets/backgrounds/dust9_town/interiors/dust9_town_multiroom_interiors.png",
+  "frameWidth": 1024,
+  "frameHeight": 768,
+  "columns": 3,
+  "rows": 3,
+  "frames": 9,
+  "frameNames": {
+    "saloon_cantina_main_room": 0,
+    "saloon_rented_rooms_back_hall": 1,
+    "security_office_front_jail": 2,
+    "jail_cell_block": 3,
+    "simple_home_interior": 4,
+    "residential_shack_bunkroom": 5,
+    "market_stall_trader_interior": 6,
+    "repair_shop_mechanic_interior": 7,
+    "boarding_house_apartment_interior": 8
+  },
+  "frameMap": {
+    "0": "saloon_cantina_main_room",
+    "1": "saloon_rented_rooms_back_hall",
+    "2": "security_office_front_jail",
+    "3": "jail_cell_block",
+    "4": "simple_home_interior",
+    "5": "residential_shack_bunkroom",
+    "6": "market_stall_trader_interior",
+    "7": "repair_shop_mechanic_interior",
+    "8": "boarding_house_apartment_interior"
+  },
+  "recommendedUse": {
+    "townInteriors": true,
+    "npcBackRooms": true,
+    "propPlacement": true,
+    "dialogueScenes": true
+  },
+  "notes": [
+    "Public Dust-9 town interior shells.",
+    "Transparent background outside room shells.",
+    "Use Phaser props for furniture, beds, shelves, jail items, saloon tables, and NPCs.",
+    "The rooms are usable, but the saloon main room could be remade larger later if you want a full dance floor and band stage."
+  ],
+  "suggestedNextPropSheets": [
+    "assets/props/dust9_town/dust9_town_saloon_props.png",
+    "assets/props/dust9_town/dust9_town_jail_props.png",
+    "assets/props/dust9_town/dust9_town_shop_props.png",
+    "assets/props/dust9_town/dust9_town_mechanic_props.png"
+  ]
+}

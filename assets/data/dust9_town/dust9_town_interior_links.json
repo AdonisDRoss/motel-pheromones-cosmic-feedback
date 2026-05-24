@@ -1,0 +1,79 @@
+{
+  "saloon_large": {
+    "background": "dust9_saloon_large_interior",
+    "type": "single_large_image",
+    "doors": [
+      "town",
+      "rented_rooms_back_hall"
+    ],
+    "npcIds": [
+      "npc_bartender",
+      "npc_server",
+      "npc_secret_contact"
+    ]
+  },
+  "general_store": {
+    "sheet": "dust9_town_multiroom_interiors",
+    "frame": 2,
+    "npcIds": [
+      "npc_shopkeeper"
+    ]
+  },
+  "repair_shop": {
+    "sheet": "dust9_town_multiroom_interiors",
+    "frame": 7,
+    "npcIds": [
+      "npc_mechanic"
+    ]
+  },
+  "clinic": {
+    "sheet": "dust9_town_multiroom_interiors",
+    "frame": 5,
+    "npcIds": [
+      "npc_doctor",
+      "npc_clinic_staff"
+    ]
+  },
+  "security_office": {
+    "sheet": "dust9_town_multiroom_interiors",
+    "frame": 2,
+    "npcIds": [
+      "npc_sheriff"
+    ]
+  },
+  "jail_cell_block": {
+    "sheet": "dust9_town_multiroom_interiors",
+    "frame": 3,
+    "npcIds": [
+      "npc_deputy",
+      "npc_inmate"
+    ]
+  },
+  "docking_office": {
+    "sheet": "dust9_town_multiroom_interiors",
+    "frame": 10,
+    "npcIds": [
+      "npc_dock_worker"
+    ]
+  },
+  "boarding_house": {
+    "sheet": "dust9_town_multiroom_interiors",
+    "frame": 8,
+    "npcIds": []
+  },
+  "market_stall": {
+    "sheet": "dust9_town_multiroom_interiors",
+    "frame": 6,
+    "npcIds": []
+  },
+  "simple_home": {
+    "sheet": "dust9_town_multiroom_interiors",
+    "frame": 4,
+    "npcIds": []
+  },
+  "residential_shack": {
+    "sheet": "dust9_town_multiroom_interiors",
+    "frame": 5,
+    "npcIds": []
+  }
+}

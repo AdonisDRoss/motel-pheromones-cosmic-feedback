@@ -1,0 +1,80 @@
+{
+  "saloon_menu": [
+    {
+      "item": "desert_stew",
+      "sheet": "dust9_town_food_drinks_credits_chems",
+      "frame": 0,
+      "price": 8,
+      "effect": "restore_health_25"
+    },
+    {
+      "item": "dusty_beer_mug",
+      "sheet": "dust9_town_food_drinks_credits_chems",
+      "frame": 16,
+      "price": 5,
+      "effect": "restore_groove_10"
+    },
+    {
+      "item": "purple_smoky_drink",
+      "sheet": "dust9_town_food_drinks_credits_chems",
+      "frame": 23,
+      "price": 12,
+      "effect": "stamina_regen_short"
+    }
+  ],
+  "general_store": [
+    {
+      "item": "water_flask",
+      "sheet": "dust9_town_food_drinks_credits_chems",
+      "frame": 27,
+      "price": 4,
+      "effect": "restore_stamina_15"
+    },
+    {
+      "item": "credit_stick_stack",
+      "sheet": "dust9_town_food_drinks_credits_chems",
+      "frame": 33,
+      "price": 0,
+      "effect": "currency"
+    },
+    {
+      "item": "speed_chem_yellow",
+      "sheet": "dust9_town_food_drinks_credits_chems",
+      "frame": 43,
+      "price": 18,
+      "effect": "speed_buff_20s"
+    }
+  ],
+  "clinic": [
+    {
+      "item": "healing_chem_green",
+      "sheet": "dust9_town_food_drinks_credits_chems",
+      "frame": 42,
+      "price": 22,
+      "effect": "heal_over_time"
+    },
+    {
+      "item": "detox_chem_white",
+      "sheet": "dust9_town_food_drinks_credits_chems",
+      "frame": 46,
+      "price": 20,
+      "effect": "clear_status"
+    }
+  ],
+  "mechanic": [
+    {
+      "item": "repair_parts",
+      "sheet": "dust9_town_mechanic_scrap_props",
+      "frame": 15,
+      "price": 15,
+      "effect": "repair_vehicle"
+    },
+    {
+      "item": "scanner_upgrade",
+      "sheet": "dust9_town_mechanic_scrap_props",
+      "frame": 23,
+      "price": 30,
+      "effect": "reveal_hidden_route"
+    }
+  ]
+}
