@@ -1,0 +1,90 @@
+{
+  "heroes": [
+    {
+      "id": "donny",
+      "name": "Donny",
+      "role": "frontman, reluctant captain, player lead",
+      "asset": "heroes/donny_frontman_concept.jpeg"
+    },
+    {
+      "id": "dex",
+      "name": "Dex",
+      "role": "humanoid dog-headed mechanic/scout; source of the mystery message",
+      "asset": "heroes/dex_humanoid_dog_concept.jpeg"
+    },
+    {
+      "id": "d",
+      "name": "D",
+      "role": "road fighter and survival protector",
+      "asset": "heroes/d_hero_concept.jpeg"
+    },
+    {
+      "id": "riff",
+      "name": "Riff",
+      "role": "robot signal tech; wakes Donny with Dex's message",
+      "asset": "heroes/riff_robot_concept.jpeg"
+    }
+  ],
+  "red_concord": [
+    {
+      "id": "subprime_emperor",
+      "name": "The Subprime Emperor Cassian Veyr",
+      "role": "sovereign of Red Concord"
+    },
+    {
+      "id": "empress_seraline",
+      "name": "Empress Seraline Veyr",
+      "role": "consort of the throne"
+    },
+    {
+      "id": "prince_malrec",
+      "name": "Prince Malrec Veyr",
+      "role": "bad heir / heir of dominion"
+    },
+    {
+      "id": "princess_cyra",
+      "name": "Princess Cyra Veyr",
+      "role": "good heir / doubtful heir"
+    },
+    {
+      "id": "captain_draeven",
+      "name": "Captain Draeven Holt",
+      "role": "lord commander of the Crimson Guard"
+    },
+    {
+      "id": "prince_varon",
+      "name": "Prince Varon Veyr",
+      "role": "brother of the throne"
+    },
+    {
+      "id": "lady_sylene",
+      "name": "Lady Sylene Veyr",
+      "role": "mistress of the Veil Court"
+    },
+    {
+      "id": "dowager_ilyra",
+      "name": "Dowager Mother Ilyra Veyr",
+      "role": "matriarch of the Concord bloodline"
+    },
+    {
+      "id": "marshal_voss",
+      "name": "Marshal Voss",
+      "role": "road authority"
+    },
+    {
+      "id": "director_kade",
+      "name": "Director Kade",
+      "role": "resource control"
+    },
+    {
+      "id": "mother_rusk",
+      "name": "Mother Rusk",
+      "role": "civil compliance"
+    },
+    {
+      "id": "pale_captain",
+      "name": "The Pale Captain",
+      "role": "enforcement division"
+    }
+  ]
+}

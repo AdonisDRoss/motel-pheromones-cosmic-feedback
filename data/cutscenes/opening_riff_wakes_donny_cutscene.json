@@ -1,0 +1,50 @@
+{
+  "id": "opening_riff_wakes_donny",
+  "title": "Riff Wakes Donny",
+  "scene": "DonnyOfficeScene",
+  "startingLocation": "Donny's office above a Dust-9 repair garage",
+  "nextScene": "Dust9RoadScene",
+  "beats": [
+    {
+      "type": "establish",
+      "text": "Camera pans from Nova and the Red Concord court down to tiny Dust-9."
+    },
+    {
+      "type": "establish",
+      "text": "Dust storm outside. Donny sleeps at his desk. The Astro Van is parked below in the garage."
+    },
+    {
+      "type": "enter",
+      "actor": "riff",
+      "text": "Riff rolls in carrying a blinking signal receiver."
+    },
+    {
+      "type": "say",
+      "speaker": "Riff",
+      "text": "Donny. Wake up."
+    },
+    {
+      "type": "say",
+      "speaker": "Donny",
+      "text": "Riff, if this is about the toaster learning swear words again, let it grow."
+    },
+    {
+      "type": "say",
+      "speaker": "Riff",
+      "text": "Not toaster. Signal. Outer rim encryption. Dex signature. Broken. Repeating. Scared."
+    },
+    {
+      "type": "playMessage",
+      "speaker": "Dex",
+      "text": "Donny... this is not a storm. It is feedback. It starts under Dust-9. Red Concord knows. Nova is listening. Bring the van. Trust Riff. Do not answer the return signal."
+    },
+    {
+      "type": "objective",
+      "text": "Check Dex's message."
+    },
+    {
+      "type": "objective",
+      "text": "Reach the Astro Van."
+    }
+  ]
+}

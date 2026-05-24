@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Dust-9 Road World — Test</title>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+<style>
+html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#000;touch-action:none;-webkit-user-select:none;user-select:none}#game{position:fixed;inset:0}canvas{image-rendering:pixelated;image-rendering:crisp-edges}
+</style>
+</head>
+<body><div id="game"></div>
+<script>
+(()=>{
+'use strict';
+const W=960,H=540;
+
+// Shared data (items, rooms, etc. kept minimal for standalone road test)
+const ROOMS=[
+{id:'drive_to_camp',name:'Road to Red Concord Camp',bg:'bg_drive',path:'assets/backgrounds/planets/dust_9/drive/dust9_road_chunk_01_no_vans.png',spawn:[480,400],bounds:[100,125,760,385],exits:[['to_camp','Camp Perimeter',390,35,180,90,null,'Reach Camp'],['to_van','Back to Van',420,455,130,70,null,'Return']]},
+{id:'camp_checkpoint',name:'Red Concord Camp Checkpoint',bg:'bg_camp',path:'assets/backgrounds/dust9/dust9_checkpoint_empty_1920x540.png',spawn:[180,390],bounds:[50,210,860,300],exits:[['road','Back to Road',20,420,100,100,'drive_to_camp','Return to Road']]}
+];
+
+class Boot extends Phaser.Scene{
+  constructor(){super('Boot')}
+  preload(){
+    this.load.on('loaderror',f=>console.warn('Missing asset',f.key,f.url));
+    ROOMS.forEach(r=>this.load.image(r.bg,r.path));
+    this.load.spritesheet('donny1','assets/sprites/player/donny/donny_empty_pistol_pose_sheet.png',{frameWidth:128,frameHeight:128});
+    this.load.spritesheet('van_drive','assets/sprites/vehicles/astro_van/astro_van_side_drive_idle_4f.png',{frameWidth:256,frameHeight:128});
+  }
+  create(){
+    const mk=(k,w,h,c)=>{if(this.textures.exists(k))return;const g=this.add.graphics();g.fillStyle(c,1).fillRect(0,0,w,h).lineStyle(2,0xffffff,.7).strokeRect(1,1,w-2,h-2).generateTexture(k,w,h);g.destroy()};
+    mk('ph_bg',960,540,0x17131c);mk('ph_player',46,82,0x314dff);
+    this.scene.start('RoadTest');
+  }
+}
+
+class RoadTest extends Phaser.Scene{
+  constructor(){super('RoadTest');this.roomId='drive_to_camp';this.exitBoxes=[];}
+  create(){
+    this.keys=this.input.keyboard.addKeys('W,A,S,D');
+    this.cursors=this.input.keyboard.createCursorKeys();
+    this.loadRoom('drive_to_camp');
+    this.makePlayer(480,400);
+    this.add.text(10,10,'DUST-9 ROAD TEST',{fontFamily:'monospace',fontSize:'13px',color:'#86f7ff',stroke:'#000',strokeThickness:2}).setDepth(100);
+    this.add.text(10,28,'WASD / Arrows = move   Walk into exit zones to transition',{fontFamily:'monospace',fontSize:'11px',color:'#998899',stroke:'#000',strokeThickness:1}).setDepth(100);
+    this.add.text(W-10,10,'← Back to Main Menu',{fontFamily:'monospace',fontSize:'12px',color:'#5533aa',stroke:'#000',strokeThickness:1}).setOrigin(1,0).setDepth(100).setInteractive().on('pointerdown',()=>{window.location.href='index.html';});
+  }
+  tex(k){return this.textures.exists(k)}
+  loadRoom(id){
+    const r=ROOMS.find(x=>x.id===id)||ROOMS[0];
+    this.room=r;this.roomId=r.id;
+    if(this.bg)this.bg.destroy();
+    this.bg=this.add.image(W/2,H/2,this.tex(r.bg)?r.bg:'ph_bg').setDisplaySize(W,H).setDepth(0);
+    this.exitBoxes.forEach(x=>x.destroy());
+    this.exitBoxes=[];
+    (r.exits||[]).forEach(e=>{
+      const g=this.add.graphics().setDepth(8);
+      g.lineStyle(1,0x86f7ff,.3).strokeRect(e[2],e[3],e[4],e[5]);
+      const lbl=this.add.text(e[2]+e[4]/2,e[3]+e[5]/2,e[7]||e[1],{fontFamily:'monospace',fontSize:'10px',color:'#86f7ff',stroke:'#000',strokeThickness:1}).setOrigin(.5).setDepth(9).setAlpha(.7);
+      this.exitBoxes.push(g,lbl);
+      g._exit=e;lbl._exit=e;
+    });
+    if(this.player){this.player.x=r.spawn[0];this.player.y=r.spawn[1];}
+  }
+  makePlayer(x,y){
+    const key=this.tex('donny1')?'donny1':'ph_player';
+    this.player=this.add.image(x,y,key).setDepth(20);
+    if(key==='donny1')this.player.setFrame(0);
+    this.player.setScale(0.8);
+  }
+  checkExits(){
+    const px=this.player.x,py=this.player.y;
+    const r=this.room;
+    for(const e of (r.exits||[])){
+      if(px>=e[2]&&px<=e[2]+e[4]&&py>=e[3]&&py<=e[3]+e[5]){
+        const dest=e[6];
+        if(dest&&ROOMS.find(x=>x.id===dest)){this.loadRoom(dest);}
+        return;
+      }
+    }
+  }
+  update(){
+    if(!this.player)return;
+    const spd=3;
+    const left=this.cursors.left.isDown||this.keys.A.isDown;
+    const right=this.cursors.right.isDown||this.keys.D.isDown;
+    const up=this.cursors.up.isDown||this.keys.W.isDown;
+    const down=this.cursors.down.isDown||this.keys.S.isDown;
+    if(left)this.player.x-=spd;
+    if(right)this.player.x+=spd;
+    if(up)this.player.y-=spd;
+    if(down)this.player.y+=spd;
+    const b=this.room.bounds;
+    this.player.x=Math.max(b[0],Math.min(b[0]+b[2],this.player.x));
+    this.player.y=Math.max(b[1],Math.min(b[1]+b[3],this.player.y));
+    this.checkExits();
+  }
+}
+
+new Phaser.Game({type:Phaser.AUTO,parent:'game',width:W,height:H,backgroundColor:'#000',pixelArt:true,roundPixels:true,scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},input:{activePointers:3},scene:[Boot,RoadTest]});
+})();
+</script></body></html>
