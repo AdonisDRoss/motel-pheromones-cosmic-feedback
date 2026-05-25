@@ -1,0 +1,73 @@
+{
+  "id": "GLASSWELL_D3_spawn_points",
+  "mapId": "GLASSWELL_D3",
+  "canvas": {
+    "width": 1448,
+    "height": 1086
+  },
+  "defaultSpawn": "west_entry_from_C3",
+  "spawns": [
+    {
+      "id": "west_entry_from_C3",
+      "x": 159,
+      "y": 543,
+      "facing": "east"
+    },
+    {
+      "id": "east_entry_return_from_E3",
+      "x": 1288,
+      "y": 543,
+      "facing": "west"
+    },
+    {
+      "id": "checkpoint_lane_center",
+      "x": 724,
+      "y": 543,
+      "facing": "east"
+    },
+    {
+      "id": "upper_crossbar_test",
+      "x": 724,
+      "y": 314,
+      "facing": "south"
+    },
+    {
+      "id": "lower_crossbar_test",
+      "x": 724,
+      "y": 781,
+      "facing": "north"
+    }
+  ],
+  "spawnPoints": [
+    {
+      "id": "west_entry_from_C3",
+      "x": 159,
+      "y": 543,
+      "facing": "east"
+    },
+    {
+      "id": "east_entry_return_from_E3",
+      "x": 1288,
+      "y": 543,
+      "facing": "west"
+    },
+    {
+      "id": "checkpoint_lane_center",
+      "x": 724,
+      "y": 543,
+      "facing": "east"
+    },
+    {
+      "id": "upper_crossbar_test",
+      "x": 724,
+      "y": 314,
+      "facing": "south"
+    },
+    {
+      "id": "lower_crossbar_test",
+      "x": 724,
+      "y": 781,
+      "facing": "north"
+    }
+  ]
+}

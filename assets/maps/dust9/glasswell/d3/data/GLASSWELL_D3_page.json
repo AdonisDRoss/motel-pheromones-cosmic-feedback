@@ -1,0 +1,36 @@
+{
+  "id": "GLASSWELL_D3_page",
+  "mapId": "GLASSWELL_D3",
+  "name": "Red Concord Checkpoint",
+  "canvas": {
+    "width": 1448,
+    "height": 1086
+  },
+  "assetRoot": "assets/maps/dust9/glasswell/d3/",
+  "layers": {
+    "base": {
+      "key": "GLASSWELL_D3_base",
+      "path": "layers/GLASSWELL_D3_base.png",
+      "depth": 0
+    },
+    "foregroundOverlay": {
+      "key": "GLASSWELL_D3_foreground_overlay",
+      "path": "layers/GLASSWELL_D3_foreground_overlay.png",
+      "depth": 9000
+    }
+  },
+  "masks": {
+    "collision": {
+      "key": "GLASSWELL_D3_collision_mask",
+      "path": "masks/GLASSWELL_D3_collision_mask.png",
+      "mode": "white_walkable_black_blocked"
+    }
+  },
+  "data": {
+    "depthZones": "data/GLASSWELL_D3_depth_zones.json",
+    "transitions": "data/GLASSWELL_D3_transitions.json",
+    "spawnPoints": "data/GLASSWELL_D3_spawn_points.json"
+  },
+  "defaultSpawn": "west_entry_from_C3",
+  "alignmentRule": "All layers use origin 0,0, scale 1, and the same canvas size."
+}
