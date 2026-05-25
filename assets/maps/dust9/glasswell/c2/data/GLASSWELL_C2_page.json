@@ -1,0 +1,66 @@
+{
+  "id": "GLASSWELL_C2_page",
+  "mapId": "GLASSWELL_C2",
+  "name": "Civic Admin Street",
+  "grid": {
+    "city": "Glasswell",
+    "world": "Dust-9",
+    "x": "C",
+    "y": 2,
+    "south": "GLASSWELL_C3",
+    "north": "GLASSWELL_C1"
+  },
+  "canvas": {
+    "width": 1448,
+    "height": 1086
+  },
+  "assetRoot": "assets/maps/dust9/glasswell/c2/",
+  "layers": {
+    "base": {
+      "key": "GLASSWELL_C2_base",
+      "path": "layers/GLASSWELL_C2_base.png",
+      "depth": 0,
+      "origin": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    "foregroundOverlay": {
+      "key": "GLASSWELL_C2_foreground_overlay",
+      "path": "layers/GLASSWELL_C2_foreground_overlay.png",
+      "depth": 9000,
+      "origin": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  },
+  "masks": {
+    "collision": {
+      "key": "GLASSWELL_C2_collision_mask",
+      "path": "masks/GLASSWELL_C2_collision_mask.png",
+      "mode": "white_walkable_black_blocked"
+    }
+  },
+  "data": {
+    "depthZones": "data/GLASSWELL_C2_depth_zones.json",
+    "transitions": "data/GLASSWELL_C2_transitions.json",
+    "spawnPoints": "data/GLASSWELL_C2_spawn_points.json"
+  },
+  "defaultSpawn": "south_entry_from_C3",
+  "camera": {
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "w": 1448,
+      "h": 1086
+    },
+    "followPlayer": true,
+    "lerp": {
+      "x": 0.12,
+      "y": 0.12
+    },
+    "zoom": 1
+  },
+  "alignmentRule": "All layers use origin 0,0, scale 1, and the same canvas size."
+}
