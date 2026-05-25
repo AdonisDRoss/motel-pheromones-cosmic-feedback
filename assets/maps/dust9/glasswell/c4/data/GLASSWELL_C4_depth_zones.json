@@ -1,0 +1,111 @@
+{
+  "id": "GLASSWELL_C4_depth_zones",
+  "mapId": "GLASSWELL_C4",
+  "canvas": {
+    "width": 1448,
+    "height": 1086
+  },
+  "depthMode": "y_sort_plus_zone_overrides",
+  "baseDepth": 0,
+  "actorDepthMode": "actor.y + 1000",
+  "foregroundOverlayDepth": 9000,
+  "zones": [
+    {
+      "id": "north_entry_from_C3",
+      "type": "rect",
+      "x": 622,
+      "y": 0,
+      "w": 202,
+      "h": 260,
+      "actorDepthRule": "actor.y + 1000",
+      "overlayBehavior": "normal",
+      "targetPage": "GLASSWELL_C3"
+    },
+    {
+      "id": "central_transit_vendor_square",
+      "type": "polygon",
+      "points": [
+        {
+          "x": 260,
+          "y": 195
+        },
+        {
+          "x": 1187,
+          "y": 195
+        },
+        {
+          "x": 1187,
+          "y": 901
+        },
+        {
+          "x": 260,
+          "y": 901
+        }
+      ],
+      "actorDepthRule": "actor.y + 1000",
+      "overlayBehavior": "normal"
+    },
+    {
+      "id": "south_transit_route",
+      "type": "rect",
+      "x": 622,
+      "y": 825,
+      "w": 202,
+      "h": 260,
+      "actorDepthRule": "actor.y + 1000",
+      "overlayBehavior": "normal",
+      "targetPage": "GLASSWELL_C5"
+    },
+    {
+      "id": "west_vendor_row",
+      "type": "rect",
+      "x": 0,
+      "y": 390,
+      "w": 318,
+      "h": 304,
+      "actorDepthRule": "actor.y + 1000",
+      "overlayBehavior": "normal",
+      "targetPage": "GLASSWELL_B4"
+    },
+    {
+      "id": "east_vendor_row",
+      "type": "rect",
+      "x": 1129,
+      "y": 390,
+      "w": 318,
+      "h": 304,
+      "actorDepthRule": "actor.y + 1000",
+      "overlayBehavior": "normal",
+      "targetPage": "GLASSWELL_D4"
+    },
+    {
+      "id": "south_pipe_arch_pass_under",
+      "type": "rect",
+      "x": 405,
+      "y": 695,
+      "w": 637,
+      "h": 162,
+      "actorDepthRule": "actor.y + 1000",
+      "requiredOverlay": "GLASSWELL_C4_foreground_overlay.png",
+      "overlayDepth": 9100,
+      "overlayBehavior": "foreground_covers_actor"
+    },
+    {
+      "id": "center_kiosk_lip_pass_under",
+      "type": "rect",
+      "x": 579,
+      "y": 390,
+      "w": 289,
+      "h": 217,
+      "actorDepthRule": "actor.y + 1000",
+      "requiredOverlay": "GLASSWELL_C4_foreground_overlay.png",
+      "overlayDepth": 9200,
+      "overlayBehavior": "foreground_covers_actor"
+    }
+  ],
+  "staticLayerDepths": {
+    "GLASSWELL_C4_base.png": 0,
+    "GLASSWELL_C4_foreground_overlay.png": 9000
+  },
+  "recommendedActorDepthFunction": "actor.setDepth(actor.y + 1000);"
+}

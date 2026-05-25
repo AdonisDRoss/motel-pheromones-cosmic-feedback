@@ -1,0 +1,59 @@
+{
+  "id": "GLASSWELL_C4_page",
+  "mapId": "GLASSWELL_C4",
+  "name": "Transit Vendor Square",
+  "grid": {
+    "city": "Glasswell",
+    "world": "Dust-9",
+    "x": "C",
+    "y": 4,
+    "north": "GLASSWELL_C3",
+    "south": "GLASSWELL_C5",
+    "west": "GLASSWELL_B4",
+    "east": "GLASSWELL_D4"
+  },
+  "canvas": {
+    "width": 1448,
+    "height": 1086
+  },
+  "assetRoot": "assets/maps/dust9/glasswell/c4/",
+  "layers": {
+    "base": {
+      "key": "GLASSWELL_C4_base",
+      "path": "layers/GLASSWELL_C4_base.png",
+      "depth": 0,
+      "origin": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    "foregroundOverlay": {
+      "key": "GLASSWELL_C4_foreground_overlay",
+      "path": "layers/GLASSWELL_C4_foreground_overlay.png",
+      "depth": 9000,
+      "origin": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  },
+  "masks": {
+    "collision": {
+      "key": "GLASSWELL_C4_collision_mask",
+      "path": "masks/GLASSWELL_C4_collision_mask.png",
+      "mode": "white_walkable_black_blocked"
+    }
+  },
+  "data": {
+    "depthZones": "data/GLASSWELL_C4_depth_zones.json",
+    "transitions": "data/GLASSWELL_C4_transitions.json",
+    "spawnPoints": "data/GLASSWELL_C4_spawn_points.json"
+  },
+  "defaultSpawn": "north_entry_from_C3",
+  "alignmentRule": "All layers use origin 0,0, scale 1, and the same canvas size.",
+  "status": {
+    "artStatus": "C4 base generated; review required before final art lock.",
+    "overlayStatus": "conservative extracted-style overlay starter; refine after Phaser test.",
+    "collisionStatus": "clean manual Phaser mask."
+  }
+}
