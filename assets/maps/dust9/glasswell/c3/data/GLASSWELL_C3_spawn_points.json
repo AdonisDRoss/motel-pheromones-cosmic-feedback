@@ -1,0 +1,155 @@
+{
+  "id": "GLASSWELL_C3_spawn_points",
+  "mapId": "GLASSWELL_C3",
+  "canvas": {
+    "width": 1536,
+    "height": 1152
+  },
+  "spawns": [
+    {
+      "id": "donny_city_start",
+      "purpose": "Donny starts in Glasswell at the Main Civic Gate plaza.",
+      "x": 768,
+      "y": 633,
+      "facing": "south",
+      "safeRadius": 48,
+      "cameraHint": "central_gate_plaza"
+    },
+    {
+      "id": "north_gate_return",
+      "x": 768,
+      "y": 310,
+      "facing": "south"
+    },
+    {
+      "id": "south_underpass_return",
+      "x": 768,
+      "y": 880,
+      "facing": "north"
+    },
+    {
+      "id": "west_exit_return",
+      "x": 150,
+      "y": 545,
+      "facing": "east"
+    },
+    {
+      "id": "east_exit_return",
+      "x": 1386,
+      "y": 545,
+      "facing": "west"
+    },
+    {
+      "id": "debug_center",
+      "x": 768,
+      "y": 580,
+      "facing": "south"
+    },
+    {
+      "id": "north_gate_test",
+      "x": 768,
+      "y": 280,
+      "facing": "north"
+    },
+    {
+      "id": "underpass_test",
+      "x": 768,
+      "y": 890,
+      "facing": "south"
+    },
+    {
+      "id": "north_entry_from_C2",
+      "x": 768,
+      "y": 218,
+      "facing": "south"
+    },
+    {
+      "id": "east_entry_from_D3",
+      "x": 1344,
+      "y": 576,
+      "facing": "west"
+    },
+    {
+      "id": "south_entry_from_C4",
+      "x": 768,
+      "y": 938,
+      "facing": "north",
+      "safeRadius": 42,
+      "cameraHint": "south_edge"
+    }
+  ],
+  "spawnPoints": [
+    {
+      "id": "donny_city_start",
+      "purpose": "Donny starts in Glasswell at the Main Civic Gate plaza.",
+      "x": 768,
+      "y": 633,
+      "facing": "south",
+      "safeRadius": 48,
+      "cameraHint": "central_gate_plaza"
+    },
+    {
+      "id": "north_gate_return",
+      "x": 768,
+      "y": 310,
+      "facing": "south"
+    },
+    {
+      "id": "south_underpass_return",
+      "x": 768,
+      "y": 880,
+      "facing": "north"
+    },
+    {
+      "id": "west_exit_return",
+      "x": 150,
+      "y": 545,
+      "facing": "east"
+    },
+    {
+      "id": "east_exit_return",
+      "x": 1386,
+      "y": 545,
+      "facing": "west"
+    },
+    {
+      "id": "debug_center",
+      "x": 768,
+      "y": 580,
+      "facing": "south"
+    },
+    {
+      "id": "north_gate_test",
+      "x": 768,
+      "y": 280,
+      "facing": "north"
+    },
+    {
+      "id": "underpass_test",
+      "x": 768,
+      "y": 890,
+      "facing": "south"
+    },
+    {
+      "id": "north_entry_from_C2",
+      "x": 768,
+      "y": 218,
+      "facing": "south"
+    },
+    {
+      "id": "east_entry_from_D3",
+      "x": 1344,
+      "y": 576,
+      "facing": "west"
+    },
+    {
+      "id": "south_entry_from_C4",
+      "x": 768,
+      "y": 938,
+      "facing": "north",
+      "safeRadius": 42,
+      "cameraHint": "south_edge"
+    }
+  ],
+  "defaultSpawn": "donny_city_start"
+}

@@ -1,0 +1,196 @@
+{
+  "id": "GLASSWELL_C3_transitions",
+  "mapId": "GLASSWELL_C3",
+  "canvas": {
+    "width": 1536,
+    "height": 1152
+  },
+  "units": "pixels",
+  "transitionMode": "rect_trigger",
+  "rules": {
+    "triggerOnOverlap": true,
+    "requireInteractButton": false,
+    "fadeOutMs": 220,
+    "fadeInMs": 220,
+    "preserveFacing": true,
+    "preservePartyState": true
+  },
+  "transitions": [
+    {
+      "id": "c3_to_c2_north_gate",
+      "label": "North Gate Path",
+      "from": "GLASSWELL_C3",
+      "to": "GLASSWELL_C2",
+      "direction": "north",
+      "trigger": {
+        "type": "rect",
+        "x": 600,
+        "y": 90,
+        "w": 336,
+        "h": 150
+      },
+      "spawnOnTarget": {
+        "spawnId": "south_gate_entry",
+        "x": 768,
+        "y": 980,
+        "facing": "north"
+      },
+      "spawnBackHere": {
+        "spawnId": "north_gate_return",
+        "x": 768,
+        "y": 310,
+        "facing": "south"
+      }
+    },
+    {
+      "id": "c3_to_c4_south_underpass",
+      "label": "South Underpass Exit",
+      "from": "GLASSWELL_C3",
+      "to": "GLASSWELL_C4",
+      "direction": "south",
+      "trigger": {
+        "type": "rect",
+        "x": 560,
+        "y": 940,
+        "w": 416,
+        "h": 190
+      },
+      "spawnOnTarget": {
+        "spawnId": "north_underpass_entry",
+        "x": 768,
+        "y": 190,
+        "facing": "south"
+      },
+      "spawnBackHere": {
+        "spawnId": "south_underpass_return",
+        "x": 768,
+        "y": 880,
+        "facing": "north"
+      }
+    },
+    {
+      "id": "c3_to_b3_west_exit",
+      "label": "West Page Exit",
+      "from": "GLASSWELL_C3",
+      "to": "GLASSWELL_B3",
+      "direction": "west",
+      "trigger": {
+        "type": "rect",
+        "x": 0,
+        "y": 405,
+        "w": 135,
+        "h": 280
+      },
+      "spawnOnTarget": {
+        "spawnId": "east_entry",
+        "x": 1380,
+        "y": 545,
+        "facing": "west"
+      },
+      "spawnBackHere": {
+        "spawnId": "west_exit_return",
+        "x": 150,
+        "y": 545,
+        "facing": "east"
+      }
+    },
+    {
+      "id": "c3_to_c2_north_exit",
+      "label": "North route to Civic Admin Street",
+      "from": "GLASSWELL_C3",
+      "to": "GLASSWELL_C2",
+      "direction": "north",
+      "trigger": {
+        "type": "rect",
+        "x": 583,
+        "y": 0,
+        "w": 368,
+        "h": 207
+      },
+      "spawnOnTarget": {
+        "spawnId": "south_entry_from_C3",
+        "x": 724,
+        "y": 923,
+        "facing": "north"
+      },
+      "enabled": true,
+      "cameraHint": "north_edge"
+    },
+    {
+      "id": "c3_to_d3_east_exit",
+      "label": "East exit to Red Concord Checkpoint",
+      "from": "GLASSWELL_C3",
+      "to": "GLASSWELL_D3",
+      "direction": "east",
+      "trigger": {
+        "type": "rect",
+        "x": 1405,
+        "y": 408,
+        "w": 130,
+        "h": 282
+      },
+      "spawnOnTarget": {
+        "spawnId": "west_entry_from_C3",
+        "x": 159,
+        "y": 543,
+        "facing": "east"
+      },
+      "enabled": true,
+      "cameraHint": "east_edge"
+    },
+    {
+      "id": "c3_to_c4_south_exit",
+      "label": "South route to Transit Vendor Square",
+      "from": "GLASSWELL_C3",
+      "to": "GLASSWELL_C4",
+      "direction": "south",
+      "trigger": {
+        "type": "rect",
+        "x": 583,
+        "y": 944,
+        "w": 368,
+        "h": 207
+      },
+      "spawnOnTarget": {
+        "spawnId": "north_entry_from_C3",
+        "x": 724,
+        "y": 173,
+        "facing": "south"
+      },
+      "enabled": true,
+      "cameraHint": "south_edge"
+    }
+  ],
+  "localSpawnPoints": [
+    {
+      "id": "default_start",
+      "x": 768,
+      "y": 720,
+      "facing": "north"
+    },
+    {
+      "id": "north_gate_return",
+      "x": 768,
+      "y": 310,
+      "facing": "south"
+    },
+    {
+      "id": "south_underpass_return",
+      "x": 768,
+      "y": 880,
+      "facing": "north"
+    },
+    {
+      "id": "west_exit_return",
+      "x": 150,
+      "y": 545,
+      "facing": "east"
+    },
+    {
+      "id": "east_exit_return",
+      "x": 1386,
+      "y": 545,
+      "facing": "west"
+    }
+  ]
+}

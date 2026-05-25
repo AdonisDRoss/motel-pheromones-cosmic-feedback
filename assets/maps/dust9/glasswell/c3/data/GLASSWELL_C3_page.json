@@ -1,0 +1,88 @@
+{
+  "id": "GLASSWELL_C3",
+  "displayName": "Main Civic Gate",
+  "type": "outdoor_city_page",
+  "grid": {
+    "city": "GLASSWELL",
+    "col": "C",
+    "row": 3
+  },
+  "canvas": {
+    "width": 1536,
+    "height": 1152
+  },
+  "units": "pixels",
+  "camera": {
+    "startX": 768,
+    "startY": 650,
+    "bounds": {
+      "x": 0,
+      "y": 0,
+      "w": 1536,
+      "h": 1152
+    },
+    "zoom": 1
+  },
+  "assets": {
+    "baseLayer": "assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_base.png",
+    "foregroundOverlay": "assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_foreground_overlay.png",
+    "collisionMask": "assets/maps/dust9/glasswell/c3/masks/GLASSWELL_C3_collision_mask.png",
+    "depthZones": "assets/maps/dust9/glasswell/c3/data/GLASSWELL_C3_depth_zones.json",
+    "transitions": "assets/maps/dust9/glasswell/c3/data/GLASSWELL_C3_transitions.json",
+    "spawnPoints": "assets/maps/dust9/glasswell/c3/data/GLASSWELL_C3_spawn_points.json"
+  },
+  "layers": [
+    {
+      "id": "base",
+      "asset": "baseLayer",
+      "depth": 0,
+      "scrollFactor": 1,
+      "parallaxRole": "ground_and_static_back_layer"
+    },
+    {
+      "id": "foreground",
+      "asset": "foregroundOverlay",
+      "depth": 9000,
+      "scrollFactor": 1,
+      "parallaxRole": "gate_arch_pipes_underpass_lip_actor_occluders"
+    }
+  ],
+  "collision": {
+    "mode": "mask_white_walkable_black_blocked",
+    "maskAsset": "collisionMask",
+    "whiteThreshold": 220,
+    "sampleMode": "pixel"
+  },
+  "depth": {
+    "mode": "actor_y_sort_plus_foreground_overlay",
+    "actorFormula": "actor.y + 1000",
+    "foregroundDepth": 9000
+  },
+  "transitions": {
+    "mode": "rect_trigger",
+    "source": "transitions"
+  },
+  "spawns": {
+    "default": "default_start",
+    "source": "spawnPoints"
+  },
+  "debug": {
+    "showCollisionMask": false,
+    "showTransitionRects": false,
+    "showDepthZones": false
+  },
+  "styleLock": {
+    "foregroundOverlayMethod": "tight_regions_extracted_from_GLASSWELL_C3_base_pixels_not_regenerated",
+    "canvas": {
+      "width": 1536,
+      "height": 1152
+    },
+    "runtimeOverlay": "GLASSWELL_C3_foreground_overlay.png",
+    "note": "The previous generated modular overlay should be discarded."
+  },
+  "defaultSpawn": "donny_city_start",
+  "playerStart": {
+    "character": "Donny",
+    "spawnId": "donny_city_start"
+  }
+}

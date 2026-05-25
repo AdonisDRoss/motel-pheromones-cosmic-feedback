@@ -1,0 +1,157 @@
+{
+  "id": "GLASSWELL_C3_depth_zones",
+  "mapId": "GLASSWELL_C3",
+  "canvas": {
+    "width": 1536,
+    "height": 1152
+  },
+  "depthMode": "y_sort_plus_zone_overrides",
+  "globalRules": {
+    "baseLayerDepth": 0,
+    "actorsUseYDepth": true,
+    "actorDepthOffset": 1000,
+    "foregroundOverlayDepth": 9000,
+    "foregroundAlwaysAboveActors": true
+  },
+  "zones": [
+    {
+      "id": "central_plaza",
+      "type": "polygon",
+      "purpose": "main_walkable_y_sort_area",
+      "points": [
+        {
+          "x": 230,
+          "y": 360
+        },
+        {
+          "x": 1305,
+          "y": 360
+        },
+        {
+          "x": 1410,
+          "y": 690
+        },
+        {
+          "x": 1230,
+          "y": 840
+        },
+        {
+          "x": 320,
+          "y": 840
+        },
+        {
+          "x": 120,
+          "y": 690
+        }
+      ],
+      "actorDepthRule": "actor.y + 1000"
+    },
+    {
+      "id": "north_gate_passage",
+      "type": "rect",
+      "purpose": "player_walks_under_gate_arch",
+      "x": 590,
+      "y": 185,
+      "w": 360,
+      "h": 210,
+      "actorDepthRule": "actor.y + 1000",
+      "overlayDepth": 9000
+    },
+    {
+      "id": "west_structure_edge",
+      "type": "polygon",
+      "purpose": "left_foreground_edges_render_above_actor",
+      "points": [
+        {
+          "x": 0,
+          "y": 510
+        },
+        {
+          "x": 260,
+          "y": 530
+        },
+        {
+          "x": 330,
+          "y": 640
+        },
+        {
+          "x": 270,
+          "y": 760
+        },
+        {
+          "x": 0,
+          "y": 760
+        }
+      ],
+      "actorDepthRule": "actor.y + 1000",
+      "foregroundCutDepth": 9000
+    },
+    {
+      "id": "east_structure_edge",
+      "type": "polygon",
+      "purpose": "right_foreground_edges_render_above_actor",
+      "points": [
+        {
+          "x": 1280,
+          "y": 530
+        },
+        {
+          "x": 1536,
+          "y": 510
+        },
+        {
+          "x": 1536,
+          "y": 760
+        },
+        {
+          "x": 1270,
+          "y": 760
+        },
+        {
+          "x": 1210,
+          "y": 640
+        }
+      ],
+      "actorDepthRule": "actor.y + 1000",
+      "foregroundCutDepth": 9000
+    },
+    {
+      "id": "south_underpass_lip",
+      "type": "rect",
+      "purpose": "player_passes_behind_underpass_front_edge",
+      "x": 500,
+      "y": 835,
+      "w": 530,
+      "h": 150,
+      "actorDepthRule": "actor.y + 1000",
+      "overlayDepth": 9500
+    },
+    {
+      "id": "west_exit_zone",
+      "type": "rect",
+      "purpose": "page_transition_depth_safe_area",
+      "x": 0,
+      "y": 405,
+      "w": 130,
+      "h": 270,
+      "actorDepthRule": "actor.y + 1000",
+      "targetPage": "GLASSWELL_B3"
+    },
+    {
+      "id": "east_exit_zone",
+      "type": "rect",
+      "purpose": "page_transition_depth_safe_area",
+      "x": 1405,
+      "y": 405,
+      "w": 130,
+      "h": 270,
+      "actorDepthRule": "actor.y + 1000",
+      "targetPage": "GLASSWELL_D3"
+    }
+  ],
+  "staticLayerDepths": {
+    "GLASSWELL_C3_base.png": 0,
+    "GLASSWELL_C3_foreground_overlay.png": 9000
+  },
+  "recommendedActorDepthFunction": "actor.setDepth(actor.y + 1000);"
+}
