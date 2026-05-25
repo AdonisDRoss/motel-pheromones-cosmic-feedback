@@ -168,9 +168,9 @@ class Boot extends Phaser.Scene{
     this.load.video('title_video',A.video,'loadeddata',false,true);
     this.load.image('title_bg',A.titleBg);
     Object.values(ROOMS).forEach(r=>this.load.image(r.key,r.background));
-    this.load.image('donny_raw',A.donnyWalk);
-    this.load.image('donny_crawl_raw',A.donnyCrawl);
-    this.load.image('donny_slide_raw',A.donnySlide);
+    this.load.spritesheet('donny_walk',A.donnyWalk,{frameWidth:181,frameHeight:272});
+    this.load.spritesheet('donny_crawl',A.donnyCrawl,{frameWidth:181,frameHeight:272});
+    this.load.spritesheet('donny_slide',A.donnySlide,{frameWidth:222,frameHeight:222});
     this.load.spritesheet('holster_empty',A.holsterEmpty,{frameWidth:128,frameHeight:128});
     this.load.spritesheet('holster_loaded',A.holsterLoaded,{frameWidth:128,frameHeight:128});
     this.load.image('donny_weapon',A.weapon);
@@ -191,7 +191,6 @@ class Boot extends Phaser.Scene{
     mk('ph_holster',34,34,0x2b1a0b);
     mk('ph_van',220,110,0x3a2d1a);
 
-    this.makeCleanDonnyTexture();
     this.makeDonnyAnims();
     this.makeRiffAnims();
     this.scene.start('Title');
@@ -221,15 +220,40 @@ class Boot extends Phaser.Scene{
     }
   }
   makeDonnyAnims(){
-    if(!this.textures.exists('donny_clean')) return;
-    ['down','left','right','up'].forEach(dir=>{
-      this.anims.create({
-        key:'walk_'+dir,
-        frames:Array.from({length:DONNY_FRAMES[dir].length},(_,i)=>({key:'donny_clean',frame:dir+'_'+i})),
-        frameRate:10,
-        repeat:-1
+    const rows={down:[0,7],left:[8,15],right:[16,23],up:[24,31]};
+
+    if(this.textures.exists('donny_walk')){
+      Object.entries(rows).forEach(([dir,range])=>{
+        this.anims.create({
+          key:'donny_walk_'+dir,
+          frames:this.anims.generateFrameNumbers('donny_walk',{start:range[0],end:range[1]}),
+          frameRate:10,
+          repeat:-1
+        });
       });
-    });
+    }
+
+    if(this.textures.exists('donny_crawl')){
+      Object.entries(rows).forEach(([dir,range])=>{
+        this.anims.create({
+          key:'donny_crawl_'+dir,
+          frames:this.anims.generateFrameNumbers('donny_crawl',{start:range[0],end:range[1]}),
+          frameRate:8,
+          repeat:-1
+        });
+      });
+    }
+
+    if(this.textures.exists('donny_slide')){
+      Object.entries(rows).forEach(([dir,range])=>{
+        this.anims.create({
+          key:'donny_slide_'+dir,
+          frames:this.anims.generateFrameNumbers('donny_slide',{start:range[0],end:range[1]}),
+          frameRate:12,
+          repeat:0
+        });
+      });
+    }
   }
 
   makeRiffAnims(){
@@ -394,9 +418,9 @@ class Dust9 extends Phaser.Scene{
     this.playerBody=this.add.zone(s.x,s.y,44,28).setOrigin(.5,.5);
     this.playerSprite=this.add.sprite(
       s.x,s.y,
-      this.has('donny_clean')?'donny_clean':'ph_player',
-      this.has('donny_clean')?'down_0':undefined
-    ).setOrigin(.5,1).setScale(this.has('donny_clean')?.52:1).setDepth(20);
+      this.has('donny_walk')?'donny_walk':'ph_player',
+      0
+    ).setOrigin(.5,1).setScale(this.has('donny_walk')?.52:1).setDepth(20);
 
     this.riffSprite=this.add.sprite(
       s.x-96,s.y+6,
@@ -646,27 +670,45 @@ class Dust9 extends Phaser.Scene{
       const t=this.jumpTimer/24;
       visualY-=Math.sin(t*Math.PI)*38;
     }
-    if(this.mode==='crawl'){
-      this.playerSprite.setScale(.43);
-    }else if(this.mode==='slide'){
-      this.playerSprite.setScale(.49);
-    }else{
-      this.playerSprite.setScale(.52);
+
+    let sheet='donny_walk';
+    let animPrefix='donny_walk';
+    let scale=.52;
+
+    if(this.mode==='crawl' && this.has('donny_crawl')){
+      sheet='donny_crawl';
+      animPrefix='donny_crawl';
+      scale=.48;
+    }else if(this.mode==='slide' && this.has('donny_slide')){
+      sheet='donny_slide';
+      animPrefix='donny_slide';
+      scale=.50;
     }
 
+    if(this.playerSprite.texture.key!==sheet && this.has(sheet)){
+      this.playerSprite.setTexture(sheet);
+    }
+
+    this.playerSprite.setScale(scale);
     this.playerSprite.x=this.playerBody.x;
     this.playerSprite.y=visualY;
     this.playerSprite.setDepth(20 + this.playerBody.y/1000);
 
-    if(this.has('donny_clean')){
-      const walk='walk_'+this.facing;
-      if(moving){
-        if(this.playerSprite.anims.currentAnim?.key!==walk || !this.playerSprite.anims.isPlaying){
-          this.playerSprite.play(walk,true);
+    const idleFrame={down:0,left:8,right:16,up:24}[this.facing] || 0;
+    const anim=animPrefix+'_'+this.facing;
+
+    if(this.has(sheet) && this.anims.exists(anim)){
+      if(this.mode==='slide'){
+        if(this.playerSprite.anims.currentAnim?.key!==anim || !this.playerSprite.anims.isPlaying){
+          this.playerSprite.play(anim,true);
+        }
+      }else if(moving){
+        if(this.playerSprite.anims.currentAnim?.key!==anim || !this.playerSprite.anims.isPlaying){
+          this.playerSprite.play(anim,true);
         }
       }else{
         this.playerSprite.anims.stop();
-        this.playerSprite.setFrame(this.facing+'_0');
+        this.playerSprite.setFrame(idleFrame);
       }
     }
 
