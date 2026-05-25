@@ -27,8 +27,9 @@ const A={
   donnySlide:'assets/sprites/player/donny/donny_slide_sitting_8x4_222x222.png',
   holsterEmpty:'assets/sprites/equipment/holsters/donny_holster_empty_4dir.png',
   holsterLoaded:'assets/sprites/equipment/holsters/donny_holster_loaded_4dir.png',
+  weapon:'assets/sprites/equipment/weapons/donny_laser_revolver.png',
   van:'assets/sprites/vehicles/astro_van/astro_van_side_drive_idle_4f.png',
-  riff:'assets/sprites/companions/riff/riff_movement.png'
+  riff:'assets/sprites/companions/riff/riff_movement_8x4_222.png'
 };
 
 /*
@@ -57,10 +58,10 @@ const HOLSTER_OFF={
 };
 
 const HAND_GUN_OFF={
-  down:{x:32,y:-86,rot:0.20},
-  left:{x:-52,y:-100,rot:Math.PI},
-  right:{x:52,y:-100,rot:0},
-  up:{x:-24,y:-128,rot:Math.PI}
+  down:{x:34,y:-92,angle:12,flipX:false,mx:12,my:18},
+  left:{x:-50,y:-102,angle:180,flipX:false,mx:-22,my:0},
+  right:{x:50,y:-102,angle:0,flipX:false,mx:22,my:0},
+  up:{x:-24,y:-126,angle:-90,flipX:false,mx:0,my:-22}
 };
 
 const ROOMS={
@@ -172,8 +173,9 @@ class Boot extends Phaser.Scene{
     this.load.image('donny_slide_raw',A.donnySlide);
     this.load.spritesheet('holster_empty',A.holsterEmpty,{frameWidth:128,frameHeight:128});
     this.load.spritesheet('holster_loaded',A.holsterLoaded,{frameWidth:128,frameHeight:128});
+    this.load.image('donny_weapon',A.weapon);
     this.load.spritesheet('astro_van',A.van,{frameWidth:256,frameHeight:128});
-    this.load.spritesheet('riff',A.riff,{frameWidth:181,frameHeight:272});
+    this.load.spritesheet('riff',A.riff,{frameWidth:222,frameHeight:222});
   }
   create(){
     const mk=(k,w,h,c)=>{
@@ -191,6 +193,7 @@ class Boot extends Phaser.Scene{
 
     this.makeCleanDonnyTexture();
     this.makeDonnyAnims();
+    this.makeRiffAnims();
     this.scene.start('Title');
   }
   makeCleanDonnyTexture(){
@@ -224,6 +227,19 @@ class Boot extends Phaser.Scene{
         key:'walk_'+dir,
         frames:Array.from({length:DONNY_FRAMES[dir].length},(_,i)=>({key:'donny_clean',frame:dir+'_'+i})),
         frameRate:10,
+        repeat:-1
+      });
+    });
+  }
+
+  makeRiffAnims(){
+    if(!this.textures.exists('riff')) return;
+    const rows={down:[0,7],left:[8,15],right:[16,23],up:[24,31]};
+    Object.entries(rows).forEach(([dir,range])=>{
+      this.anims.create({
+        key:'riff_walk_'+dir,
+        frames:this.anims.generateFrameNumbers('riff',{start:range[0],end:range[1]}),
+        frameRate:8,
         repeat:-1
       });
     });
@@ -382,13 +398,32 @@ class Dust9 extends Phaser.Scene{
       this.has('donny_clean')?'down_0':undefined
     ).setOrigin(.5,1).setScale(this.has('donny_clean')?.52:1).setDepth(20);
 
+    this.riffSprite=this.add.sprite(
+      s.x-96,s.y+6,
+      this.has('riff')?'riff':'ph_player',
+      0
+    ).setOrigin(.5,1).setScale(this.has('riff')?.42:.6).setDepth(19);
+
+    if(this.has('riff') && this.anims.exists('riff_walk_down')){
+      this.riffSprite.play('riff_walk_down');
+      this.riffSprite.anims.stop();
+      this.riffSprite.setFrame(0);
+    }
+
+    this.riffLabel=txt(this,s.x-96,s.y-116,'RIFF: signal found',11,'#86f7ff')
+      .setOrigin(.5,1).setDepth(100).setVisible(this.roomId==='donny_office');
+
     this.holsterSprite=this.add.sprite(
       s.x,s.y,
       this.has('holster_loaded')?'holster_loaded':(this.has('holster_empty')?'holster_empty':'ph_holster'),
       0
     ).setOrigin(.5,.5).setScale(.74).setDepth(21);
 
-    this.handGun=this.add.graphics().setDepth(22);
+    this.handGunSprite=this.add.image(
+      s.x,s.y,
+      this.has('donny_weapon')?'donny_weapon':'ph_holster'
+    ).setOrigin(.5,.5).setScale(.72).setDepth(22).setVisible(false);
+
     this.muzzleFx=this.add.graphics().setDepth(23);
 
     this.cameras.main.startFollow(this.playerBody,true,.08,.08);
@@ -520,7 +555,6 @@ class Dust9 extends Phaser.Scene{
     if(this.slideTimer<=0){
       this.slideTimer=22;
       this.mode='slide';
-      // small dash in facing direction
       const dash=32;
       if(this.facing==='left') this.playerBody.x-=dash;
       if(this.facing==='right') this.playerBody.x+=dash;
@@ -639,6 +673,52 @@ class Dust9 extends Phaser.Scene{
     this.updateHolster();
     this.updateHandGun();
     this.updateMuzzleFx();
+    this.updateRiffCompanion();
+  }
+
+  updateRiffCompanion(){
+    if(!this.riffSprite || !this.playerBody) return;
+
+    const targetX=this.playerBody.x-92;
+    const targetY=this.playerBody.y+8;
+    const dx=targetX-this.riffSprite.x;
+    const dy=targetY-this.riffSprite.y;
+    const dist=Math.hypot(dx,dy);
+
+    let moving=false;
+    if(dist>16){
+      this.riffSprite.x+=dx*0.10;
+      this.riffSprite.y+=dy*0.10;
+      moving=true;
+    }
+
+    let dir='down';
+    if(Math.abs(dx)>Math.abs(dy)){
+      dir=dx<0?'left':'right';
+    }else if(Math.abs(dy)>3){
+      dir=dy<0?'up':'down';
+    }
+
+    this.riffSprite.setDepth(19+this.riffSprite.y/1000);
+
+    if(this.has('riff')){
+      const anim='riff_walk_'+dir;
+      if(moving && this.anims.exists(anim)){
+        if(this.riffSprite.anims.currentAnim?.key!==anim || !this.riffSprite.anims.isPlaying){
+          this.riffSprite.play(anim,true);
+        }
+      }else{
+        this.riffSprite.anims.stop();
+        const idleFrame={down:0,left:8,right:16,up:24}[dir] || 0;
+        this.riffSprite.setFrame(idleFrame);
+      }
+    }
+
+    if(this.riffLabel){
+      this.riffLabel.setPosition(this.riffSprite.x,this.riffSprite.y-116);
+      this.riffLabel.setVisible(this.roomId==='donny_office');
+      this.riffLabel.setDepth(101);
+    }
   }
 
   updateHolster(){
@@ -660,45 +740,34 @@ class Dust9 extends Phaser.Scene{
   }
 
   updateHandGun(){
-    this.handGun.clear();
-    if(this.pistol.state!=='drawn') return;
+    if(!this.handGunSprite) return;
+    if(this.pistol.state!=='drawn'){
+      this.handGunSprite.setVisible(false);
+      return;
+    }
 
     const off=HAND_GUN_OFF[this.facing];
-    const x=this.playerBody.x+off.x;
-    const y=this.playerBody.y+off.y;
-    const rot=off.rot;
-
-    this.handGun.lineStyle(4,0x111111,1);
-    this.handGun.fillStyle(0x4a4540,1);
-
-    // Draw a small simple pistol as an overlay near Donny’s hand.
-    const len=24, grip=10;
-    const dx=Math.cos(rot), dy=Math.sin(rot);
-    const px=-dy, py=dx;
-
-    this.handGun.lineBetween(x,y,x+dx*len,y+dy*len);
-    this.handGun.lineStyle(3,0x9a8e74,1);
-    this.handGun.lineBetween(x+dx*4,y+dy*4,x+dx*(len-4),y+dy*(len-4));
-    this.handGun.lineStyle(4,0x191919,1);
-    this.handGun.lineBetween(x+px*2,y+py*2,x+px*2-dx*grip+dy*6,y+py*2-dy*grip-dx*6);
+    this.handGunSprite.setVisible(true);
+    this.handGunSprite.setPosition(this.playerBody.x+off.x,this.playerBody.y+off.y);
+    this.handGunSprite.setAngle(off.angle);
+    this.handGunSprite.setFlipX(off.flipX);
+    this.handGunSprite.setDepth(this.playerSprite.depth+0.04);
+    this.handGunSprite.setScale(.62);
   }
 
   updateMuzzleFx(){
     this.muzzleFx.clear();
-    if(this.fireTimer<=0) return;
+    if(this.fireTimer<=0 || this.pistol.state!=='drawn') return;
 
     const off=HAND_GUN_OFF[this.facing];
-    const x=this.playerBody.x+off.x;
-    const y=this.playerBody.y+off.y;
-    const rot=off.rot;
-    const dx=Math.cos(rot), dy=Math.sin(rot);
-    const mx=x+dx*30, my=y+dy*30;
+    const x=this.playerBody.x+off.x+off.mx;
+    const y=this.playerBody.y+off.y+off.my;
 
     const alpha=Math.min(1,this.fireTimer/6);
     this.muzzleFx.fillStyle(0xfff0a0,alpha);
-    this.muzzleFx.fillCircle(mx,my,7);
+    this.muzzleFx.fillCircle(x,y,7);
     this.muzzleFx.fillStyle(0xff7a00,alpha*.8);
-    this.muzzleFx.fillCircle(mx,my,12);
+    this.muzzleFx.fillCircle(x,y,12);
   }
 
   changeRoom(id,enterFrom){
@@ -708,6 +777,9 @@ class Dust9 extends Phaser.Scene{
     this.playerBody.x=enterFrom==='left'?72:WORLD_W-72;
     this.playerBody.y=r.spawn.y;
     this.room=r;
+    if(this.riffSprite){
+      this.riffSprite.setPosition(this.playerBody.x-92,this.playerBody.y+8);
+    }
     this.updateVisuals(false);
   }
 }
