@@ -1,5 +1,5 @@
 
-const GAME_VERSION = 'glasswell-global-touch-strict-collision-2026-05-25';
+const GAME_VERSION = 'glasswell-touch-balanced-collision-2026-05-25';
 const ROOT = 'assets/maps/dust9/glasswell/';
 
 // DOM mobile controls are used instead of Phaser canvas-only touch controls.
@@ -410,31 +410,10 @@ class MapScene extends Phaser.Scene {
   }
 
   isWalkable(x,y){
-    if(!this.maskCtx) return false;
-
-    const cx=Math.floor(Phaser.Math.Clamp(x,0,this.mapW-1));
-    const cy=Math.floor(Phaser.Math.Clamp(y,0,this.mapH-1));
-
-    // Strict foot collision:
-    // sample center + small foot area so Donny cannot slip through wall/stall edges.
-    const samples = [
-      [0,0],
-      [-9,0],
-      [9,0],
-      [0,-6],
-      [0,6],
-      [-7,5],
-      [7,5]
-    ];
-
-    for(const [ox,oy] of samples){
-      const sx=Math.floor(Phaser.Math.Clamp(cx+ox,0,this.mapW-1));
-      const sy=Math.floor(Phaser.Math.Clamp(cy+oy,0,this.mapH-1));
-      const p=this.maskCtx.getImageData(sx,sy,1,1).data;
-      if(!(p[0]>=220 && p[1]>=220 && p[2]>=220)) return false;
-    }
-
-    return true;
+    x=Math.floor(Phaser.Math.Clamp(x,0,this.mapW-1));
+    y=Math.floor(Phaser.Math.Clamp(y,0,this.mapH-1));
+    const p=this.maskCtx.getImageData(x,y,1,1).data;
+    return p[0]>=220 && p[1]>=220 && p[2]>=220;
   }
 
   createInput(){
@@ -577,6 +556,10 @@ class MapScene extends Phaser.Scene {
     const ny=this.player.y+vy*step;
     const foot=this.player.footOffsetY || 0;
 
+    // Balanced collision:
+    // Do NOT bypass walls just because touch is active.
+    // Use the mask center foot-point so movement works on current test masks.
+    // Tight wall/stall cleanup should be done by editing the mask PNGs page by page.
     const nextXAllowed = this.isWalkable(nx,this.player.y+foot);
     const nextYAllowed = this.isWalkable(this.player.x,ny+foot);
 
@@ -590,7 +573,12 @@ class MapScene extends Phaser.Scene {
       this.prompt.setText(`${t.disabled?'Blocked route':'Route'}: ${t.label || targetOf(t)}${t.disabled?' — not built yet':''}`);
       if(!t.disabled && this.time.now>this.transitionCooldownUntil)this.handleTransition(t);
     } else {
-      this.prompt.setText('');
+      const d = window.GLASSWELL_TOUCH || {x:0,y:0,active:false};
+      if(d.active){
+        this.prompt.setText(`MOVE ${d.x.toFixed(2)}, ${d.y.toFixed(2)} | POS ${Math.round(this.player.x)}, ${Math.round(this.player.y)}`);
+      } else {
+        this.prompt.setText('');
+      }
     }
   }
 }
