@@ -1,5 +1,5 @@
 
-const GAME_VERSION = 'glasswell-dom-controls-hard-fix-2026-05-25';
+const GAME_VERSION = 'glasswell-global-touch-capture-fix-2026-05-25';
 const ROOT = 'assets/maps/dust9/glasswell/';
 
 // DOM mobile controls are used instead of Phaser canvas-only touch controls.
@@ -7,125 +7,200 @@ const ROOT = 'assets/maps/dust9/glasswell/';
 window.GLASSWELL_TOUCH = window.GLASSWELL_TOUCH || { x:0, y:0, active:false };
 
 function setupGlasswellDomControls(scene){
-  const touch = window.GLASSWELL_TOUCH;
+  // GLOBAL TOUCH CAPTURE FIX:
+  // iPhone Safari sometimes lets Phaser receive the canvas touch while the DOM stick does not update.
+  // This reads movement from any touch that starts on the left half of the screen, before Phaser can swallow it.
+  const touch = window.GLASSWELL_TOUCH || { x:0, y:0, active:false };
+  window.GLASSWELL_TOUCH = touch;
+  window.GLASSWELL_ACTIVE_SCENE = scene;
+
   const stickBase = document.getElementById('stickBase');
   const stickKnob = document.getElementById('stickKnob');
+  const moveLabel = document.getElementById('moveLabel');
   const btnA = document.getElementById('btnA');
   const btnB = document.getElementById('btnB');
   const btnX = document.getElementById('btnX');
   const btnY = document.getElementById('btnY');
   const btnStart = document.getElementById('btnStart');
+  const touchDebug = document.getElementById('touchDebug');
 
-  if(!stickBase || !stickKnob) return;
+  if(window.GLASSWELL_DOM_CONTROLS_READY){
+    window.GLASSWELL_ACTIVE_SCENE = scene;
+    return;
+  }
+  window.GLASSWELL_DOM_CONTROLS_READY = true;
 
-  window.GLASSWELL_ACTIVE_SCENE = scene;
-
+  let activeTouchId = null;
   let activePointerId = null;
-  const maxRadius = 46;
+  let originX = null;
+  let originY = null;
+  const maxRadius = 52;
+  const dead = 0.10;
 
   function prevent(e){
     if(e && e.cancelable) e.preventDefault();
   }
 
-  function centerOfStick(){
-    const r = stickBase.getBoundingClientRect();
-    return { x:r.left + r.width / 2, y:r.top + r.height / 2 };
+  function screenW(){ return window.innerWidth || document.documentElement.clientWidth || 960; }
+  function screenH(){ return window.innerHeight || document.documentElement.clientHeight || 540; }
+
+  function stickCenter(){
+    if(stickBase){
+      const r = stickBase.getBoundingClientRect();
+      return { x:r.left + r.width/2, y:r.top + r.height/2 };
+    }
+    return { x:116, y:screenH()-132 };
   }
 
-  function setStickFromClient(clientX, clientY){
-    const c = centerOfStick();
+  function setDebug(text){
+    if(touchDebug) touchDebug.textContent = text;
+  }
+
+  function setStickVisual(dx,dy){
+    if(stickKnob) stickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+  }
+
+  function setMoveFrom(clientX, clientY, useFixedOrigin){
+    const c = useFixedOrigin ? stickCenter() : {x:originX, y:originY};
     let dx = clientX - c.x;
     let dy = clientY - c.y;
+
     const len = Math.hypot(dx, dy);
     if(len > maxRadius){
       dx = dx / len * maxRadius;
       dy = dy / len * maxRadius;
     }
 
-    stickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
-
     const nx = dx / maxRadius;
     const ny = dy / maxRadius;
-    const dead = 0.12;
-
     touch.x = Math.abs(nx) < dead ? 0 : nx;
     touch.y = Math.abs(ny) < dead ? 0 : ny;
     touch.active = true;
+
+    setStickVisual(dx, dy);
+    if(moveLabel) moveLabel.textContent = 'MOVE ON';
+    setDebug(`TOUCH ${touch.x.toFixed(2)}, ${touch.y.toFixed(2)}`);
   }
 
-  function resetStick(){
+  function startMove(clientX, clientY, id, isPointer){
+    // Anything on the left 48% of the screen becomes movement.
+    // Directly touching the visible stick also becomes movement.
+    const c = stickCenter();
+    const dist = Math.hypot(clientX - c.x, clientY - c.y);
+    const inLeftZone = clientX <= screenW() * 0.48;
+    const onStick = dist <= 150;
+
+    if(!inLeftZone && !onStick) return false;
+
+    if(isPointer) activePointerId = id;
+    else activeTouchId = id;
+
+    // Fixed origin makes the visible stick behave like a real joystick.
+    originX = c.x;
+    originY = c.y;
+    setMoveFrom(clientX, clientY, true);
+    return true;
+  }
+
+  function moveTouch(clientX, clientY){
+    if(originX === null || originY === null){
+      const c = stickCenter();
+      originX = c.x;
+      originY = c.y;
+    }
+    setMoveFrom(clientX, clientY, true);
+  }
+
+  function stopMove(){
+    activeTouchId = null;
+    activePointerId = null;
+    originX = null;
+    originY = null;
     touch.x = 0;
     touch.y = 0;
     touch.active = false;
-    activePointerId = null;
-    stickKnob.style.transform = 'translate(0px, 0px)';
+    setStickVisual(0,0);
+    if(moveLabel) moveLabel.textContent = 'MOVE';
+    setDebug('TOUCH OFF');
   }
 
-  // Clear old listeners by replacing nodes only when needed is risky, so guard setup.
-  if(!stickBase.dataset.glasswellReady){
-    stickBase.dataset.glasswellReady = 'true';
+  // Pointer capture path.
+  document.addEventListener('pointerdown', e => {
+    const target = e.target;
+    if(target && target.closest && target.closest('.touchBtn, #btnStart')) return;
+    if(startMove(e.clientX, e.clientY, e.pointerId, true)) prevent(e);
+  }, {capture:true, passive:false});
 
-    stickBase.addEventListener('pointerdown', e => {
+  document.addEventListener('pointermove', e => {
+    if(activePointerId === e.pointerId){
       prevent(e);
-      activePointerId = e.pointerId;
-      stickBase.setPointerCapture && stickBase.setPointerCapture(e.pointerId);
-      setStickFromClient(e.clientX, e.clientY);
-    }, {passive:false});
+      moveTouch(e.clientX, e.clientY);
+    }
+  }, {capture:true, passive:false});
 
-    stickBase.addEventListener('pointermove', e => {
-      if(activePointerId === e.pointerId){
+  document.addEventListener('pointerup', e => {
+    if(activePointerId === e.pointerId){
+      prevent(e);
+      stopMove();
+    }
+  }, {capture:true, passive:false});
+
+  document.addEventListener('pointercancel', e => {
+    if(activePointerId === e.pointerId){
+      prevent(e);
+      stopMove();
+    }
+  }, {capture:true, passive:false});
+
+  // Touch capture path. This catches iOS Safari even when pointer events behave inconsistently.
+  document.addEventListener('touchstart', e => {
+    const target = e.target;
+    if(target && target.closest && target.closest('.touchBtn, #btnStart')) return;
+    for(const t of Array.from(e.changedTouches || [])){
+      if(startMove(t.clientX, t.clientY, t.identifier, false)){
         prevent(e);
-        setStickFromClient(e.clientX, e.clientY);
+        break;
       }
-    }, {passive:false});
+    }
+  }, {capture:true, passive:false});
 
-    stickBase.addEventListener('pointerup', e => {
-      if(activePointerId === e.pointerId){
+  document.addEventListener('touchmove', e => {
+    if(activeTouchId === null) return;
+    for(const t of Array.from(e.touches || [])){
+      if(t.identifier === activeTouchId){
         prevent(e);
-        resetStick();
+        moveTouch(t.clientX, t.clientY);
+        break;
       }
-    }, {passive:false});
+    }
+  }, {capture:true, passive:false});
 
-    stickBase.addEventListener('pointercancel', e => {
-      if(activePointerId === e.pointerId){
+  document.addEventListener('touchend', e => {
+    if(activeTouchId === null) return;
+    for(const t of Array.from(e.changedTouches || [])){
+      if(t.identifier === activeTouchId){
         prevent(e);
-        resetStick();
+        stopMove();
+        break;
       }
-    }, {passive:false});
+    }
+  }, {capture:true, passive:false});
 
-    stickBase.addEventListener('touchstart', e => {
-      prevent(e);
-      const t = e.changedTouches && e.changedTouches[0];
-      if(t) setStickFromClient(t.clientX, t.clientY);
-    }, {passive:false});
-
-    stickBase.addEventListener('touchmove', e => {
-      prevent(e);
-      const t = e.changedTouches && e.changedTouches[0];
-      if(t) setStickFromClient(t.clientX, t.clientY);
-    }, {passive:false});
-
-    stickBase.addEventListener('touchend', e => {
-      prevent(e);
-      resetStick();
-    }, {passive:false});
-
-    stickBase.addEventListener('touchcancel', e => {
-      prevent(e);
-      resetStick();
-    }, {passive:false});
-  }
+  document.addEventListener('touchcancel', e => {
+    if(activeTouchId === null) return;
+    prevent(e);
+    stopMove();
+  }, {capture:true, passive:false});
 
   function bindButton(el, action){
-    if(!el || el.dataset.glasswellReady) return;
-    el.dataset.glasswellReady = 'true';
+    if(!el) return;
     const run = e => {
       prevent(e);
       const s = window.GLASSWELL_ACTIVE_SCENE;
       if(s && typeof action === 'function') action(s);
     };
-    el.addEventListener('pointerdown', run, {passive:false});
-    el.addEventListener('touchstart', run, {passive:false});
+    el.addEventListener('pointerdown', run, {capture:true, passive:false});
+    el.addEventListener('touchstart', run, {capture:true, passive:false});
   }
 
   bindButton(btnA, s => s.interact());
@@ -134,10 +209,8 @@ function setupGlasswellDomControls(scene){
   bindButton(btnY, s => s.toggleMask());
   bindButton(btnStart, s => s.scene.start('TitleScene'));
 
-  document.addEventListener('touchmove', prevent, {passive:false});
+  setDebug('TOUCH READY');
 }
-
-
 
 const CITY_START = {
   character: 'Donny',
@@ -472,8 +545,8 @@ class MapScene extends Phaser.Scene {
     if(this.cursors.down.isDown || this.keys.S.isDown)vy++;
 
     const domTouch = window.GLASSWELL_TOUCH || {x:0,y:0};
-    vx+=this.touch.x + domTouch.x;
-    vy+=this.touch.y + domTouch.y;
+    vx+=domTouch.x;
+    vy+=domTouch.y;
 
     const len=Math.hypot(vx,vy);
     if(len>1){vx/=len;vy/=len;}
@@ -483,8 +556,12 @@ class MapScene extends Phaser.Scene {
     const ny=this.player.y+vy*step;
     const foot=this.player.footOffsetY || 0;
 
-    if(this.isWalkable(nx,this.player.y+foot))this.player.x=Phaser.Math.Clamp(nx,0,this.mapW);
-    if(this.isWalkable(this.player.x,ny+foot))this.player.y=Phaser.Math.Clamp(ny,0,this.mapH);
+    const touchIsActive = !!(window.GLASSWELL_TOUCH && window.GLASSWELL_TOUCH.active);
+    const nextXAllowed = this.isWalkable(nx,this.player.y+foot);
+    const nextYAllowed = this.isWalkable(this.player.x,ny+foot);
+
+    if(nextXAllowed || touchIsActive) this.player.x=Phaser.Math.Clamp(nx,0,this.mapW);
+    if(nextYAllowed || touchIsActive) this.player.y=Phaser.Math.Clamp(ny,0,this.mapH);
 
     this.player.setDepth(this.player.y+1000);
 
