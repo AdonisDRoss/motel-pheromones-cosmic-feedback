@@ -82,7 +82,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-touch-axis-van-placeholder-holster-2026-05-26-018';
+const VERSION = 'glasswell-real-astro-van-path-fix-2026-05-26-019';
 
 function version(path){ return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`; }
 function key(id,type){return `${id}_${type}`}
@@ -278,15 +278,15 @@ const HOLSTER = {
   frameWidth:128,
   frameHeight:128,
 
-  // Tiny holster, placed on Donny's hip instead of floating near his hand.
-  scale:0.18,
+  // Tiny hip holster. It should sit on Donny's belt/hip, not by his hand.
+  scale:0.16,
 
   directionFrame:{down:0,right:1,left:2,up:3},
   hip:{
-    down:{x:9,y:-19},
-    right:{x:10,y:-20},
-    left:{x:-10,y:-20},
-    up:{x:8,y:-20}
+    down:{x:8,y:-18},
+    right:{x:8,y:-18},
+    left:{x:-8,y:-18},
+    up:{x:7,y:-19}
   }
 };
 
@@ -306,11 +306,11 @@ const VAN = {
   anim:{down:'astro_van_drive_down',downRight:'astro_van_drive_downRight',right:'astro_van_drive_right',upRight:'astro_van_drive_upRight',up:'astro_van_drive_up',upLeft:'astro_van_drive_upLeft',left:'astro_van_drive_left',downLeft:'astro_van_drive_downLeft'},
   speed:285,
   enterDistance:72,
-  renderScale:1.12,
+  renderScale:1.22,
 
   // Small physical footprint only around the van body.
   // This prevents a huge transparent sprite box from trapping Donny.
-  body:{w:82,h:34,offsetY:-16},
+  body:{w:92,h:36,offsetY:-18},
 
   exitOffset:{down:{x:0,y:92},up:{x:0,y:-92},right:{x:112,y:0},left:{x:-112,y:0}}
 };
@@ -650,7 +650,7 @@ function selectVanDriveTexture(scene){
   VAN.activeDriveKey = VAN.driveKey;
   VAN.activeLayout = 'fallback';
   VAN.columns = 1;
-  console.warn('No Astro Van drive asset found in', VAN_FOLDER, 'using generated fallback van.');
+  console.warn('No Astro Van drive asset found in', VAN_FOLDER, 'using fallback van. Expected exact file:', VAN_FOLDER + 'astro_van_8dir_drive_11x8_128x96_TRANSPARENT_FIXED.png');
   return null;
 }
 
@@ -868,11 +868,12 @@ class MapScene extends Phaser.Scene{
   }
 
   spawnVanNearDonny(){
-    // Put the van in the road, reachable from Donny, and use clean generated van textures.
+    // Put the van in the road, reachable from Donny.
     const vx=clamp(this.mapW*.46,100,this.mapW-100);
     const vy=clamp(this.mapH*.56,100,this.mapH-100);
 
-    const texture=this.vanTextureForDir ? this.vanTextureForDir('right') : 'astro_van_generated_right';
+    const realKey=(VAN.activeDriveKey && this.textures.exists(VAN.activeDriveKey)) ? VAN.activeDriveKey : null;
+    const texture=realKey || (this.vanTextureForDir ? this.vanTextureForDir('right') : 'astro_van_generated_right');
 
     if(!this.van){
       this.van=this.add.sprite(vx,vy,texture,0).setOrigin(.5,.68).setScale(VAN.renderScale).setDepth(vy+900);
@@ -1054,6 +1055,22 @@ class MapScene extends Phaser.Scene{
     return `${Math.max(0,Math.ceil(this.vanFuel))}%`;
   }
 
+  realVanFrameForDir(dir=this.vanDir,animated=false){
+    const base=VAN.idleFrame[dir] ?? 0;
+
+    if(VAN.activeLayout==='8dir11'){
+      const step=animated ? Math.floor(this.time.now/95)%11 : 0;
+      return base + step;
+    }
+
+    if(VAN.activeLayout==='4dir4'){
+      const step=animated ? Math.floor(this.time.now/130)%4 : 0;
+      return base + step;
+    }
+
+    return base;
+  }
+
   vanTextureForDir(dir=this.vanDir){
     const keyMap={
       right:'astro_van_generated_right',
@@ -1095,10 +1112,22 @@ class MapScene extends Phaser.Scene{
 
   updateVanVisual(animated=false){
     if(!this.van)return;
-    const tex=this.vanTextureForDir(this.vanDir);
-    if(this.textures.exists(tex) && this.van.texture.key!==tex){
-      this.van.setTexture(tex);
+
+    // Use the actual Astro Van file from:
+    // assets/sprites/vehicles/astro_van/astro_van_8dir_drive_11x8_128x96_TRANSPARENT_FIXED.png
+    // The generated van is only a fallback if that file fails to load.
+    const realKey=VAN.activeDriveKey;
+    if(realKey && this.textures.exists(realKey) && realKey!=='astro_van_drive_fallback'){
+      if(this.van.texture.key!==realKey)this.van.setTexture(realKey);
+      this.van.setFrame(this.realVanFrameForDir(this.vanDir,animated));
+      this.van.setOrigin(.5,.68);
+      this.van.setScale(VAN.renderScale);
+      return;
     }
+
+    // Fallback generated van if the real asset is missing.
+    const fallbackTex=this.vanTextureForDir ? this.vanTextureForDir(this.vanDir) : 'astro_van_generated_right';
+    if(this.textures.exists(fallbackTex) && this.van.texture.key!==fallbackTex)this.van.setTexture(fallbackTex);
     this.van.setOrigin(.5,.68);
     this.van.setScale(VAN.renderScale);
   }
@@ -1765,7 +1794,7 @@ class MapScene extends Phaser.Scene{
       this.updateVanHeadlights();
       this.checkRoutes();
       this.hud.setText(`${PAGES[this.pageId].label} | Astro Van | ${Math.round(this.van.x)},${Math.round(this.van.y)}`);
-      this.status.setText(`Fuel: ${this.fuelText()} | Car Load ${formatWeight(this.getCarWeight())}/${formatWeight(this.getCarWeightLimit())} | B exits | hold Y lights | tap Y horn`);
+      this.status.setText(`Fuel: ${this.fuelText()} | Van asset: ${VAN.activeDriveKey||'fallback'} | B exits | hold Y lights | tap Y horn`);
       return;
     }
 
