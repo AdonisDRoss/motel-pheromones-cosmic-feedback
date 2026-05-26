@@ -82,7 +82,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-van-physics-updown-movement-fix-2026-05-26-006';
+const VERSION = 'glasswell-single-fuel-can-car-inventory-2026-05-26-013';
 
 function version(path){ return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`; }
 function key(id,type){return `${id}_${type}`}
@@ -90,6 +90,7 @@ function rectHit(r,x,y){return r && x>=r.x && x<=r.x+r.w && y>=r.y && y<=r.y+r.h
 function pct(w,h,a,b,c,d){return{x:a*w,y:b*h,w:c*w,h:d*h}}
 function dist(a,b,c,d){return Math.hypot(a-c,b-d)}
 function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function safeInputNumber(v){v=Number(v);return Number.isFinite(v)?v:0}
 
 const PAGES = {
   GLASSWELL_B3_DESERT_TEST:{id:'GLASSWELL_B3_DESERT_TEST',label:'B3 — Empty Dust-9 Desert Drive Test',synthetic:true,width:1800,height:1200},
@@ -97,6 +98,15 @@ const PAGES = {
   GLASSWELL_C3:{id:'GLASSWELL_C3',label:'C3 — Main Civic Gate',root:'assets/maps/dust9/glasswell/c3/',base:'layers/GLASSWELL_C3_base.png',fg:'layers/GLASSWELL_C3_foreground_overlay.png',mask:'masks/GLASSWELL_C3_collision_mask.png'},
   GLASSWELL_C4:{id:'GLASSWELL_C4',label:'C4 — Transit Vendor Square',root:'assets/maps/dust9/glasswell/c4/',base:'layers/GLASSWELL_C4_base.png',fg:'layers/GLASSWELL_C4_foreground_overlay.png',mask:'masks/GLASSWELL_C4_collision_mask.png'},
   GLASSWELL_D3:{id:'GLASSWELL_D3',label:'D3 — Red Concord Checkpoint',root:'assets/maps/dust9/glasswell/d3/',base:'layers/GLASSWELL_D3_base.png',fg:'layers/GLASSWELL_D3_foreground_overlay.png',mask:'masks/GLASSWELL_D3_collision_mask.png'}
+};
+
+
+// Single-frame fuel can setup:
+// fuel_can_hand_overlay_4dir_128.png repeats the same best fuel-can frame in all 4 slots.
+// This keeps Phaser frame order compatibility while using one clean can image.
+const FUEL_CAN_ASSETS = {
+  hand:'assets/sprites/items/fuel/fuel_can_prop_4dir_128.png',
+  pickup:'assets/sprites/items/fuel/fuel_can_pickup_128.png'
 };
 
 const DONNY_ASSETS = {
@@ -250,6 +260,24 @@ const GUN_PROP = {
   }
 };
 
+const FUEL_CAN_PROP = {
+  key:'fuel_can_hand_prop',
+
+  // Smaller hand prop. The same best fuel-can frame is repeated for every direction.
+  scale:0.52,
+
+  directionFrame:{down:0,right:1,left:2,up:3},
+
+  // Center of the 128x128 prop frame is the grip/hand anchor.
+  hand:{
+    down:{x:15,y:-44},
+    right:{x:29,y:-48},
+    left:{x:-29,y:-48},
+    up:{x:-8,y:-61}
+  }
+};
+
+
 const HOLSTER = {
   enabled:true,
   key:'donny_holster',
@@ -291,6 +319,61 @@ const VAN = {
 
   exitOffset:{down:{x:0,y:92},up:{x:0,y:-92},right:{x:112,y:0},left:{x:-112,y:0}}
 };
+
+
+const HEADLIGHTS = {
+  enabledByDefault:true,
+  alpha:0.34,
+  coreAlpha:0.50,
+  length:285,
+  width:118,
+  sideSpread:34,
+  color:0xd8f7ff,
+  coreColor:0xffffff
+};
+
+const FUEL = {
+  max:100,
+  start:100,
+
+  // Percent burned per second at full stick while driving.
+  burnPerSecond:2.8,
+
+  // Optional later fuel-station settings.
+  stationRefillPerSecond:35,
+  emptyWarningCooldown:1400
+};
+
+const ITEM_DB = {
+  laser_pistol:{id:'laser_pistol',name:'Dust-9 Laser Pistol',type:'weapon',weight:3.5},
+  fuel_can:{id:'fuel_can',name:'Fuel Can',type:'fuel',weight:12.0},
+  ration_gel:{id:'ration_gel',name:'Ration Gel',type:'consumable',weight:0.5},
+  water_vial:{id:'water_vial',name:'Water Vial',type:'consumable',weight:1.2},
+  scrap_armor:{id:'scrap_armor',name:'Scrap Armor',type:'armor',weight:18.0},
+  pistol_ammo:{id:'pistol_ammo',name:'Pistol Ammo Pack',type:'ammo',weight:1.2},
+  van_parts:{id:'van_parts',name:'Van Parts',type:'parts',weight:8.0}
+};
+
+function makeInventoryItem(id,qty=1){
+  const base=ITEM_DB[id] || {id,name:id,type:'misc',weight:1};
+  return {...base,qty};
+}
+
+function itemStackWeight(item){
+  if(!item)return 0;
+  return (Number(item.weight)||0) * (Number(item.qty)||1);
+}
+
+function inventoryWeight(items){
+  return (items||[]).reduce((sum,item)=>sum+itemStackWeight(item),0);
+}
+
+function formatWeight(n){
+  n=Number(n)||0;
+  return `${Math.round(n*10)/10} lb`;
+}
+
+
 
 const TOUCH = {x:0,y:0,active:false,a:false,b:false,xBtn:false,y:false,start:false};
 
@@ -384,6 +467,8 @@ class BootScene extends Phaser.Scene{
     this.load.spritesheet('donny_pistol',version(DONNY_ASSETS.pistol),{frameWidth:128,frameHeight:128});
     this.load.spritesheet('donny_punch',version(DONNY_ASSETS.punch),{frameWidth:128,frameHeight:128});
     this.load.spritesheet('donny_kick',version(DONNY_ASSETS.kick),{frameWidth:128,frameHeight:128});
+    this.load.spritesheet(FUEL_CAN_PROP.key,version(FUEL_CAN_ASSETS.hand),{frameWidth:128,frameHeight:128});
+    this.load.image('fuel_can_pickup',version(FUEL_CAN_ASSETS.pickup));
     this.load.spritesheet(GUN_PROP.key,version(DONNY_ASSETS.laserOverlay),{frameWidth:128,frameHeight:128});
     this.load.spritesheet(HOLSTER.key,version(DONNY_ASSETS.holster),{frameWidth:128,frameHeight:128});
 
@@ -528,7 +613,7 @@ class TitleScene extends Phaser.Scene{
     this.add.text(480,88,'COSMIC FEEDBACK',{fontFamily:'Arial Black',fontSize:'30px',color:'#e8e1cf'}).setOrigin(.5);
     this.add.text(480,138,'GLASSWELL',{fontFamily:'Arial Black',fontSize:'46px',color:'#9ff4ff'}).setOrigin(.5).setShadow(0,0,'#67dce8',8,true,true);
     this.add.text(480,195,'2.5D GTA-style open-city sci-fi RPG / brawler',{fontFamily:'Courier New',fontSize:'18px',color:'#d9b46a'}).setOrigin(.5);
-    this.add.text(480,302,'A jump | X punch/shoot | B kick/slide/crawl | Y interact/enter van\nHold direction to run | START inventory | B exits van',{fontFamily:'Courier New',fontSize:'17px',color:'#d5c7a3',align:'center',lineSpacing:8}).setOrigin(.5);
+    this.add.text(480,302,'On foot: A jump | X punch/shoot | B kick/slide/crawl | Y enter/interact\nVan: stick drive uses fuel | B rear menu on foot | X headlights | Y horn',{fontFamily:'Courier New',fontSize:'17px',color:'#d5c7a3',align:'center',lineSpacing:8}).setOrigin(.5);
     const start=()=>this.scene.start('MapScene',{pageId:'GLASSWELL_C3',spawn:'donny_city_start'});
     this.input.once('pointerdown',start);
     this.input.keyboard.once('keydown-ENTER',start);
@@ -542,12 +627,45 @@ class MapScene extends Phaser.Scene{
     this.pageId='GLASSWELL_C3';
     this.playerDir='down';
     this.inVan=false;
+    this.vanFuel=FUEL.start;
+    this.lastFuelWarning=0;
     this.vanDir='right';
     this.isCrawling=false;
     this.isInventoryOpen=false;
     this.weaponEquipped=true;
+    this.hasFuelCan=true;
+    this.fuelCanEquipped=false;
+
+    // Inventory weight limits.
+    this.playerWeightLimit=100;
+    this.carBaseWeightLimit=200;
+    this.carPurchasedWeightLimit=400;
+    this.carPurchased=false;
+
+    // Every item has a weight. Donny starts light enough to move.
+    this.playerInventory=[
+      makeInventoryItem('laser_pistol',1),
+      makeInventoryItem('fuel_can',1),
+      makeInventoryItem('ration_gel',2),
+      makeInventoryItem('water_vial',2)
+    ];
+
+    // Car storage starts at 200 lb. When purchased, it upgrades to 400 lb.
+    this.carInventory=[
+      makeInventoryItem('van_parts',1),
+      makeInventoryItem('pistol_ammo',1)
+    ];
+
+    this.bag=this.playerInventory;
+
+    this.rearMenuOpen=false;
+    this.rearMenuIndex=0;
+    this.rearMenuOptions=['Check Car Inventory','Refuel','Walk Away'];
+    this.rearMenuNavCooldown=0;
+
+    this.headlightsOn=HEADLIGHTS.enabledByDefault;
+    this.hornUntil=0;
     this.pistolAmmo=24;
-    this.bag=[];
     this.actionUntil=0;
     this.actionType='';
     this.slideUntil=0;
@@ -561,7 +679,7 @@ class MapScene extends Phaser.Scene{
 
   create(){
     setupTouch();
-    this.keys=this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,X,J,B,K,Y,E,ENTER,I,TAB,ESC');
+    this.keys=this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,X,J,B,K,Y,E,R,ENTER,I,TAB,ESC');
     this.input.keyboard.on('keydown-SPACE',()=>this.handleA());
     this.input.keyboard.on('keydown-X',()=>this.handleX());
     this.input.keyboard.on('keydown-J',()=>this.handleX());
@@ -569,6 +687,7 @@ class MapScene extends Phaser.Scene{
     this.input.keyboard.on('keydown-K',()=>this.handleB());
     this.input.keyboard.on('keydown-Y',()=>this.handleY());
     this.input.keyboard.on('keydown-E',()=>this.handleY());
+    this.input.keyboard.on('keydown-R',()=>this.refillVanFuel(FUEL.max));
     this.input.keyboard.on('keydown-ENTER',()=>this.toggleInventory());
     this.input.keyboard.on('keydown-I',()=>this.toggleInventory());
     this.input.keyboard.on('keydown-TAB',()=>this.toggleInventory());
@@ -637,9 +756,11 @@ class MapScene extends Phaser.Scene{
       this.player=this.add.sprite(this.playerX,this.playerY,texture,0).setOrigin(.5,.72).setScale(DONNY.scale).setDepth(this.playerY+1000);
       this.gun=this.add.sprite(this.playerX,this.playerY,GUN_PROP.key,0).setOrigin(.5,.5).setScale(GUN_PROP.scale).setVisible(false).setDepth(this.playerY+1005);
       this.holster=this.add.sprite(this.playerX,this.playerY,HOLSTER.key,0).setOrigin(.5,.5).setScale(HOLSTER.scale).setVisible(false).setDepth(this.playerY+1004);
+      this.fuelCan=this.add.sprite(this.playerX,this.playerY,FUEL_CAN_PROP.key,0).setOrigin(.5,.5).setScale(FUEL_CAN_PROP.scale).setVisible(false).setDepth(this.playerY+1007);
     }
     this.player.setPosition(this.playerX,this.playerY).setVisible(!this.inVan).setDepth(this.playerY+1000);
     this.updateGunOverlay();
+    this.updateFuelCanOverlay();
     this.setDonnyIdle();
   }
 
@@ -650,31 +771,30 @@ class MapScene extends Phaser.Scene{
       this.van.setPosition(this.playerX-165,this.playerY+105).setVisible(true);
     }
     this.vanX=this.van.x;this.vanY=this.van.y;this.vanPage=this.pageId;this.vanDir='right';
+    this.createVanLightObjects();
     this.enableVanPhysics();
   }
 
   inputVector(){
-    let x=TOUCH.x,y=TOUCH.y;
+    let x = Number(TOUCH.x) || 0;
+    let y = Number(TOUCH.y) || 0;
+
     if(this.keys.LEFT.isDown||this.keys.A.isDown)x-=1;
     if(this.keys.RIGHT.isDown||this.keys.D.isDown)x+=1;
     if(this.keys.UP.isDown||this.keys.W.isDown)y-=1;
     if(this.keys.DOWN.isDown||this.keys.S.isDown)y+=1;
+
+    if(!Number.isFinite(x))x=0;
+    if(!Number.isFinite(y))y=0;
+
     const l=Math.hypot(x,y);
     if(l>1){x/=l;y/=l}
-    return {x,y,len:Math.min(1,l)};
-  }
 
-  directionFromVector(x,y,last='down'){
-    if(Math.abs(x)<.05 && Math.abs(y)<.05)return last;
-
-    // Strict 2.5D control rule:
-    // If the stick has real up/down input, Donny must be allowed to face and walk up/down.
-    // This prevents sideways drift from stealing vertical movement on iPhone touch controls.
-    const ax=Math.abs(x);
-    const ay=Math.abs(y);
-    if(ay>.18 && ay>=ax*.45)return y>0?'down':'up';
-    if(ax>.18)return x>0?'right':'left';
-    return y>0?'down':'up';
+    return {
+      x:Number.isFinite(x)?x:0,
+      y:Number.isFinite(y)?y:0,
+      len:Number.isFinite(l)?Math.min(1,l):0
+    };
   }
 
   vanDirectionFromVector(x,y,last='right'){
@@ -760,7 +880,184 @@ class MapScene extends Phaser.Scene{
     }
   }
 
+  burnVanFuel(inputLen,delta){
+    if(!this.inVan)return;
+    if(this.vanFuel<=0)return;
+
+    const burn=(FUEL.burnPerSecond||2.8)*Math.max(0,inputLen||0)*delta/1000;
+    this.vanFuel=clamp(this.vanFuel-burn,0,FUEL.max);
+
+    if(this.vanFuel<=0){
+      this.vanFuel=0;
+      this.message('Out of fuel');
+    }
+  }
+
+  canDriveVan(inputLen){
+    if((inputLen||0)<=.08)return false;
+    if(this.vanFuel>0)return true;
+
+    if(this.time.now-this.lastFuelWarning>(FUEL.emptyWarningCooldown||1400)){
+      this.lastFuelWarning=this.time.now;
+      this.message('Out of fuel — refill at a fuel station');
+    }
+    return false;
+  }
+
+  refillVanFuel(amount=FUEL.max){
+    const before=this.vanFuel;
+    this.vanFuel=clamp(this.vanFuel+amount,0,FUEL.max);
+    if(this.vanFuel>before)this.message(`Fuel refilled: ${Math.round(this.vanFuel)}%`);
+  }
+
+  fuelText(){
+    return `${Math.max(0,Math.ceil(this.vanFuel))}%`;
+  }
+
+  createVanLightObjects(){
+    if(this.headlightBeam)return;
+
+    this.headlightBeam=this.add.graphics()
+      .setDepth(50)
+      .setVisible(false);
+
+    this.headlightCore=this.add.graphics()
+      .setDepth(51)
+      .setVisible(false);
+  }
+
+  getVanForwardVector(){
+    const dir=this.vanDir || 'right';
+    const map={
+      right:{x:1,y:0},
+      left:{x:-1,y:0},
+      down:{x:0,y:1},
+      up:{x:0,y:-1},
+      downRight:{x:.707,y:.707},
+      downLeft:{x:-.707,y:.707},
+      upRight:{x:.707,y:-.707},
+      upLeft:{x:-.707,y:-.707}
+    };
+    return map[dir] || map.right;
+  }
+
+  updateVanHeadlights(){
+    if(!this.van || !this.headlightBeam || !this.headlightCore)return;
+
+    const visible=this.headlightsOn && this.van.visible;
+    this.headlightBeam.setVisible(visible);
+    this.headlightCore.setVisible(visible);
+
+    if(!visible){
+      this.headlightBeam.clear();
+      this.headlightCore.clear();
+      return;
+    }
+
+    const f=this.getVanForwardVector();
+    const side={x:-f.y,y:f.x};
+    const originX=this.van.x + f.x*44;
+    const originY=this.van.y + f.y*24 - 8;
+
+    const leftLamp={
+      x:originX + side.x*HEADLIGHTS.sideSpread,
+      y:originY + side.y*HEADLIGHTS.sideSpread
+    };
+    const rightLamp={
+      x:originX - side.x*HEADLIGHTS.sideSpread,
+      y:originY - side.y*HEADLIGHTS.sideSpread
+    };
+
+    const tip={
+      x:originX + f.x*HEADLIGHTS.length,
+      y:originY + f.y*HEADLIGHTS.length
+    };
+
+    const sideWide={
+      x:side.x*HEADLIGHTS.width,
+      y:side.y*HEADLIGHTS.width
+    };
+
+    this.headlightBeam.clear();
+    this.headlightCore.clear();
+
+    // Wide soft cone.
+    this.headlightBeam.fillStyle(HEADLIGHTS.color, HEADLIGHTS.alpha);
+    this.headlightBeam.beginPath();
+    this.headlightBeam.moveTo(leftLamp.x,leftLamp.y);
+    this.headlightBeam.lineTo(tip.x+sideWide.x,tip.y+sideWide.y);
+    this.headlightBeam.lineTo(tip.x-sideWide.x,tip.y-sideWide.y);
+    this.headlightBeam.lineTo(rightLamp.x,rightLamp.y);
+    this.headlightBeam.closePath();
+    this.headlightBeam.fillPath();
+
+    // Bright center cone.
+    this.headlightCore.fillStyle(HEADLIGHTS.coreColor, HEADLIGHTS.coreAlpha);
+    this.headlightCore.beginPath();
+    this.headlightCore.moveTo(leftLamp.x,leftLamp.y);
+    this.headlightCore.lineTo(tip.x+side.x*32,tip.y+side.y*32);
+    this.headlightCore.lineTo(tip.x-side.x*32,tip.y-side.y*32);
+    this.headlightCore.lineTo(rightLamp.x,rightLamp.y);
+    this.headlightCore.closePath();
+    this.headlightCore.fillPath();
+
+    // Lamp bulbs.
+    this.headlightCore.fillStyle(0xffffff, .95);
+    this.headlightCore.fillCircle(leftLamp.x,leftLamp.y,5);
+    this.headlightCore.fillCircle(rightLamp.x,rightLamp.y,5);
+
+    this.headlightBeam.setDepth(this.van.y+850);
+    this.headlightCore.setDepth(this.van.y+851);
+  }
+
+  toggleHeadlights(){
+    this.headlightsOn=!this.headlightsOn;
+    this.message(this.headlightsOn?'Headlights on':'Headlights off');
+  }
+
+  honkHorn(){
+    this.hornUntil=this.time.now+380;
+    this.message('HONK');
+  }
+
+  rearOfVanPoint(){
+    if(!this.van)return {x:0,y:0};
+    const f=this.getVanForwardVector ? this.getVanForwardVector() : {x:1,y:0};
+    return {
+      x:this.van.x - f.x*58,
+      y:this.van.y - f.y*42
+    };
+  }
+
+  nearRearOfVan(){
+    if(!this.van || !this.van.visible || this.inVan)return false;
+    const rear=this.rearOfVanPoint();
+    return dist(this.playerX,this.playerY,rear.x,rear.y)<74;
+  }
+
+  refuelVanWithCan(){
+    if(this.inVan)return false;
+    if(!this.hasFuelCan || !this.fuelCanEquipped)return false;
+    if(!this.nearRearOfVan())return false;
+
+    if(this.vanFuel>=FUEL.max){
+      this.message('Van fuel already full');
+      return true;
+    }
+
+    // Reuse empty pistol/aiming pose; the fuel can overlay sits at the hand.
+    this.actionType='refuel';
+    this.actionUntil=this.time.now+650;
+    const anim=`donny_shoot_${this.playerDir}`;
+    if(this.anims.exists(anim))this.player.play(anim,true);
+
+    this.refillVanFuel(FUEL.max);
+    this.message('Refueled Astro Van');
+    return true;
+  }
+
   handleA(){
+    if(this.rearMenuOpen){this.selectRearMenuOption();return}
     if(this.isInventoryOpen){this.useInventory();return}
     if(this.inVan)return;
     if(this.jumpZ>1 || this.isCrawling)return;
@@ -771,15 +1068,29 @@ class MapScene extends Phaser.Scene{
   }
 
   handleX(){
+    if(this.rearMenuOpen){this.nextRearMenuOption();return}
     if(this.isInventoryOpen){this.nextInventory();return}
-    if(this.inVan)return;
+    if(this.inVan){
+      this.toggleHeadlights();
+      return;
+    }
+    if(this.fuelCanEquipped){
+      this.actionType='hold_can';
+      this.actionUntil=this.time.now+260;
+      const anim=`donny_shoot_${this.playerDir}`;
+      if(this.anims.exists(anim))this.player.play(anim,true);
+      this.message('Fuel can ready');
+      return;
+    }
     if(this.weaponEquipped)this.shootPistol();
     else this.punch();
   }
 
   handleB(){
+    if(this.rearMenuOpen){this.closeRearMenu();return}
     if(this.isInventoryOpen){this.dropInventory();return}
     if(this.inVan){this.exitVan();return}
+    if(this.nearRearOfVan && this.nearRearOfVan()){this.openRearMenu();return}
     const input=this.inputVector();
     if(this.isCrawling){this.isCrawling=false;this.setDonnyIdle();this.message('Crawl off');return}
     if(input.y>.55){this.isCrawling=true;this.message('Crawl on');return}
@@ -788,7 +1099,12 @@ class MapScene extends Phaser.Scene{
   }
 
   handleY(){
+    if(this.rearMenuOpen){this.closeRearMenu();return}
     if(this.isInventoryOpen){this.toggleInventory();return}
+    if(this.inVan){
+      this.honkHorn();
+      return;
+    }
     if(this.nearVan()){this.enterVan();return}
     this.message('No interaction here');
   }
@@ -867,12 +1183,27 @@ class MapScene extends Phaser.Scene{
     this.player.setFrame(DONNY.directionFrame[this.playerDir]||0);
   }
 
+  updateFuelCanOverlay(){
+    if(!this.fuelCan)return;
+
+    const visible = this.fuelCanEquipped && !this.inVan && !this.isCrawling;
+    const frame = FUEL_CAN_PROP.directionFrame[this.playerDir] ?? 1;
+    const hand = FUEL_CAN_PROP.hand[this.playerDir] || FUEL_CAN_PROP.hand.right;
+
+    this.fuelCan
+      .setFrame(frame)
+      .setScale(FUEL_CAN_PROP.scale)
+      .setPosition(this.playerX+hand.x, this.playerY+hand.y-this.jumpZ)
+      .setDepth(this.playerY+1007)
+      .setVisible(visible);
+  }
+
   updateGunOverlay(){
     if(!this.gun || !this.holster)return;
 
     const now=this.time?.now||0;
     const shooting =
-      this.weaponEquipped &&
+      this.weaponEquipped && !this.fuelCanEquipped &&
       this.actionType==='shoot' &&
       now>=this.actionUntil-ACTION.shootDuration+ACTION.gunShowDelay &&
       now<this.actionUntil-ACTION.gunHideBeforeEnd;
@@ -896,13 +1227,172 @@ class MapScene extends Phaser.Scene{
       .setScale(HOLSTER.scale)
       .setPosition(this.playerX+hip.x, this.playerY+hip.y-this.jumpZ)
       .setDepth(this.playerY+1004)
-      .setVisible(HOLSTER.enabled && this.weaponEquipped && !shooting && !this.inVan && !this.isCrawling);
+      .setVisible(HOLSTER.enabled && this.weaponEquipped && !this.fuelCanEquipped && !shooting && !this.inVan && !this.isCrawling);
   }
 
   toggleInventory(){
     this.isInventoryOpen=!this.isInventoryOpen;
     if(this.isInventoryOpen)this.openInventory(); else this.closeInventory();
   }
+  getPlayerWeight(){
+    return inventoryWeight(this.playerInventory);
+  }
+
+  getCarWeightLimit(){
+    return this.carPurchased ? this.carPurchasedWeightLimit : this.carBaseWeightLimit;
+  }
+
+  getCarWeight(){
+    return inventoryWeight(this.carInventory);
+  }
+
+  hasItem(id){
+    return (this.playerInventory||[]).some(item=>item.id===id && (item.qty||1)>0);
+  }
+
+  removePlayerItem(id,qty=1){
+    const item=(this.playerInventory||[]).find(x=>x.id===id);
+    if(!item)return false;
+    item.qty=(item.qty||1)-qty;
+    if(item.qty<=0)this.playerInventory=this.playerInventory.filter(x=>x!==item);
+    this.bag=this.playerInventory;
+    return true;
+  }
+
+  addToCar(id,qty=1){
+    const item=makeInventoryItem(id,qty);
+    if(this.getCarWeight()+itemStackWeight(item)>this.getCarWeightLimit()){
+      this.message('Car inventory full');
+      return false;
+    }
+    const existing=this.carInventory.find(x=>x.id===id);
+    if(existing)existing.qty=(existing.qty||1)+qty;
+    else this.carInventory.push(item);
+    return true;
+  }
+
+  syncInventoryFlags(){
+    this.hasFuelCan=this.hasItem('fuel_can');
+    if(!this.hasFuelCan)this.fuelCanEquipped=false;
+    if(this.fuelCanEquipped)this.weaponEquipped=false;
+  }
+
+  openRearMenu(){
+    if(this.rearMenuOpen)return;
+    this.syncInventoryFlags();
+    this.rearMenuOpen=true;
+    this.rearMenuIndex=0;
+    this.openRearMenuUI();
+  }
+
+  closeRearMenu(){
+    this.rearMenuOpen=false;
+    if(this.rearBox)this.rearBox.setVisible(false);
+    this.message('Rear menu closed');
+  }
+
+  openRearMenuUI(){
+    if(!this.rearBox){
+      this.rearBox=this.add.container(0,0).setScrollFactor(0).setDepth(31000);
+      const bg=this.add.rectangle(480,270,690,360,0x030506,.94).setStrokeStyle(3,0xff2aa1,.9);
+      const title=this.add.text(150,92,'ASTRO VAN REAR MENU',{fontFamily:'Arial Black',fontSize:'22px',color:'#9ff4ff'});
+      this.rearText=this.add.text(150,135,'',{fontFamily:'Courier New',fontSize:'16px',color:'#f4e7c2',lineSpacing:8});
+      const help=this.add.text(150,410,'A select | X/Stick down next | B/Y walk away',{fontFamily:'Courier New',fontSize:'14px',color:'#d9b46a'});
+      this.rearBox.add([bg,title,this.rearText,help]);
+    }
+    this.rearBox.setVisible(true);
+    this.refreshRearMenu();
+  }
+
+  refreshRearMenu(){
+    if(!this.rearText)return;
+    const carLimit=this.getCarWeightLimit();
+    const lines=[
+      `Fuel: ${this.fuelText()}`,
+      `Donny Load: ${formatWeight(this.getPlayerWeight())} / ${formatWeight(this.playerWeightLimit)}`,
+      `Car Storage: ${formatWeight(this.getCarWeight())} / ${formatWeight(carLimit)}${this.carPurchased?'':' (400 lb after purchase)'}`,
+      '',
+      'Rear Options:'
+    ];
+
+    this.rearMenuOptions.forEach((opt,i)=>{
+      lines.push(`${i===this.rearMenuIndex?'▶':' '} ${opt}`);
+    });
+
+    this.rearText.setText(lines.join('\n'));
+  }
+
+  nextRearMenuOption(){
+    this.rearMenuIndex=(this.rearMenuIndex+1)%this.rearMenuOptions.length;
+    this.refreshRearMenu();
+  }
+
+  selectRearMenuOption(){
+    const opt=this.rearMenuOptions[this.rearMenuIndex];
+    if(opt==='Check Car Inventory'){
+      this.showCarInventoryMenu();
+      return;
+    }
+    if(opt==='Refuel'){
+      this.refuelFromRearMenu();
+      return;
+    }
+    this.closeRearMenu();
+  }
+
+  showCarInventoryMenu(){
+    const carLimit=this.getCarWeightLimit();
+    const lines=[
+      `CAR INVENTORY`,
+      `Storage: ${formatWeight(this.getCarWeight())} / ${formatWeight(carLimit)}`,
+      this.carPurchased?'Purchased storage: 400 lb':'Unpurchased storage: 200 lb',
+      '',
+      ...(this.carInventory.length ? this.carInventory.map(item=>`- ${item.name} x${item.qty||1} = ${formatWeight(itemStackWeight(item))}`) : ['- empty']),
+      '',
+      `Donny Load: ${formatWeight(this.getPlayerWeight())} / ${formatWeight(this.playerWeightLimit)}`,
+      '',
+      'B/Y = walk away'
+    ];
+    if(this.rearText)this.rearText.setText(lines.join('\n'));
+  }
+
+  refuelFromRearMenu(){
+    this.syncInventoryFlags();
+    if(!this.hasFuelCan){
+      this.message('Need a fuel can');
+      this.refreshRearMenu();
+      return;
+    }
+    if(this.vanFuel>=FUEL.max){
+      this.message('Van fuel already full');
+      this.refreshRearMenu();
+      return;
+    }
+
+    // Fuel can can be carried or equipped. If carried, Donny uses it for this action.
+    this.fuelCanEquipped=true;
+    this.weaponEquipped=false;
+
+    this.actionType='refuel';
+    this.actionUntil=this.time.now+650;
+    const anim=`donny_shoot_${this.playerDir}`;
+    if(this.anims.exists(anim))this.player.play(anim,true);
+
+    this.refillVanFuel(FUEL.max);
+    this.message('Refueled Astro Van');
+    this.closeRearMenu();
+  }
+
+  updateRearMenuInput(now,input){
+    if(!this.rearMenuOpen)return;
+    if(now<this.rearMenuNavCooldown)return;
+    if((input&&input.y>.45) || TOUCH.xBtn){
+      TOUCH.xBtn=false;
+      this.nextRearMenuOption();
+      this.rearMenuNavCooldown=now+220;
+    }
+  }
+
   openInventory(){
     if(!this.invBox){
       this.invBox=this.add.container(0,0).setScrollFactor(0).setDepth(30000);
@@ -917,20 +1407,71 @@ class MapScene extends Phaser.Scene{
   closeInventory(){if(this.invBox)this.invBox.setVisible(false);this.message('Inventory closed')}
   refreshInventory(){
     if(!this.invText)return;
-    this.invText.setText([
+    this.syncInventoryFlags();
+    const lines=[
+      `DONNY INVENTORY`,
+      `Load: ${formatWeight(this.getPlayerWeight())} / ${formatWeight(this.playerWeightLimit)}`,
       `Weapon: ${this.weaponEquipped?'Pistol equipped':'empty'}`,
       `Ammo: ${this.pistolAmmo}/24`,
-      `Bag: ${this.bag.length}`,
+      `Astro Van Fuel: ${this.fuelText()}`,
       '',
-      'Selected:',
-      '▶ Dust-9 Laser Pistol',
-      '',
-      'Press A to equip/unequip pistol.'
-    ].join('\n'));
+      'Items:'
+    ];
+
+    if(this.playerInventory.length){
+      this.playerInventory.forEach(item=>{
+        let tag='';
+        if(item.id==='fuel_can' && this.fuelCanEquipped)tag=' [EQUIPPED]';
+        if(item.id==='laser_pistol' && this.weaponEquipped)tag=' [EQUIPPED]';
+        lines.push(`- ${item.name} x${item.qty||1} — ${formatWeight(itemStackWeight(item))}${tag}`);
+      });
+    } else {
+      lines.push('- empty');
+    }
+
+    lines.push('');
+    lines.push('A = toggle fuel can / pistol');
+    lines.push('B = drop equipped fuel can or unequip pistol');
+
+    this.invText.setText(lines.join('\n'));
   }
-  useInventory(){this.weaponEquipped=!this.weaponEquipped;this.refreshInventory();this.message(this.weaponEquipped?'Pistol equipped':'Pistol unequipped')}
+  useInventory(){
+    this.syncInventoryFlags();
+    if(this.hasFuelCan && !this.fuelCanEquipped){
+      this.fuelCanEquipped=true;
+      this.weaponEquipped=false;
+      this.refreshInventory();
+      this.message('Fuel can equipped');
+      return;
+    }
+
+    if(this.fuelCanEquipped){
+      this.fuelCanEquipped=false;
+      this.weaponEquipped=this.hasItem('laser_pistol');
+      this.refreshInventory();
+      this.message(this.weaponEquipped?'Pistol equipped':'Hands empty');
+      return;
+    }
+
+    this.weaponEquipped=!this.weaponEquipped;
+    this.refreshInventory();
+    this.message(this.weaponEquipped?'Pistol equipped':'Pistol unequipped');
+  }
   nextInventory(){this.refreshInventory()}
-  dropInventory(){if(this.weaponEquipped){this.weaponEquipped=false;this.refreshInventory();this.message('Dropped/unequipped pistol')}}
+  dropInventory(){
+    if(this.fuelCanEquipped){
+      this.fuelCanEquipped=false;
+      this.hasFuelCan=false;
+      this.refreshInventory();
+      this.message('Dropped fuel can');
+      return;
+    }
+    if(this.weaponEquipped){
+      this.weaponEquipped=false;
+      this.refreshInventory();
+      this.message('Dropped/unequipped pistol');
+    }
+  }
 
   message(t){
     this.prompt.setText(t);
@@ -966,28 +1507,40 @@ class MapScene extends Phaser.Scene{
     if(TOUCH.start){TOUCH.start=false;this.toggleInventory()}
 
     this.updateJump(delta);
-    if(this.isInventoryOpen){this.updateGunOverlay();return}
+    this.updateVanHeadlights();
 
     const input=this.inputVector();
+
+    if(this.rearMenuOpen){
+      this.updateRearMenuInput(now,input);
+      this.updateGunOverlay();
+      this.updateFuelCanOverlay();
+      return;
+    }
+
+    if(this.isInventoryOpen){this.updateGunOverlay();this.updateFuelCanOverlay();return}
+
     const moving=input.len>.08;
 
     if(this.inVan){
-      if(moving){
+      if(moving && this.canDriveVan(input.len)){
         this.vanDir=this.vanDirectionFromVector(input.x,input.y,this.vanDir);
+        this.burnVanFuel(input.len,delta);
         this.van.x=clamp(this.van.x+input.x*VAN.speed*delta/1000,20,this.mapW-20);
         this.van.y=clamp(this.van.y+input.y*VAN.speed*delta/1000,20,this.mapH-20);
         if(this.van.body)this.van.body.updateFromGameObject();
         const anim=VAN.anim[this.vanDir];
         if(this.anims.exists(anim))this.van.play(anim,true);
-        else this.van.setFrame(VAN.idleFrame[this.vanDir]||0);
+        else this.van.setFrame(VAN.idleFrame[this.vanDir] ?? 0);
       } else {
         this.van.stop();
         this.van.setFrame(VAN.idleFrame[this.vanDir] ?? 0);
       }
       this.van.setDepth(this.van.y+900);
+      this.updateVanHeadlights();
       this.checkRoutes();
       this.hud.setText(`${PAGES[this.pageId].label} | Astro Van | ${Math.round(this.van.x)},${Math.round(this.van.y)}`);
-      this.status.setText(`Driving | B exits | Pistol ammo: ${this.pistolAmmo}`);
+      this.status.setText(`Fuel: ${this.fuelText()} | Car Load ${formatWeight(this.getCarWeight())}/${formatWeight(this.getCarWeightLimit())} | B exits | X lights | Y horn`);
       return;
     }
 
@@ -1006,7 +1559,7 @@ class MapScene extends Phaser.Scene{
     if(this.actionType==='slide' && now<this.slideUntil){
       const sv=this.slideVec||input;
       this.moveDonnyWithCollision(sv.x*390*delta/1000, sv.y*390*delta/1000);
-    } else if(moving && !(now<this.actionUntil && ['punch','kick','shoot'].includes(this.actionType))){
+    } else if(moving && !(now<this.actionUntil && ['punch','kick','shoot','refuel','hold_can'].includes(this.actionType))){
       this.moveDonnyWithCollision(input.x*speed*delta/1000, input.y*speed*delta/1000);
     }
 
@@ -1022,11 +1575,13 @@ class MapScene extends Phaser.Scene{
 
     this.player.setPosition(this.playerX,this.playerY-this.jumpZ).setDepth(this.playerY+1000);
     this.updateGunOverlay();
+    this.updateVanHeadlights();
     this.checkRoutes();
 
-    if(this.nearVan())this.prompt.setText('Y: enter Astro Van');
-    this.hud.setText(`${PAGES[this.pageId].label} | Donny | ${Math.round(this.playerX)},${Math.round(this.playerY)} | input ${input.x.toFixed(2)},${input.y.toFixed(2)} | 2.5D GTA-style open-city sci-fi RPG / brawler`);
-    this.status.setText(`Weapon: ${this.weaponEquipped?'Pistol equipped':'empty'} | Bag: ${this.bag.length}`);
+    if(this.nearRearOfVan && this.nearRearOfVan())this.prompt.setText('B: rear menu');
+    else if(this.nearVan())this.prompt.setText('Y: enter Astro Van');
+    this.hud.setText(`${PAGES[this.pageId].label} | Donny | ${Math.round(this.playerX)},${Math.round(this.playerY)} | 2.5D GTA-style open-city sci-fi RPG / brawler`);
+    this.status.setText(`${this.fuelCanEquipped?'Fuel can equipped':(this.weaponEquipped?'Pistol equipped':'Hands empty')} | Load ${formatWeight(this.getPlayerWeight())}/${formatWeight(this.playerWeightLimit)} | Car ${formatWeight(this.getCarWeight())}/${formatWeight(this.getCarWeightLimit())} | Fuel ${this.fuelText()}`);
   }
 }
 
