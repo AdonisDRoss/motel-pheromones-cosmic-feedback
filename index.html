@@ -1,582 +1,520 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <title>Cosmic Feedback: Glasswell</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-
-<script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="screen-orientation" content="landscape" />
+<meta name="x5-orientation" content="landscape" />
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js" crossorigin="anonymous"></script>
+<script>
+if(!window.Phaser){
+  document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.70.0/phaser.min.js"><\/script>');
+}
+</script>
 <style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    background: #000;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    touch-action: none;
-  }
-
-  #game {
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-  }
-
-  canvas {
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-  }
+*{box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:#000;width:100%;height:100%;overflow:hidden;touch-action:none;overscroll-behavior:none}
+body{position:fixed;inset:0}
+#game{position:fixed;inset:0;width:100vw;height:100vh;overflow:hidden;z-index:1;background:#000}
+canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+#touchControls{position:fixed;inset:0;z-index:20;pointer-events:none;touch-action:none}
+#stickBase{position:absolute;left:56px;bottom:38px;width:126px;height:126px;border-radius:50%;border:4px solid rgba(255,255,255,.42);background:rgba(0,0,0,.25);box-shadow:0 0 0 2px rgba(36,223,255,.22) inset;pointer-events:auto;touch-action:none}
+#stickRing{position:absolute;left:16px;top:16px;width:86px;height:86px;border-radius:50%;border:2px solid rgba(255,42,161,.44)}
+#stickKnob{position:absolute;left:38px;top:38px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.30);border:2px solid rgba(255,255,255,.68)}
+#moveLabel{position:absolute;left:0;right:0;bottom:-25px;text-align:center;font:800 12px Arial,sans-serif;color:rgba(255,255,255,.72);letter-spacing:1px}
+.touchBtn{position:absolute;border-radius:50%;border:3px solid rgba(255,255,255,.78);color:#fff;font:900 20px Arial,sans-serif;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;box-shadow:0 0 18px rgba(255,255,255,.08)}
+.touchBtn:active{transform:scale(.96)}
+#btnY{right:86px;bottom:154px;width:62px;height:62px;background:rgba(255,42,161,.42);font-size:16px}
+#btnA{right:22px;bottom:92px;width:62px;height:62px;background:rgba(33,215,255,.34);font-size:16px}
+#btnX{right:150px;bottom:92px;width:62px;height:62px;background:rgba(255,180,45,.38);font-size:16px}
+#btnB{right:86px;bottom:30px;width:62px;height:62px;background:rgba(70,255,135,.32);font-size:16px}
+#btnStart{position:fixed;left:50vw;bottom:max(9px,env(safe-area-inset-bottom));transform:translateX(-50%);width:132px;height:35px;border-radius:18px;background:rgba(0,0,0,.62);border:2px solid rgba(255,255,255,.58);color:#fff;font:900 13px Arial,sans-serif;letter-spacing:1px;pointer-events:auto;touch-action:none;display:flex;align-items:center;justify-content:center;z-index:40}
+#btnStart:active{transform:translateX(-50%) scale(.96)}
+#bootError{position:fixed;left:10px;top:10px;z-index:99998;max-width:76vw;background:rgba(0,0,0,.88);border:2px solid #ff2aa1;color:#fff;font:700 13px Arial,sans-serif;line-height:1.35;padding:10px 12px;border-radius:10px;display:none;white-space:pre-wrap;pointer-events:none}
+#rotateNotice{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;text-align:center;background:#050612;color:#fff;font-family:Arial,sans-serif;padding:28px;line-height:1.35}
+#rotateNotice .box{border:2px solid #ff2aa1;border-radius:18px;background:rgba(0,0,0,.55);padding:22px;max-width:380px}
+#rotateNotice .big{font-size:24px;font-weight:900;margin-bottom:10px}
+@media (orientation: portrait){#rotateNotice{display:flex}#touchControls{display:none}}
 </style>
 </head>
-
 <body>
+<div id="rotateNotice"><div class="box"><div class="big">Rotate Phone</div><div>Glasswell is a landscape 2.5D city build.</div><div>Turn your phone sideways to play.</div></div></div>
 <div id="game"></div>
+<div id="touchControls">
+  <div id="stickBase"><div id="stickRing"></div><div id="stickKnob"></div><div id="moveLabel">MOVE</div></div>
+  <div id="btnY" class="touchBtn">Y</div>
+  <div id="btnA" class="touchBtn">A</div>
+  <div id="btnX" class="touchBtn">X</div>
+  <div id="btnB" class="touchBtn">B</div>
+  <div id="btnStart">START</div>
+</div>
+<div id="bootError"></div>
 
 <script>
-const VERSION = "glasswell-current-001";
+/*
+COSMIC FEEDBACK — GLASSWELL
+2.5D GTA-style open-city sci-fi RPG / brawler prototype.
+This is NOT a side-scroller.
+Donny starts in Glasswell, using real Glasswell map-layer assets, Donny sprite assets, and Red Concord weapon assets.
+*/
+function showBootError(message){
+  const box=document.getElementById('bootError');
+  if(!box)return;
+  box.style.display='block';
+  box.textContent=message;
+}
+window.addEventListener('error', e => showBootError('GAME ERROR: ' + (e.message || 'unknown error')));
+window.addEventListener('unhandledrejection', e => showBootError('GAME ERROR: ' + ((e.reason && (e.reason.message || e.reason)) || 'unhandled promise rejection')));
+window.addEventListener('contextmenu', e => e.preventDefault());
+window.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('touchmove', e => e.preventDefault(), { passive:false });
 
 const GAME_W = 960;
 const GAME_H = 540;
+const VERSION = 'glasswell-gta-asset-wire-2026-05-25-002';
+const REMOTE_DONNY_ROOT = 'https://raw.githubusercontent.com/AdonisDRoss/motel-pheromones/main/';
 
-const ASSETS = {
-  title: "assets/title-screen.png",
-
-  maps: {
-    C3: "assets/maps/GLASSWELL_C3_base.png",
-    B3: "assets/maps/GLASSWELL_B3_base.png",
-    D3: "assets/maps/GLASSWELL_D3_base.png",
-    C2: "assets/maps/GLASSWELL_C2_base.png",
-    C4: "assets/maps/GLASSWELL_C4_base.png"
-  },
-
-  masks: {
-    C3: "assets/collision/GLASSWELL_C3_collision.png",
-    B3: "assets/collision/GLASSWELL_B3_collision.png",
-    D3: "assets/collision/GLASSWELL_D3_collision.png",
-    C2: "assets/collision/GLASSWELL_C2_collision.png",
-    C4: "assets/collision/GLASSWELL_C4_collision.png"
-  },
-
-  donny: "assets/sprites/player/donny/donny_idle.png",
-
-  astroVan: "assets/vehicles/astro_van_sprite_sheet.png"
+const GAME_IDENTITY = {
+  title:'Cosmic Feedback: Glasswell',
+  genre:'2.5D GTA-style open-city sci-fi RPG / brawler',
+  camera:'top-down / 2.5D orthographic city camera',
+  rule:'free-roam Glasswell city chunks, not a side-scroller'
 };
 
-const MAP_ORDER = ["C3", "B3", "D3", "C2", "C4"];
-
-const MAP_NAMES = {
-  C3: "GLASSWELL_C3 — Main Civic Gate",
-  B3: "GLASSWELL_B3 — Ration Gate Plaza",
-  D3: "GLASSWELL_D3 — Red Concord Checkpoint",
-  C2: "GLASSWELL_C2 — Civic Admin Street",
-  C4: "GLASSWELL_C4 — Transit Vendor Square"
+const PAGES = {
+  GLASSWELL_C2:{id:'GLASSWELL_C2',label:'C2 — Civic Admin Street',root:'assets/maps/dust9/glasswell/c2/',base:'layers/GLASSWELL_C2_base.png',fg:'layers/GLASSWELL_C2_foreground_overlay.png',mask:'masks/GLASSWELL_C2_collision_mask.png'},
+  GLASSWELL_C3:{id:'GLASSWELL_C3',label:'C3 — Main Civic Gate',root:'assets/maps/dust9/glasswell/c3/',base:'layers/GLASSWELL_C3_base.png',fg:'layers/GLASSWELL_C3_foreground_overlay.png',mask:'masks/GLASSWELL_C3_collision_mask.png'},
+  GLASSWELL_C4:{id:'GLASSWELL_C4',label:'C4 — Transit Vendor Square',root:'assets/maps/dust9/glasswell/c4/',base:'layers/GLASSWELL_C4_base.png',fg:'layers/GLASSWELL_C4_foreground_overlay.png',mask:'masks/GLASSWELL_C4_collision_mask.png'},
+  GLASSWELL_D3:{id:'GLASSWELL_D3',label:'D3 — Red Concord Checkpoint',root:'assets/maps/dust9/glasswell/d3/',base:'layers/GLASSWELL_D3_base.png',fg:'layers/GLASSWELL_D3_foreground_overlay.png',mask:'masks/GLASSWELL_D3_collision_mask.png'}
 };
+const PAGE_ORDER = ['GLASSWELL_C3','GLASSWELL_C2','GLASSWELL_C4','GLASSWELL_D3'];
+function key(id,type){return `${id}_${type}`}
+function version(path){return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`}
+function rectHit(r,x,y){return r && x>=r.x && x<=r.x+r.w && y>=r.y && y<=r.y+r.h}
+function pct(w,h,a,b,c,d){return{x:a*w,y:b*h,w:c*w,h:d*h}}
 
-class BootScene extends Phaser.Scene {
-  constructor() {
-    super("BootScene");
+const DONNY_ASSETS = {
+  move: REMOTE_DONNY_ROOT + 'assets/sprites/player/donny/donny_overhead_noguitar_phaser_ready_1779508629.png',
+  pistol: REMOTE_DONNY_ROOT + 'assets/sprites/player/donny/donny_empty_pistol_pose_sheet.png',
+  punch: REMOTE_DONNY_ROOT + 'assets/sprites/player/donny/donny_unarmed_punch_sheet.png',
+  jump: REMOTE_DONNY_ROOT + 'assets/sprites/player/donny/donny_jump_4dir_1779501362.png',
+  holster: REMOTE_DONNY_ROOT + 'assets/sprites/equipment/holsters/donny_tight_holster_brown_4dir_1779504330.png',
+  van: REMOTE_DONNY_ROOT + 'assets/sprites/vehicles/astro_van/astro_van_v1_sheet.png'
+};
+const DONNY = {
+  frameWidth:192,
+  frameHeight:288,
+  scale:0.32,
+  speed:230,
+  directionFrame:{down:0,right:4,left:8,up:12},
+  anims:{down:[0,1,2,3],right:[4,5,6,7],left:[8,9,10,11],up:[12,13,14,15]}
+};
+const ACTION = { frameWidth:128, frameHeight:128, scale:0.72, directionFrame:{down:0,right:4,left:8,up:12} };
+const WEAPON_ASSETS = {
+  pickups:'assets/sprites/weapons/red_concord/red_concord_weapon_pickups.png',
+  overlay:'assets/sprites/weapons/red_concord/red_concord_weapons_4dir_overlay.png',
+  fx:'assets/fx/red_concord/red_concord_weapon_fx.png'
+};
+const WEAPON_DIR_FRAME = {down:0,right:1,left:2,up:3};
+
+function buildPageData(id,w,h){
+  const data={routes:[],spawns:{},weapons:[],interiors:[]};
+  if(id==='GLASSWELL_C3'){
+    data.spawns={donny_city_start:{x:w*.50,y:h*.55},north_entry_from_C2:{x:w*.50,y:h*.18},south_entry_from_C4:{x:w*.50,y:h*.82},east_entry_from_D3:{x:w*.88,y:h*.50}};
+    data.routes=[
+      {id:'c3_to_c2',to:'GLASSWELL_C2',r:pct(w,h,.38,0,.24,.10),spawn:'south_entry_from_C3',label:'north to Civic Admin Street'},
+      {id:'c3_to_c4',to:'GLASSWELL_C4',r:pct(w,h,.38,.90,.24,.10),spawn:'north_entry_from_C3',label:'south to Transit Vendor Square'},
+      {id:'c3_to_d3',to:'GLASSWELL_D3',r:pct(w,h,.92,.38,.08,.24),spawn:'west_entry_from_C3',label:'east to Red Concord Checkpoint'}
+    ];
+    data.weapons=[{id:'red_concord_baton_c3',name:'Red Concord stun baton',x:w*.57,y:h*.58,frame:0,type:'melee'}];
+    data.interiors=[
+      {id:'c3_gate_office',label:'Gate Custody Room',x:w*.43,y:h*.32,w:w*.14,h:h*.10,msg:'Door hook reserved: Gate Custody Room / Red Concord processing.'},
+      {id:'c3_safe_gap',label:'Sable Kin Route Gap',x:w*.16,y:h*.55,w:w*.10,h:h*.10,msg:'Hidden route reserved: Sable Kin water network.'}
+    ];
+  } else if(id==='GLASSWELL_C2'){
+    data.spawns={south_entry_from_C3:{x:w*.50,y:h*.84}};
+    data.routes=[
+      {id:'c2_to_c3',to:'GLASSWELL_C3',r:pct(w,h,.39,.91,.22,.09),spawn:'north_entry_from_C2',label:'south to Main Civic Gate'},
+      {id:'c2_to_c1_reserved',msg:'C1 reserved for next Glasswell page',r:pct(w,h,.41,0,.18,.09),label:'north reserved'}
+    ];
+    data.weapons=[{id:'admin_shock_pistol_c2',name:'Confiscated shock pistol',x:w*.48,y:h*.54,frame:1,type:'sidearm'}];
+    data.interiors=[
+      {id:'c2_varric_office',label:'House Varric Permit Office',x:w*.61,y:h*.30,w:w*.13,h:h*.12,msg:'Interior reserved: water-credit / permit office.'},
+      {id:'c2_debt_room',label:'Debt Clerk Room',x:w*.28,y:h*.60,w:w*.13,h:h*.12,msg:'Interior reserved: House Varric debt records.'}
+    ];
+  } else if(id==='GLASSWELL_C4'){
+    data.spawns={north_entry_from_C3:{x:w*.50,y:h*.16},west_entry_from_B4:{x:w*.10,y:h*.50},east_entry_from_D4:{x:w*.90,y:h*.50}};
+    data.routes=[
+      {id:'c4_to_c3',to:'GLASSWELL_C3',r:pct(w,h,.43,0,.14,.10),spawn:'south_entry_from_C4',label:'north to Main Civic Gate'},
+      {id:'c4_to_c5_reserved',msg:'C5 reserved for lower transit lanes',r:pct(w,h,.43,.91,.14,.09),label:'south reserved'},
+      {id:'c4_to_b4_reserved',msg:'B4 reserved for ration market approach',r:pct(w,h,0,.38,.08,.24),label:'west reserved'},
+      {id:'c4_to_d4_reserved',msg:'D4 reserved for checkpoint service road',r:pct(w,h,.92,.38,.08,.24),label:'east reserved'}
+    ];
+    data.weapons=[{id:'vendor_pipe_c4',name:'Scrap pipe',x:w*.41,y:h*.64,frame:2,type:'melee'}];
+    data.interiors=[
+      {id:'c4_vendor_stall',label:'Transit Vendor Stall',x:w*.42,y:h*.40,w:w*.16,h:h*.13,msg:'Interior/vendor hook reserved: transit market stall.'},
+      {id:'c4_alley_kids_den',label:'Alley Kids Hideout',x:w*.20,y:h*.50,w:w*.13,h:h*.12,msg:'Interior reserved: alley kids den / safe corner.'}
+    ];
+  } else if(id==='GLASSWELL_D3'){
+    data.spawns={west_entry_from_C3:{x:w*.12,y:h*.50}};
+    data.routes=[
+      {id:'d3_to_c3',to:'GLASSWELL_C3',r:pct(w,h,0,.38,.08,.24),spawn:'east_entry_from_D3',label:'west to Main Civic Gate'},
+      {id:'d3_to_e3_reserved',msg:'E3 reserved for Red Concord custody road',r:pct(w,h,.92,.38,.08,.24),label:'east reserved'}
+    ];
+    data.weapons=[{id:'checkpoint_rifle_d3',name:'Red Concord rifle',x:w*.55,y:h*.50,frame:3,type:'rifle'}];
+    data.interiors=[
+      {id:'d3_checkpoint_booth',label:'Checkpoint Booth',x:w*.45,y:h*.28,w:w*.14,h:h*.12,msg:'Interior reserved: checkpoint booth / patrol terminal.'},
+      {id:'d3_custody_cell',label:'Custody Holding Room',x:w*.68,y:h*.62,w:w*.13,h:h*.12,msg:'Interior reserved: Red Concord holding room.'}
+    ];
   }
+  return data;
+}
 
-  preload() {
-    this.load.image("title", ASSETS.title + "?v=" + VERSION);
+const TOUCH = {x:0,y:0,active:false,a:false,b:false,xBtn:false,y:false,start:false};
+function setupTouch(){
+  if(window.__GLASSWELL_TOUCH_READY)return;
+  window.__GLASSWELL_TOUCH_READY=true;
+  const knob=document.getElementById('stickKnob');
+  const label=document.getElementById('moveLabel');
+  let active=null,center=null; const max=52;
+  const prevent=e=>{if(e&&e.cancelable)e.preventDefault()};
+  const getCenter=()=>{const el=document.getElementById('stickBase');const r=el.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2}};
+  const set=(x,y)=>{center=center||getCenter();let dx=x-center.x,dy=y-center.y;const len=Math.hypot(dx,dy);if(len>max){dx=dx/len*max;dy=dy/len*max}TOUCH.x=Math.abs(dx/max)<.08?0:dx/max;TOUCH.y=Math.abs(dy/max)<.08?0:dy/max;TOUCH.active=true;if(knob)knob.style.transform=`translate(${dx}px,${dy}px)`;if(label)label.textContent='MOVE ON'};
+  const stop=()=>{active=null;center=null;TOUCH.x=0;TOUCH.y=0;TOUCH.active=false;if(knob)knob.style.transform='translate(0,0)';if(label)label.textContent='MOVE'};
+  document.addEventListener('pointerdown',e=>{if(e.target.closest&&e.target.closest('.touchBtn,#btnStart'))return;if(e.clientX<innerWidth*.50){active=e.pointerId;center=getCenter();set(e.clientX,e.clientY);prevent(e)}},{capture:true,passive:false});
+  document.addEventListener('pointermove',e=>{if(e.pointerId===active){set(e.clientX,e.clientY);prevent(e)}},{capture:true,passive:false});
+  document.addEventListener('pointerup',e=>{if(e.pointerId===active){stop();prevent(e)}},{capture:true,passive:false});
+  const bind=(id,prop)=>{const el=document.getElementById(id);if(!el||el.dataset.bound)return;el.dataset.bound='1';el.addEventListener('pointerdown',e=>{prevent(e);TOUCH[prop]=true;setTimeout(()=>TOUCH[prop]=false,120)}, {passive:false})};
+  bind('btnA','a'); bind('btnB','b'); bind('btnX','xBtn'); bind('btnY','y'); bind('btnStart','start');
+}
 
-    for (const id of MAP_ORDER) {
-      this.load.image("map_" + id, ASSETS.maps[id] + "?v=" + VERSION);
-      this.load.image("mask_" + id, ASSETS.masks[id] + "?v=" + VERSION);
-    }
-
-    this.load.spritesheet("donny_idle", ASSETS.donny + "?v=" + VERSION, {
-      frameWidth: 128,
-      frameHeight: 128
+class BootScene extends Phaser.Scene{
+  constructor(){super('BootScene')}
+  preload(){
+    this.load.setCORS('anonymous');
+    this.badAssets=[];
+    this.load.on('loaderror', file => this.badAssets.push(file && (file.src || file.key) || 'unknown asset'));
+    Object.values(PAGES).forEach(p=>{
+      this.load.image(key(p.id,'base'),version(p.root+p.base));
+      this.load.image(key(p.id,'fg'),version(p.root+p.fg));
+      this.load.image(key(p.id,'mask'),version(p.root+p.mask));
     });
-
-    this.load.spritesheet("astro_van", ASSETS.astroVan + "?v=" + VERSION, {
-      frameWidth: 320,
-      frameHeight: 256
-    });
+    this.load.spritesheet('donny_overhead',version(DONNY_ASSETS.move),{frameWidth:DONNY.frameWidth,frameHeight:DONNY.frameHeight});
+    this.load.spritesheet('donny_pistol',version(DONNY_ASSETS.pistol),{frameWidth:ACTION.frameWidth,frameHeight:ACTION.frameHeight});
+    this.load.spritesheet('donny_punch',version(DONNY_ASSETS.punch),{frameWidth:ACTION.frameWidth,frameHeight:ACTION.frameHeight});
+    this.load.spritesheet('weapon_pickups',version(WEAPON_ASSETS.pickups),{frameWidth:128,frameHeight:128});
+    this.load.spritesheet('weapon_overlay',version(WEAPON_ASSETS.overlay),{frameWidth:128,frameHeight:128});
+    this.load.spritesheet('weapon_fx',version(WEAPON_ASSETS.fx),{frameWidth:128,frameHeight:128});
+    this.load.spritesheet('astro_van',version(DONNY_ASSETS.van),{frameWidth:320,frameHeight:320});
   }
-
-  create() {
+  create(){
     createFallbackTextures(this);
-    this.scene.start("TitleScene");
+    if(this.badAssets.length)console.warn('Missing/failed assets:',this.badAssets);
+    makeDonnyAnims(this);
+    this.scene.start('TitleScene');
+  }
+}
+function makeDonnyAnims(scene){
+  if(scene.textures.exists('donny_overhead')){
+    Object.keys(DONNY.anims).forEach(dir=>{
+      const k=`donny_walk_${dir}`;
+      if(!scene.anims.exists(k)) scene.anims.create({key:k,frames:DONNY.anims[dir].map(frame=>({key:'donny_overhead',frame})),frameRate:8,repeat:-1});
+    });
   }
 }
 
-class TitleScene extends Phaser.Scene {
-  constructor() {
-    super("TitleScene");
+class TitleScene extends Phaser.Scene{
+  constructor(){super('TitleScene')}
+  create(){
+    setupTouch();
+    const w=this.scale.width,h=this.scale.height;
+    this.cameras.main.setBackgroundColor('#040608');
+    const g=this.add.graphics();
+    g.fillGradientStyle(0x091018,0x091018,0x130715,0x06080e,1,1,1,1).fillRect(0,0,w,h);
+    for(let i=0;i<44;i++){
+      const x=(i*97)%w, y=(i*53)%h;
+      g.fillStyle(i%2?0xff2aa1:0x24dfff,.10).fillRect(x,y,Phaser.Math.Between(30,110),2);
+    }
+    this.add.text(w/2,70,'COSMIC FEEDBACK',{fontFamily:'Arial Black',fontSize:'34px',color:'#e8e1cf'}).setOrigin(.5);
+    this.add.text(w/2,122,'GLASSWELL',{fontFamily:'Arial Black',fontSize:'52px',color:'#9ff4ff'}).setOrigin(.5).setShadow(0,0,'#67dce8',10,true,true);
+    this.add.text(w/2,172,'2.5D GTA-STYLE OPEN CITY BUILD',{fontFamily:'Arial Black',fontSize:'20px',color:'#ff6ab7'}).setOrigin(.5);
+    this.add.text(w/2,230,'Donny starts at the Main Civic Gate\nReal Glasswell map layers + Donny sprite + Red Concord weapon hook',{fontFamily:'Courier New',fontSize:'17px',color:'#d8c99d',align:'center',lineSpacing:7}).setOrigin(.5);
+    this.add.text(w/2,334,'Tap / Enter to start\nLeft stick = move | A/E = interact + pick up | X = attack | B = drop weapon | Y = debug',{fontFamily:'Courier New',fontSize:'16px',color:'#ffffff',align:'center',lineSpacing:8}).setOrigin(.5);
+    this.add.text(w/2,h-48,'Maps first → assets second → NPCs third → missions fourth',{fontFamily:'Arial Black',fontSize:'14px',color:'#9fb3c8'}).setOrigin(.5);
+    const go=()=>this.scene.start('CityScene',{pageId:'GLASSWELL_C3',spawn:'donny_city_start'});
+    this.input.once('pointerdown',go);
+    this.input.keyboard.once('keydown-ENTER',go);
+    this.input.keyboard.once('keydown-SPACE',go);
   }
+}
 
-  create() {
-    this.cameras.main.setBackgroundColor("#050505");
-
-    if (this.textures.exists("title")) {
-      const bg = this.add.image(GAME_W / 2, GAME_H / 2, "title");
-      bg.setDisplaySize(GAME_W, GAME_H);
+class CityScene extends Phaser.Scene{
+  constructor(){super('CityScene');this.speed=DONNY.speed;this.debug=false;this.lastDir='down';this.cool=0;this.heldWeapon=null;this.weaponSprites=[]}
+  init(d){this.startPage=d?.pageId||'GLASSWELL_C3';this.startSpawn=d?.spawn||'donny_city_start'}
+  create(){
+    setupTouch();
+    this.keys=this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,E,X,B,Y,ESC,SPACE');
+    this.input.keyboard.on('keydown-E',()=>this.interact());
+    this.input.keyboard.on('keydown-SPACE',()=>this.interact());
+    this.input.keyboard.on('keydown-X',()=>this.attack());
+    this.input.keyboard.on('keydown-B',()=>this.dropWeapon());
+    this.input.keyboard.on('keydown-Y',()=>this.toggleDebug());
+    this.input.keyboard.on('keydown-ESC',()=>this.scene.start('TitleScene'));
+    this.makeHud();
+    this.loadPage(this.startPage,this.startSpawn);
+  }
+  makeHud(){
+    this.hud=this.add.text(10,8,'',{fontFamily:'Arial Black',fontSize:'13px',color:'#d7faff',backgroundColor:'rgba(0,0,0,.60)',padding:{x:8,y:5}}).setScrollFactor(0).setDepth(20000);
+    this.prompt=this.add.text(10,this.scale.height-42,'',{fontFamily:'Arial',fontSize:'14px',color:'#f0e5be',backgroundColor:'rgba(0,0,0,.68)',padding:{x:8,y:6}}).setScrollFactor(0).setDepth(20000);
+    this.weaponHud=this.add.text(this.scale.width-10,8,'Weapon: empty',{fontFamily:'Arial Black',fontSize:'13px',color:'#ffe0a8',backgroundColor:'rgba(0,0,0,.60)',padding:{x:8,y:5}}).setOrigin(1,0).setScrollFactor(0).setDepth(20000);
+  }
+  clearPage(){
+    this.children.list.filter(o=>o.getData&&o.getData('mapObj')).forEach(o=>o.destroy());
+    this.weaponSprites=[]; this.maskCtx=null; this.base=null; this.fg=null; this.debugG=null;
+  }
+  loadPage(id,spawnId){
+    this.clearPage();
+    this.pageId=id; this.cfg=PAGES[id];
+    const baseKey=key(id,'base'), fgKey=key(id,'fg'), maskKey=key(id,'mask');
+    const baseTexture=this.textures.exists(baseKey)?baseKey:'fallback_map';
+    this.base=this.add.image(0,0,baseTexture).setOrigin(0).setDepth(0).setData('mapObj',true);
+    this.mapW=this.base.width; this.mapH=this.base.height;
+    this.data=buildPageData(id,this.mapW,this.mapH);
+    this.prepareMask(maskKey);
+    const sp=this.data.spawns[spawnId]||this.data.spawns.donny_city_start||Object.values(this.data.spawns)[0]||{x:this.mapW/2,y:this.mapH/2};
+    if(!this.player){
+      const tex=this.textures.exists('donny_overhead')?'donny_overhead':'fallback_player';
+      this.player=this.add.sprite(sp.x,sp.y,tex,0);
+      this.player.setOrigin(.5,.82);
+      if(tex==='donny_overhead')this.player.setScale(DONNY.scale); else this.player.setScale(1.0);
+      this.weaponOverlay=this.add.sprite(sp.x,sp.y,'weapon_overlay',0).setVisible(false).setOrigin(.5,.82).setScale(.72);
     } else {
-      this.add.rectangle(GAME_W / 2, GAME_H / 2, GAME_W, GAME_H, 0x07090c);
+      this.player.setPosition(sp.x,sp.y);
     }
-
-    this.add.text(GAME_W / 2, 80, "COSMIC FEEDBACK", {
-      fontFamily: "monospace",
-      fontSize: "42px",
-      color: "#d9ecff",
-      stroke: "#000000",
-      strokeThickness: 6
-    }).setOrigin(0.5);
-
-    this.add.text(GAME_W / 2, 135, "GLASSWELL BUILD", {
-      fontFamily: "monospace",
-      fontSize: "22px",
-      color: "#ff4f91",
-      stroke: "#000000",
-      strokeThickness: 4
-    }).setOrigin(0.5);
-
-    this.add.text(GAME_W / 2, GAME_H - 120, "TAP / CLICK / PRESS ENTER TO START", {
-      fontFamily: "monospace",
-      fontSize: "20px",
-      color: "#ffffff",
-      stroke: "#000000",
-      strokeThickness: 5
-    }).setOrigin(0.5);
-
-    this.add.text(GAME_W / 2, GAME_H - 80, "Donny starts at the Main Civic Gate", {
-      fontFamily: "monospace",
-      fontSize: "16px",
-      color: "#9fb3c8"
-    }).setOrigin(0.5);
-
-    this.input.once("pointerdown", () => this.scene.start("GameScene", { mapId: "C3" }));
-
-    this.input.keyboard.once("keydown-ENTER", () => {
-      this.scene.start("GameScene", { mapId: "C3" });
+    this.placeVan();
+    this.placeWeapons();
+    this.placeInteriorMarkers();
+    if(this.textures.exists(fgKey)) this.fg=this.add.image(0,0,fgKey).setOrigin(0).setDepth(9000).setData('mapObj',true);
+    this.cameras.main.setBounds(0,0,this.mapW,this.mapH);
+    this.cameras.main.startFollow(this.player,true,.12,.12);
+    this.cameras.main.fadeIn(140,0,0,0);
+    this.cool=this.time.now+500;
+    this.drawDebug();
+    this.message(this.cfg.label);
+  }
+  prepareMask(maskKey){
+    this.maskCtx=null;
+    if(!this.textures.exists(maskKey))return;
+    try{
+      const img=this.textures.get(maskKey).getSourceImage();
+      const canvas=document.createElement('canvas');
+      canvas.width=img.width; canvas.height=img.height;
+      const ctx=canvas.getContext('2d',{willReadFrequently:true});
+      ctx.drawImage(img,0,0);
+      this.maskCtx=ctx; this.maskW=canvas.width; this.maskH=canvas.height;
+    }catch(e){console.warn('Mask sampling disabled:',e)}
+  }
+  placeVan(){
+    if(this.pageId!=='GLASSWELL_C3')return;
+    const tex=this.textures.exists('astro_van')?'astro_van':'fallback_van';
+    this.van=this.add.sprite(this.mapW*.69,this.mapH*.58,tex,0).setDepth(this.mapH*.58+700).setData('mapObj',true);
+    this.van.setScale(tex==='astro_van'?.50:1);
+    this.vanLabel=this.add.text(this.van.x,this.van.y+78,'ASTRO VAN',{fontFamily:'Arial Black',fontSize:'14px',color:'#9ff4ff',backgroundColor:'rgba(0,0,0,.55)',padding:{x:6,y:3}}).setOrigin(.5).setDepth(this.van.depth+1).setData('mapObj',true);
+  }
+  placeWeapons(){
+    this.data.weapons.forEach(w=>{
+      if(sessionStorage.getItem('picked_'+w.id))return;
+      const tex=this.textures.exists('weapon_pickups')?'weapon_pickups':'fallback_weapon';
+      const s=this.add.sprite(w.x,w.y,tex,w.frame||0).setScale(tex==='weapon_pickups'?.78:1).setDepth(w.y+500).setData('mapObj',true);
+      s.weaponData=w;
+      this.weaponSprites.push(s);
     });
   }
-}
-
-class GameScene extends Phaser.Scene {
-  constructor() {
-    super("GameScene");
-
-    this.mapId = "C3";
-    this.mapImage = null;
-    this.player = null;
-    this.van = null;
-
-    this.keys = null;
-    this.touch = {
-      left: false,
-      right: false,
-      up: false,
-      down: false,
-      interact: false
-    };
-
-    this.speed = 190;
-    this.debugText = null;
-  }
-
-  init(data) {
-    this.mapId = data.mapId || "C3";
-  }
-
-  create() {
-    this.cameras.main.setBackgroundColor("#000000");
-
-    this.buildMap();
-    this.buildPlayer();
-    this.buildVehicle();
-    this.buildHUD();
-    this.buildControls();
-
-    this.keys = this.input.keyboard.addKeys({
-      up: "W",
-      down: "S",
-      left: "A",
-      right: "D",
-      up2: "UP",
-      down2: "DOWN",
-      left2: "LEFT",
-      right2: "RIGHT",
-      interact: "E",
-      next: "N",
-      prev: "P",
-      menu: "ESC"
+  placeInteriorMarkers(){
+    this.data.interiors.forEach(d=>{
+      const r=this.add.rectangle(d.x+d.w/2,d.y+d.h/2,d.w,d.h,0x24dfff,.07).setStrokeStyle(2,0x24dfff,.18).setDepth(20).setData('mapObj',true);
+      r.interiorData=d;
+      const t=this.add.text(d.x+d.w/2,d.y+d.h/2,d.label,{fontFamily:'Arial Black',fontSize:'12px',color:'#bdefff',backgroundColor:'rgba(0,0,0,.45)',padding:{x:5,y:2}}).setOrigin(.5).setDepth(21).setData('mapObj',true);
+      t.setVisible(false); r.labelText=t;
     });
-
-    this.input.keyboard.on("keydown-N", () => this.changeMap(1));
-    this.input.keyboard.on("keydown-P", () => this.changeMap(-1));
-    this.input.keyboard.on("keydown-ESC", () => this.scene.start("TitleScene"));
   }
-
-  buildMap() {
-    const key = "map_" + this.mapId;
-
-    if (this.textures.exists(key)) {
-      this.mapImage = this.add.image(0, 0, key).setOrigin(0, 0);
+  walkable(x,y){
+    if(x<8||y<8||x>this.mapW-8||y>this.mapH-8)return false;
+    if(!this.maskCtx)return true;
+    const sx=Math.floor(Phaser.Math.Clamp(x,0,this.maskW-1));
+    const sy=Math.floor(Phaser.Math.Clamp(y,0,this.maskH-1));
+    try{
+      const p=this.maskCtx.getImageData(sx,sy,1,1).data;
+      return p[0]>=220 && p[1]>=220 && p[2]>=220;
+    }catch(e){return true}
+  }
+  canMove(nx,ny){
+    const samples=[[0,0],[-15,5],[15,5],[0,18]];
+    return samples.every(([ox,oy])=>this.walkable(nx+ox,ny+oy));
+  }
+  update(_,delta){
+    let vx=TOUCH.x,vy=TOUCH.y;
+    if(this.keys.LEFT.isDown||this.keys.A.isDown)vx--;
+    if(this.keys.RIGHT.isDown||this.keys.D.isDown)vx++;
+    if(this.keys.UP.isDown||this.keys.W.isDown)vy--;
+    if(this.keys.DOWN.isDown||this.keys.S.isDown)vy++;
+    const len=Math.hypot(vx,vy); if(len>1){vx/=len;vy/=len}
+    if(Math.abs(vx)>Math.abs(vy)){if(vx>0)this.lastDir='right';else if(vx<0)this.lastDir='left'} else {if(vy>0)this.lastDir='down';else if(vy<0)this.lastDir='up'}
+    const step=this.speed*delta/1000;
+    const nx=this.player.x+vx*step, ny=this.player.y+vy*step;
+    if(this.canMove(nx,this.player.y))this.player.x=Phaser.Math.Clamp(nx,0,this.mapW);
+    if(this.canMove(this.player.x,ny))this.player.y=Phaser.Math.Clamp(ny,0,this.mapH);
+    this.animateDonny(vx,vy);
+    this.depthActors();
+    this.updatePromptHints();
+    this.updateWeaponOverlay();
+    this.hud.setText(`${this.cfg.label} | Donny | ${Math.round(this.player.x)},${Math.round(this.player.y)} | ${GAME_IDENTITY.genre}`);
+    this.weaponHud.setText(`Weapon: ${this.heldWeapon?this.heldWeapon.name:'empty'}`);
+    if(TOUCH.a){TOUCH.a=false;this.interact()}
+    if(TOUCH.xBtn){TOUCH.xBtn=false;this.attack()}
+    if(TOUCH.b){TOUCH.b=false;this.dropWeapon()}
+    if(TOUCH.y){TOUCH.y=false;this.toggleDebug()}
+    if(TOUCH.start){TOUCH.start=false;this.scene.start('TitleScene')}
+  }
+  animateDonny(vx,vy){
+    if(!this.textures.exists('donny_overhead'))return;
+    if(Math.hypot(vx,vy)>.05){
+      const anim=`donny_walk_${this.lastDir}`;
+      if(this.player.anims.currentAnim?.key!==anim)this.player.play(anim,true);
     } else {
-      this.mapImage = this.add.image(0, 0, "fallback_map").setOrigin(0, 0);
-    }
-
-    const mapW = this.mapImage.width;
-    const mapH = this.mapImage.height;
-
-    this.physics.world.setBounds(0, 0, mapW, mapH);
-    this.cameras.main.setBounds(0, 0, mapW, mapH);
-  }
-
-  buildPlayer() {
-    const start = getStartPosition(this.mapId);
-
-    if (this.textures.exists("donny_idle")) {
-      this.player = this.physics.add.sprite(start.x, start.y, "donny_idle", 0);
-      this.player.setScale(1.5);
-    } else {
-      this.player = this.physics.add.sprite(start.x, start.y, "fallback_player");
-      this.player.setScale(1);
-    }
-
-    this.player.setCollideWorldBounds(true);
-    this.player.body.setSize(46, 72);
-    this.player.body.setOffset(41, 48);
-
-    this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
-  }
-
-  buildVehicle() {
-    const pos = getVanPosition(this.mapId);
-
-    if (this.textures.exists("astro_van")) {
-      this.van = this.add.sprite(pos.x, pos.y, "astro_van", 0);
-      this.van.setScale(0.72);
-    } else {
-      this.van = this.add.image(pos.x, pos.y, "fallback_van");
-      this.van.setScale(1);
-    }
-
-    this.van.setDepth(5);
-  }
-
-  buildHUD() {
-    this.add.rectangle(0, 0, GAME_W, 42, 0x000000, 0.68)
-      .setOrigin(0, 0)
-      .setScrollFactor(0)
-      .setDepth(1000);
-
-    this.debugText = this.add.text(14, 12, MAP_NAMES[this.mapId], {
-      fontFamily: "monospace",
-      fontSize: "15px",
-      color: "#ffffff"
-    })
-    .setScrollFactor(0)
-    .setDepth(1001);
-
-    this.add.text(GAME_W - 14, 12, "N/P = MAP  |  E = INTERACT", {
-      fontFamily: "monospace",
-      fontSize: "14px",
-      color: "#b9d8ff"
-    })
-    .setOrigin(1, 0)
-    .setScrollFactor(0)
-    .setDepth(1001);
-  }
-
-  buildControls() {
-    const z = 2000;
-
-    const pad = this.add.circle(95, GAME_H - 92, 68, 0xffffff, 0.08)
-      .setStrokeStyle(3, 0xffffff, 0.25)
-      .setScrollFactor(0)
-      .setDepth(z);
-
-    const stick = this.add.circle(95, GAME_H - 92, 28, 0xffffff, 0.14)
-      .setStrokeStyle(2, 0xffffff, 0.35)
-      .setScrollFactor(0)
-      .setDepth(z + 1);
-
-    pad.setInteractive();
-
-    pad.on("pointermove", pointer => {
-      const localX = pointer.x - 95;
-      const localY = pointer.y - (GAME_H - 92);
-
-      this.touch.left = localX < -18;
-      this.touch.right = localX > 18;
-      this.touch.up = localY < -18;
-      this.touch.down = localY > 18;
-
-      const clampedX = Phaser.Math.Clamp(localX, -38, 38);
-      const clampedY = Phaser.Math.Clamp(localY, -38, 38);
-      stick.setPosition(95 + clampedX, GAME_H - 92 + clampedY);
-    });
-
-    pad.on("pointerout", () => this.resetStick(stick));
-    pad.on("pointerup", () => this.resetStick(stick));
-
-    this.makeButton(GAME_W - 82, GAME_H - 92, "A", () => {
-      this.touch.interact = true;
-      this.time.delayedCall(140, () => this.touch.interact = false);
-    });
-
-    this.makeButton(GAME_W - 145, GAME_H - 92, "B", () => {});
-    this.makeButton(GAME_W - 82, GAME_H - 155, "X", () => {});
-    this.makeButton(GAME_W - 145, GAME_H - 155, "Y", () => {});
-
-    this.makeButton(GAME_W / 2, GAME_H - 48, "MENU", () => {
-      this.scene.start("TitleScene");
-    }, 72, 34);
-  }
-
-  makeButton(x, y, label, callback, w = 52, h = 52) {
-    const bg = this.add.rectangle(x, y, w, h, 0xffffff, 0.10)
-      .setStrokeStyle(2, 0xffffff, 0.35)
-      .setScrollFactor(0)
-      .setDepth(2100)
-      .setInteractive();
-
-    const txt = this.add.text(x, y, label, {
-      fontFamily: "monospace",
-      fontSize: label.length > 1 ? "13px" : "20px",
-      color: "#ffffff"
-    })
-    .setOrigin(0.5)
-    .setScrollFactor(0)
-    .setDepth(2101);
-
-    bg.on("pointerdown", callback);
-
-    return { bg, txt };
-  }
-
-  resetStick(stick) {
-    this.touch.left = false;
-    this.touch.right = false;
-    this.touch.up = false;
-    this.touch.down = false;
-    stick.setPosition(95, GAME_H - 92);
-  }
-
-  update() {
-    if (!this.player) return;
-
-    let vx = 0;
-    let vy = 0;
-
-    const left = this.keys.left.isDown || this.keys.left2.isDown || this.touch.left;
-    const right = this.keys.right.isDown || this.keys.right2.isDown || this.touch.right;
-    const up = this.keys.up.isDown || this.keys.up2.isDown || this.touch.up;
-    const down = this.keys.down.isDown || this.keys.down2.isDown || this.touch.down;
-
-    if (left) vx -= this.speed;
-    if (right) vx += this.speed;
-    if (up) vy -= this.speed;
-    if (down) vy += this.speed;
-
-    if (vx !== 0 && vy !== 0) {
-      vx *= 0.707;
-      vy *= 0.707;
-    }
-
-    this.player.body.setVelocity(vx, vy);
-
-    if (this.keys.interact.isDown || this.touch.interact) {
-      this.tryInteract();
-    }
-
-    this.depthSort();
-  }
-
-  tryInteract() {
-    if (!this.van || !this.player) return;
-
-    const dist = Phaser.Math.Distance.Between(
-      this.player.x,
-      this.player.y,
-      this.van.x,
-      this.van.y
-    );
-
-    if (dist < 150) {
-      this.flashMessage("Astro van door FX hook ready.");
+      this.player.anims.stop();
+      this.player.setFrame(DONNY.directionFrame[this.lastDir]||0);
     }
   }
-
-  flashMessage(message) {
-    if (this.messageText) this.messageText.destroy();
-
-    this.messageText = this.add.text(GAME_W / 2, 70, message, {
-      fontFamily: "monospace",
-      fontSize: "16px",
-      color: "#ffffff",
-      backgroundColor: "#000000",
-      padding: { x: 10, y: 6 }
-    })
-    .setOrigin(0.5)
-    .setScrollFactor(0)
-    .setDepth(3000);
-
-    this.time.delayedCall(1200, () => {
-      if (this.messageText) this.messageText.destroy();
-    });
+  depthActors(){
+    this.player.setDepth(this.player.y+1000);
+    if(this.weaponOverlay)this.weaponOverlay.setDepth(this.player.depth+5);
+    this.weaponSprites.forEach(s=>s.setDepth(s.y+500));
   }
-
-  depthSort() {
-    if (this.player) this.player.setDepth(this.player.y);
-    if (this.van) this.van.setDepth(this.van.y - 20);
+  updateWeaponOverlay(){
+    if(!this.weaponOverlay)return;
+    if(!this.heldWeapon||!this.textures.exists('weapon_overlay')){this.weaponOverlay.setVisible(false);return}
+    this.weaponOverlay.setVisible(true).setPosition(this.player.x,this.player.y-2).setFrame(WEAPON_DIR_FRAME[this.lastDir]||0);
   }
-
-  changeMap(dir) {
-    const currentIndex = MAP_ORDER.indexOf(this.mapId);
-    const nextIndex = Phaser.Math.Wrap(currentIndex + dir, 0, MAP_ORDER.length);
-    this.scene.restart({ mapId: MAP_ORDER[nextIndex] });
+  nearestWeapon(){
+    let best=null,bestD=999999;
+    this.weaponSprites.forEach(s=>{const d=Phaser.Math.Distance.Between(this.player.x,this.player.y,s.x,s.y);if(d<bestD){best=s;bestD=d}});
+    return bestD<70?best:null;
+  }
+  currentRoute(){
+    const x=this.player.x,y=this.player.y+12;
+    return this.data.routes.find(t=>rectHit(t.r,x,y));
+  }
+  currentInterior(){
+    const x=this.player.x,y=this.player.y+8;
+    return this.data.interiors.find(t=>rectHit(t,x,y));
+  }
+  updatePromptHints(){
+    const w=this.nearestWeapon();
+    if(w){this.prompt.setText(`A/E: pick up ${w.weaponData.name}`);return}
+    const interior=this.currentInterior();
+    if(interior){this.prompt.setText(`A/E: ${interior.label}`);return}
+    const r=this.currentRoute();
+    if(r){this.prompt.setText(r.msg?r.msg:`A/E: ${r.label}`);return}
+  }
+  interact(){
+    const w=this.nearestWeapon();
+    if(w){this.pickWeapon(w);return}
+    const interior=this.currentInterior();
+    if(interior){this.message(interior.msg);return}
+    const r=this.currentRoute();
+    if(r){this.route(r);return}
+    const nearVan=this.van && Phaser.Math.Distance.Between(this.player.x,this.player.y,this.van.x,this.van.y)<145;
+    if(nearVan){this.message('Astro van door FX hook ready — use new door sheet when uploaded.');return}
+    this.message('No interaction here');
+  }
+  pickWeapon(sprite){
+    if(this.heldWeapon){this.message('Already holding a weapon. Press B to drop it.');return}
+    this.heldWeapon=Object.assign({},sprite.weaponData);
+    sessionStorage.setItem('picked_'+this.heldWeapon.id,'1');
+    sprite.destroy(); this.weaponSprites=this.weaponSprites.filter(s=>s!==sprite);
+    this.message(`Picked up ${this.heldWeapon.name}`);
+  }
+  dropWeapon(){
+    if(!this.heldWeapon){this.message('No weapon to drop');return}
+    const w=this.heldWeapon; this.heldWeapon=null; sessionStorage.removeItem('picked_'+w.id);
+    w.x=this.player.x+(this.lastDir==='right'?45:this.lastDir==='left'?-45:0);
+    w.y=this.player.y+(this.lastDir==='down'?45:this.lastDir==='up'?-45:0);
+    const tex=this.textures.exists('weapon_pickups')?'weapon_pickups':'fallback_weapon';
+    const s=this.add.sprite(w.x,w.y,tex,w.frame||0).setScale(tex==='weapon_pickups'?.78:1).setDepth(w.y+500).setData('mapObj',true);
+    s.weaponData=w; this.weaponSprites.push(s);
+    this.message(`Dropped ${w.name}`);
+  }
+  attack(){
+    if(this.time.now<this.cool)return;
+    this.cool=this.time.now+260;
+    const usingWeapon=!!this.heldWeapon;
+    if(!usingWeapon && this.textures.exists('donny_punch')){
+      this.player.setTexture('donny_punch',ACTION.directionFrame[this.lastDir]||0).setScale(ACTION.scale);
+      this.time.delayedCall(160,()=>{this.player.setTexture(this.textures.exists('donny_overhead')?'donny_overhead':'fallback_player',DONNY.directionFrame[this.lastDir]||0).setScale(this.textures.exists('donny_overhead')?DONNY.scale:1)});
+    }
+    const ox=this.lastDir==='right'?65:this.lastDir==='left'?-65:0;
+    const oy=this.lastDir==='down'?55:this.lastDir==='up'?-70:0;
+    const fxTex=this.textures.exists('weapon_fx')?'weapon_fx':'fallback_fx';
+    const fx=this.add.sprite(this.player.x+ox,this.player.y+oy,fxTex,0).setScale(0.75).setDepth(this.player.depth+10).setData('mapObj',true);
+    fx.setAlpha(.92);
+    this.tweens.add({targets:fx,alpha:0,scale:1.05,duration:180,onComplete:()=>fx.destroy()});
+    this.message(usingWeapon?`${this.heldWeapon.name} attack`:'Unarmed hit');
+  }
+  route(t){
+    if(this.time.now<this.cool)return;
+    if(t.msg){this.message(t.msg);this.cool=this.time.now+450;return}
+    this.cool=this.time.now+700;
+    this.cameras.main.fadeOut(130,0,0,0);
+    this.time.delayedCall(150,()=>this.loadPage(t.to,t.spawn));
+  }
+  toggleDebug(){this.debug=!this.debug;this.drawDebug();this.message(`Debug ${this.debug?'on':'off'}`)}
+  drawDebug(){
+    if(this.debugG)this.debugG.destroy();
+    this.debugG=this.add.graphics().setDepth(14000).setData('mapObj',true);
+    if(!this.debug)return;
+    this.debugG.lineStyle(3,0x24dfff,.85); this.data.routes.forEach(t=>this.debugG.strokeRect(t.r.x,t.r.y,t.r.w,t.r.h));
+    this.debugG.lineStyle(2,0xff2aa1,.65); this.data.interiors.forEach(t=>this.debugG.strokeRect(t.x,t.y,t.w,t.h));
+    this.debugG.fillStyle(0xffd166,.35); this.weaponSprites.forEach(s=>this.debugG.fillCircle(s.x,s.y,18));
+  }
+  message(t){
+    this.prompt.setText(t);
+    this.time.delayedCall(1700,()=>{if(this.prompt.text===t)this.prompt.setText('')});
   }
 }
 
-function getStartPosition(mapId) {
-  const starts = {
-    C3: { x: 480, y: 390 },
-    B3: { x: 480, y: 390 },
-    D3: { x: 480, y: 390 },
-    C2: { x: 480, y: 390 },
-    C4: { x: 480, y: 390 }
-  };
-
-  return starts[mapId] || starts.C3;
+function createFallbackTextures(scene){
+  const g=scene.add.graphics();
+  if(!scene.textures.exists('fallback_map')){
+    g.clear();g.fillStyle(0x101319,1).fillRect(0,0,1536,1152);g.fillStyle(0x222a35,1).fillRect(0,500,1536,270);g.fillStyle(0x121820,1).fillRect(0,0,1536,230).fillRect(0,900,1536,252);g.lineStyle(6,0xff2aa1,.40).strokeRect(160,190,380,250).strokeRect(920,180,360,260);g.generateTexture('fallback_map',1536,1152);
+  }
+  if(!scene.textures.exists('fallback_player')){
+    g.clear();g.fillStyle(0x000000,0).fillRect(0,0,128,128);g.fillStyle(0x09090b,1).fillRoundedRect(46,34,36,46,8);g.fillStyle(0xc79d72,1).fillRoundedRect(50,18,28,22,6);g.fillStyle(0x202035,1).fillRect(49,78,12,34).fillRect(67,78,12,34);g.lineStyle(4,0x2a2a2a,1).lineBetween(86,38,86,94);g.fillStyle(0x24dfff,1).fillRect(54,27,5,3).fillRect(68,27,5,3);g.generateTexture('fallback_player',128,128);
+  }
+  if(!scene.textures.exists('fallback_weapon')){
+    g.clear();g.fillStyle(0x000000,0).fillRect(0,0,128,128);g.lineStyle(8,0xd7d7d7,1).lineBetween(35,86,94,38);g.lineStyle(3,0xff2aa1,1).lineBetween(42,80,88,43);g.generateTexture('fallback_weapon',128,128);
+  }
+  if(!scene.textures.exists('fallback_fx')){
+    g.clear();g.fillStyle(0x000000,0).fillRect(0,0,128,128);g.lineStyle(8,0x24dfff,.85).strokeCircle(64,64,34);g.lineStyle(4,0xff2aa1,.85).strokeCircle(64,64,22);g.generateTexture('fallback_fx',128,128);
+  }
+  if(!scene.textures.exists('fallback_van')){
+    g.clear();g.fillStyle(0x000000,0).fillRect(0,0,320,320);g.fillStyle(0x17191d,1).fillRoundedRect(58,110,205,86,12);g.fillStyle(0x2a2f38,1).fillRoundedRect(82,76,155,58,8);g.fillStyle(0x0c1721,1).fillRect(86,118,42,30).fillRect(137,118,42,30).fillRect(188,118,42,30);g.fillStyle(0xff2aa1,1).fillRect(88,190,118,6);g.fillStyle(0x050505,1).fillCircle(92,198,18).fillCircle(232,198,18);g.generateTexture('fallback_van',320,320);
+  }
+  g.destroy();
 }
 
-function getVanPosition(mapId) {
-  const vans = {
-    C3: { x: 710, y: 355 },
-    B3: { x: 720, y: 370 },
-    D3: { x: 720, y: 360 },
-    C2: { x: 720, y: 370 },
-    C4: { x: 720, y: 360 }
-  };
-
-  return vans[mapId] || vans.C3;
-}
-
-function createFallbackTextures(scene) {
-  if (!scene.textures.exists("fallback_map")) {
-    const g = scene.make.graphics({ x: 0, y: 0, add: false });
-
-    g.fillStyle(0x101319, 1);
-    g.fillRect(0, 0, 1280, 720);
-
-    g.fillStyle(0x1d232d, 1);
-    g.fillRect(0, 420, 1280, 300);
-
-    g.fillStyle(0x2b3442, 1);
-    g.fillRect(0, 370, 1280, 80);
-
-    g.fillStyle(0x3d1d2d, 1);
-    g.fillRect(120, 160, 220, 230);
-
-    g.fillStyle(0x171b22, 1);
-    g.fillRect(420, 120, 360, 280);
-
-    g.fillStyle(0x261825, 1);
-    g.fillRect(860, 170, 240, 220);
-
-    g.lineStyle(4, 0xff4f91, 0.65);
-    g.strokeRect(120, 160, 220, 230);
-    g.strokeRect(420, 120, 360, 280);
-    g.strokeRect(860, 170, 240, 220);
-
-    g.generateTexture("fallback_map", 1280, 720);
-    g.destroy();
-  }
-
-  if (!scene.textures.exists("fallback_player")) {
-    const g = scene.make.graphics({ x: 0, y: 0, add: false });
-
-    g.fillStyle(0x000000, 0);
-    g.fillRect(0, 0, 128, 128);
-
-    g.fillStyle(0x111111, 1);
-    g.fillRect(48, 32, 32, 56);
-
-    g.fillStyle(0xdec8a0, 1);
-    g.fillRect(49, 18, 30, 24);
-
-    g.fillStyle(0x0a0a0a, 1);
-    g.fillRect(42, 42, 12, 36);
-    g.fillRect(74, 42, 12, 36);
-
-    g.fillStyle(0x222244, 1);
-    g.fillRect(50, 86, 12, 30);
-    g.fillRect(66, 86, 12, 30);
-
-    g.fillStyle(0xff4f91, 1);
-    g.fillRect(44, 54, 40, 8);
-
-    g.generateTexture("fallback_player", 128, 128);
-    g.destroy();
-  }
-
-  if (!scene.textures.exists("fallback_van")) {
-    const g = scene.make.graphics({ x: 0, y: 0, add: false });
-
-    g.fillStyle(0x000000, 0);
-    g.fillRect(0, 0, 320, 256);
-
-    g.fillStyle(0x17191d, 1);
-    g.fillRoundedRect(55, 85, 210, 90, 12);
-
-    g.fillStyle(0x2a2f38, 1);
-    g.fillRoundedRect(80, 55, 160, 55, 8);
-
-    g.fillStyle(0x0c1721, 1);
-    g.fillRect(82, 95, 42, 32);
-    g.fillRect(132, 95, 42, 32);
-    g.fillRect(184, 95, 42, 32);
-
-    g.fillStyle(0xff4f91, 1);
-    g.fillRect(88, 170, 118, 6);
-
-    g.fillStyle(0x2be4ff, 1);
-    g.fillRect(190, 65, 42, 5);
-
-    g.fillStyle(0x050505, 1);
-    g.fillCircle(88, 178, 18);
-    g.fillCircle(232, 178, 18);
-
-    g.fillStyle(0xffa02a, 1);
-    g.fillTriangle(267, 124, 305, 112, 305, 136);
-
-    g.generateTexture("fallback_van", 320, 256);
-    g.destroy();
-  }
-}
-
-const config = {
-  type: Phaser.AUTO,
-  parent: "game",
-  width: GAME_W,
-  height: GAME_H,
-  backgroundColor: "#000000",
-  pixelArt: true,
-  roundPixels: true,
-  physics: {
-    default: "arcade",
-    arcade: {
-      gravity: { y: 0 },
-      debug: false
-    }
-  },
-  scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: GAME_W,
-    height: GAME_H
-  },
-  scene: [BootScene, TitleScene, GameScene]
-};
-
-new Phaser.Game(config);
+new Phaser.Game({
+  type:Phaser.AUTO,
+  parent:'game',
+  width:GAME_W,
+  height:GAME_H,
+  backgroundColor:'#000',
+  pixelArt:true,
+  roundPixels:true,
+  scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH,width:GAME_W,height:GAME_H},
+  scene:[BootScene,TitleScene,CityScene]
+});
 </script>
 </body>
 </html>
