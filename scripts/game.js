@@ -1,6 +1,143 @@
 
-const GAME_VERSION = 'glasswell-city-so-far-donny-start-2026-05-25';
+const GAME_VERSION = 'glasswell-dom-controls-hard-fix-2026-05-25';
 const ROOT = 'assets/maps/dust9/glasswell/';
+
+// DOM mobile controls are used instead of Phaser canvas-only touch controls.
+// This avoids iPhone Safari pointer-scaling and bottom-browser-bar problems.
+window.GLASSWELL_TOUCH = window.GLASSWELL_TOUCH || { x:0, y:0, active:false };
+
+function setupGlasswellDomControls(scene){
+  const touch = window.GLASSWELL_TOUCH;
+  const stickBase = document.getElementById('stickBase');
+  const stickKnob = document.getElementById('stickKnob');
+  const btnA = document.getElementById('btnA');
+  const btnB = document.getElementById('btnB');
+  const btnX = document.getElementById('btnX');
+  const btnY = document.getElementById('btnY');
+  const btnStart = document.getElementById('btnStart');
+
+  if(!stickBase || !stickKnob) return;
+
+  window.GLASSWELL_ACTIVE_SCENE = scene;
+
+  let activePointerId = null;
+  const maxRadius = 46;
+
+  function prevent(e){
+    if(e && e.cancelable) e.preventDefault();
+  }
+
+  function centerOfStick(){
+    const r = stickBase.getBoundingClientRect();
+    return { x:r.left + r.width / 2, y:r.top + r.height / 2 };
+  }
+
+  function setStickFromClient(clientX, clientY){
+    const c = centerOfStick();
+    let dx = clientX - c.x;
+    let dy = clientY - c.y;
+    const len = Math.hypot(dx, dy);
+    if(len > maxRadius){
+      dx = dx / len * maxRadius;
+      dy = dy / len * maxRadius;
+    }
+
+    stickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+
+    const nx = dx / maxRadius;
+    const ny = dy / maxRadius;
+    const dead = 0.12;
+
+    touch.x = Math.abs(nx) < dead ? 0 : nx;
+    touch.y = Math.abs(ny) < dead ? 0 : ny;
+    touch.active = true;
+  }
+
+  function resetStick(){
+    touch.x = 0;
+    touch.y = 0;
+    touch.active = false;
+    activePointerId = null;
+    stickKnob.style.transform = 'translate(0px, 0px)';
+  }
+
+  // Clear old listeners by replacing nodes only when needed is risky, so guard setup.
+  if(!stickBase.dataset.glasswellReady){
+    stickBase.dataset.glasswellReady = 'true';
+
+    stickBase.addEventListener('pointerdown', e => {
+      prevent(e);
+      activePointerId = e.pointerId;
+      stickBase.setPointerCapture && stickBase.setPointerCapture(e.pointerId);
+      setStickFromClient(e.clientX, e.clientY);
+    }, {passive:false});
+
+    stickBase.addEventListener('pointermove', e => {
+      if(activePointerId === e.pointerId){
+        prevent(e);
+        setStickFromClient(e.clientX, e.clientY);
+      }
+    }, {passive:false});
+
+    stickBase.addEventListener('pointerup', e => {
+      if(activePointerId === e.pointerId){
+        prevent(e);
+        resetStick();
+      }
+    }, {passive:false});
+
+    stickBase.addEventListener('pointercancel', e => {
+      if(activePointerId === e.pointerId){
+        prevent(e);
+        resetStick();
+      }
+    }, {passive:false});
+
+    stickBase.addEventListener('touchstart', e => {
+      prevent(e);
+      const t = e.changedTouches && e.changedTouches[0];
+      if(t) setStickFromClient(t.clientX, t.clientY);
+    }, {passive:false});
+
+    stickBase.addEventListener('touchmove', e => {
+      prevent(e);
+      const t = e.changedTouches && e.changedTouches[0];
+      if(t) setStickFromClient(t.clientX, t.clientY);
+    }, {passive:false});
+
+    stickBase.addEventListener('touchend', e => {
+      prevent(e);
+      resetStick();
+    }, {passive:false});
+
+    stickBase.addEventListener('touchcancel', e => {
+      prevent(e);
+      resetStick();
+    }, {passive:false});
+  }
+
+  function bindButton(el, action){
+    if(!el || el.dataset.glasswellReady) return;
+    el.dataset.glasswellReady = 'true';
+    const run = e => {
+      prevent(e);
+      const s = window.GLASSWELL_ACTIVE_SCENE;
+      if(s && typeof action === 'function') action(s);
+    };
+    el.addEventListener('pointerdown', run, {passive:false});
+    el.addEventListener('touchstart', run, {passive:false});
+  }
+
+  bindButton(btnA, s => s.interact());
+  bindButton(btnB, s => s.message('B reserved'));
+  bindButton(btnX, s => s.toggleDebug());
+  bindButton(btnY, s => s.toggleMask());
+  bindButton(btnStart, s => s.scene.start('TitleScene'));
+
+  document.addEventListener('touchmove', prevent, {passive:false});
+}
+
+
 
 const CITY_START = {
   character: 'Donny',
@@ -180,6 +317,7 @@ class MapScene extends Phaser.Scene {
     this.drawDebug();
     this.updateHud();
     this.transitionCooldownUntil=this.time.now+550;
+    window.GLASSWELL_ACTIVE_SCENE = this;
     this.message(`${this.characterName} entered ${this.cfg.label}`);
   }
 
@@ -206,6 +344,9 @@ class MapScene extends Phaser.Scene {
   }
 
   createInput(){
+    // Extra pointers are required for mobile: one thumb can hold the stick while another taps buttons.
+    this.input.addPointer(4);
+
     this.cursors=this.input.keyboard.createCursorKeys();
     this.keys=this.input.keyboard.addKeys({
       W:Phaser.Input.Keyboard.KeyCodes.W,A:Phaser.Input.Keyboard.KeyCodes.A,S:Phaser.Input.Keyboard.KeyCodes.S,D:Phaser.Input.Keyboard.KeyCodes.D,
@@ -217,36 +358,12 @@ class MapScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-ESC',()=>this.scene.start('TitleScene'));
     this.touch=new Phaser.Math.Vector2(0,0);
     this.touchActive=false;
+    this.activeStickPointerId=null;
     this.createTouch();
   }
 
   createTouch(){
-    const sx=88,sy=this.scale.height-86;
-    this.stick={x:sx,y:sy,radius:52};
-    const cont=this.add.container(sx,sy).setScrollFactor(0).setDepth(20000);
-    const base=this.add.circle(0,0,52,0x111111,.45).setStrokeStyle(2,0xffffff,.35);
-    this.knob=this.add.circle(0,0,20,0xffffff,.22).setStrokeStyle(2,0x67dce8,.7);
-    cont.add([base,this.knob]);
-
-    const button=(x,y,label,fn)=>{
-      const c=this.add.circle(x,y,29,0x111111,.55).setStrokeStyle(2,0xffffff,.35).setScrollFactor(0).setDepth(20000).setInteractive();
-      this.add.text(x,y,label,{fontFamily:'Arial Black',fontSize:'16px',color:'#fff'}).setOrigin(.5).setScrollFactor(0).setDepth(20001);
-      c.on('pointerdown',fn);
-    };
-
-    button(this.scale.width-128,this.scale.height-108,'A',()=>this.interact());
-    button(this.scale.width-70,this.scale.height-74,'B',()=>this.message('B reserved'));
-    button(this.scale.width-128,this.scale.height-42,'Y',()=>this.toggleMask());
-    button(this.scale.width-186,this.scale.height-74,'X',()=>this.toggleDebug());
-
-    this.input.on('pointerdown',p=>{
-      if(Phaser.Math.Distance.Between(p.x,p.y,this.stick.x,this.stick.y)<=86){
-        this.touchActive=true;
-        this.updateStick(p);
-      }
-    });
-    this.input.on('pointermove',p=>{if(this.touchActive)this.updateStick(p);});
-    this.input.on('pointerup',()=>{this.touchActive=false;this.touch.set(0,0);this.knob.setPosition(0,0);});
+    setupGlasswellDomControls(this);
   }
 
   updateStick(p){
@@ -354,8 +471,9 @@ class MapScene extends Phaser.Scene {
     if(this.cursors.up.isDown || this.keys.W.isDown)vy--;
     if(this.cursors.down.isDown || this.keys.S.isDown)vy++;
 
-    vx+=this.touch.x;
-    vy+=this.touch.y;
+    const domTouch = window.GLASSWELL_TOUCH || {x:0,y:0};
+    vx+=this.touch.x + domTouch.x;
+    vy+=this.touch.y + domTouch.y;
 
     const len=Math.hypot(vx,vy);
     if(len>1){vx/=len;vy/=len;}
