@@ -98,7 +98,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-donny-local-props-2026-05-26-005';
+const VERSION = 'glasswell-donny-music-visible-2026-05-26-007';
 
 // IMPORTANT:
 // Donny now uses the local files created tonight under assets/sprites/player/donny/props.
@@ -156,7 +156,9 @@ const DONNY_ASSETS = {
 const DONNY = {
   frameWidth:128,
   frameHeight:128,
-  scale:0.74,
+  // The local 128x128 Donny prop sheets are drawn small inside the cell.
+  // Render larger so Donny reads correctly next to the Astro Van.
+  scale:1.65,
   speed:230,
 
   // 4-dir sheet order: down, right, left, up.
@@ -169,7 +171,7 @@ const DONNY = {
 const ACTION = {
   frameWidth:128,
   frameHeight:128,
-  scale:0.74,
+  scale:1.65,
   duration:190,
 
   // 4-dir sheet order: down, right, left, up.
@@ -180,7 +182,7 @@ const HOLSTER = {
   key:'donny_holster',
   frameWidth:128,
   frameHeight:128,
-  scale:0.74,
+  scale:1.65,
   directionFrame:{down:0,right:1,left:2,up:3},
   offset:{
     down:{x:0,y:0},
@@ -200,6 +202,10 @@ const WEAPON_DIR_FRAME = {down:0,right:1,left:2,up:3};
 const VAN_ASSETS = {
   drive:'assets/sprites/vehicles/astro_van/astro_van_turn_movement_8x6_128x96_transparent.png',
   open:'assets/sprites/vehicles/astro_van/astro_van_open_8x4_204x164_transparent.png'
+};
+
+const AUDIO_ASSETS = {
+  glasswellTheme:'assets/audio/glasswell/checkpoint_4_am.mp3'
 };
 const VAN = {
   driveKey:'astro_van_drive',
@@ -419,6 +425,8 @@ class BootScene extends Phaser.Scene{
     this.load.spritesheet(VAN.driveKey,version(VAN_ASSETS.drive),{frameWidth:VAN.driveFrame.w,frameHeight:VAN.driveFrame.h,margin:0,spacing:0});
     this.load.spritesheet(VAN.openKey,version(VAN_ASSETS.open),{frameWidth:VAN.openFrame.w,frameHeight:VAN.openFrame.h,margin:0,spacing:0});
     if(DONNY_ASSETS.oldVan){ this.load.spritesheet('astro_van_old',version(DONNY_ASSETS.oldVan),{frameWidth:320,frameHeight:320}); }
+
+    this.load.audio('glasswell_theme', version(AUDIO_ASSETS.glasswellTheme));
   }
 
   create(){
@@ -519,7 +527,7 @@ class TitleScene extends Phaser.Scene{
     this.add.text(w/2,172,'2.5D GTA-STYLE OPEN CITY BUILD',{fontFamily:'Arial Black',fontSize:'20px',color:'#ff6ab7'}).setOrigin(.5);
 
     this.add.text(w/2,232,
-      'Donny starts at the Main Civic Gate\nLocal Donny props + laser gun action + holster return + weapons + driveable Astro Van',
+      'Donny starts at the Main Civic Gate\nLocal Donny props + laser gun action + holster return + weapons + driveable Astro Van + Glasswell music',
       {fontFamily:'Courier New',fontSize:'17px',color:'#d8c99d',align:'center',lineSpacing:7}
     ).setOrigin(.5);
 
@@ -570,6 +578,7 @@ class CityScene extends Phaser.Scene{
 
     this.makeHud();
     this.loadPage(this.startPage,this.startSpawn);
+    this.startGlasswellMusic();
   }
 
   makeHud(){
@@ -596,6 +605,26 @@ class CityScene extends Phaser.Scene{
       backgroundColor:'rgba(0,0,0,.60)',
       padding:{x:8,y:5}
     }).setOrigin(1,0).setScrollFactor(0).setDepth(20000);
+  }
+
+  startGlasswellMusic(){
+    if(!this.sound || !this.cache.audio.exists('glasswell_theme'))return;
+
+    const existing=this.sound.get('glasswell_theme');
+    if(existing && existing.isPlaying)return;
+
+    try{
+      this.glasswellMusic=this.sound.add('glasswell_theme',{
+        loop:true,
+        volume:0.42
+      });
+
+      this.glasswellMusic.play();
+    }catch(e){
+      // iPhone/Safari can block audio until a tap. The game already starts from a tap,
+      // but keep this safe so audio never black-screens the game.
+      console.warn('Glasswell music start blocked:',e);
+    }
   }
 
   clearPage(){
@@ -683,8 +712,8 @@ class CityScene extends Phaser.Scene{
     this.player.setCollideWorldBounds(true);
 
     if(this.player.body){
-      this.player.body.setSize(42,54);
-      this.player.body.setOffset(43,66);
+      this.player.body.setSize(32,44);
+      this.player.body.setOffset(48,70);
     }
 
     // Holster overlay: visible by default, hides during pistol draw/fire, reappears after action.
@@ -729,8 +758,8 @@ class CityScene extends Phaser.Scene{
     const frame=useDrive?VAN.idleFrame.down:0;
 
     const spawn=this.currentSpawn||{x:this.mapW*.50,y:this.mapH*.55};
-    const vanX=options.keepDriving?spawn.x:(this.pageId==='GLASSWELL_C3'?spawn.x+150:spawn.x-130);
-    const vanY=options.keepDriving?spawn.y:(this.pageId==='GLASSWELL_C3'?spawn.y+18:spawn.y+10);
+    const vanX=options.keepDriving?spawn.x:(this.pageId==='GLASSWELL_C3'?spawn.x+190:spawn.x-130);
+    const vanY=options.keepDriving?spawn.y:(this.pageId==='GLASSWELL_C3'?spawn.y+30:spawn.y+10);
 
     this.astroVan=this.physics.add.sprite(vanX,vanY,tex,frame)
       .setOrigin(.5,.72)
@@ -845,7 +874,7 @@ class CityScene extends Phaser.Scene{
     if(TOUCH.b){TOUCH.b=false;this.dropOrExit()}
 
     this.hud.setText(`${this.cfg.label} | Donny | ${Math.round(this.player.x)},${Math.round(this.player.y)} | ${GAME_IDENTITY.genre}`);
-    this.weaponHud.setText(`Weapon: ${this.heldWeapon?this.heldWeapon.name:'empty'} | Holster: ${this.pistolActionActive?'hidden':'on hip'}`);
+    this.weaponHud.setText(`Weapon: ${this.heldWeapon?this.heldWeapon.name:'empty'} | Holster: ${this.pistolActionActive?'hidden':'on hip'} | Donny: local props`);
   }
 
   updateDonnyMovement(delta){
