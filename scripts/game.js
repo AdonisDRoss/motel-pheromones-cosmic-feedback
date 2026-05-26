@@ -1,5 +1,5 @@
 
-const GAME_VERSION = 'glasswell-global-touch-capture-fix-2026-05-25';
+const GAME_VERSION = 'glasswell-global-touch-strict-collision-2026-05-25';
 const ROOT = 'assets/maps/dust9/glasswell/';
 
 // DOM mobile controls are used instead of Phaser canvas-only touch controls.
@@ -410,10 +410,31 @@ class MapScene extends Phaser.Scene {
   }
 
   isWalkable(x,y){
-    x=Math.floor(Phaser.Math.Clamp(x,0,this.mapW-1));
-    y=Math.floor(Phaser.Math.Clamp(y,0,this.mapH-1));
-    const p=this.maskCtx.getImageData(x,y,1,1).data;
-    return p[0]>=220 && p[1]>=220 && p[2]>=220;
+    if(!this.maskCtx) return false;
+
+    const cx=Math.floor(Phaser.Math.Clamp(x,0,this.mapW-1));
+    const cy=Math.floor(Phaser.Math.Clamp(y,0,this.mapH-1));
+
+    // Strict foot collision:
+    // sample center + small foot area so Donny cannot slip through wall/stall edges.
+    const samples = [
+      [0,0],
+      [-9,0],
+      [9,0],
+      [0,-6],
+      [0,6],
+      [-7,5],
+      [7,5]
+    ];
+
+    for(const [ox,oy] of samples){
+      const sx=Math.floor(Phaser.Math.Clamp(cx+ox,0,this.mapW-1));
+      const sy=Math.floor(Phaser.Math.Clamp(cy+oy,0,this.mapH-1));
+      const p=this.maskCtx.getImageData(sx,sy,1,1).data;
+      if(!(p[0]>=220 && p[1]>=220 && p[2]>=220)) return false;
+    }
+
+    return true;
   }
 
   createInput(){
@@ -556,12 +577,11 @@ class MapScene extends Phaser.Scene {
     const ny=this.player.y+vy*step;
     const foot=this.player.footOffsetY || 0;
 
-    const touchIsActive = !!(window.GLASSWELL_TOUCH && window.GLASSWELL_TOUCH.active);
     const nextXAllowed = this.isWalkable(nx,this.player.y+foot);
     const nextYAllowed = this.isWalkable(this.player.x,ny+foot);
 
-    if(nextXAllowed || touchIsActive) this.player.x=Phaser.Math.Clamp(nx,0,this.mapW);
-    if(nextYAllowed || touchIsActive) this.player.y=Phaser.Math.Clamp(ny,0,this.mapH);
+    if(nextXAllowed) this.player.x=Phaser.Math.Clamp(nx,0,this.mapW);
+    if(nextYAllowed) this.player.y=Phaser.Math.Clamp(ny,0,this.mapH);
 
     this.player.setDepth(this.player.y+1000);
 
