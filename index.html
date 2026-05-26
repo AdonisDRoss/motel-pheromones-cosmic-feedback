@@ -105,7 +105,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-astrovan-8dir-11x8-2026-05-26-012';
+const VERSION = 'glasswell-pause-inventory-pistol-controls-2026-05-26-014';
 
 // IMPORTANT:
 // Donny now uses the local files created tonight under assets/sprites/player/donny/props.
@@ -136,16 +136,19 @@ const PAGES = {
 };
 
 const DONNY_ASSETS = {
-  // Main Donny body/action sheets created tonight.
+  // Main Donny body/action sheets.
   idle: DONNY_ROOT + 'assets/sprites/player/donny/donny_idle_4dir.png',
   move: DONNY_ROOT + 'assets/sprites/player/donny/donny_walk_4dir.png',
   run: DONNY_ROOT + 'assets/sprites/player/donny/donny_run_4dir.png',
+  jump: DONNY_ROOT + 'assets/sprites/player/donny/donny_jump_4dir.png',
+  slide: DONNY_ROOT + 'assets/sprites/player/donny/donny_slide_4dir.png',
+  crawl: DONNY_ROOT + 'assets/sprites/player/donny/donny_crawl_4dir.png',
   pistol: DONNY_ROOT + 'assets/sprites/player/donny/donny_shoot_4dir.png',
   punch: DONNY_ROOT + 'assets/sprites/player/donny/donny_punch_4dir.png',
+  kick: DONNY_ROOT + 'assets/sprites/player/donny/donny_kick_4dir.png',
 
-  // Separate prop overlays created tonight.
+  // Separate prop overlay. Holster stays disabled for now.
   laserOverlay: DONNY_ROOT + 'assets/sprites/player/donny/props/donny_laser_gun_overlay_4dir_128.png',
-  gunHoldFull: DONNY_ROOT + 'assets/sprites/player/donny/props/donny_laser_gun_hold_4dir_128.png',
   holster: DONNY_ROOT + 'assets/sprites/player/donny/props/donny_laser_holster_4dir_128.png',
 
   oldVan: null
@@ -154,9 +157,10 @@ const DONNY_ASSETS = {
 const DONNY = {
   frameWidth:128,
   frameHeight:128,
-  // Keep one render scale for all Donny body/action sheets to reduce growth/shrink.
   scale:1.08,
   speed:230,
+  runSpeed:335,
+  crawlSpeed:95,
 
   // 8 columns x 4 rows. Row order: down, right, left, up.
   directionFrame:{down:0,right:8,left:16,up:24},
@@ -171,11 +175,11 @@ const DONNY = {
 const ACTION = {
   frameWidth:128,
   frameHeight:128,
-  // Match Donny body scale so shoot/punch do not resize the sprite.
   scale:1.08,
-  duration:260,
-  gunShowDelay:85,
-  gunHideBeforeEnd:55,
+  duration:280,
+  shootDuration:360,
+  gunShowDelay:90,
+  gunHideBeforeEnd:70,
 
   // 8 columns x 4 rows. Row order: down, right, left, up.
   directionFrame:{down:0,right:8,left:16,up:24}
@@ -195,8 +199,8 @@ const GUN_PROP = {
   key:'donny_laser_gun_overlay',
   frameWidth:128,
   frameHeight:128,
-  // Slightly smaller than Donny so the prop fits the hand instead of looking like a second body.
-  scale:0.92,
+  // Same scale/origin as Donny body so the prop aligns with his hand.
+  scale:1.08,
   directionFrame:{down:0,right:1,left:2,up:3},
   offset:{
     down:{x:0,y:0},
@@ -214,7 +218,7 @@ const WEAPON_ASSETS = {
 const WEAPON_DIR_FRAME = {down:0,right:1,left:2,up:3};
 
 const VAN_ASSETS = {
-  drive:'assets/sprites/vehicles/astro_van/astro_van_8dir_drive_11x8_128x96_transparent.png',
+  drive:'assets/sprites/vehicles/astro_van/astro_van_turn_movement_8x6_128x96_transparent.png',
   open:'assets/sprites/vehicles/astro_van/astro_van_open_8x4_204x164_transparent.png'
 };
 
@@ -233,21 +237,11 @@ const VAN = {
   // assets/sprites/vehicles/astro_van/astro_van_open_8x4_204x164_transparent.png
   openFrame:{w:204,h:164},
 
-  // 8-direction 11x8 sheet. Row order: down, downRight, right, upRight, up, upLeft, left, downLeft.
-  // Use row-based frames only so the van does not spin.
-  columns:11,
-  idleFrame:{down:0,downRight:11,right:22,upRight:33,up:44,upLeft:55,left:66,downLeft:77},
+  // Best starter direction frames from the 8x6 turn sheet.
+  // Stable frames only. These stop the van from spinning through mixed angle frames.
+  idleFrame:{down:0,right:3,left:24,up:13},
 
-  driveAnim:{
-    down:'astro_van_drive_down',
-    downRight:'astro_van_drive_downRight',
-    right:'astro_van_drive_right',
-    upRight:'astro_van_drive_upRight',
-    up:'astro_van_drive_up',
-    upLeft:'astro_van_drive_upLeft',
-    left:'astro_van_drive_left',
-    downLeft:'astro_van_drive_downLeft'
-  },
+  driveAnim:{down:'astro_van_drive_down',right:'astro_van_drive_right',left:'astro_van_drive_left',up:'astro_van_drive_up'},
 
   // Turning animations are available for later tuning.
   turnAnim:{
@@ -450,9 +444,13 @@ class BootScene extends Phaser.Scene{
 
     this.load.spritesheet('donny_idle',version(DONNY_ASSETS.idle),{frameWidth:DONNY.frameWidth,frameHeight:DONNY.frameHeight});
     this.load.spritesheet('donny_overhead',version(DONNY_ASSETS.move),{frameWidth:DONNY.frameWidth,frameHeight:DONNY.frameHeight});
+    this.load.spritesheet('donny_run',version(DONNY_ASSETS.run),{frameWidth:DONNY.frameWidth,frameHeight:DONNY.frameHeight});
+    this.load.spritesheet('donny_jump',version(DONNY_ASSETS.jump),{frameWidth:ACTION.frameWidth,frameHeight:ACTION.frameHeight});
+    this.load.spritesheet('donny_slide',version(DONNY_ASSETS.slide),{frameWidth:ACTION.frameWidth,frameHeight:ACTION.frameHeight});
+    this.load.spritesheet('donny_crawl',version(DONNY_ASSETS.crawl),{frameWidth:DONNY.frameWidth,frameHeight:DONNY.frameHeight});
     this.load.spritesheet('donny_pistol',version(DONNY_ASSETS.pistol),{frameWidth:ACTION.frameWidth,frameHeight:ACTION.frameHeight});
     this.load.spritesheet('donny_punch',version(DONNY_ASSETS.punch),{frameWidth:ACTION.frameWidth,frameHeight:ACTION.frameHeight});
-    this.load.spritesheet('donny_holster',version(DONNY_ASSETS.holster),{frameWidth:HOLSTER.frameWidth,frameHeight:HOLSTER.frameHeight});
+    this.load.spritesheet('donny_kick',version(DONNY_ASSETS.kick),{frameWidth:ACTION.frameWidth,frameHeight:ACTION.frameHeight});
     this.load.spritesheet('donny_laser_gun_overlay',version(DONNY_ASSETS.laserOverlay),{frameWidth:GUN_PROP.frameWidth,frameHeight:GUN_PROP.frameHeight});
 
     this.load.spritesheet('weapon_pickups',version(WEAPON_ASSETS.pickups),{frameWidth:128,frameHeight:128});
@@ -480,19 +478,31 @@ class BootScene extends Phaser.Scene{
 }
 
 function createDonnyAnimations(scene){
-  if(scene.textures.exists('donny_overhead')){
-    Object.keys(DONNY.anims).forEach(dir=>{
-      const animKey=`donny_walk_${dir}`;
-      if(!scene.anims.exists(animKey)){
-        scene.anims.create({
-          key:animKey,
-          frames:DONNY.anims[dir].map(frame=>({key:'donny_overhead',frame})),
-          frameRate:8,
-          repeat:-1
-        });
-      }
+  const dirs=['down','right','left','up'];
+  const make=(prefix,textureKey,frameRate=8,repeat=-1)=>{
+    if(!scene.textures.exists(textureKey))return;
+    dirs.forEach(dir=>{
+      const animKey=`${prefix}_${dir}`;
+      if(scene.anims.exists(animKey))return;
+      scene.anims.create({
+        key:animKey,
+        frames:DONNY.anims[dir].map(frame=>({key:textureKey,frame})),
+        frameRate,
+        repeat
+      });
     });
-  }
+  };
+
+  make('donny_walk','donny_overhead',8,-1);
+  make('donny_run','donny_run',11,-1);
+  make('donny_crawl','donny_crawl',6,-1);
+
+  // Action sheets use 8 frames per direction row.
+  make('donny_punch','donny_punch',14,0);
+  make('donny_kick','donny_kick',14,0);
+  make('donny_jump','donny_jump',10,0);
+  make('donny_slide','donny_slide',13,0);
+  make('donny_shoot','donny_pistol',12,0);
 }
 
 function createVanAnimations(scene){
@@ -507,7 +517,7 @@ function createVanAnimations(scene){
   };
 
   if(scene.textures.exists(VAN.driveKey)){
-    const makeFrames=(animKey,frames,frameRate=8,repeat=-1)=>{
+    const makeFrames=(animKey,frames,frameRate=7,repeat=-1)=>{
       if(scene.anims.exists(animKey))return;
       scene.anims.create({
         key:animKey,
@@ -517,16 +527,23 @@ function createVanAnimations(scene){
       });
     };
 
-    // New 11x8 sheet: each direction owns one full row.
-    // This prevents spinning because no animation crosses into another direction row.
-    const cols=VAN.columns||11;
-    const dirs=['down','downRight','right','upRight','up','upLeft','left','downLeft'];
-    dirs.forEach((dir,row)=>{
-      const start=row*cols;
-      const frames=[];
-      for(let i=0;i<cols;i++)frames.push(start+i);
-      makeFrames(`astro_van_drive_${dir}`,frames,8,-1);
-    });
+    // Stable single-frame drive anims. The source sheet contains mixed angles, so looping
+    // several frames makes the van spin. Use static direction frames for stable driving.
+    makeFrames('astro_van_drive_down',[0],1,-1);
+    makeFrames('astro_van_drive_right',[3],1,-1);
+    makeFrames('astro_van_drive_left',[24],1,-1);
+    makeFrames('astro_van_drive_up',[13],1,-1);
+
+    // Optional turn anims kept available for later, but NOT auto-played during driving.
+    makeFrames('astro_van_turn_down_to_right',[0,1,2,3],10,0);
+    makeFrames('astro_van_turn_right_to_up',[3,2,1,13],10,0);
+    makeFrames('astro_van_turn_up_to_left',[13,17,18,24],10,0);
+    makeFrames('astro_van_turn_left_to_down',[24,33,34,0],10,0);
+
+    makeFrames('astro_van_turn_down_to_left',[0,33,32,24],10,0);
+    makeFrames('astro_van_turn_left_to_up',[24,18,17,13],10,0);
+    makeFrames('astro_van_turn_up_to_right',[13,1,2,3],10,0);
+    makeFrames('astro_van_turn_right_to_down',[3,2,1,0],10,0);
   }
 
   if(scene.textures.exists(VAN.openKey)){
@@ -535,26 +552,6 @@ function createVanAnimations(scene){
     make('astro_van_door_left',VAN.openKey,16,23,8,0);
     make('astro_van_door_back',VAN.openKey,24,31,8,0);
   }
-}
-
-
-function getVanDirection8(vx,vy){
-  if(Math.hypot(vx,vy)<.05)return null;
-  const deg=Phaser.Math.RadToDeg(Math.atan2(vy,vx));
-  if(deg>=-22.5 && deg<22.5)return 'right';
-  if(deg>=22.5 && deg<67.5)return 'downRight';
-  if(deg>=67.5 && deg<112.5)return 'down';
-  if(deg>=112.5 && deg<157.5)return 'downLeft';
-  if(deg>=157.5 || deg<-157.5)return 'left';
-  if(deg>=-157.5 && deg<-112.5)return 'upLeft';
-  if(deg>=-112.5 && deg<-67.5)return 'up';
-  return 'upRight';
-}
-
-function cardinalFrom8(dir){
-  if(dir==='downRight'||dir==='downLeft')return 'down';
-  if(dir==='upRight'||dir==='upLeft')return 'up';
-  return dir||'down';
 }
 
 class TitleScene extends Phaser.Scene{
@@ -577,12 +574,12 @@ class TitleScene extends Phaser.Scene{
     this.add.text(w/2,172,'2.5D GTA-STYLE OPEN CITY BUILD',{fontFamily:'Arial Black',fontSize:'20px',color:'#ff6ab7'}).setOrigin(.5);
 
     this.add.text(w/2,232,
-      'Donny starts at the Main Civic Gate\nDonny movement/actions + timed laser gun prop + stable sprite scale + driveable Astro Van + Glasswell music',
+      'Donny starts at the Main Civic Gate\nPause inventory + pistol equip/put away + X punch/shoot + Y jump + driveable Astro Van',
       {fontFamily:'Courier New',fontSize:'17px',color:'#d8c99d',align:'center',lineSpacing:7}
     ).setOrigin(.5);
 
     this.add.text(w/2,345,
-      'Move: left stick / WASD / arrows\nA/E/Space = interact / enter van / pick up\nX = pistol or weapon attack | Y = punch | B = drop weapon / exit van\nDrive west/left from C3 to test the empty desert screen',
+      'Move: left stick / WASD / arrows\nSTART = pause / inventory | Inventory A = equip / put away pistol\nX = punch if pistol put away, shoot if pistol equipped\nY = jump | B = kick standing, slide while moving, drop/exit when needed',
       {fontFamily:'Courier New',fontSize:'16px',color:'#ffffff',align:'center',lineSpacing:8}
     ).setOrigin(.5);
 
@@ -608,6 +605,12 @@ class CityScene extends Phaser.Scene{
     this.activeVehicle=null;
     this.pistolActionActive=false;
     this.punchActionActive=false;
+    this.kickActionActive=false;
+    this.jumpActionActive=false;
+    this.slideActionActive=false;
+    this.crawlMode=false;
+    this.pausedForInventory=false;
+    this.pistolEquipped=false;
   }
 
   init(d){
@@ -618,13 +621,18 @@ class CityScene extends Phaser.Scene{
   create(){
     setupTouch();
 
-    this.keys=this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,E,X,B,Y,ESC,SPACE');
+    this.keys=this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,E,X,B,Y,J,K,C,I,P,SHIFT,ESC,SPACE');
     this.input.keyboard.on('keydown-E',()=>this.interact());
-    this.input.keyboard.on('keydown-SPACE',()=>this.interact());
-    this.input.keyboard.on('keydown-X',()=>this.firePistolOrWeapon());
-    this.input.keyboard.on('keydown-Y',()=>this.punch());
-    this.input.keyboard.on('keydown-B',()=>this.dropOrExit());
-    this.input.keyboard.on('keydown-ESC',()=>this.scene.start('TitleScene'));
+    this.input.keyboard.on('keydown-SPACE',()=>this.jump());
+    this.input.keyboard.on('keydown-X',()=>this.primaryXAction());
+    this.input.keyboard.on('keydown-Y',()=>this.jump());
+    this.input.keyboard.on('keydown-J',()=>this.punch());
+    this.input.keyboard.on('keydown-K',()=>this.kick());
+    this.input.keyboard.on('keydown-C',()=>this.toggleCrawl());
+    this.input.keyboard.on('keydown-I',()=>this.togglePauseInventory());
+    this.input.keyboard.on('keydown-P',()=>this.togglePauseInventory());
+    this.input.keyboard.on('keydown-B',()=>this.smartBAction());
+    this.input.keyboard.on('keydown-ESC',()=>this.togglePauseInventory());
 
     this.makeHud();
     this.loadPage(this.startPage,this.startSpawn);
@@ -655,6 +663,25 @@ class CityScene extends Phaser.Scene{
       backgroundColor:'rgba(0,0,0,.60)',
       padding:{x:8,y:5}
     }).setOrigin(1,0).setScrollFactor(0).setDepth(20000);
+
+    this.pauseShade=this.add.rectangle(this.scale.width/2,this.scale.height/2,this.scale.width,this.scale.height,0x000000,.66)
+      .setScrollFactor(0)
+      .setDepth(30000)
+      .setVisible(false);
+
+    this.pausePanel=this.add.rectangle(this.scale.width/2,this.scale.height/2,460,292,0x07090f,.92)
+      .setStrokeStyle(3,0xff2aa1,.8)
+      .setScrollFactor(0)
+      .setDepth(30001)
+      .setVisible(false);
+
+    this.pauseText=this.add.text(this.scale.width/2,this.scale.height/2,'',{
+      fontFamily:'Courier New',
+      fontSize:'17px',
+      color:'#ffffff',
+      align:'left',
+      lineSpacing:8
+    }).setOrigin(.5).setScrollFactor(0).setDepth(30002).setVisible(false);
   }
 
   startGlasswellMusic(){
@@ -674,6 +701,62 @@ class CityScene extends Phaser.Scene{
       // iPhone/Safari can block audio until a tap. The game already starts from a tap,
       // but keep this safe so audio never black-screens the game.
       console.warn('Glasswell music start blocked:',e);
+    }
+  }
+
+  togglePauseInventory(){
+    this.pausedForInventory=!this.pausedForInventory;
+    this.updatePauseInventoryUI();
+  }
+
+  updatePauseInventoryUI(){
+    const visible=!!this.pausedForInventory;
+    if(this.pauseShade)this.pauseShade.setVisible(visible);
+    if(this.pausePanel)this.pausePanel.setVisible(visible);
+    if(this.pauseText){
+      this.pauseText.setVisible(visible);
+      this.pauseText.setText(
+        'PAUSED — INVENTORY\\n\\n' +
+        `Pistol: ${this.pistolEquipped?'EQUIPPED':'PUT AWAY'}\\n` +
+        `Held weapon: ${this.heldWeapon?this.heldWeapon.name:'none'}\\n\\n` +
+        'Touch controls:\\n' +
+        'A = equip / put away pistol\\n' +
+        'B = resume\\n' +
+        'START = resume\\n\\n' +
+        'Keyboard:\\n' +
+        'I / P / Esc = pause / resume\\n' +
+        'E = equip / put away pistol'
+      );
+    }
+  }
+
+  togglePistolEquipped(){
+    this.pistolEquipped=!this.pistolEquipped;
+    if(this.gunOverlay)this.gunOverlay.setVisible(false);
+    this.updatePauseInventoryUI();
+    this.message(this.pistolEquipped?'Pistol equipped':'Pistol put away');
+  }
+
+  handlePauseInput(){
+    if(TOUCH.start){
+      TOUCH.start=false;
+      this.togglePauseInventory();
+      return;
+    }
+    if(TOUCH.a){
+      TOUCH.a=false;
+      this.togglePistolEquipped();
+      return;
+    }
+    if(TOUCH.b){
+      TOUCH.b=false;
+      this.pausedForInventory=false;
+      this.updatePauseInventoryUI();
+      return;
+    }
+
+    if(Phaser.Input.Keyboard.JustDown(this.keys.E)){
+      this.togglePistolEquipped();
     }
   }
 
@@ -766,7 +849,7 @@ class CityScene extends Phaser.Scene{
       this.player.body.setOffset(43,62);
     }
 
-    // Holster is intentionally disabled for now. Do not draw a separate holster prop.
+    // Holster is intentionally removed for now.
     this.holster=null;
 
     // Held Red Concord weapon overlay when a pickup is equipped.
@@ -898,7 +981,11 @@ class CityScene extends Phaser.Scene{
   update(_,delta){
     if(TOUCH.start){
       TOUCH.start=false;
-      this.scene.start('TitleScene');
+      this.togglePauseInventory();
+    }
+
+    if(this.pausedForInventory){
+      this.handlePauseInput();
       return;
     }
 
@@ -920,16 +1007,16 @@ class CityScene extends Phaser.Scene{
     this.updateOverlays();
 
     if(TOUCH.a){TOUCH.a=false;this.interact()}
-    if(TOUCH.xBtn){TOUCH.xBtn=false;this.firePistolOrWeapon()}
-    if(TOUCH.y){TOUCH.y=false;this.punch()}
-    if(TOUCH.b){TOUCH.b=false;this.dropOrExit()}
+    if(TOUCH.xBtn){TOUCH.xBtn=false;this.primaryXAction()}
+    if(TOUCH.y){TOUCH.y=false;this.jump()}
+    if(TOUCH.b){TOUCH.b=false;this.smartBAction()}
 
     this.hud.setText(`${this.cfg.label} | Donny | ${Math.round(this.player.x)},${Math.round(this.player.y)} | ${GAME_IDENTITY.genre}`);
-    this.weaponHud.setText(`Weapon: ${this.heldWeapon?this.heldWeapon.name:'empty'} | Holster: removed | Gun: ${this.gunOverlay?.visible?'in hand':'hidden'}`);
+    this.weaponHud.setText(`Weapon: ${this.heldWeapon?this.heldWeapon.name:'empty'} | Pistol: ${this.pistolEquipped?'equipped':'put away'} | X: ${this.heldWeapon?'weapon':(this.pistolEquipped?'shoot':'punch')}`);
   }
 
   updateDonnyMovement(delta){
-    if(!this.player || this.pistolActionActive || this.punchActionActive)return;
+    if(!this.player || this.anyBlockingAction())return;
 
     let vx=TOUCH.x,vy=TOUCH.y;
 
@@ -939,6 +1026,7 @@ class CityScene extends Phaser.Scene{
     if(this.keys.DOWN.isDown||this.keys.S.isDown)vy++;
 
     const len=Math.hypot(vx,vy);
+    const rawLen=len;
     if(len>1){vx/=len;vy/=len}
 
     if(Math.abs(vx)>Math.abs(vy)){
@@ -949,26 +1037,34 @@ class CityScene extends Phaser.Scene{
       else if(vy<0)this.lastDir='up';
     }
 
-    const step=this.speed*delta/1000;
+    const wantsRun=!this.crawlMode && (rawLen>.78 || this.keys.SHIFT?.isDown);
+    const moveSpeed=this.crawlMode?DONNY.crawlSpeed:(wantsRun?DONNY.runSpeed:DONNY.speed);
+    const step=moveSpeed*delta/1000;
     const nx=this.player.x+vx*step;
     const ny=this.player.y+vy*step;
 
     if(this.canMove(nx,this.player.y))this.player.x=Phaser.Math.Clamp(nx,0,this.mapW);
     if(this.canMove(this.player.x,ny))this.player.y=Phaser.Math.Clamp(ny,0,this.mapH);
 
-    this.animateDonny(vx,vy);
+    this.animateDonny(vx,vy,wantsRun);
     this.depthActors();
   }
 
-  animateDonny(vx,vy){
+  animateDonny(vx,vy,wantsRun=false){
     if(!this.textures.exists('donny_overhead'))return;
 
-    if(Math.hypot(vx,vy)>.05){
-      const anim=`donny_walk_${this.lastDir}`;
+    const moving=Math.hypot(vx,vy)>.05;
+
+    if(moving){
+      let anim=`donny_walk_${this.lastDir}`;
+      if(this.crawlMode && this.textures.exists('donny_crawl'))anim=`donny_crawl_${this.lastDir}`;
+      else if(wantsRun && this.textures.exists('donny_run'))anim=`donny_run_${this.lastDir}`;
+
       if(this.player.anims.currentAnim?.key!==anim)this.player.play(anim,true);
     } else {
       this.player.anims.stop();
-      this.player.setTexture('donny_overhead');
+      const idleTex=this.crawlMode && this.textures.exists('donny_crawl')?'donny_crawl':(this.textures.exists('donny_idle')?'donny_idle':'donny_overhead');
+      this.player.setTexture(idleTex);
       this.player.setFrame(DONNY.directionFrame[this.lastDir]||0);
       this.player.setScale(DONNY.scale);
     }
@@ -1029,7 +1125,11 @@ class CityScene extends Phaser.Scene{
     if(moving){
       const oldDir=van.direction||'down';
 
-      van.direction=getVanDirection8(vx,vy)||van.direction||'down';
+      if(Math.abs(vx)>Math.abs(vy)){
+        van.direction=vx>=0?'right':'left';
+      } else {
+        van.direction=vy>=0?'down':'up';
+      }
 
       const nextX=van.x+vx*VAN.speed*delta/1000;
       const nextY=van.y+vy*VAN.speed*delta/1000;
@@ -1038,10 +1138,9 @@ class CityScene extends Phaser.Scene{
       if(this.canMove(van.x,nextY))van.y=Phaser.Math.Clamp(nextY,0,this.mapH);
 
       if(this.textures.exists(VAN.driveKey)){
-        // Play only the row assigned to the current direction. Never cross rows.
-        const anim=VAN.driveAnim[van.direction];
-        if(anim)van.play(anim,true);
-        else van.setTexture(VAN.driveKey,VAN.idleFrame[van.direction]||0);
+        // Use direct frame selection instead of looping animation to prevent spinning.
+        if(van.anims)van.anims.stop();
+        van.setTexture(VAN.driveKey,VAN.idleFrame[van.direction]||0);
       }
     } else {
       if(van.anims)van.anims.stop();
@@ -1108,6 +1207,48 @@ class CityScene extends Phaser.Scene{
     if(r){this.prompt.setText(r.msg?r.msg:`A/E: ${r.label}`);return}
   }
 
+  anyBlockingAction(){
+    return this.pistolActionActive || this.punchActionActive || this.kickActionActive || this.jumpActionActive || this.slideActionActive;
+  }
+
+  isTryingToMove(){
+    return Math.hypot(TOUCH.x,TOUCH.y)>.08 ||
+      this.keys.LEFT?.isDown || this.keys.RIGHT?.isDown || this.keys.UP?.isDown || this.keys.DOWN?.isDown ||
+      this.keys.A?.isDown || this.keys.D?.isDown || this.keys.W?.isDown || this.keys.S?.isDown;
+  }
+
+  actionOrJump(){
+    if(this.playerInVan)return;
+    if(this.nearestWeapon() || this.nearVan() || this.currentInterior() || this.currentRoute()){
+      this.interact();
+      return;
+    }
+    this.jump();
+  }
+
+  smartBAction(){
+    if(this.playerInVan){
+      this.exitVan();
+      return;
+    }
+    if(this.heldWeapon){
+      this.dropWeapon();
+      return;
+    }
+    if(this.isTryingToMove()){
+      this.slide();
+      return;
+    }
+    this.kick();
+  }
+
+  toggleCrawl(){
+    if(this.anyBlockingAction() || this.playerInVan)return;
+    this.crawlMode=!this.crawlMode;
+    this.restoreDonnyBaseFrame();
+    this.message(this.crawlMode?'Crawl mode on':'Crawl mode off');
+  }
+
   interact(){
     if(this.playerInVan)return;
 
@@ -1170,34 +1311,47 @@ class CityScene extends Phaser.Scene{
     this.message(`Dropped ${w.name}`);
   }
 
-  firePistolOrWeapon(){
+  primaryXAction(){
     if(this.playerInVan)return;
     if(this.time.now<this.cool)return;
 
-    this.cool=this.time.now+260;
-
     if(this.heldWeapon){
+      this.cool=this.time.now+260;
       this.weaponAttack();
-    } else {
-      this.pistolAction();
+      return;
     }
+
+    if(this.pistolEquipped){
+      this.cool=this.time.now+360;
+      this.pistolAction();
+      return;
+    }
+
+    // No weapon and pistol put away: X punches.
+    this.punch();
+  }
+
+  firePistolOrWeapon(){
+    this.primaryXAction();
   }
 
   pistolAction(){
+    if(this.anyBlockingAction())return;
     this.pistolActionActive=true;
+    this.crawlMode=false;
 
-    // Start clean: no holster, no gun, no stray weapon overlay by Donny's feet.
-    if(this.holster)this.holster.setVisible(false);
     if(this.weaponOverlay)this.weaponOverlay.setVisible(false);
     if(this.gunOverlay)this.gunOverlay.setVisible(false);
 
     if(this.textures.exists('donny_pistol')){
       this.player.anims.stop();
-      this.player.setTexture('donny_pistol',ACTION.directionFrame[this.lastDir]||0);
+      const anim=`donny_shoot_${this.lastDir}`;
+      if(this.anims.exists(anim))this.player.play(anim,true);
+      else this.player.setTexture('donny_pistol',ACTION.directionFrame[this.lastDir]||0);
       this.player.setScale(ACTION.scale);
     }
 
-    // The gun appears only after Donny reaches the hand-out firing pose.
+    // Gun appears when the shooting animation reaches the hand-out pose.
     this.time.delayedCall(ACTION.gunShowDelay,()=>{
       if(!this.pistolActionActive || !this.gunOverlay)return;
       const gunOffset=GUN_PROP.offset[this.lastDir]||{x:0,y:0};
@@ -1208,36 +1362,78 @@ class CityScene extends Phaser.Scene{
       this.spawnMuzzleFx();
     });
 
-    // Hide gun before the hand drops / before Donny returns to normal.
-    this.time.delayedCall(Math.max(0,ACTION.duration-ACTION.gunHideBeforeEnd),()=>{
+    // Gun disappears before Donny drops his hand.
+    this.time.delayedCall(Math.max(0,ACTION.shootDuration-ACTION.gunHideBeforeEnd),()=>{
       if(this.gunOverlay)this.gunOverlay.setVisible(false);
     });
 
-    this.time.delayedCall(ACTION.duration,()=>{
+    this.time.delayedCall(ACTION.shootDuration,()=>{
       this.pistolActionActive=false;
       if(this.gunOverlay)this.gunOverlay.setVisible(false);
       this.restoreDonnyBaseFrame();
-      this.message('Laser pistol action complete');
     });
   }
 
   punch(){
-    if(this.playerInVan)return;
+    if(this.playerInVan || this.anyBlockingAction())return;
     if(this.time.now<this.cool)return;
+    this.cool=this.time.now+260;
+    this.crawlMode=false;
+    this.playDonnyAction('punch','donny_punch','punchActionActive',ACTION.duration);
+  }
 
-    this.cool=this.time.now+230;
-    this.punchActionActive=true;
+  kick(){
+    if(this.playerInVan || this.anyBlockingAction())return;
+    if(this.time.now<this.cool)return;
+    this.cool=this.time.now+280;
+    this.crawlMode=false;
+    this.playDonnyAction('kick','donny_kick','kickActionActive',ACTION.duration);
+  }
 
-    if(this.textures.exists('donny_punch')){
+  jump(){
+    if(this.playerInVan || this.anyBlockingAction())return;
+    if(this.time.now<this.cool)return;
+    this.cool=this.time.now+360;
+    this.crawlMode=false;
+    this.playDonnyAction('jump','donny_jump','jumpActionActive',360,40);
+  }
+
+  slide(){
+    if(this.playerInVan || this.anyBlockingAction())return;
+    if(this.time.now<this.cool)return;
+    this.cool=this.time.now+420;
+    this.crawlMode=false;
+    this.playDonnyAction('slide','donny_slide','slideActionActive',380,70);
+  }
+
+  playDonnyAction(label,textureKey,flag,duration,movePush=0){
+    this[flag]=true;
+
+    if(this.textures.exists(textureKey)){
       this.player.anims.stop();
-      this.player.setTexture('donny_punch',ACTION.directionFrame[this.lastDir]||0);
+      const anim=`${label==='shoot'?'donny_shoot':textureKey}_${this.lastDir}`;
+      if(this.anims.exists(anim)){
+        this.player.play(anim,true);
+      } else {
+        this.player.setTexture(textureKey,ACTION.directionFrame[this.lastDir]||0);
+      }
       this.player.setScale(ACTION.scale);
     }
 
-    this.spawnHitFx();
+    if(movePush){
+      const dx=this.lastDir==='right'?1:this.lastDir==='left'?-1:0;
+      const dy=this.lastDir==='down'?1:this.lastDir==='up'?-1:0;
+      this.tweens.add({
+        targets:this.player,
+        x:this.player.x+dx*movePush,
+        y:this.player.y+dy*movePush,
+        duration:duration*.55,
+        ease:'Quad.easeOut'
+      });
+    }
 
-    this.time.delayedCall(ACTION.duration,()=>{
-      this.punchActionActive=false;
+    this.time.delayedCall(duration,()=>{
+      this[flag]=false;
       this.restoreDonnyBaseFrame();
     });
   }
@@ -1248,8 +1444,11 @@ class CityScene extends Phaser.Scene{
   }
 
   restoreDonnyBaseFrame(){
-    if(this.textures.exists('donny_overhead')){
-      this.player.setTexture('donny_overhead',DONNY.directionFrame[this.lastDir]||0);
+    if(this.gunOverlay)this.gunOverlay.setVisible(false);
+
+    const baseTex=this.crawlMode && this.textures.exists('donny_crawl')?'donny_crawl':(this.textures.exists('donny_idle')?'donny_idle':'donny_overhead');
+    if(this.textures.exists(baseTex)){
+      this.player.setTexture(baseTex,DONNY.directionFrame[this.lastDir]||0);
       this.player.setScale(DONNY.scale);
     } else {
       this.player.setTexture('fallback_player');
@@ -1371,7 +1570,7 @@ class CityScene extends Phaser.Scene{
     const van=this.astroVan;
     if(!van || !this.playerInVan)return false;
 
-    const dir=cardinalFrom8(van.direction||'down');
+    const dir=van.direction||'down';
     const off=VAN.exitOffset[dir]||VAN.exitOffset.down;
 
     van.hasDriver=false;
