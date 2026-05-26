@@ -105,7 +105,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-pause-inventory-astrovan-8dir-fixed-2026-05-26-015';
+const VERSION = 'glasswell-inventory-menu-donny-smaller-van-left-fix-2026-05-26-016';
 
 // IMPORTANT:
 // Donny now uses the local files created tonight under assets/sprites/player/donny/props.
@@ -157,7 +157,7 @@ const DONNY_ASSETS = {
 const DONNY = {
   frameWidth:128,
   frameHeight:128,
-  scale:1.08,
+  scale:0.88,
   speed:230,
   runSpeed:335,
   crawlSpeed:95,
@@ -175,7 +175,7 @@ const DONNY = {
 const ACTION = {
   frameWidth:128,
   frameHeight:128,
-  scale:1.08,
+  scale:0.88,
   duration:280,
   shootDuration:360,
   gunShowDelay:90,
@@ -190,7 +190,7 @@ const HOLSTER = {
   key:'donny_holster',
   frameWidth:128,
   frameHeight:128,
-  scale:1.08,
+  scale:0.88,
   directionFrame:{down:0,right:1,left:2,up:3},
   offset:{down:{x:0,y:0},right:{x:0,y:0},left:{x:0,y:0},up:{x:0,y:0}}
 };
@@ -556,17 +556,18 @@ function createVanAnimations(scene){
 
 
 function getVanDirection8(vx,vy){
+  const ax=Math.abs(vx);
+  const ay=Math.abs(vy);
   if(Math.hypot(vx,vy)<.05)return null;
-  const deg=Phaser.Math.RadToDeg(Math.atan2(vy,vx));
 
-  if(deg>=-22.5 && deg<22.5)return 'right';
-  if(deg>=22.5 && deg<67.5)return 'downRight';
-  if(deg>=67.5 && deg<112.5)return 'down';
-  if(deg>=112.5 && deg<157.5)return 'downLeft';
-  if(deg>=157.5 || deg<-157.5)return 'left';
-  if(deg>=-157.5 && deg<-112.5)return 'upLeft';
-  if(deg>=-112.5 && deg<-67.5)return 'up';
-  return 'upRight';
+  // Favor clean cardinals. This stops a mostly-left thumbstick push from becoming up-left/down-left.
+  if(ax > ay*1.45)return vx>=0?'right':'left';
+  if(ay > ax*1.45)return vy>=0?'down':'up';
+
+  if(vx>=0 && vy>=0)return 'downRight';
+  if(vx>=0 && vy<0)return 'upRight';
+  if(vx<0 && vy<0)return 'upLeft';
+  return 'downLeft';
 }
 
 function cardinalFrom8(dir){
@@ -600,7 +601,7 @@ class TitleScene extends Phaser.Scene{
     ).setOrigin(.5);
 
     this.add.text(w/2,345,
-      'Move: left stick / WASD / arrows\nSTART = pause / inventory | Inventory A = equip / put away pistol\nX = punch if pistol put away, shoot if pistol equipped\nY = jump | B = kick standing, slide while moving, drop/exit when needed',
+      'Move: left stick / WASD / arrows\nSTART = pause / inventory | Inventory A = equip / put away pistol/items\nX = punch if pistol put away, shoot if pistol equipped\nY = jump | A = interact only | B = kick/slide/drop/exit',
       {fontFamily:'Courier New',fontSize:'16px',color:'#ffffff',align:'center',lineSpacing:8}
     ).setOrigin(.5);
 
@@ -632,6 +633,9 @@ class CityScene extends Phaser.Scene{
     this.crawlMode=false;
     this.pausedForInventory=false;
     this.pistolEquipped=false;
+    this.inventoryItems=[];
+    this.inventoryIndex=0;
+    this.inventoryNavCool=0;
   }
 
   init(d){
@@ -652,6 +656,7 @@ class CityScene extends Phaser.Scene{
     this.input.keyboard.on('keydown-C',()=>this.toggleCrawl());
     this.input.keyboard.on('keydown-I',()=>this.togglePauseInventory());
     this.input.keyboard.on('keydown-P',()=>this.togglePauseInventory());
+    this.input.keyboard.on('keydown-ENTER',()=>{ if(this.pausedForInventory)this.activateInventorySelection(); });
     this.input.keyboard.on('keydown-B',()=>this.smartBAction());
     this.input.keyboard.on('keydown-ESC',()=>this.togglePauseInventory());
 
@@ -725,6 +730,13 @@ class CityScene extends Phaser.Scene{
     }
   }
 
+  getInventoryMenuItems(){
+    return [
+      {kind:'pistol', name:'Laser pistol'},
+      ...this.inventoryItems.map(item=>({kind:'item', name:item.name, item}))
+    ];
+  }
+
   togglePauseInventory(){
     this.pausedForInventory=!this.pausedForInventory;
     this.updatePauseInventoryUI();
@@ -734,41 +746,83 @@ class CityScene extends Phaser.Scene{
     const visible=!!this.pausedForInventory;
     if(this.pauseShade)this.pauseShade.setVisible(visible);
     if(this.pausePanel)this.pausePanel.setVisible(visible);
+
     if(this.pauseText){
       this.pauseText.setVisible(visible);
+      if(!visible)return;
+
+      const items=this.getInventoryMenuItems();
+      if(this.inventoryIndex>=items.length)this.inventoryIndex=Math.max(0,items.length-1);
+
+      const lines=items.map((entry,i)=>{
+        const cursor=i===this.inventoryIndex?'>':' ';
+        let status='';
+
+        if(entry.kind==='pistol'){
+          status=this.pistolEquipped?'EQUIPPED':'put away';
+        } else {
+          status=this.heldWeapon && this.heldWeapon.id===entry.item.id ? 'EQUIPPED' : 'in bag';
+        }
+
+        return `${cursor} ${entry.name} — ${status}`;
+      }).join('\n');
+
       this.pauseText.setText(
-        'PAUSED — INVENTORY\\n\\n' +
-        `Pistol: ${this.pistolEquipped?'EQUIPPED':'PUT AWAY'}\\n` +
-        `Held weapon: ${this.heldWeapon?this.heldWeapon.name:'none'}\\n\\n` +
-        'Touch controls:\\n' +
-        'A = equip / put away pistol\\n' +
-        'B = resume\\n' +
-        'START = resume\\n\\n' +
-        'Keyboard:\\n' +
-        'I / P / Esc = pause / resume\\n' +
-        'E = equip / put away pistol'
+        'PAUSED — INVENTORY\n\n' +
+        lines +
+        '\n\nA / Enter / E = equip or put away\n' +
+        'X / Y or Up / Down = select item\n' +
+        'B / START / Esc = resume'
       );
     }
   }
 
-  togglePistolEquipped(){
-    this.pistolEquipped=!this.pistolEquipped;
-    if(this.gunOverlay)this.gunOverlay.setVisible(false);
+  moveInventorySelection(dir){
+    const items=this.getInventoryMenuItems();
+    if(!items.length)return;
+    this.inventoryIndex=(this.inventoryIndex+dir+items.length)%items.length;
     this.updatePauseInventoryUI();
-    this.message(this.pistolEquipped?'Pistol equipped':'Pistol put away');
+  }
+
+  activateInventorySelection(){
+    const items=this.getInventoryMenuItems();
+    const entry=items[this.inventoryIndex];
+    if(!entry)return;
+
+    if(entry.kind==='pistol'){
+      this.pistolEquipped=!this.pistolEquipped;
+      if(this.pistolEquipped){
+        this.heldWeapon=null;
+      }
+      if(this.gunOverlay)this.gunOverlay.setVisible(false);
+      this.message(this.pistolEquipped?'Pistol equipped':'Pistol put away');
+      this.updatePauseInventoryUI();
+      return;
+    }
+
+    if(entry.kind==='item'){
+      const currentlyEquipped=this.heldWeapon && this.heldWeapon.id===entry.item.id;
+      if(currentlyEquipped){
+        this.heldWeapon=null;
+        this.message(`${entry.item.name} put away`);
+      } else {
+        this.heldWeapon=entry.item;
+        this.pistolEquipped=false;
+        this.message(`${entry.item.name} equipped`);
+      }
+      this.updatePauseInventoryUI();
+    }
   }
 
   handlePauseInput(){
+    const now=this.time.now;
+
     if(TOUCH.start){
       TOUCH.start=false;
       this.togglePauseInventory();
       return;
     }
-    if(TOUCH.a){
-      TOUCH.a=false;
-      this.togglePistolEquipped();
-      return;
-    }
+
     if(TOUCH.b){
       TOUCH.b=false;
       this.pausedForInventory=false;
@@ -776,8 +830,38 @@ class CityScene extends Phaser.Scene{
       return;
     }
 
+    if(TOUCH.a){
+      TOUCH.a=false;
+      this.activateInventorySelection();
+      return;
+    }
+
+    if(TOUCH.xBtn && now>this.inventoryNavCool){
+      TOUCH.xBtn=false;
+      this.inventoryNavCool=now+180;
+      this.moveInventorySelection(1);
+      return;
+    }
+
+    if(TOUCH.y && now>this.inventoryNavCool){
+      TOUCH.y=false;
+      this.inventoryNavCool=now+180;
+      this.moveInventorySelection(-1);
+      return;
+    }
+
+    if(now>this.inventoryNavCool){
+      if(TOUCH.y>.45 || this.keys.DOWN?.isDown){
+        this.inventoryNavCool=now+180;
+        this.moveInventorySelection(1);
+      } else if(TOUCH.y<-.45 || this.keys.UP?.isDown){
+        this.inventoryNavCool=now+180;
+        this.moveInventorySelection(-1);
+      }
+    }
+
     if(Phaser.Input.Keyboard.JustDown(this.keys.E)){
-      this.togglePistolEquipped();
+      this.activateInventorySelection();
     }
   }
 
@@ -1033,7 +1117,7 @@ class CityScene extends Phaser.Scene{
     if(TOUCH.b){TOUCH.b=false;this.smartBAction()}
 
     this.hud.setText(`${this.cfg.label} | Donny | ${Math.round(this.player.x)},${Math.round(this.player.y)} | ${GAME_IDENTITY.genre}`);
-    this.weaponHud.setText(`Weapon: ${this.heldWeapon?this.heldWeapon.name:'empty'} | Pistol: ${this.pistolEquipped?'equipped':'put away'} | X: ${this.heldWeapon?'weapon':(this.pistolEquipped?'shoot':'punch')}`);
+    this.weaponHud.setText(`Weapon: ${this.heldWeapon?this.heldWeapon.name:'empty'} | Pistol: ${this.pistolEquipped?'equipped':'put away'} | Bag: ${this.inventoryItems.length}`);
   }
 
   updateDonnyMovement(delta){
@@ -1290,11 +1374,16 @@ class CityScene extends Phaser.Scene{
       return;
     }
 
-    this.heldWeapon=Object.assign({},sprite.weaponData);
-    sessionStorage.setItem('picked_'+this.heldWeapon.id,'1');
+    const item=Object.assign({},sprite.weaponData);
+    if(!this.inventoryItems.some(i=>i.id===item.id)){
+      this.inventoryItems.push(item);
+    }
+    this.heldWeapon=item;
+    this.pistolEquipped=false;
+    sessionStorage.setItem('picked_'+item.id,'1');
     sprite.destroy();
     this.weaponSprites=this.weaponSprites.filter(s=>s!==sprite);
-    this.message(`Picked up ${this.heldWeapon.name}`);
+    this.message(`Picked up and equipped ${item.name}`);
   }
 
   dropOrExit(){
@@ -1313,6 +1402,7 @@ class CityScene extends Phaser.Scene{
 
     const w=this.heldWeapon;
     this.heldWeapon=null;
+    this.inventoryItems=this.inventoryItems.filter(i=>i.id!==w.id);
     sessionStorage.removeItem('picked_'+w.id);
 
     w.x=this.player.x+(this.lastDir==='right'?45:this.lastDir==='left'?-45:0);
