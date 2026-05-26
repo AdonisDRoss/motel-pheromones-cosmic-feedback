@@ -82,7 +82,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-donny-small-uniform-vertical-walk-van-center-2026-05-26-016';
+const VERSION = 'glasswell-action-enter-van-crop-direction-fix-2026-05-26-017';
 
 function version(path){ return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`; }
 function key(id,type){return `${id}_${type}`}
@@ -220,19 +220,19 @@ const DONNY = {
   frameWidth:128,
   frameHeight:128,
 
-  // Uniform smaller Donny scale. Same value across idle/walk/run/action prevents scale popping.
-  scale:0.78,
-  walkScale:0.78,
-  runScale:0.78,
-  crawlScale:0.78,
-  actionScale:0.78,
+  // Smaller uniform Donny. Same scale for every state prevents idle/walk/run popping.
+  scale:0.70,
+  walkScale:0.70,
+  runScale:0.70,
+  crawlScale:0.70,
+  actionScale:0.70,
 
-  // Feet anchor. Higher originY puts the visual feet closer to the gameplay position.
-  originY:0.88,
+  // Feet anchor closer to the bottom of the frame.
+  originY:0.90,
 
   speed:205,
-  runSpeed:292,
-  crawlSpeed:88,
+  runSpeed:205,
+  crawlSpeed:86,
 
   directionFrame:{down:0,right:8,left:16,up:24},
   anims:{
@@ -255,25 +255,25 @@ const GUN_PROP = {
   key:'donny_laser_gun_overlay',
   frameWidth:128,
   frameHeight:128,
-  scale:0.34,
+  scale:0.28,
   directionFrame:{down:0,right:1,left:2,up:3},
   hand:{
-    down:{x:12,y:-38},
-    right:{x:24,y:-41},
-    left:{x:-24,y:-41},
-    up:{x:-7,y:-52}
+    down:{x:10,y:-34},
+    right:{x:20,y:-36},
+    left:{x:-20,y:-36},
+    up:{x:-6,y:-46}
   }
 };
 
 const FUEL_CAN_PROP = {
   key:'fuel_can_hand_prop',
-  scale:0.42,
+  scale:0.34,
   directionFrame:{down:0,right:1,left:2,up:3},
   hand:{
-    down:{x:12,y:-38},
-    right:{x:24,y:-41},
-    left:{x:-24,y:-41},
-    up:{x:-7,y:-52}
+    down:{x:10,y:-34},
+    right:{x:20,y:-36},
+    left:{x:-20,y:-36},
+    up:{x:-6,y:-46}
   }
 };
 
@@ -283,13 +283,13 @@ const HOLSTER = {
   key:'donny_holster',
   frameWidth:128,
   frameHeight:128,
-  scale:0.28,
+  scale:0.24,
   directionFrame:{down:0,right:1,left:2,up:3},
   hip:{
-    down:{x:14,y:-22},
-    right:{x:17,y:-21},
-    left:{x:-17,y:-21},
-    up:{x:13,y:-23}
+    down:{x:11,y:-19},
+    right:{x:14,y:-18},
+    left:{x:-14,y:-18},
+    up:{x:11,y:-20}
   }
 };
 
@@ -297,6 +297,10 @@ const VAN = {
   driveKey:'astro_van_drive_fallback',
   activeDriveKey:'astro_van_drive_fallback',
   activeLayout:'fallback',
+  fullImageKey:'astro_van_drive_full_image',
+  cropKey:'astro_van_drive_cropped_runtime',
+  cropReady:false,
+  cropFrame:{w:128,h:96},
   openKey:'astro_van_open',
   driveFrame:{w:128,h:96},
   openFrame:{w:204,h:164},
@@ -304,12 +308,12 @@ const VAN = {
   idleFrame:{down:0,downRight:11,right:22,upRight:33,up:44,upLeft:55,left:66,downLeft:77},
   anim:{down:'astro_van_drive_down',downRight:'astro_van_drive_downRight',right:'astro_van_drive_right',upRight:'astro_van_drive_upRight',up:'astro_van_drive_up',upLeft:'astro_van_drive_upLeft',left:'astro_van_drive_left',downLeft:'astro_van_drive_downLeft'},
   speed:285,
-  enterDistance:105,
-  renderScale:1.35,
+  enterDistance:72,
+  renderScale:1.04,
 
   // Small physical footprint only around the van body.
   // This prevents a huge transparent sprite box from trapping Donny.
-  body:{w:78,h:32,offsetY:-18},
+  body:{w:70,h:28,offsetY:-16},
 
   exitOffset:{down:{x:0,y:92},up:{x:0,y:-92},right:{x:112,y:0},left:{x:-112,y:0}}
 };
@@ -506,6 +510,10 @@ class BootScene extends Phaser.Scene{
     this.load.spritesheet(GUN_PROP.key,version(DONNY_ASSETS.laserOverlay),{frameWidth:128,frameHeight:128});
     this.load.spritesheet(HOLSTER.key,version(DONNY_ASSETS.holster),{frameWidth:128,frameHeight:128});
 
+    // Load the van sheet as a normal image too. Runtime cropping uses the true image width/height,
+    // which fixes bad Phaser frame slicing and van cropping.
+    this.load.image(VAN.fullImageKey,version(VAN_ASSETS.candidates[0].path));
+
     VAN_ASSETS.candidates.forEach(v=>{
       this.load.spritesheet(v.key,version(v.path),{frameWidth:v.frameWidth,frameHeight:v.frameHeight,margin:0,spacing:0});
     });
@@ -647,7 +655,7 @@ class TitleScene extends Phaser.Scene{
     this.add.text(480,88,'COSMIC FEEDBACK',{fontFamily:'Arial Black',fontSize:'30px',color:'#e8e1cf'}).setOrigin(.5);
     this.add.text(480,138,'GLASSWELL',{fontFamily:'Arial Black',fontSize:'46px',color:'#9ff4ff'}).setOrigin(.5).setShadow(0,0,'#67dce8',8,true,true);
     this.add.text(480,195,'2.5D GTA-style open-city sci-fi RPG / brawler',{fontFamily:'Courier New',fontSize:'18px',color:'#d9b46a'}).setOrigin(.5);
-    this.add.text(480,302,'On foot: A jump | X punch/shoot | B kick/slide/crawl | Y enter/interact\nVan: stick drive uses fuel | B rear menu on foot | hold Y headlights | tap Y horn',{fontFamily:'Courier New',fontSize:'17px',color:'#d5c7a3',align:'center',lineSpacing:8}).setOrigin(.5);
+    this.add.text(480,302,'On foot: Y action/enter | A jump | X punch/shoot | B kick/slide/crawl\nVan: stick drive uses fuel | B rear menu on foot | hold Y headlights | tap Y horn',{fontFamily:'Courier New',fontSize:'17px',color:'#d5c7a3',align:'center',lineSpacing:8}).setOrigin(.5);
     const start=()=>this.scene.start('MapScene',{pageId:'GLASSWELL_C3',spawn:'donny_city_start'});
     this.input.once('pointerdown',start);
     this.input.keyboard.once('keydown-ENTER',start);
@@ -801,7 +809,7 @@ class MapScene extends Phaser.Scene{
   createPlayerSprites(){
     if(!this.player){
       const texture=this.textures.exists('donny_idle')?'donny_idle':(this.textures.exists('donny_overhead')?'donny_overhead':'donny_fallback');
-      this.player=this.add.sprite(this.playerX,this.playerY,texture,0).setOrigin(.5,DONNY.originY || .88).setScale(DONNY.scale).setDepth(this.playerY+1000);
+      this.player=this.add.sprite(this.playerX,this.playerY,texture,0).setOrigin(.5,DONNY.originY || .90).setScale(DONNY.scale).setDepth(this.playerY+1000);
       this.gun=this.add.sprite(this.playerX,this.playerY,GUN_PROP.key,0).setOrigin(.5,.5).setScale(GUN_PROP.scale).setVisible(false).setDepth(this.playerY+1005);
       this.holster=this.add.sprite(this.playerX,this.playerY,HOLSTER.key,0).setOrigin(.5,.5).setScale(HOLSTER.scale).setVisible(false).setDepth(this.playerY+1004);
       this.fuelCan=this.add.sprite(this.playerX,this.playerY,FUEL_CAN_PROP.key,0).setOrigin(.5,.5).setScale(FUEL_CAN_PROP.scale).setVisible(false).setDepth(this.playerY+1007);
@@ -813,14 +821,18 @@ class MapScene extends Phaser.Scene{
   }
 
   spawnVanNearDonny(){
-    // Put the van in the road close to Donny so rear menu/refuel testing is reachable.
-    const vx=clamp(this.playerX-125,80,this.mapW-80);
-    const vy=clamp(this.playerY+35,80,this.mapH-80);
+    // Put the van in the middle of the road for testing. It will not auto-enter Donny.
+    const vx=clamp(this.mapW*.42,100,this.mapW-100);
+    const vy=clamp(this.mapH*.60,100,this.mapH-100);
+
+    this.ensureVanCropTexture();
+
+    const texture=this.textures.exists(VAN.cropKey) ? VAN.cropKey : VAN.activeDriveKey;
 
     if(!this.van){
-      this.van=this.add.sprite(vx,vy,VAN.activeDriveKey,VAN.idleFrame.right||0).setOrigin(.5,.68).setScale(VAN.renderScale).setDepth(vy+900);
+      this.van=this.add.sprite(vx,vy,texture,0).setOrigin(.5,.68).setScale(VAN.renderScale).setDepth(vy+900);
     } else {
-      this.van.setPosition(vx,vy).setVisible(true);
+      this.van.setPosition(vx,vy).setVisible(true).setTexture(texture);
     }
 
     this.vanX=this.van.x;
@@ -828,6 +840,7 @@ class MapScene extends Phaser.Scene{
     this.vanPage=this.pageId;
     this.vanDir='right';
 
+    this.updateVanVisual(false);
     this.createVanLightObjects();
     this.enableVanPhysics();
   }
@@ -998,6 +1011,60 @@ class MapScene extends Phaser.Scene{
 
   fuelText(){
     return `${Math.max(0,Math.ceil(this.vanFuel))}%`;
+  }
+
+  ensureVanCropTexture(){
+    if(this.vanCropReady)return this.textures.exists(VAN.cropKey);
+
+    if(!this.textures.exists(VAN.fullImageKey))return false;
+
+    const src=this.textures.get(VAN.fullImageKey).getSourceImage();
+    if(!src || !src.width || !src.height)return false;
+
+    const cols=11;
+    const rows=8;
+    const fw=Math.max(1,Math.floor(src.width/cols));
+    const fh=Math.max(1,Math.floor(src.height/rows));
+
+    VAN.cropFrame={w:fw,h:fh};
+    VAN.columns=cols;
+    VAN.cropReady=true;
+
+    if(this.textures.exists(VAN.cropKey))this.textures.remove(VAN.cropKey);
+    this.textures.createCanvas(VAN.cropKey,fw,fh);
+
+    this.vanCropReady=true;
+    this.updateVanVisual(false);
+    return true;
+  }
+
+  updateVanVisual(animated=false){
+    if(!this.van)return;
+
+    if(this.ensureVanCropTexture()){
+      const src=this.textures.get(VAN.fullImageKey).getSourceImage();
+      const tex=this.textures.get(VAN.cropKey);
+      const ctx=tex.getContext();
+      const fw=VAN.cropFrame.w;
+      const fh=VAN.cropFrame.h;
+
+      const rows={down:0,downRight:1,right:2,upRight:3,up:4,upLeft:5,left:6,downLeft:7};
+      const row=rows[this.vanDir] ?? 2;
+      const col=animated ? Math.floor(this.time.now/95)%11 : 0;
+
+      ctx.clearRect(0,0,fw,fh);
+      ctx.drawImage(src,col*fw,row*fh,fw,fh,0,0,fw,fh);
+      tex.refresh();
+
+      this.van.setTexture(VAN.cropKey);
+      this.van.setOrigin(.5,.68);
+      this.van.setScale(VAN.renderScale);
+      return;
+    }
+
+    // Fallback if image crop texture is unavailable.
+    const frame=VAN.idleFrame[this.vanDir] ?? 0;
+    if(this.van.setFrame)this.van.setFrame(frame);
   }
 
   createVanLightObjects(){
@@ -1184,6 +1251,16 @@ class MapScene extends Phaser.Scene{
     this.kick();
   }
 
+  canEnterVanNow(){
+    if(!this.nearVan())return false;
+    const input=this.inputVector ? this.inputVector() : {len:0};
+    if(input.len>.16){
+      this.message('Stop moving, then press Y to enter');
+      return false;
+    }
+    return true;
+  }
+
   handleY(){
     if(this.rearMenuOpen){this.closeRearMenu();return}
     if(this.isInventoryOpen){this.toggleInventory();return}
@@ -1191,7 +1268,7 @@ class MapScene extends Phaser.Scene{
       this.honkHorn();
       return;
     }
-    if(this.nearVan()){this.enterVan();return}
+    if(this.canEnterVanNow()){this.enterVan();return}
     this.message('No interaction here');
   }
 
@@ -1248,11 +1325,8 @@ class MapScene extends Phaser.Scene{
 
   setDonnyVisual(mode='idle'){
     if(!this.player)return;
-
-    // Uniform scale prevents the "small idle frame between walking frames" pop.
-    const scale=DONNY.scale;
-    this.player.setScale(scale);
-    this.player.setOrigin(.5, DONNY.originY || .88);
+    this.player.setScale(DONNY.scale);
+    this.player.setOrigin(.5, DONNY.originY || .90);
   }
 
   playDonnyAction(action){
@@ -1621,7 +1695,7 @@ class MapScene extends Phaser.Scene{
 
     let moving=input.len>.055;
     if(moving){
-      this.lastMoveUntil=now+180;
+      this.lastMoveUntil=now+300;
       this.lastMoveInput={x:input.x,y:input.y};
     } else if(now<this.lastMoveUntil){
       moving=true;
@@ -1637,12 +1711,9 @@ class MapScene extends Phaser.Scene{
         this.van.x=clamp(this.van.x+input.x*VAN.speed*delta/1000,20,this.mapW-20);
         this.van.y=clamp(this.van.y+input.y*VAN.speed*delta/1000,20,this.mapH-20);
         if(this.van.body)this.van.body.updateFromGameObject();
-        const anim=VAN.anim[this.vanDir];
-        if(this.anims.exists(anim))this.van.play(anim,true);
-        else this.van.setFrame(VAN.idleFrame[this.vanDir] ?? 0);
+        this.updateVanVisual(true);
       } else {
-        this.van.stop();
-        this.van.setFrame(VAN.idleFrame[this.vanDir] ?? 0);
+        this.updateVanVisual(false);
       }
       this.van.setDepth(this.van.y+900);
       this.updateVanHeadlights();
@@ -1662,7 +1733,7 @@ class MapScene extends Phaser.Scene{
     let speed=DONNY.speed;
     let mode='WALK';
     if(this.isCrawling){speed=DONNY.crawlSpeed;mode='CRAWL'}
-    else if(moving && input.len>.72 && now-this.moveHoldStart>350){speed=DONNY.runSpeed;mode='RUN'}
+    else if(false && moving && input.len>.72 && now-this.moveHoldStart>350){speed=DONNY.runSpeed;mode='RUN'}
 
     if(this.actionType==='slide' && now<this.slideUntil){
       const sv=this.slideVec||input;
@@ -1687,7 +1758,7 @@ class MapScene extends Phaser.Scene{
     this.checkRoutes();
 
     if(this.nearRearOfVan && this.nearRearOfVan())this.prompt.setText('B: rear menu');
-    else if(this.nearVan())this.prompt.setText('Y: enter Astro Van');
+    else if(this.nearVan())this.prompt.setText('Y: enter Astro Van (action)');
     this.hud.setText(`${PAGES[this.pageId].label} | Donny | ${Math.round(this.playerX)},${Math.round(this.playerY)} | 2.5D GTA-style open-city sci-fi RPG / brawler`);
     this.status.setText(`${this.fuelCanEquipped?'Fuel can equipped':(this.weaponEquipped?'Pistol equipped':'Hands empty')} | Load ${formatWeight(this.getPlayerWeight())}/${formatWeight(this.playerWeightLimit)} | Car ${formatWeight(this.getCarWeight())}/${formatWeight(this.getCarWeightLimit())} | Fuel ${this.fuelText()}`);
   }
