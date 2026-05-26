@@ -6,180 +6,37 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
-*{
-  box-sizing:border-box;
-  -webkit-user-select:none;
-  user-select:none;
-  -webkit-touch-callout:none;
-  -webkit-tap-highlight-color:transparent;
-}
-html,body{
-  margin:0;
-  padding:0;
-  background:#000;
-  width:100%;
-  height:100%;
-  overflow:hidden;
-  touch-action:none;
-  overscroll-behavior:none;
-}
-body{
-  position:fixed;
-  inset:0;
-}
-#game{
-  position:fixed;
-  inset:0;
-  width:100vw;
-  height:100vh;
-  touch-action:none;
-}
-canvas{
-  image-rendering:pixelated;
-  image-rendering:crisp-edges;
-  display:block;
-  touch-action:none;
-}
-#touchControls{
-  position:fixed;
-  inset:0;
-  z-index:9999;
-  pointer-events:none;
-  touch-action:none;
-}
-#moveZone{
-  position:absolute;
-  left:0;
-  top:0;
-  width:48vw;
-  height:100vh;
-  pointer-events:auto;
-  touch-action:none;
-}
-#stickBase{
-  position:absolute;
-  left:max(34px, calc(env(safe-area-inset-left) + 34px));
-  bottom:max(58px, calc(env(safe-area-inset-bottom) + 58px));
-  width:116px;
-  height:116px;
-  border-radius:50%;
-  border:3px solid rgba(255,255,255,.46);
-  background:rgba(0,0,0,.22);
-  box-shadow:0 0 0 2px rgba(103,220,232,.22) inset;
-  pointer-events:auto;
-  touch-action:none;
-}
-#stickKnob{
-  position:absolute;
-  left:50%;
-  top:50%;
-  width:44px;
-  height:44px;
-  margin-left:-22px;
-  margin-top:-22px;
-  border-radius:50%;
-  background:rgba(255,255,255,.28);
-  border:3px solid rgba(103,220,232,.82);
-  pointer-events:none;
-}
-#moveLabel{
-  position:absolute;
-  left:0;
-  right:0;
-  bottom:-22px;
-  text-align:center;
-  font:800 10px Arial,sans-serif;
-  color:rgba(255,255,255,.70);
-  letter-spacing:1px;
-  pointer-events:none;
-}
-#touchDebug{
-  position:absolute;
-  left:max(34px, calc(env(safe-area-inset-left) + 34px));
-  bottom:max(186px, calc(env(safe-area-inset-bottom) + 186px));
-  color:#9ff4ff;
-  background:rgba(0,0,0,.45);
-  border:1px solid rgba(159,244,255,.24);
-  border-radius:8px;
-  padding:4px 7px;
-  font:800 10px Arial,sans-serif;
-  pointer-events:none;
-}
-.touchBtn{
-  position:absolute;
-  width:66px;
-  height:66px;
-  border-radius:50%;
-  border:3px solid rgba(255,255,255,.52);
-  background:rgba(0,0,0,.46);
-  color:#fff;
-  font:900 18px Arial,sans-serif;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  pointer-events:auto;
-  touch-action:none;
-}
-#btnA{
-  right:max(100px, calc(env(safe-area-inset-right) + 100px));
-  bottom:max(154px, calc(env(safe-area-inset-bottom) + 154px));
-}
-#btnB{
-  right:max(100px, calc(env(safe-area-inset-right) + 100px));
-  bottom:max(38px, calc(env(safe-area-inset-bottom) + 38px));
-}
-#btnX{
-  right:max(158px, calc(env(safe-area-inset-right) + 158px));
-  bottom:max(96px, calc(env(safe-area-inset-bottom) + 96px));
-}
-#btnY{
-  right:max(42px, calc(env(safe-area-inset-right) + 42px));
-  bottom:max(96px, calc(env(safe-area-inset-bottom) + 96px));
-}
-#btnStart{
-  position:absolute;
-  left:50%;
-  bottom:max(24px, calc(env(safe-area-inset-bottom) + 24px));
-  transform:translateX(-50%);
-  width:116px;
-  height:34px;
-  border-radius:18px;
-  border:2px solid rgba(255,255,255,.50);
-  background:rgba(0,0,0,.50);
-  color:#fff;
-  font:900 12px Arial,sans-serif;
-  letter-spacing:1px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  pointer-events:auto;
-  touch-action:none;
-}
-.touchBtn:active,#btnStart:active{
-  transform:scale(.96);
-}
-#btnStart:active{
-  transform:translateX(-50%) scale(.96);
-}
+*{box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:#000;width:100%;height:100%;overflow:hidden;touch-action:none;overscroll-behavior:none}
+body{position:fixed;inset:0}
+#game{position:fixed;inset:0;width:100vw;height:100vh;touch-action:none}
+canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block;touch-action:none}
+#touchControls{position:fixed;inset:0;z-index:9999;pointer-events:none;touch-action:none}
+#moveZone{position:absolute;left:0;top:0;width:48vw;height:100vh;pointer-events:auto;touch-action:none}
+#stickBase{position:absolute;left:max(34px,calc(env(safe-area-inset-left) + 34px));bottom:max(58px,calc(env(safe-area-inset-bottom) + 58px));width:116px;height:116px;border-radius:50%;border:3px solid rgba(255,255,255,.46);background:rgba(0,0,0,.22);box-shadow:0 0 0 2px rgba(103,220,232,.22) inset;pointer-events:auto;touch-action:none}
+#stickKnob{position:absolute;left:50%;top:50%;width:44px;height:44px;margin-left:-22px;margin-top:-22px;border-radius:50%;background:rgba(255,255,255,.28);border:3px solid rgba(103,220,232,.82);pointer-events:none}
+#moveLabel{position:absolute;left:0;right:0;bottom:-22px;text-align:center;font:800 10px Arial,sans-serif;color:rgba(255,255,255,.70);letter-spacing:1px;pointer-events:none}
+.touchBtn{position:absolute;width:66px;height:66px;border-radius:50%;border:3px solid rgba(255,255,255,.52);background:rgba(0,0,0,.46);color:#fff;font:900 18px Arial,sans-serif;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none}
+#btnA{right:max(100px,calc(env(safe-area-inset-right) + 100px));bottom:max(154px,calc(env(safe-area-inset-bottom) + 154px))}
+#btnB{right:max(100px,calc(env(safe-area-inset-right) + 100px));bottom:max(38px,calc(env(safe-area-inset-bottom) + 38px))}
+#btnX{right:max(158px,calc(env(safe-area-inset-right) + 158px));bottom:max(96px,calc(env(safe-area-inset-bottom) + 96px))}
+#btnY{right:max(42px,calc(env(safe-area-inset-right) + 42px));bottom:max(96px,calc(env(safe-area-inset-bottom) + 96px))}
+#btnStart{position:absolute;left:50%;bottom:max(24px,calc(env(safe-area-inset-bottom) + 24px));transform:translateX(-50%);width:116px;height:34px;border-radius:18px;border:2px solid rgba(255,255,255,.50);background:rgba(0,0,0,.50);color:#fff;font:900 12px Arial,sans-serif;letter-spacing:1px;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none}
+.touchBtn:active,#btnStart:active{transform:scale(.96)}
+#btnStart:active{transform:translateX(-50%) scale(.96)}
 </style>
 </head>
 <body>
 <div id="game"></div>
-
 <div id="touchControls">
   <div id="moveZone"></div>
-  <div id="stickBase">
-    <div id="stickKnob"></div>
-    <div id="moveLabel">MOVE</div>
-  </div>
-  <div id="touchDebug">TOUCH READY</div>
+  <div id="stickBase"><div id="stickKnob"></div><div id="moveLabel">MOVE</div></div>
   <div id="btnA" class="touchBtn">A</div>
   <div id="btnB" class="touchBtn">B</div>
   <div id="btnX" class="touchBtn">X</div>
   <div id="btnY" class="touchBtn">Y</div>
   <div id="btnStart">START</div>
 </div>
-
-<script src="scripts/game.js?v=glasswell-touch-balanced-collision-2026-05-25"></script>
+<script src="scripts/game.js?v=glasswell-fixed-now-rect-collision-2026-05-25"></script>
 </body>
 </html>
