@@ -1,677 +1,115 @@
 <!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8" />
-<title>Cosmic Feedback — Glasswell City Test</title>
+<html><head><meta charset="UTF-8" />
+<title>Cosmic Feedback — Glasswell Donny + Van Test</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
-
 <style>
-*{
-  box-sizing:border-box;
-  -webkit-user-select:none;
-  user-select:none;
-  -webkit-touch-callout:none;
-}
+*{box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:#000;width:100%;height:100%;overflow:hidden;touch-action:none;overscroll-behavior:none}
+body{position:fixed;inset:0}#game{position:fixed;inset:0;width:100vw;height:100vh;overflow:hidden}canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+</style></head><body><div id="game"></div><script>
+const VERSION='glasswell-donny-van-restored-002';
+const GAME_W=960,GAME_H=540;
+const A=p=>p+'?v='+VERSION;
 
-html,body{
-  margin:0;
-  padding:0;
-  background:#000;
-  width:100%;
-  height:100%;
-  overflow:hidden;
-  touch-action:none;
-  overscroll-behavior:none;
-}
-
-body{
-  position:fixed;
-  inset:0;
-}
-
-#game{
-  position:fixed;
-  inset:0;
-  width:100vw;
-  height:100vh;
-  overflow:hidden;
-}
-
-canvas{
-  image-rendering:pixelated;
-  image-rendering:crisp-edges;
-}
-</style>
-</head>
-
-<body>
-<div id="game"></div>
-
-<script>
-const VERSION = "glasswell-all-pages-001";
-
-const GAME_W = 960;
-const GAME_H = 540;
-
-function assetPath(path){
-  return path + "?v=" + VERSION;
-}
-
-/*
-  AVAILABLE GLASSWELL MAP PAGES
-  These are the pages currently present in:
-  assets/maps/dust9/glasswell/page_registry.json
-
-  START:
-  GLASSWELL_C3 — Main Civic Gate
-
-  EDGE ROUTES:
-  C3 north -> C2
-  C3 south -> C4
-  C3 east  -> D3
-  C2 south -> C3
-  C4 north -> C3
-  D3 west  -> C3
-*/
-
-const MAP_PAGES = {
-  GLASSWELL_C2: {
-    id: "GLASSWELL_C2",
-    title: "C2 — Civic Admin Street",
-    w: 1448,
-    h: 1086,
-    baseKey: "GLASSWELL_C2_base",
-    basePath: "assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_base.png",
-    overlayKey: "GLASSWELL_C2_foreground_overlay",
-    overlayPath: "assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_foreground_overlay.png",
-    routes: {
-      south: "GLASSWELL_C3"
-    }
-  },
-
-  GLASSWELL_C3: {
-    id: "GLASSWELL_C3",
-    title: "C3 — Main Civic Gate",
-    w: 1536,
-    h: 1152,
-    baseKey: "GLASSWELL_C3_base",
-    basePath: "assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_base.png",
-    overlayKey: "GLASSWELL_C3_foreground_overlay",
-    overlayPath: "assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_foreground_overlay.png",
-    routes: {
-      north: "GLASSWELL_C2",
-      south: "GLASSWELL_C4",
-      east: "GLASSWELL_D3"
-    }
-  },
-
-  GLASSWELL_C4: {
-    id: "GLASSWELL_C4",
-    title: "C4 — Transit Vendor Square",
-    w: 1448,
-    h: 1086,
-    baseKey: "GLASSWELL_C4_base",
-    basePath: "assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_base.png",
-    overlayKey: "GLASSWELL_C4_foreground_overlay",
-    overlayPath: "assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_foreground_overlay.png",
-    routes: {
-      north: "GLASSWELL_C3"
-    }
-  },
-
-  GLASSWELL_D3: {
-    id: "GLASSWELL_D3",
-    title: "D3 — Red Concord Checkpoint",
-    w: 1448,
-    h: 1086,
-    baseKey: "GLASSWELL_D3_base",
-    basePath: "assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_base.png",
-    overlayKey: "GLASSWELL_D3_foreground_overlay",
-    overlayPath: "assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_foreground_overlay.png",
-    routes: {
-      west: "GLASSWELL_C3"
-    }
-  }
+const MAPS={
+ C2:{id:'C2',title:'C2 — Civic Admin Street',w:1448,h:1086,base:'assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_base.png',over:'assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_foreground_overlay.png',routes:{south:'C3'}},
+ C3:{id:'C3',title:'C3 — Main Civic Gate',w:1536,h:1152,base:'assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_base.png',over:'assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_foreground_overlay.png',routes:{north:'C2',south:'C4',east:'D3'}},
+ C4:{id:'C4',title:'C4 — Transit Vendor Square',w:1448,h:1086,base:'assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_base.png',over:'assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_foreground_overlay.png',routes:{north:'C3'}},
+ D3:{id:'D3',title:'D3 — Red Concord Checkpoint',w:1448,h:1086,base:'assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_base.png',over:'assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_foreground_overlay.png',routes:{west:'C3'}}
 };
+const ORDER=['C3','C2','C4','D3'];
 
-const MAP_ORDER = [
-  "GLASSWELL_C3",
-  "GLASSWELL_C2",
-  "GLASSWELL_C4",
-  "GLASSWELL_D3"
-];
-
-const ASSETS = {
-  astroVanDrive: "assets/vehicles/astro_van_8dir_drive_1x8_128x96_TRANSPARENT_FIXED.png"
+const DONNY_PATHS={
+ idle:'assets/sprites/player/donny/donny_idle_4dir.png',
+ walk:'assets/sprites/player/donny/donny_walk_4dir.png',
+ overhead:'assets/sprites/player/donny/donny_overhead_noguitar_phaser_ready_1779508629.png'
 };
+const VAN_PATH='assets/sprites/vehicles/astro_van/astro_van_v1_sheet.png';
 
-const VAN_FRAME = {
-  SOUTH: 0,
-  SOUTHEAST: 1,
-  EAST: 2,
-  NORTHEAST: 3,
-  NORTH: 4,
-  NORTHWEST: 5,
-  WEST: 6,
-  SOUTHWEST: 7
-};
+const D={fw:128,fh:128,cols:8,rows:['down','right','left','up'],row:{down:0,right:1,left:2,up:3}};
+const V={fw:128,fh:96};
+const VF={south:0,southeast:1,east:2,northeast:3,north:4,northwest:5,west:6,southwest:7};
+function axis(v){return v>.25?1:v<-.25?-1:0}
+function dirFromMove(dx,dy,last){dx=axis(dx);dy=axis(dy);if(!dx&&!dy)return last||'down';return Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up')}
+function vanFrame(dx,dy,last){dx=axis(dx);dy=axis(dy);if(dx===0&&dy>0)return VF.south;if(dx>0&&dy>0)return VF.southeast;if(dx>0&&dy===0)return VF.east;if(dx>0&&dy<0)return VF.northeast;if(dx===0&&dy<0)return VF.north;if(dx<0&&dy<0)return VF.northwest;if(dx<0&&dy===0)return VF.west;if(dx<0&&dy>0)return VF.southwest;return last}
 
-function normalizeAxis(v){
-  if (v > 0.25) return 1;
-  if (v < -0.25) return -1;
-  return 0;
+class Glasswell extends Phaser.Scene{
+ constructor(){super('Glasswell');this.mapId='C3';this.mode='donny';this.donnyDir='down';this.vanFrame=VF.east;this.failed=new Set();this.btn={};this.bHeld=false;this.mapHeld=false;this.joy={baseX:135,baseY:405,knobX:135,knobY:405,dx:0,dy:0,r:70,pid:null}}
+ preload(){
+  this.load.on('loaderror',f=>{console.warn('ASSET FAILED:',f.key,f.src);this.failed.add(f.key)});
+  for(const [id,m] of Object.entries(MAPS)){this.load.image(id+'_base',A(m.base));this.load.image(id+'_over',A(m.over))}
+  this.load.spritesheet('donny_idle_4dir',A(DONNY_PATHS.idle),{frameWidth:D.fw,frameHeight:D.fh,margin:0,spacing:0});
+  this.load.spritesheet('donny_walk_4dir',A(DONNY_PATHS.walk),{frameWidth:D.fw,frameHeight:D.fh,margin:0,spacing:0});
+  this.load.image('donny_overhead',A(DONNY_PATHS.overhead));
+  this.load.spritesheet('astro_van_sheet',A(VAN_PATH),{frameWidth:V.fw,frameHeight:V.fh,margin:0,spacing:0});
+ }
+ create(){
+  this.cameras.main.setBackgroundColor('#000');this.mapGroup=this.add.group();
+  this.keys=this.input.keyboard.addKeys({up:38,down:40,left:37,right:39,w:87,a:65,s:83,d:68,one:49,two:50,three:51,four:52,b:66,e:69,tab:9});
+  this.makeDonnyAnims();this.makeActors();this.loadMap('C3','start',900,452);this.makeHud();this.makeControls();this.setMode('donny');
+ }
+ makeDonnyAnims(){
+  this.hasDonny4=this.textures.exists('donny_idle_4dir')&&this.textures.exists('donny_walk_4dir')&&!this.failed.has('donny_idle_4dir')&&!this.failed.has('donny_walk_4dir');
+  if(!this.hasDonny4)return;
+  D.rows.forEach((dir,row)=>{let idle=[],walk=[];for(let i=0;i<D.cols;i++){idle.push({key:'donny_idle_4dir',frame:row*D.cols+i});walk.push({key:'donny_walk_4dir',frame:row*D.cols+i})}
+   this.anims.create({key:'donny_idle_'+dir,frames:idle,frameRate:6,repeat:-1});this.anims.create({key:'donny_walk_'+dir,frames:walk,frameRate:9,repeat:-1});
+  });
+ }
+ makeActors(){
+  if(this.hasDonny4){this.donny=this.physics.add.sprite(840,452,'donny_idle_4dir',0).setOrigin(.5,.92).setScale(1);this.donny.body.setSize(38,34);this.donny.body.setOffset(45,82);this.donny.play('donny_idle_down',true)}
+  else if(this.textures.exists('donny_overhead')&&!this.failed.has('donny_overhead')){this.donny=this.physics.add.image(840,452,'donny_overhead').setOrigin(.5,.92).setScale(1);this.donny.body.setSize(34,34)}
+  else{this.donny=this.physics.add.rectangle(840,452,38,54,0xff2ad4,.9);this.donny.setStrokeStyle(2,0xffffff,1)}
+  this.donny.body.setCollideWorldBounds(true);
+  this.hasVan=this.textures.exists('astro_van_sheet')&&!this.failed.has('astro_van_sheet');
+  if(this.hasVan){this.van=this.physics.add.sprite(920,452,'astro_van_sheet',this.vanFrame).setOrigin(.5,.65).setScale(1);this.van.body.setSize(78,42);this.van.body.setOffset(25,42);this.van.setFrame(this.vanFrame)}
+  else{this.van=this.physics.add.rectangle(920,452,96,54,0x313744,1);this.van.setStrokeStyle(2,0xa8f5ff,1)}
+  this.van.body.setCollideWorldBounds(true);this.depthActors();
+ }
+ loadMap(id,side,x,y){
+  const m=MAPS[id];if(!m)return;this.mapId=id;if(this.mapGroup)this.mapGroup.clear(true,true);
+  if(this.textures.exists(id+'_base')&&!this.failed.has(id+'_base'))this.mapGroup.add(this.add.image(0,0,id+'_base').setOrigin(0).setDepth(0));
+  else{this.mapGroup.add(this.add.rectangle(0,0,m.w,m.h,0x171717,1).setOrigin(0).setDepth(0));this.mapGroup.add(this.add.text(40,40,'MAP ASSET MISSING\n'+m.base,{fontFamily:'monospace',fontSize:'20px',color:'#ff4040',backgroundColor:'rgba(0,0,0,.75)',padding:{x:10,y:8}}).setDepth(100))}
+  if(this.textures.exists(id+'_over')&&!this.failed.has(id+'_over'))this.mapGroup.add(this.add.image(0,0,id+'_over').setOrigin(0).setDepth(9000));
+  this.physics.world.setBounds(0,0,m.w,m.h);this.cameras.main.setBounds(0,0,m.w,m.h);
+  const pad=120;let px=typeof x==='number'?x:900,py=typeof y==='number'?y:452;
+  if(side==='north'){py=pad;px=Phaser.Math.Clamp(px,pad,m.w-pad)}else if(side==='south'){py=m.h-pad;px=Phaser.Math.Clamp(px,pad,m.w-pad)}else if(side==='west'){px=pad;py=Phaser.Math.Clamp(py,pad,m.h-pad)}else if(side==='east'){px=m.w-pad;py=Phaser.Math.Clamp(py,pad,m.h-pad)}else if(side==='center'){px=Phaser.Math.Clamp(px,pad,m.w-pad);py=Phaser.Math.Clamp(py,pad,m.h-pad)}
+  if(this.mode==='van'){this.van.setPosition(px,py);this.donny.setPosition(px-56,py+20);this.donny.setVisible(false)}else{this.donny.setPosition(px-64,py+8);this.van.setPosition(px+58,py);this.donny.setVisible(true)}
+  this.donny.setVelocity(0);this.van.setVelocity(0);this.depthActors();
+ }
+ setMode(mode){this.mode=mode;if(mode==='van'){this.actor=this.van;this.donny.setVisible(false);this.cameras.main.startFollow(this.van,true,.12,.12)}else{this.actor=this.donny;this.donny.setVisible(true);this.donny.setPosition(this.van.x-56,this.van.y+20);this.cameras.main.startFollow(this.donny,true,.12,.12)}this.donny.setVelocity(0);this.van.setVelocity(0);this.depthActors()}
+ toggleVan(){if(this.mode==='van'){this.setMode('donny');return} if(Phaser.Math.Distance.Between(this.donny.x,this.donny.y,this.van.x,this.van.y)<=128)this.setMode('van')}
+ makeHud(){this.hud=this.add.text(16,12,'',{fontFamily:'monospace',fontSize:'13px',color:'#eee',backgroundColor:'rgba(0,0,0,.58)',padding:{x:8,y:5}}).setScrollFactor(0).setDepth(12000)}
+ makeControls(){
+  this.joyOuter=this.add.circle(this.joy.baseX,this.joy.baseY,this.joy.r,0x00a6b8,.20).setStrokeStyle(5,0xa8f5ff,.35).setScrollFactor(0).setDepth(10000);
+  this.joyInner=this.add.circle(this.joy.baseX,this.joy.baseY,this.joy.r*.62,0x8a0078,.12).setStrokeStyle(3,0xff2ad4,.35).setScrollFactor(0).setDepth(10001);
+  this.joyKnob=this.add.circle(this.joy.knobX,this.joy.knobY,34,0xffffff,.18).setStrokeStyle(4,0xffffff,.75).setScrollFactor(0).setDepth(10002);
+  this.add.text(this.joy.baseX-28,this.joy.baseY+88,'MOVE',{fontFamily:'monospace',fontSize:'18px',color:'#fff',fontStyle:'bold'}).setScrollFactor(0).setDepth(10003);
+  this.makeBtn('Y',790,285,42,0xb0007f);this.makeBtn('X',715,360,42,0x9b7a00);this.makeBtn('A',865,360,42,0x006676);this.makeBtn('B',790,435,42,0x008a36);
+  this.mapBtn=this.add.rectangle(GAME_W/2,480,150,42,0x111111,.70).setStrokeStyle(2,0xffffff,.5).setScrollFactor(0).setDepth(10000).setInteractive({useHandCursor:true});
+  this.add.text(GAME_W/2,480,'MAP',{fontFamily:'monospace',fontSize:'19px',color:'#fff',fontStyle:'bold'}).setOrigin(.5).setScrollFactor(0).setDepth(10001);
+  this.mapBtn.on('pointerdown',()=>{this.mapHeld=true});
+ }
+ makeBtn(label,x,y,r,color){let b=this.add.circle(x,y,r,color,.55).setStrokeStyle(4,0xffffff,.75).setScrollFactor(0).setDepth(10000).setInteractive({useHandCursor:true});this.add.text(x,y,label,{fontFamily:'Arial',fontSize:'24px',color:'#fff',fontStyle:'bold'}).setOrigin(.5).setScrollFactor(0).setDepth(10001);this.btn[label]={down:false};b.on('pointerdown',()=>this.btn[label].down=true);b.on('pointerup',()=>this.btn[label].down=false);b.on('pointerout',()=>this.btn[label].down=false)}
+ joyInput(){
+  const ps=this.input.manager.pointers;let p0=null;for(let i=0;i<ps.length;i++){const p=ps[i];if(!p||!p.isDown)continue;if(this.joy.pid===null){const d=Phaser.Math.Distance.Between(p.x,p.y,this.joy.baseX,this.joy.baseY);if(d<=this.joy.r+60){this.joy.pid=p.id;p0=p;break}}else if(p.id===this.joy.pid){p0=p;break}}
+  if(!p0){this.joy.pid=null;this.joy.dx=0;this.joy.dy=0;this.joyKnob.setPosition(this.joy.baseX,this.joy.baseY);return}
+  let dx=p0.x-this.joy.baseX,dy=p0.y-this.joy.baseY,len=Math.sqrt(dx*dx+dy*dy),max=this.joy.r;if(len>max){dx=dx/len*max;dy=dy/len*max}this.joy.dx=dx/max;this.joy.dy=dy/max;this.joyKnob.setPosition(this.joy.baseX+dx,this.joy.baseY+dy)
+ }
+ moveInput(){let dx=0,dy=0;if(this.keys.left.isDown||this.keys.a.isDown)dx--;if(this.keys.right.isDown||this.keys.d.isDown)dx++;if(this.keys.up.isDown||this.keys.w.isDown)dy--;if(this.keys.down.isDown||this.keys.s.isDown)dy++;if(Math.abs(this.joy.dx)>.18||Math.abs(this.joy.dy)>.18){dx=this.joy.dx;dy=this.joy.dy}let len=Math.sqrt(dx*dx+dy*dy);if(len>1){dx/=len;dy/=len}return{dx,dy,moving:Math.abs(dx)>.05||Math.abs(dy)>.05}}
+ cycleMap(){const i=ORDER.indexOf(this.mapId);this.loadMap(ORDER[(i+1)%ORDER.length],'center',(this.actor||this.donny).x,(this.actor||this.donny).y)}
+ hotkeys(){if(Phaser.Input.Keyboard.JustDown(this.keys.one))this.loadMap('C3','center');if(Phaser.Input.Keyboard.JustDown(this.keys.two))this.loadMap('C2','center');if(Phaser.Input.Keyboard.JustDown(this.keys.three))this.loadMap('C4','center');if(Phaser.Input.Keyboard.JustDown(this.keys.four))this.loadMap('D3','center');if(Phaser.Input.Keyboard.JustDown(this.keys.tab))this.cycleMap();if(this.mapHeld){this.mapHeld=false;this.cycleMap()}}
+ edges(){const m=MAPS[this.mapId],r=m.routes,a=this.mode==='van'?this.van:this.donny,p=38;if(a.x<=p){if(r.west){this.loadMap(r.west,'east',MAPS[r.west].w-120,a.y);return}a.x=p+2}if(a.x>=m.w-p){if(r.east){this.loadMap(r.east,'west',120,a.y);return}a.x=m.w-p-2}if(a.y<=p){if(r.north){this.loadMap(r.north,'south',a.x,MAPS[r.north].h-120);return}a.y=p+2}if(a.y>=m.h-p){if(r.south){this.loadMap(r.south,'north',a.x,120);return}a.y=m.h-p-2}}
+ depthActors(){if(this.donny)this.donny.setDepth(this.donny.y+1000);if(this.van)this.van.setDepth(this.van.y+990)}
+ update(){
+  this.joyInput();this.hotkeys();if(!this.donny||!this.van)return;
+  const b=this.keys.b.isDown||this.keys.e.isDown||(this.btn.B&&this.btn.B.down);if(b&&!this.bHeld)this.toggleVan();this.bHeld=b;
+  const mv=this.moveInput();
+  if(this.mode==='van'){if(mv.moving){this.van.setVelocity(mv.dx*168,mv.dy*168);if(this.hasVan){this.vanFrame=vanFrame(mv.dx,mv.dy,this.vanFrame);this.van.setFrame(this.vanFrame)}}else{this.van.setVelocity(0);if(this.hasVan)this.van.setFrame(this.vanFrame)}}
+  else{if(mv.moving){this.donny.setVelocity(mv.dx*138,mv.dy*138);this.donnyDir=dirFromMove(mv.dx,mv.dy,this.donnyDir);if(this.hasDonny4&&this.donny.anims)this.donny.play('donny_walk_'+this.donnyDir,true)}else{this.donny.setVelocity(0);if(this.hasDonny4&&this.donny.anims)this.donny.play('donny_idle_'+this.donnyDir,true)}}
+  this.depthActors();this.edges();const m=MAPS[this.mapId],a=this.mode==='van'?this.van:this.donny;
+  this.hud.setText(`${m.title} | Mode: ${this.mode==='van'?'ASTRO VAN':'DONNY'} | ${Math.round(a.x)},${Math.round(a.y)}\nRestored paths: Donny + Astro Van from assets/sprites/...\nB/E enters/exits van | 1=C3 2=C2 3=C4 4=D3 | MAP/TAB cycles\nVan frame: ${this.vanFrame} | setFrame only`);
+ }
 }
-
-function getVanDirectionFrame(dx, dy, fallbackFrame){
-  dx = normalizeAxis(dx);
-  dy = normalizeAxis(dy);
-
-  if (dx === 0 && dy > 0) return VAN_FRAME.SOUTH;
-  if (dx > 0 && dy > 0) return VAN_FRAME.SOUTHEAST;
-  if (dx > 0 && dy === 0) return VAN_FRAME.EAST;
-  if (dx > 0 && dy < 0) return VAN_FRAME.NORTHEAST;
-  if (dx === 0 && dy < 0) return VAN_FRAME.NORTH;
-  if (dx < 0 && dy < 0) return VAN_FRAME.NORTHWEST;
-  if (dx < 0 && dy === 0) return VAN_FRAME.WEST;
-  if (dx < 0 && dy > 0) return VAN_FRAME.SOUTHWEST;
-
-  return fallbackFrame;
-}
-
-class GlasswellScene extends Phaser.Scene {
-  constructor(){
-    super("GlasswellScene");
-
-    this.currentMapId = "GLASSWELL_C3";
-    this.currentVanFrame = VAN_FRAME.EAST;
-    this.vanUsesDirectionSheet = true;
-
-    this.mapGroup = null;
-    this.mapBase = null;
-    this.mapOverlay = null;
-    this.van = null;
-    this.keys = null;
-    this.failedAssetKeys = new Set();
-
-    this.joy = {
-      active:false,
-      baseX:135,
-      baseY:405,
-      knobX:135,
-      knobY:405,
-      dx:0,
-      dy:0,
-      radius:70,
-      pointerId:null
-    };
-
-    this.buttons = {};
-  }
-
-  preload(){
-    this.load.on("loaderror", (file) => {
-      console.warn("ASSET FAILED:", file.key, file.src);
-      this.failedAssetKeys.add(file.key);
-    });
-
-    Object.values(MAP_PAGES).forEach((page) => {
-      this.load.image(page.baseKey, assetPath(page.basePath));
-      this.load.image(page.overlayKey, assetPath(page.overlayPath));
-    });
-
-    this.load.spritesheet("astro_van_drive", assetPath(ASSETS.astroVanDrive), {
-      frameWidth: 128,
-      frameHeight: 96,
-      margin: 0,
-      spacing: 0
-    });
-  }
-
-  create(){
-    this.cameras.main.setBackgroundColor("#000000");
-
-    this.mapGroup = this.add.group();
-
-    this.keys = this.input.keyboard.addKeys({
-      up: Phaser.Input.Keyboard.KeyCodes.UP,
-      down: Phaser.Input.Keyboard.KeyCodes.DOWN,
-      left: Phaser.Input.Keyboard.KeyCodes.LEFT,
-      right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
-      w: Phaser.Input.Keyboard.KeyCodes.W,
-      a: Phaser.Input.Keyboard.KeyCodes.A,
-      s: Phaser.Input.Keyboard.KeyCodes.S,
-      d: Phaser.Input.Keyboard.KeyCodes.D,
-      one: Phaser.Input.Keyboard.KeyCodes.ONE,
-      two: Phaser.Input.Keyboard.KeyCodes.TWO,
-      three: Phaser.Input.Keyboard.KeyCodes.THREE,
-      four: Phaser.Input.Keyboard.KeyCodes.FOUR,
-      b: Phaser.Input.Keyboard.KeyCodes.B,
-      y: Phaser.Input.Keyboard.KeyCodes.Y,
-      h: Phaser.Input.Keyboard.KeyCodes.H,
-      tab: Phaser.Input.Keyboard.KeyCodes.TAB
-    });
-
-    this.createOrLoadVanFallback();
-    this.changeMap("GLASSWELL_C3", "start", 900, 452);
-
-    this.createHUD();
-    this.createTouchControls();
-
-    this.cameras.main.startFollow(this.van, true, 0.12, 0.12);
-  }
-
-  createOrLoadVanFallback(){
-    const vanLoaded = this.textures.exists("astro_van_drive") && !this.failedAssetKeys.has("astro_van_drive");
-
-    if (!vanLoaded){
-      this.vanUsesDirectionSheet = false;
-
-      const g = this.add.graphics();
-      g.fillStyle(0x2b2e38, 1);
-      g.fillRect(10, 14, 76, 30);
-      g.fillStyle(0x6d2a92, 1);
-      g.fillRect(18, 20, 28, 9);
-      g.fillStyle(0x111111, 1);
-      g.fillCircle(25, 45, 6);
-      g.fillCircle(72, 45, 6);
-      g.lineStyle(2, 0xa8f5ff, 1);
-      g.strokeRect(10, 14, 76, 30);
-      g.generateTexture("astro_van_fallback", 96, 56);
-      g.destroy();
-    }
-
-    const textureKey = this.vanUsesDirectionSheet ? "astro_van_drive" : "astro_van_fallback";
-
-    this.van = this.physics.add.sprite(900, 452, textureKey, 0);
-    this.van.setOrigin(0.5, 0.65);
-    this.van.setScale(1);
-    this.van.body.setCollideWorldBounds(true);
-    this.van.body.setSize(72, 42);
-
-    if (this.vanUsesDirectionSheet){
-      this.van.body.setOffset(28, 42);
-      this.van.setFrame(this.currentVanFrame);
-    }
-  }
-
-  changeMap(nextMapId, entrySide, forceX, forceY){
-    const page = MAP_PAGES[nextMapId];
-
-    if (!page){
-      console.warn("Missing page:", nextMapId);
-      return;
-    }
-
-    this.currentMapId = nextMapId;
-
-    if (this.mapGroup){
-      this.mapGroup.clear(true, true);
-    }
-
-    if (this.textures.exists(page.baseKey) && !this.failedAssetKeys.has(page.baseKey)){
-      this.mapBase = this.add.image(0, 0, page.baseKey)
-        .setOrigin(0, 0)
-        .setDepth(0);
-
-      this.mapGroup.add(this.mapBase);
-    } else {
-      this.mapBase = this.add.rectangle(0, 0, page.w, page.h, 0x171717, 1)
-        .setOrigin(0, 0)
-        .setDepth(0);
-
-      const missingText = this.add.text(40, 40,
-        "MAP ASSET MISSING\\n" + page.basePath,
-        {
-          fontFamily:"monospace",
-          fontSize:"20px",
-          color:"#ff4040",
-          backgroundColor:"rgba(0,0,0,0.75)",
-          padding:{x:10,y:8}
-        }
-      ).setDepth(100);
-
-      this.mapGroup.add(this.mapBase);
-      this.mapGroup.add(missingText);
-    }
-
-    if (this.textures.exists(page.overlayKey) && !this.failedAssetKeys.has(page.overlayKey)){
-      this.mapOverlay = this.add.image(0, 0, page.overlayKey)
-        .setOrigin(0, 0)
-        .setDepth(9000);
-
-      this.mapGroup.add(this.mapOverlay);
-    } else {
-      this.mapOverlay = null;
-    }
-
-    this.physics.world.setBounds(0, 0, page.w, page.h);
-    this.cameras.main.setBounds(0, 0, page.w, page.h);
-
-    if (this.van){
-      this.van.body.setCollideWorldBounds(true);
-
-      let x = typeof forceX === "number" ? forceX : this.van.x;
-      let y = typeof forceY === "number" ? forceY : this.van.y;
-
-      const edgePad = 96;
-
-      if (entrySide === "north"){
-        x = Phaser.Math.Clamp(x, edgePad, page.w - edgePad);
-        y = edgePad;
-      } else if (entrySide === "south"){
-        x = Phaser.Math.Clamp(x, edgePad, page.w - edgePad);
-        y = page.h - edgePad;
-      } else if (entrySide === "west"){
-        x = edgePad;
-        y = Phaser.Math.Clamp(y, edgePad, page.h - edgePad);
-      } else if (entrySide === "east"){
-        x = page.w - edgePad;
-        y = Phaser.Math.Clamp(y, edgePad, page.h - edgePad);
-      } else if (entrySide === "start"){
-        x = 900;
-        y = 452;
-      } else {
-        x = Phaser.Math.Clamp(x, edgePad, page.w - edgePad);
-        y = Phaser.Math.Clamp(y, edgePad, page.h - edgePad);
-      }
-
-      this.van.setPosition(x, y);
-      this.van.setVelocity(0, 0);
-      this.van.setDepth(this.van.y + 1000);
-    }
-
-    console.log("Loaded map page:", page.id, page.title);
-  }
-
-  createHUD(){
-    this.hud = this.add.text(16, 12, "", {
-      fontFamily:"monospace",
-      fontSize:"13px",
-      color:"#eee",
-      backgroundColor:"rgba(0,0,0,0.55)",
-      padding:{x:8,y:5}
-    }).setScrollFactor(0).setDepth(12000);
-  }
-
-  createTouchControls(){
-    this.joyBaseOuter = this.add.circle(this.joy.baseX, this.joy.baseY, this.joy.radius, 0x00a6b8, 0.20)
-      .setStrokeStyle(5, 0xa8f5ff, 0.35)
-      .setScrollFactor(0)
-      .setDepth(10000);
-
-    this.joyBaseInner = this.add.circle(this.joy.baseX, this.joy.baseY, this.joy.radius * 0.62, 0x8a0078, 0.12)
-      .setStrokeStyle(3, 0xff2ad4, 0.35)
-      .setScrollFactor(0)
-      .setDepth(10001);
-
-    this.joyKnob = this.add.circle(this.joy.knobX, this.joy.knobY, 34, 0xffffff, 0.18)
-      .setStrokeStyle(4, 0xffffff, 0.75)
-      .setScrollFactor(0)
-      .setDepth(10002);
-
-    this.moveLabel = this.add.text(this.joy.baseX - 38, this.joy.baseY + 88, "MOVE ON", {
-      fontFamily:"monospace",
-      fontSize:"18px",
-      color:"#ffffff",
-      fontStyle:"bold"
-    }).setScrollFactor(0).setDepth(10003);
-
-    this.makeButton("Y", 790, 285, 42, 0xb0007f);
-    this.makeButton("X", 715, 360, 42, 0x9b7a00);
-    this.makeButton("A", 865, 360, 42, 0x006676);
-    this.makeButton("B", 790, 435, 42, 0x008a36);
-
-    this.startButton = this.add.rectangle(GAME_W / 2, 480, 150, 42, 0x111111, 0.70)
-      .setStrokeStyle(2, 0xffffff, 0.50)
-      .setScrollFactor(0)
-      .setDepth(10000)
-      .setInteractive({useHandCursor:true});
-
-    this.startText = this.add.text(GAME_W / 2, 480, "MAP", {
-      fontFamily:"monospace",
-      fontSize:"19px",
-      color:"#ffffff",
-      fontStyle:"bold"
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(10001);
-
-    this.startButton.on("pointerdown", () => {
-      this.cycleMap();
-    });
-  }
-
-  makeButton(label, x, y, r, color){
-    const btn = this.add.circle(x, y, r, color, 0.55)
-      .setStrokeStyle(4, 0xffffff, 0.75)
-      .setScrollFactor(0)
-      .setDepth(10000)
-      .setInteractive({useHandCursor:true});
-
-    const txt = this.add.text(x, y, label, {
-      fontFamily:"Arial",
-      fontSize:"24px",
-      color:"#ffffff",
-      fontStyle:"bold"
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(10001);
-
-    this.buttons[label] = {
-      button:btn,
-      text:txt,
-      down:false
-    };
-
-    btn.on("pointerdown", () => {
-      this.buttons[label].down = true;
-    });
-
-    btn.on("pointerup", () => {
-      this.buttons[label].down = false;
-    });
-
-    btn.on("pointerout", () => {
-      this.buttons[label].down = false;
-    });
-  }
-
-  handleTouchJoystick(){
-    const pointers = this.input.manager.pointers;
-    let activePointer = null;
-
-    for (let i = 0; i < pointers.length; i++){
-      const p = pointers[i];
-      if (!p || !p.isDown) continue;
-
-      if (this.joy.pointerId === null){
-        const d = Phaser.Math.Distance.Between(p.x, p.y, this.joy.baseX, this.joy.baseY);
-        if (d <= this.joy.radius + 60){
-          this.joy.pointerId = p.id;
-          activePointer = p;
-          break;
-        }
-      } else if (p.id === this.joy.pointerId){
-        activePointer = p;
-        break;
-      }
-    }
-
-    if (!activePointer){
-      this.joy.pointerId = null;
-      this.joy.active = false;
-      this.joy.dx = 0;
-      this.joy.dy = 0;
-      this.joy.knobX = this.joy.baseX;
-      this.joy.knobY = this.joy.baseY;
-      this.joyKnob.setPosition(this.joy.knobX, this.joy.knobY);
-      return;
-    }
-
-    this.joy.active = true;
-
-    let dx = activePointer.x - this.joy.baseX;
-    let dy = activePointer.y - this.joy.baseY;
-
-    const len = Math.sqrt(dx * dx + dy * dy);
-    const max = this.joy.radius;
-
-    if (len > max){
-      dx = dx / len * max;
-      dy = dy / len * max;
-    }
-
-    this.joy.knobX = this.joy.baseX + dx;
-    this.joy.knobY = this.joy.baseY + dy;
-
-    this.joy.dx = dx / max;
-    this.joy.dy = dy / max;
-
-    this.joyKnob.setPosition(this.joy.knobX, this.joy.knobY);
-  }
-
-  getMovementInput(){
-    let dx = 0;
-    let dy = 0;
-
-    if (this.keys.left.isDown || this.keys.a.isDown) dx -= 1;
-    if (this.keys.right.isDown || this.keys.d.isDown) dx += 1;
-    if (this.keys.up.isDown || this.keys.w.isDown) dy -= 1;
-    if (this.keys.down.isDown || this.keys.s.isDown) dy += 1;
-
-    if (Math.abs(this.joy.dx) > 0.18 || Math.abs(this.joy.dy) > 0.18){
-      dx = this.joy.dx;
-      dy = this.joy.dy;
-    }
-
-    const len = Math.sqrt(dx * dx + dy * dy);
-
-    if (len > 1){
-      dx /= len;
-      dy /= len;
-    }
-
-    return {dx, dy};
-  }
-
-  cycleMap(){
-    const currentIndex = MAP_ORDER.indexOf(this.currentMapId);
-    const nextIndex = (currentIndex + 1) % MAP_ORDER.length;
-    this.changeMap(MAP_ORDER[nextIndex], "center");
-  }
-
-  checkKeyboardMapSelect(){
-    if (Phaser.Input.Keyboard.JustDown(this.keys.one)) this.changeMap("GLASSWELL_C3", "center");
-    if (Phaser.Input.Keyboard.JustDown(this.keys.two)) this.changeMap("GLASSWELL_C2", "center");
-    if (Phaser.Input.Keyboard.JustDown(this.keys.three)) this.changeMap("GLASSWELL_C4", "center");
-    if (Phaser.Input.Keyboard.JustDown(this.keys.four)) this.changeMap("GLASSWELL_D3", "center");
-    if (Phaser.Input.Keyboard.JustDown(this.keys.tab)) this.cycleMap();
-  }
-
-  checkEdgeTransitions(){
-    const page = MAP_PAGES[this.currentMapId];
-    const routes = page.routes;
-    const pad = 38;
-
-    if (this.van.x <= pad){
-      if (routes.west){
-        this.changeMap(routes.west, "east", MAP_PAGES[routes.west].w - 110, this.van.y);
-        return true;
-      }
-      this.van.x = pad + 2;
-    }
-
-    if (this.van.x >= page.w - pad){
-      if (routes.east){
-        this.changeMap(routes.east, "west", 110, this.van.y);
-        return true;
-      }
-      this.van.x = page.w - pad - 2;
-    }
-
-    if (this.van.y <= pad){
-      if (routes.north){
-        this.changeMap(routes.north, "south", this.van.x, MAP_PAGES[routes.north].h - 110);
-        return true;
-      }
-      this.van.y = pad + 2;
-    }
-
-    if (this.van.y >= page.h - pad){
-      if (routes.south){
-        this.changeMap(routes.south, "north", this.van.x, 110);
-        return true;
-      }
-      this.van.y = page.h - pad - 2;
-    }
-
-    return false;
-  }
-
-  update(){
-    this.handleTouchJoystick();
-    this.checkKeyboardMapSelect();
-
-    if (!this.van) return;
-
-    const move = this.getMovementInput();
-    const moving = Math.abs(move.dx) > 0.05 || Math.abs(move.dy) > 0.05;
-
-    if (moving){
-      const speed = 168;
-      this.van.setVelocity(move.dx * speed, move.dy * speed);
-
-      if (this.vanUsesDirectionSheet){
-        this.currentVanFrame = getVanDirectionFrame(move.dx, move.dy, this.currentVanFrame);
-        this.van.setFrame(this.currentVanFrame);
-      }
-    } else {
-      this.van.setVelocity(0, 0);
-
-      if (this.vanUsesDirectionSheet){
-        this.van.setFrame(this.currentVanFrame);
-      }
-    }
-
-    this.van.setDepth(this.van.y + 1000);
-    this.checkEdgeTransitions();
-
-    const page = MAP_PAGES[this.currentMapId];
-
-    this.hud.setText(
-      page.title + " | Astro Van | " +
-      Math.round(this.van.x) + "," + Math.round(this.van.y) +
-      "\nPages: 1=C3  2=C2  3=C4  4=D3  | START/MAP cycles pages" +
-      "\nEdge exits: C3 north/south/east, C2 south, C4 north, D3 west" +
-      "\nVan frame: " + this.currentVanFrame + " | direction sheet uses setFrame only"
-    );
-  }
-}
-
-const config = {
-  type: Phaser.AUTO,
-  parent: "game",
-  width: GAME_W,
-  height: GAME_H,
-  backgroundColor: "#000000",
-  pixelArt: true,
-  roundPixels: true,
-  scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: GAME_W,
-    height: GAME_H
-  },
-  physics: {
-    default: "arcade",
-    arcade: {
-      gravity: {y:0},
-      debug: false
-    }
-  },
-  scene: [GlasswellScene]
-};
-
-window.addEventListener("load", () => {
-  new Phaser.Game(config);
-});
-</script>
-</body>
-</html>
+new Phaser.Game({type:Phaser.AUTO,parent:'game',width:GAME_W,height:GAME_H,backgroundColor:'#000',pixelArt:true,roundPixels:true,scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH,width:GAME_W,height:GAME_H},physics:{default:'arcade',arcade:{gravity:{y:0},debug:false}},scene:[Glasswell]});
+</script></body></html>
