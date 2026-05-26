@@ -1,0 +1,177 @@
+{
+  "name": "Donny Phaser-ready sprite and weapon pack",
+  "created": "2026-05-25",
+  "frameWidth": 128,
+  "frameHeight": 128,
+  "spriteSheetSize": "1024x512",
+  "rowOrder": [
+    "down",
+    "right",
+    "left",
+    "up"
+  ],
+  "columns": 8,
+  "backgroundRemoval": "edge-connected bright/gray checker background removed, hard alpha output",
+  "assets": {
+    "donny_idle_4dir": {
+      "path": "assets/sprites/player/donny/donny_idle_4dir.png",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "columns": 8,
+      "rows": 4,
+      "rowOrder": [
+        "down",
+        "right",
+        "left",
+        "up"
+      ]
+    },
+    "donny_walk_4dir": {
+      "path": "assets/sprites/player/donny/donny_walk_4dir.png",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "columns": 8,
+      "rows": 4,
+      "rowOrder": [
+        "down",
+        "right",
+        "left",
+        "up"
+      ]
+    },
+    "donny_run_4dir": {
+      "path": "assets/sprites/player/donny/donny_run_4dir.png",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "columns": 8,
+      "rows": 4,
+      "rowOrder": [
+        "down",
+        "right",
+        "left",
+        "up"
+      ]
+    },
+    "donny_jump_4dir": {
+      "path": "assets/sprites/player/donny/donny_jump_4dir.png",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "columns": 8,
+      "rows": 4,
+      "rowOrder": [
+        "down",
+        "right",
+        "left",
+        "up"
+      ]
+    },
+    "donny_slide_4dir": {
+      "path": "assets/sprites/player/donny/donny_slide_4dir.png",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "columns": 8,
+      "rows": 4,
+      "rowOrder": [
+        "down",
+        "right",
+        "left",
+        "up"
+      ]
+    },
+    "donny_crawl_4dir": {
+      "path": "assets/sprites/player/donny/donny_crawl_4dir.png",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "columns": 8,
+      "rows": 4,
+      "rowOrder": [
+        "down",
+        "right",
+        "left",
+        "up"
+      ]
+    },
+    "donny_punch_4dir": {
+      "path": "assets/sprites/player/donny/donny_punch_4dir.png",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "columns": 8,
+      "rows": 4,
+      "rowOrder": [
+        "down",
+        "right",
+        "left",
+        "up"
+      ]
+    },
+    "donny_kick_4dir": {
+      "path": "assets/sprites/player/donny/donny_kick_4dir.png",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "columns": 8,
+      "rows": 4,
+      "rowOrder": [
+        "down",
+        "right",
+        "left",
+        "up"
+      ]
+    },
+    "donny_shoot_4dir": {
+      "path": "assets/sprites/player/donny/donny_shoot_4dir.png",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "columns": 8,
+      "rows": 4,
+      "rowOrder": [
+        "down",
+        "right",
+        "left",
+        "up"
+      ]
+    },
+    "donny_hurt_4dir": {
+      "path": "assets/sprites/player/donny/donny_hurt_4dir.png",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "columns": 8,
+      "rows": 4,
+      "rowOrder": [
+        "down",
+        "right",
+        "left",
+        "up"
+      ]
+    },
+    "donny_sleep_4dir": {
+      "path": "assets/sprites/player/donny/donny_sleep_4dir.png",
+      "frameWidth": 128,
+      "frameHeight": 128,
+      "columns": 8,
+      "rows": 4,
+      "rowOrder": [
+        "down",
+        "right",
+        "left",
+        "up"
+      ]
+    },
+    "props": {
+      "gunOverlay": "assets/sprites/player/donny/props/donny_laser_gun_overlay_4dir_128.png",
+      "gunHoldFull": "assets/sprites/player/donny/props/donny_laser_gun_hold_4dir_128.png",
+      "holster": "assets/sprites/player/donny/props/donny_laser_holster_4dir_128.png",
+      "directionFrameOrder": {
+        "down": 0,
+        "right": 1,
+        "left": 2,
+        "up": 3
+      }
+    }
+  },
+  "notes": [
+    "All output PNGs are transparent RGBA.",
+    "The crawl sheet is rebuilt from available low/crawl-like source frames; replace with the original GitHub crawl if you prefer it.",
+    "The gun and holster are separate overlay props, not baked into Donny.",
+    "Side-only actions are mirrored to complete left/right where necessary."
+  ]
+}
