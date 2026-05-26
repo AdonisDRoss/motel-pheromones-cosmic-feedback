@@ -11,6 +11,7 @@
   -webkit-user-select:none;
   user-select:none;
   -webkit-touch-callout:none;
+  -webkit-tap-highlight-color:transparent;
 }
 html,body{
   margin:0;
@@ -31,17 +32,18 @@ body{
   inset:0;
   width:100vw;
   height:100vh;
+  touch-action:none;
 }
 canvas{
   image-rendering:pixelated;
   image-rendering:crisp-edges;
+  display:block;
+  touch-action:none;
 }
 </style>
 </head>
 <body>
 <div id="game"></div>
-
-<!-- Correct repo path: scripts/game.js exists; src/game.js is missing. -->
-<script src="scripts/game.js?v=glasswell-city-so-far-donny-start-script-path-fix-1"></script>
+<script src="scripts/game.js?v=glasswell-city-so-far-donny-controls-fix-2026-05-25"></script>
 </body>
 </html>
