@@ -98,7 +98,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-donny-music-visible-2026-05-26-007';
+const VERSION = 'glasswell-donny-body-props-holster-gun-2026-05-26-008';
 
 // IMPORTANT:
 // Donny now uses the local files created tonight under assets/sprites/player/donny/props.
@@ -129,60 +129,70 @@ const PAGES = {
 };
 
 const DONNY_ASSETS = {
-  // Local files from assets/sprites/player/donny/props
-  // Base Donny body with holster on hip.
-  move: DONNY_ROOT + 'assets/sprites/player/donny/props/donny_laser_holster_4dir_128.png',
+  // Main Donny body/action sheets created tonight.
+  idle: DONNY_ROOT + 'assets/sprites/player/donny/donny_idle_4dir.png',
+  move: DONNY_ROOT + 'assets/sprites/player/donny/donny_walk_4dir.png',
+  run: DONNY_ROOT + 'assets/sprites/player/donny/donny_run_4dir.png',
+  pistol: DONNY_ROOT + 'assets/sprites/player/donny/donny_shoot_4dir.png',
+  punch: DONNY_ROOT + 'assets/sprites/player/donny/donny_punch_4dir.png',
 
-  // Donny with laser gun in hand, 4 directions.
-  pistol: DONNY_ROOT + 'assets/sprites/player/donny/props/donny_laser_gun_hold_4dir_128.png',
-
-  // No separate unarmed punch sheet was visible in the props folder, so Y uses the base holster pose for now.
-  punch: DONNY_ROOT + 'assets/sprites/player/donny/props/donny_laser_holster_4dir_128.png',
-
-  // Optional overlays / one-frame direction images created tonight.
+  // Separate prop overlays created tonight.
   laserOverlay: DONNY_ROOT + 'assets/sprites/player/donny/props/donny_laser_gun_overlay_4dir_128.png',
-  gunDown: DONNY_ROOT + 'assets/sprites/player/donny/props/donny_laser_gun_down_128.png',
-  gunRight: DONNY_ROOT + 'assets/sprites/player/donny/props/donny_laser_gun_right_128.png',
-  gunLeft: DONNY_ROOT + 'assets/sprites/player/donny/props/donny_laser_gun_left_128.png',
-  gunUp: DONNY_ROOT + 'assets/sprites/player/donny/props/donny_laser_gun_up_128.png',
-
-  // Same as move, kept because the code expects a holster texture key.
+  gunHoldFull: DONNY_ROOT + 'assets/sprites/player/donny/props/donny_laser_gun_hold_4dir_128.png',
   holster: DONNY_ROOT + 'assets/sprites/player/donny/props/donny_laser_holster_4dir_128.png',
 
-  // Old van fallback is no longer required; keep null-safe fallback.
   oldVan: null
 };
 
 const DONNY = {
   frameWidth:128,
   frameHeight:128,
-  // The local 128x128 Donny prop sheets are drawn small inside the cell.
-  // Render larger so Donny reads correctly next to the Astro Van.
-  scale:1.65,
+  scale:1.18,
   speed:230,
 
-  // 4-dir sheet order: down, right, left, up.
-  directionFrame:{down:0,right:1,left:2,up:3},
-
-  // These are pose sheets, so movement uses stable directional frames instead of walk cycles.
-  anims:{down:[0],right:[1],left:[2],up:[3]}
+  // 8 columns x 4 rows. Row order: down, right, left, up.
+  directionFrame:{down:0,right:8,left:16,up:24},
+  anims:{
+    down:[0,1,2,3,4,5,6,7],
+    right:[8,9,10,11,12,13,14,15],
+    left:[16,17,18,19,20,21,22,23],
+    up:[24,25,26,27,28,29,30,31]
+  }
 };
 
 const ACTION = {
   frameWidth:128,
   frameHeight:128,
-  scale:1.65,
-  duration:190,
+  scale:1.18,
+  duration:220,
 
-  // 4-dir sheet order: down, right, left, up.
-  directionFrame:{down:0,right:1,left:2,up:3}
+  // 8 columns x 4 rows. Row order: down, right, left, up.
+  directionFrame:{down:0,right:8,left:16,up:24}
 };
 
 const HOLSTER = {
   key:'donny_holster',
   frameWidth:128,
   frameHeight:128,
-  scale:1.65,
+  scale:1.18,
+
+  // Prop overlay sheet order: down, right, left, up.
+  directionFrame:{down:0,right:1,left:2,up:3},
+
+  // Nudge the holster so it sits on Donny's hip.
+  offset:{
+    down:{x:0,y:0},
+    right:{x:0,y:0},
+    left:{x:0,y:0},
+    up:{x:0,y:0}
+  }
+};
+
+const GUN_PROP = {
+  key:'donny_laser_gun_overlay',
+  frameWidth:128,
+  frameHeight:128,
+  scale:1.18,
   directionFrame:{down:0,right:1,left:2,up:3},
   offset:{
     down:{x:0,y:0},
@@ -413,10 +423,12 @@ class BootScene extends Phaser.Scene{
       this.load.image(key(p.id,'mask'),version(p.root+p.mask));
     });
 
+    this.load.spritesheet('donny_idle',version(DONNY_ASSETS.idle),{frameWidth:DONNY.frameWidth,frameHeight:DONNY.frameHeight});
     this.load.spritesheet('donny_overhead',version(DONNY_ASSETS.move),{frameWidth:DONNY.frameWidth,frameHeight:DONNY.frameHeight});
     this.load.spritesheet('donny_pistol',version(DONNY_ASSETS.pistol),{frameWidth:ACTION.frameWidth,frameHeight:ACTION.frameHeight});
     this.load.spritesheet('donny_punch',version(DONNY_ASSETS.punch),{frameWidth:ACTION.frameWidth,frameHeight:ACTION.frameHeight});
     this.load.spritesheet('donny_holster',version(DONNY_ASSETS.holster),{frameWidth:HOLSTER.frameWidth,frameHeight:HOLSTER.frameHeight});
+    this.load.spritesheet('donny_laser_gun_overlay',version(DONNY_ASSETS.laserOverlay),{frameWidth:GUN_PROP.frameWidth,frameHeight:GUN_PROP.frameHeight});
 
     this.load.spritesheet('weapon_pickups',version(WEAPON_ASSETS.pickups),{frameWidth:128,frameHeight:128});
     this.load.spritesheet('weapon_overlay',version(WEAPON_ASSETS.overlay),{frameWidth:128,frameHeight:128});
@@ -527,7 +539,7 @@ class TitleScene extends Phaser.Scene{
     this.add.text(w/2,172,'2.5D GTA-STYLE OPEN CITY BUILD',{fontFamily:'Arial Black',fontSize:'20px',color:'#ff6ab7'}).setOrigin(.5);
 
     this.add.text(w/2,232,
-      'Donny starts at the Main Civic Gate\nLocal Donny props + laser gun action + holster return + weapons + driveable Astro Van + Glasswell music',
+      'Donny starts at the Main Civic Gate\nDonny movement/actions + laser gun prop + holster-on-hip logic + driveable Astro Van + Glasswell music',
       {fontFamily:'Courier New',fontSize:'17px',color:'#d8c99d',align:'center',lineSpacing:7}
     ).setOrigin(.5);
 
@@ -712,8 +724,8 @@ class CityScene extends Phaser.Scene{
     this.player.setCollideWorldBounds(true);
 
     if(this.player.body){
-      this.player.body.setSize(32,44);
-      this.player.body.setOffset(48,70);
+      this.player.body.setSize(42,58);
+      this.player.body.setOffset(43,62);
     }
 
     // Holster overlay: visible by default, hides during pistol draw/fire, reappears after action.
@@ -722,13 +734,19 @@ class CityScene extends Phaser.Scene{
       .setOrigin(.5,.82)
       .setScale(this.textures.exists('donny_holster')?HOLSTER.scale:1)
       .setDepth(this.player.depth+3)
-      .setVisible(false); // base Donny local sheet already includes the holster
+      .setVisible(true);
 
     // Held Red Concord weapon overlay when a pickup is equipped.
     this.weaponOverlay=this.add.sprite(x,y,this.textures.exists('weapon_overlay')?'weapon_overlay':'fallback_weapon',0)
       .setVisible(false)
       .setOrigin(.5,.82)
       .setScale(this.textures.exists('weapon_overlay')?.72:1);
+
+    // Laser gun prop appears only during shooting, then disappears.
+    this.gunOverlay=this.add.sprite(x,y,this.textures.exists('donny_laser_gun_overlay')?'donny_laser_gun_overlay':'fallback_weapon',0)
+      .setVisible(false)
+      .setOrigin(.5,.82)
+      .setScale(this.textures.exists('donny_laser_gun_overlay')?GUN_PROP.scale:1);
   }
 
   prepareMask(maskKey){
@@ -874,7 +892,7 @@ class CityScene extends Phaser.Scene{
     if(TOUCH.b){TOUCH.b=false;this.dropOrExit()}
 
     this.hud.setText(`${this.cfg.label} | Donny | ${Math.round(this.player.x)},${Math.round(this.player.y)} | ${GAME_IDENTITY.genre}`);
-    this.weaponHud.setText(`Weapon: ${this.heldWeapon?this.heldWeapon.name:'empty'} | Holster: ${this.pistolActionActive?'hidden':'on hip'} | Donny: local props`);
+    this.weaponHud.setText(`Weapon: ${this.heldWeapon?this.heldWeapon.name:'empty'} | Holster: ${this.pistolActionActive?'hidden':'on hip'} | Gun: ${this.pistolActionActive?'in hand':'hidden'}`);
   }
 
   updateDonnyMovement(delta){
@@ -926,6 +944,7 @@ class CityScene extends Phaser.Scene{
   depthActors(){
     if(this.player)this.player.setDepth(this.player.y+1000);
     if(this.holster)this.holster.setDepth(this.player.depth+3);
+    if(this.gunOverlay)this.gunOverlay.setDepth(this.player.depth+6);
     if(this.weaponOverlay)this.weaponOverlay.setDepth(this.player.depth+5);
     if(this.astroVan)this.astroVan.setDepth(this.astroVan.y+700);
     if(this.vanLabel&&this.astroVan){
@@ -943,8 +962,14 @@ class CityScene extends Phaser.Scene{
     if(this.holster){
       this.holster.setPosition(this.player.x+offset.x,this.player.y+offset.y);
       this.holster.setFrame(HOLSTER.directionFrame[this.lastDir]||0);
-      // Stay hidden because the local base Donny sheet already has the holster drawn on him.
-      if(!this.pistolActionActive && !this.playerInVan)this.holster.setVisible(false);
+      this.holster.setVisible(!this.pistolActionActive && !this.playerInVan);
+    }
+
+    if(this.gunOverlay){
+      const gunOffset=GUN_PROP.offset[this.lastDir]||{x:0,y:0};
+      this.gunOverlay.setPosition(this.player.x+gunOffset.x,this.player.y+gunOffset.y);
+      this.gunOverlay.setFrame(GUN_PROP.directionFrame[this.lastDir]||0);
+      this.gunOverlay.setVisible(this.pistolActionActive && !this.playerInVan);
     }
 
     if(this.weaponOverlay){
@@ -1137,8 +1162,14 @@ class CityScene extends Phaser.Scene{
   pistolAction(){
     this.pistolActionActive=true;
 
+    // During shooting: holster disappears and laser gun prop appears in Donny's hand.
     if(this.holster)this.holster.setVisible(false);
+    if(this.gunOverlay)this.gunOverlay.setVisible(false);
     if(this.weaponOverlay)this.weaponOverlay.setVisible(false);
+    if(this.gunOverlay){
+      this.gunOverlay.setFrame(GUN_PROP.directionFrame[this.lastDir]||0);
+      this.gunOverlay.setVisible(true);
+    }
 
     if(this.textures.exists('donny_pistol')){
       this.player.anims.stop();
@@ -1152,8 +1183,9 @@ class CityScene extends Phaser.Scene{
       this.pistolActionActive=false;
       this.restoreDonnyBaseFrame();
 
-      // Returning to the base Donny sheet puts the holster back on his hip.
-      if(this.holster)this.holster.setVisible(false);
+      // Shooting complete: gun disappears, holster reappears on hip.
+      if(this.gunOverlay)this.gunOverlay.setVisible(false);
+      if(this.holster)this.holster.setVisible(true);
 
       this.message('Laser pistol action complete — holster back on hip');
     });
@@ -1266,6 +1298,7 @@ class CityScene extends Phaser.Scene{
     this.player.setVisible(false);
     if(this.player.body)this.player.body.enable=false;
     if(this.holster)this.holster.setVisible(false);
+    if(this.gunOverlay)this.gunOverlay.setVisible(false);
     if(this.weaponOverlay)this.weaponOverlay.setVisible(false);
 
     if(this.textures.exists(VAN.openKey)){
@@ -1326,7 +1359,8 @@ class CityScene extends Phaser.Scene{
 
     this.restoreDonnyBaseFrame();
 
-    if(this.holster)this.holster.setVisible(false);
+    if(this.gunOverlay)this.gunOverlay.setVisible(false);
+    if(this.holster)this.holster.setVisible(true);
 
     this.cameras.main.startFollow(this.player,true,.12,.12);
     this.message('Exited Astro Van');
