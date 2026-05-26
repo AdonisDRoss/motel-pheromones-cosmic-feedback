@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8" />
-<title>Cosmic Feedback — Glasswell Test</title>
+<title>Cosmic Feedback — Glasswell City Test</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 
@@ -49,20 +49,101 @@ canvas{
 <div id="game"></div>
 
 <script>
-const VERSION = "glasswell-van-frame-fix-001";
+const VERSION = "glasswell-all-pages-001";
 
 const GAME_W = 960;
 const GAME_H = 540;
 
-const ASSETS = {
-  mapC3: "assets/maps/GLASSWELL_C3_base.png?v=" + VERSION,
+function assetPath(path){
+  return path + "?v=" + VERSION;
+}
 
-  // IMPORTANT:
-  // This must be a clean sheet:
-  // 1 row x 8 columns
-  // each frame 128x96
-  // total image size should be 1024x96
-  astroVanDrive: "assets/vehicles/astro_van_8dir_drive_1x8_128x96_TRANSPARENT_FIXED.png?v=" + VERSION
+/*
+  AVAILABLE GLASSWELL MAP PAGES
+  These are the pages currently present in:
+  assets/maps/dust9/glasswell/page_registry.json
+
+  START:
+  GLASSWELL_C3 — Main Civic Gate
+
+  EDGE ROUTES:
+  C3 north -> C2
+  C3 south -> C4
+  C3 east  -> D3
+  C2 south -> C3
+  C4 north -> C3
+  D3 west  -> C3
+*/
+
+const MAP_PAGES = {
+  GLASSWELL_C2: {
+    id: "GLASSWELL_C2",
+    title: "C2 — Civic Admin Street",
+    w: 1448,
+    h: 1086,
+    baseKey: "GLASSWELL_C2_base",
+    basePath: "assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_base.png",
+    overlayKey: "GLASSWELL_C2_foreground_overlay",
+    overlayPath: "assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_foreground_overlay.png",
+    routes: {
+      south: "GLASSWELL_C3"
+    }
+  },
+
+  GLASSWELL_C3: {
+    id: "GLASSWELL_C3",
+    title: "C3 — Main Civic Gate",
+    w: 1536,
+    h: 1152,
+    baseKey: "GLASSWELL_C3_base",
+    basePath: "assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_base.png",
+    overlayKey: "GLASSWELL_C3_foreground_overlay",
+    overlayPath: "assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_foreground_overlay.png",
+    routes: {
+      north: "GLASSWELL_C2",
+      south: "GLASSWELL_C4",
+      east: "GLASSWELL_D3"
+    }
+  },
+
+  GLASSWELL_C4: {
+    id: "GLASSWELL_C4",
+    title: "C4 — Transit Vendor Square",
+    w: 1448,
+    h: 1086,
+    baseKey: "GLASSWELL_C4_base",
+    basePath: "assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_base.png",
+    overlayKey: "GLASSWELL_C4_foreground_overlay",
+    overlayPath: "assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_foreground_overlay.png",
+    routes: {
+      north: "GLASSWELL_C3"
+    }
+  },
+
+  GLASSWELL_D3: {
+    id: "GLASSWELL_D3",
+    title: "D3 — Red Concord Checkpoint",
+    w: 1448,
+    h: 1086,
+    baseKey: "GLASSWELL_D3_base",
+    basePath: "assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_base.png",
+    overlayKey: "GLASSWELL_D3_foreground_overlay",
+    overlayPath: "assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_foreground_overlay.png",
+    routes: {
+      west: "GLASSWELL_C3"
+    }
+  }
+};
+
+const MAP_ORDER = [
+  "GLASSWELL_C3",
+  "GLASSWELL_C2",
+  "GLASSWELL_C4",
+  "GLASSWELL_D3"
+];
+
+const ASSETS = {
+  astroVanDrive: "assets/vehicles/astro_van_8dir_drive_1x8_128x96_TRANSPARENT_FIXED.png"
 };
 
 const VAN_FRAME = {
@@ -102,11 +183,16 @@ class GlasswellScene extends Phaser.Scene {
   constructor(){
     super("GlasswellScene");
 
-    this.van = null;
+    this.currentMapId = "GLASSWELL_C3";
     this.currentVanFrame = VAN_FRAME.EAST;
-    this.vanEntered = true;
+    this.vanUsesDirectionSheet = true;
 
+    this.mapGroup = null;
+    this.mapBase = null;
+    this.mapOverlay = null;
+    this.van = null;
     this.keys = null;
+    this.failedAssetKeys = new Set();
 
     this.joy = {
       active:false,
@@ -124,9 +210,17 @@ class GlasswellScene extends Phaser.Scene {
   }
 
   preload(){
-    this.load.image("glasswell_c3", ASSETS.mapC3);
+    this.load.on("loaderror", (file) => {
+      console.warn("ASSET FAILED:", file.key, file.src);
+      this.failedAssetKeys.add(file.key);
+    });
 
-    this.load.spritesheet("astro_van_drive", ASSETS.astroVanDrive, {
+    Object.values(MAP_PAGES).forEach((page) => {
+      this.load.image(page.baseKey, assetPath(page.basePath));
+      this.load.image(page.overlayKey, assetPath(page.overlayPath));
+    });
+
+    this.load.spritesheet("astro_van_drive", assetPath(ASSETS.astroVanDrive), {
       frameWidth: 128,
       frameHeight: 96,
       margin: 0,
@@ -137,30 +231,7 @@ class GlasswellScene extends Phaser.Scene {
   create(){
     this.cameras.main.setBackgroundColor("#000000");
 
-    this.map = this.add.image(0, 0, "glasswell_c3")
-      .setOrigin(0, 0)
-      .setDepth(0);
-
-    const mapW = this.map.width;
-    const mapH = this.map.height;
-
-    this.physics.world.setBounds(0, 0, mapW, mapH);
-
-    this.cameras.main.setBounds(0, 0, mapW, mapH);
-
-    // ASTRO VAN
-    // Do NOT animate this sheet.
-    // The 8 frames are direction frames, not driving animation frames.
-    this.van = this.physics.add.sprite(900, 452, "astro_van_drive", this.currentVanFrame);
-    this.van.setOrigin(0.5, 0.65);
-    this.van.setScale(1);
-    this.van.setDepth(this.van.y);
-
-    this.van.body.setCollideWorldBounds(true);
-    this.van.body.setSize(72, 42);
-    this.van.body.setOffset(28, 42);
-
-    this.cameras.main.startFollow(this.van, true, 0.12, 0.12);
+    this.mapGroup = this.add.group();
 
     this.keys = this.input.keyboard.addKeys({
       up: Phaser.Input.Keyboard.KeyCodes.UP,
@@ -171,26 +242,146 @@ class GlasswellScene extends Phaser.Scene {
       a: Phaser.Input.Keyboard.KeyCodes.A,
       s: Phaser.Input.Keyboard.KeyCodes.S,
       d: Phaser.Input.Keyboard.KeyCodes.D,
+      one: Phaser.Input.Keyboard.KeyCodes.ONE,
+      two: Phaser.Input.Keyboard.KeyCodes.TWO,
+      three: Phaser.Input.Keyboard.KeyCodes.THREE,
+      four: Phaser.Input.Keyboard.KeyCodes.FOUR,
       b: Phaser.Input.Keyboard.KeyCodes.B,
       y: Phaser.Input.Keyboard.KeyCodes.Y,
-      h: Phaser.Input.Keyboard.KeyCodes.H
+      h: Phaser.Input.Keyboard.KeyCodes.H,
+      tab: Phaser.Input.Keyboard.KeyCodes.TAB
     });
+
+    this.createOrLoadVanFallback();
+    this.changeMap("GLASSWELL_C3", "start", 900, 452);
 
     this.createHUD();
     this.createTouchControls();
 
-    this.debugText = this.add.text(16, 12, "", {
-      fontFamily:"monospace",
-      fontSize:"13px",
-      color:"#eee",
-      backgroundColor:"rgba(0,0,0,0.48)",
-      padding:{x:8,y:5}
-    }).setScrollFactor(0).setDepth(5000);
+    this.cameras.main.startFollow(this.van, true, 0.12, 0.12);
+  }
 
-    // Safety check for the van sheet.
-    const tex = this.textures.get("astro_van_drive");
-    console.log("Astro Van frame count:", tex.frameTotal - 1);
-    console.log("Expected van frames: 8 direction frames, 128x96 each.");
+  createOrLoadVanFallback(){
+    const vanLoaded = this.textures.exists("astro_van_drive") && !this.failedAssetKeys.has("astro_van_drive");
+
+    if (!vanLoaded){
+      this.vanUsesDirectionSheet = false;
+
+      const g = this.add.graphics();
+      g.fillStyle(0x2b2e38, 1);
+      g.fillRect(10, 14, 76, 30);
+      g.fillStyle(0x6d2a92, 1);
+      g.fillRect(18, 20, 28, 9);
+      g.fillStyle(0x111111, 1);
+      g.fillCircle(25, 45, 6);
+      g.fillCircle(72, 45, 6);
+      g.lineStyle(2, 0xa8f5ff, 1);
+      g.strokeRect(10, 14, 76, 30);
+      g.generateTexture("astro_van_fallback", 96, 56);
+      g.destroy();
+    }
+
+    const textureKey = this.vanUsesDirectionSheet ? "astro_van_drive" : "astro_van_fallback";
+
+    this.van = this.physics.add.sprite(900, 452, textureKey, 0);
+    this.van.setOrigin(0.5, 0.65);
+    this.van.setScale(1);
+    this.van.body.setCollideWorldBounds(true);
+    this.van.body.setSize(72, 42);
+
+    if (this.vanUsesDirectionSheet){
+      this.van.body.setOffset(28, 42);
+      this.van.setFrame(this.currentVanFrame);
+    }
+  }
+
+  changeMap(nextMapId, entrySide, forceX, forceY){
+    const page = MAP_PAGES[nextMapId];
+
+    if (!page){
+      console.warn("Missing page:", nextMapId);
+      return;
+    }
+
+    this.currentMapId = nextMapId;
+
+    if (this.mapGroup){
+      this.mapGroup.clear(true, true);
+    }
+
+    if (this.textures.exists(page.baseKey) && !this.failedAssetKeys.has(page.baseKey)){
+      this.mapBase = this.add.image(0, 0, page.baseKey)
+        .setOrigin(0, 0)
+        .setDepth(0);
+
+      this.mapGroup.add(this.mapBase);
+    } else {
+      this.mapBase = this.add.rectangle(0, 0, page.w, page.h, 0x171717, 1)
+        .setOrigin(0, 0)
+        .setDepth(0);
+
+      const missingText = this.add.text(40, 40,
+        "MAP ASSET MISSING\\n" + page.basePath,
+        {
+          fontFamily:"monospace",
+          fontSize:"20px",
+          color:"#ff4040",
+          backgroundColor:"rgba(0,0,0,0.75)",
+          padding:{x:10,y:8}
+        }
+      ).setDepth(100);
+
+      this.mapGroup.add(this.mapBase);
+      this.mapGroup.add(missingText);
+    }
+
+    if (this.textures.exists(page.overlayKey) && !this.failedAssetKeys.has(page.overlayKey)){
+      this.mapOverlay = this.add.image(0, 0, page.overlayKey)
+        .setOrigin(0, 0)
+        .setDepth(9000);
+
+      this.mapGroup.add(this.mapOverlay);
+    } else {
+      this.mapOverlay = null;
+    }
+
+    this.physics.world.setBounds(0, 0, page.w, page.h);
+    this.cameras.main.setBounds(0, 0, page.w, page.h);
+
+    if (this.van){
+      this.van.body.setCollideWorldBounds(true);
+
+      let x = typeof forceX === "number" ? forceX : this.van.x;
+      let y = typeof forceY === "number" ? forceY : this.van.y;
+
+      const edgePad = 96;
+
+      if (entrySide === "north"){
+        x = Phaser.Math.Clamp(x, edgePad, page.w - edgePad);
+        y = edgePad;
+      } else if (entrySide === "south"){
+        x = Phaser.Math.Clamp(x, edgePad, page.w - edgePad);
+        y = page.h - edgePad;
+      } else if (entrySide === "west"){
+        x = edgePad;
+        y = Phaser.Math.Clamp(y, edgePad, page.h - edgePad);
+      } else if (entrySide === "east"){
+        x = page.w - edgePad;
+        y = Phaser.Math.Clamp(y, edgePad, page.h - edgePad);
+      } else if (entrySide === "start"){
+        x = 900;
+        y = 452;
+      } else {
+        x = Phaser.Math.Clamp(x, edgePad, page.w - edgePad);
+        y = Phaser.Math.Clamp(y, edgePad, page.h - edgePad);
+      }
+
+      this.van.setPosition(x, y);
+      this.van.setVelocity(0, 0);
+      this.van.setDepth(this.van.y + 1000);
+    }
+
+    console.log("Loaded map page:", page.id, page.title);
   }
 
   createHUD(){
@@ -198,61 +389,62 @@ class GlasswellScene extends Phaser.Scene {
       fontFamily:"monospace",
       fontSize:"13px",
       color:"#eee",
-      backgroundColor:"rgba(0,0,0,0.48)",
+      backgroundColor:"rgba(0,0,0,0.55)",
       padding:{x:8,y:5}
-    }).setScrollFactor(0).setDepth(5000);
+    }).setScrollFactor(0).setDepth(12000);
   }
 
   createTouchControls(){
-    const cam = this.cameras.main;
-
     this.joyBaseOuter = this.add.circle(this.joy.baseX, this.joy.baseY, this.joy.radius, 0x00a6b8, 0.20)
       .setStrokeStyle(5, 0xa8f5ff, 0.35)
       .setScrollFactor(0)
-      .setDepth(4000);
+      .setDepth(10000);
 
     this.joyBaseInner = this.add.circle(this.joy.baseX, this.joy.baseY, this.joy.radius * 0.62, 0x8a0078, 0.12)
       .setStrokeStyle(3, 0xff2ad4, 0.35)
       .setScrollFactor(0)
-      .setDepth(4001);
+      .setDepth(10001);
 
     this.joyKnob = this.add.circle(this.joy.knobX, this.joy.knobY, 34, 0xffffff, 0.18)
       .setStrokeStyle(4, 0xffffff, 0.75)
       .setScrollFactor(0)
-      .setDepth(4002);
+      .setDepth(10002);
 
     this.moveLabel = this.add.text(this.joy.baseX - 38, this.joy.baseY + 88, "MOVE ON", {
       fontFamily:"monospace",
       fontSize:"18px",
       color:"#ffffff",
       fontStyle:"bold"
-    }).setScrollFactor(0).setDepth(4003);
+    }).setScrollFactor(0).setDepth(10003);
 
     this.makeButton("Y", 790, 285, 42, 0xb0007f);
     this.makeButton("X", 715, 360, 42, 0x9b7a00);
     this.makeButton("A", 865, 360, 42, 0x006676);
     this.makeButton("B", 790, 435, 42, 0x008a36);
 
-    this.startButton = this.add.roundRectangle(GAME_W / 2, 480, 150, 42, 18, 0x111111, 0.65)
-      .setStrokeStyle(2, 0xffffff, 0.45)
+    this.startButton = this.add.rectangle(GAME_W / 2, 480, 150, 42, 0x111111, 0.70)
+      .setStrokeStyle(2, 0xffffff, 0.50)
       .setScrollFactor(0)
-      .setDepth(4000);
+      .setDepth(10000)
+      .setInteractive({useHandCursor:true});
 
-    this.startText = this.add.text(GAME_W / 2, 480, "START", {
+    this.startText = this.add.text(GAME_W / 2, 480, "MAP", {
       fontFamily:"monospace",
       fontSize:"19px",
       color:"#ffffff",
       fontStyle:"bold"
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(4001);
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(10001);
 
-    this.startButton.setInteractive({useHandCursor:true});
+    this.startButton.on("pointerdown", () => {
+      this.cycleMap();
+    });
   }
 
   makeButton(label, x, y, r, color){
     const btn = this.add.circle(x, y, r, color, 0.55)
       .setStrokeStyle(4, 0xffffff, 0.75)
       .setScrollFactor(0)
-      .setDepth(4000)
+      .setDepth(10000)
       .setInteractive({useHandCursor:true});
 
     const txt = this.add.text(x, y, label, {
@@ -260,7 +452,7 @@ class GlasswellScene extends Phaser.Scene {
       fontSize:"24px",
       color:"#ffffff",
       fontStyle:"bold"
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(4001);
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(10001);
 
     this.buttons[label] = {
       button:btn,
@@ -283,18 +475,14 @@ class GlasswellScene extends Phaser.Scene {
 
   handleTouchJoystick(){
     const pointers = this.input.manager.pointers;
-
     let activePointer = null;
 
     for (let i = 0; i < pointers.length; i++){
       const p = pointers[i];
       if (!p || !p.isDown) continue;
 
-      const screenX = p.x;
-      const screenY = p.y;
-
       if (this.joy.pointerId === null){
-        const d = Phaser.Math.Distance.Between(screenX, screenY, this.joy.baseX, this.joy.baseY);
+        const d = Phaser.Math.Distance.Between(p.x, p.y, this.joy.baseX, this.joy.baseY);
         if (d <= this.joy.radius + 60){
           this.joy.pointerId = p.id;
           activePointer = p;
@@ -363,44 +551,96 @@ class GlasswellScene extends Phaser.Scene {
     return {dx, dy};
   }
 
+  cycleMap(){
+    const currentIndex = MAP_ORDER.indexOf(this.currentMapId);
+    const nextIndex = (currentIndex + 1) % MAP_ORDER.length;
+    this.changeMap(MAP_ORDER[nextIndex], "center");
+  }
+
+  checkKeyboardMapSelect(){
+    if (Phaser.Input.Keyboard.JustDown(this.keys.one)) this.changeMap("GLASSWELL_C3", "center");
+    if (Phaser.Input.Keyboard.JustDown(this.keys.two)) this.changeMap("GLASSWELL_C2", "center");
+    if (Phaser.Input.Keyboard.JustDown(this.keys.three)) this.changeMap("GLASSWELL_C4", "center");
+    if (Phaser.Input.Keyboard.JustDown(this.keys.four)) this.changeMap("GLASSWELL_D3", "center");
+    if (Phaser.Input.Keyboard.JustDown(this.keys.tab)) this.cycleMap();
+  }
+
+  checkEdgeTransitions(){
+    const page = MAP_PAGES[this.currentMapId];
+    const routes = page.routes;
+    const pad = 38;
+
+    if (this.van.x <= pad){
+      if (routes.west){
+        this.changeMap(routes.west, "east", MAP_PAGES[routes.west].w - 110, this.van.y);
+        return true;
+      }
+      this.van.x = pad + 2;
+    }
+
+    if (this.van.x >= page.w - pad){
+      if (routes.east){
+        this.changeMap(routes.east, "west", 110, this.van.y);
+        return true;
+      }
+      this.van.x = page.w - pad - 2;
+    }
+
+    if (this.van.y <= pad){
+      if (routes.north){
+        this.changeMap(routes.north, "south", this.van.x, MAP_PAGES[routes.north].h - 110);
+        return true;
+      }
+      this.van.y = pad + 2;
+    }
+
+    if (this.van.y >= page.h - pad){
+      if (routes.south){
+        this.changeMap(routes.south, "north", this.van.x, 110);
+        return true;
+      }
+      this.van.y = page.h - pad - 2;
+    }
+
+    return false;
+  }
+
   update(){
     this.handleTouchJoystick();
+    this.checkKeyboardMapSelect();
 
     if (!this.van) return;
 
     const move = this.getMovementInput();
-
     const moving = Math.abs(move.dx) > 0.05 || Math.abs(move.dy) > 0.05;
 
     if (moving){
       const speed = 168;
       this.van.setVelocity(move.dx * speed, move.dy * speed);
 
-      // MAIN FIX:
-      // Change direction frame only.
-      // Do NOT play an animation for this 1x8 sheet.
-      this.currentVanFrame = getVanDirectionFrame(move.dx, move.dy, this.currentVanFrame);
-      this.van.setFrame(this.currentVanFrame);
+      if (this.vanUsesDirectionSheet){
+        this.currentVanFrame = getVanDirectionFrame(move.dx, move.dy, this.currentVanFrame);
+        this.van.setFrame(this.currentVanFrame);
+      }
     } else {
       this.van.setVelocity(0, 0);
-      this.van.setFrame(this.currentVanFrame);
+
+      if (this.vanUsesDirectionSheet){
+        this.van.setFrame(this.currentVanFrame);
+      }
     }
 
-    this.van.setDepth(this.van.y);
+    this.van.setDepth(this.van.y + 1000);
+    this.checkEdgeTransitions();
 
-    if (Phaser.Input.Keyboard.JustDown(this.keys.b) || this.buttons.B.down){
-      console.log("B pressed: exit van placeholder");
-    }
-
-    if (Phaser.Input.Keyboard.JustDown(this.keys.y) || Phaser.Input.Keyboard.JustDown(this.keys.h)){
-      console.log("Y/H pressed: horn / lights placeholder");
-    }
+    const page = MAP_PAGES[this.currentMapId];
 
     this.hud.setText(
-      "C3 — Main Civic Gate | Astro Van | " +
+      page.title + " | Astro Van | " +
       Math.round(this.van.x) + "," + Math.round(this.van.y) +
-      "\nFuel: 81% | Van asset: astro_van_8dir_drive_1x8_128x96_TRANSPARENT_FIXED | B exits | hold Y lights | tap Y horn" +
-      "\nVan frame: " + this.currentVanFrame + " | setFrame only — no drive animation"
+      "\nPages: 1=C3  2=C2  3=C4  4=D3  | START/MAP cycles pages" +
+      "\nEdge exits: C3 north/south/east, C2 south, C4 north, D3 west" +
+      "\nVan frame: " + this.currentVanFrame + " | direction sheet uses setFrame only"
     );
   }
 }
