@@ -83,7 +83,14 @@ function showBootError(message){
   box.style.display='block';
   box.textContent=message;
 }
-window.addEventListener('error', e => showBootError('GAME ERROR: ' + (e.message || 'unknown error')));
+window.addEventListener('error', e => {
+  const msg = e.message || 'unknown error';
+  if(String(msg).toLowerCase().includes('failed to start the audio device')){
+    console.warn('Ignored browser audio warning:', msg);
+    return;
+  }
+  showBootError('GAME ERROR: ' + msg);
+});
 window.addEventListener('unhandledrejection', e => showBootError('GAME ERROR: ' + ((e.reason && (e.reason.message || e.reason)) || 'unhandled promise rejection')));
 window.addEventListener('contextmenu', e => e.preventDefault());
 window.addEventListener('gesturestart', e => e.preventDefault());
@@ -91,7 +98,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-donny-van-turn-movement-2026-05-26-003';
+const VERSION = 'glasswell-donny-van-stable-drive-2026-05-26-004';
 
 // IMPORTANT:
 // Donny is loaded from the verified cosmic-feedback staging folder using an absolute raw GitHub URL.
@@ -187,6 +194,7 @@ const VAN = {
   openFrame:{w:204,h:164},
 
   // Best starter direction frames from the 8x6 turn sheet.
+  // Stable frames only. These stop the van from spinning through mixed angle frames.
   idleFrame:{down:0,right:3,left:24,up:13},
 
   driveAnim:{down:'astro_van_drive_down',right:'astro_van_drive_right',left:'astro_van_drive_left',up:'astro_van_drive_up'},
@@ -444,20 +452,22 @@ function createVanAnimations(scene){
       });
     };
 
-    // 8x6 turn/movement sheet starter maps.
-    makeFrames('astro_van_drive_down',[0,4,44,47],7,-1);
-    makeFrames('astro_van_drive_right',[3,7,15,23],7,-1);
-    makeFrames('astro_van_drive_left',[24,31,32,39],7,-1);
-    makeFrames('astro_van_drive_up',[13,14,40,41],7,-1);
+    // Stable single-frame drive anims. The source sheet contains mixed angles, so looping
+    // several frames makes the van spin. Use static direction frames for stable driving.
+    makeFrames('astro_van_drive_down',[0],1,-1);
+    makeFrames('astro_van_drive_right',[3],1,-1);
+    makeFrames('astro_van_drive_left',[24],1,-1);
+    makeFrames('astro_van_drive_up',[13],1,-1);
 
+    // Optional turn anims kept available for later, but NOT auto-played during driving.
     makeFrames('astro_van_turn_down_to_right',[0,1,2,3],10,0);
-    makeFrames('astro_van_turn_right_to_up',[7,10,11,13],10,0);
+    makeFrames('astro_van_turn_right_to_up',[3,2,1,13],10,0);
     makeFrames('astro_van_turn_up_to_left',[13,17,18,24],10,0);
-    makeFrames('astro_van_turn_left_to_down',[24,33,34,44],10,0);
+    makeFrames('astro_van_turn_left_to_down',[24,33,34,0],10,0);
 
     makeFrames('astro_van_turn_down_to_left',[0,33,32,24],10,0);
     makeFrames('astro_van_turn_left_to_up',[24,18,17,13],10,0);
-    makeFrames('astro_van_turn_up_to_right',[13,11,10,7],10,0);
+    makeFrames('astro_van_turn_up_to_right',[13,1,2,3],10,0);
     makeFrames('astro_van_turn_right_to_down',[3,2,1,0],10,0);
   }
 
@@ -718,13 +728,14 @@ class CityScene extends Phaser.Scene{
       this.astroVan.body.setOffset(useDrive?19:72,useDrive?38:105);
     }
 
-    this.vanLabel=this.add.text(this.astroVan.x,this.astroVan.y+78,'ASTRO VAN',{
+    // No visible label in-game. Keep a hidden label object so older update code remains safe.
+    this.vanLabel=this.add.text(this.astroVan.x,this.astroVan.y+78,'',{
       fontFamily:'Arial Black',
       fontSize:'14px',
       color:'#9ff4ff',
-      backgroundColor:'rgba(0,0,0,.55)',
-      padding:{x:6,y:3}
-    }).setOrigin(.5).setDepth(this.astroVan.depth+1).setData('mapObj',true);
+      backgroundColor:'rgba(0,0,0,0)',
+      padding:{x:0,y:0}
+    }).setOrigin(.5).setDepth(this.astroVan.depth+1).setVisible(false).setData('mapObj',true);
   }
 
   placeWeapons(){
@@ -798,7 +809,7 @@ class CityScene extends Phaser.Scene{
         this.exitVan();
       }
 
-      this.hud.setText(`${this.cfg.label} | Driving Astro Van | ${Math.round(this.astroVan.x)},${Math.round(this.astroVan.y)} | ${GAME_IDENTITY.genre}`);
+      this.hud.setText(`${this.cfg.label} | Driving Astro Van — Donny inside | ${Math.round(this.astroVan.x)},${Math.round(this.astroVan.y)} | ${GAME_IDENTITY.genre}`);
       this.weaponHud.setText('Vehicle: Astro Van');
       return;
     }
@@ -927,7 +938,9 @@ class CityScene extends Phaser.Scene{
       if(this.canMove(van.x,nextY))van.y=Phaser.Math.Clamp(nextY,0,this.mapH);
 
       if(this.textures.exists(VAN.driveKey)){
-        van.play(VAN.driveAnim[van.direction],true);
+        // Use direct frame selection instead of looping animation to prevent spinning.
+        if(van.anims)van.anims.stop();
+        van.setTexture(VAN.driveKey,VAN.idleFrame[van.direction]||0);
       }
     } else {
       if(van.anims)van.anims.stop();
