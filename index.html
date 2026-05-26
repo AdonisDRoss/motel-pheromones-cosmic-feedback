@@ -82,7 +82,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-donny-idle-freeze-direction-fix-2026-05-26-021';
+const VERSION = 'glasswell-van-function-global-hardfix-2026-05-26-023';
 
 function version(path){ return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`; }
 function key(id,type){return `${id}_${type}`}
@@ -216,6 +216,37 @@ const VAN_ASSETS = {
     }
   ]
 };
+
+function selectVanDriveTexture(scene){
+  // GLOBAL HARD FIX:
+  // This function must exist before createVanAnimations() runs.
+  // Missing this function causes:
+  // ReferenceError: Can't find variable: selectVanDriveTexture
+
+  const candidates = (typeof VAN_ASSETS !== 'undefined' && VAN_ASSETS.candidates) ? VAN_ASSETS.candidates : [];
+  const found = candidates.find(v => scene.textures.exists(v.key));
+
+  if(found){
+    VAN.activeDriveKey = found.key;
+    VAN.activeLayout = found.layout || '8dir11';
+    VAN.driveFrame = { w: found.frameWidth || 128, h: found.frameHeight || 96 };
+    VAN.columns = found.columns || 11;
+    VAN.idleFrame = {down:0,downRight:11,right:22,upRight:33,up:44,upLeft:55,left:66,downLeft:77};
+    console.log('Using Astro Van asset:', found.path);
+    return found;
+  }
+
+  // No real van file loaded. Use safe generated fallback.
+  VAN.activeDriveKey = 'astro_van_safe_right';
+  VAN.activeLayout = 'fallback';
+  VAN.driveFrame = {w:128,h:96};
+  VAN.columns = 1;
+  VAN.idleFrame = {down:0,downRight:0,right:0,upRight:0,up:0,upLeft:0,left:0,downLeft:0};
+  console.warn('Astro Van real file did not load. Using safe fallback van.');
+  return null;
+}
+
+
 
 const DONNY = {
   frameWidth:128,
@@ -670,42 +701,67 @@ function createDonnyAnimations(scene){
 
 function createVanAnimations(scene){
   const found = selectVanDriveTexture(scene);
-  const driveKey = VAN.activeDriveKey;
 
-  if(!scene.textures.exists(driveKey))return;
-
-  if(found && found.layout === '8dir11'){
+  // Real 8-direction, 11-frame-per-row van sheet.
+  if(found && found.layout === '8dir11' && scene.textures.exists(VAN.activeDriveKey)){
     const rows=['down','downRight','right','upRight','up','upLeft','left','downLeft'];
+
     rows.forEach((dir,row)=>{
       const animKey=VAN.anim[dir];
       if(scene.anims.exists(animKey))return;
+
       const frames=[];
-      for(let c=0;c<11;c++)frames.push({key:driveKey,frame:row*11+c});
+      for(let c=0;c<11;c++){
+        frames.push({key:VAN.activeDriveKey,frame:row*11+c});
+      }
+
       scene.anims.create({key:animKey,frames,frameRate:8,repeat:-1});
     });
+
     VAN.idleFrame={down:0,downRight:11,right:22,upRight:33,up:44,upLeft:55,left:66,downLeft:77};
     return;
   }
 
-  if(found && found.layout === '4dir4'){
+  // Real 4-direction fallback sheet.
+  if(found && found.layout === '4dir4' && scene.textures.exists(VAN.activeDriveKey)){
     const map={down:0,right:4,left:8,up:12,downRight:4,upRight:4,upLeft:8,downLeft:8};
+
     Object.entries(map).forEach(([dir,start])=>{
       const animKey=VAN.anim[dir];
       if(scene.anims.exists(animKey))return;
+
       const frames=[];
-      for(let c=0;c<4;c++)frames.push({key:driveKey,frame:start+c});
+      for(let c=0;c<4;c++){
+        frames.push({key:VAN.activeDriveKey,frame:start+c});
+      }
+
       scene.anims.create({key:animKey,frames,frameRate:6,repeat:-1});
     });
+
     VAN.idleFrame={down:0,downRight:4,right:4,upRight:4,up:12,upLeft:8,left:8,downLeft:8};
     return;
   }
 
-  // Fallback generated single-frame van.
-  Object.keys(VAN.anim).forEach(dir=>{
+  // Safe fallback generated van textures.
+  const safeMap={
+    right:'astro_van_safe_right',
+    left:'astro_van_safe_left',
+    down:'astro_van_safe_down',
+    up:'astro_van_safe_up',
+    downRight:'astro_van_safe_downRight',
+    upRight:'astro_van_safe_upRight',
+    downLeft:'astro_van_safe_downLeft',
+    upLeft:'astro_van_safe_upLeft'
+  };
+
+  Object.entries(safeMap).forEach(([dir,key])=>{
     const animKey=VAN.anim[dir];
     if(scene.anims.exists(animKey))return;
-    scene.anims.create({key:animKey,frames:[{key:driveKey,frame:0}],frameRate:1,repeat:-1});
+    if(scene.textures.exists(key)){
+      scene.anims.create({key:animKey,frames:[{key,frame:0}],frameRate:1,repeat:-1});
+    }
   });
+
   VAN.idleFrame={down:0,downRight:0,right:0,upRight:0,up:0,upLeft:0,left:0,downLeft:0};
 }
 
