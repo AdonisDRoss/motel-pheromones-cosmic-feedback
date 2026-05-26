@@ -82,7 +82,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-donny-walk-error-scale-fix-2026-05-26-015';
+const VERSION = 'glasswell-donny-small-uniform-vertical-walk-van-center-2026-05-26-016';
 
 function version(path){ return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`; }
 function key(id,type){return `${id}_${type}`}
@@ -220,19 +220,19 @@ const DONNY = {
   frameWidth:128,
   frameHeight:128,
 
-  // Base Donny size. Walk/run sheets were reading smaller, so movement gets its own scale.
-  scale:0.86,
-  walkScale:0.96,
-  runScale:0.96,
-  crawlScale:0.86,
-  actionScale:0.88,
+  // Uniform smaller Donny scale. Same value across idle/walk/run/action prevents scale popping.
+  scale:0.78,
+  walkScale:0.78,
+  runScale:0.78,
+  crawlScale:0.78,
+  actionScale:0.78,
 
-  // Anchor closer to feet so he does not look like he is floating.
-  originY:0.82,
+  // Feet anchor. Higher originY puts the visual feet closer to the gameplay position.
+  originY:0.88,
 
   speed:205,
-  runSpeed:300,
-  crawlSpeed:90,
+  runSpeed:292,
+  crawlSpeed:88,
 
   directionFrame:{down:0,right:8,left:16,up:24},
   anims:{
@@ -255,36 +255,25 @@ const GUN_PROP = {
   key:'donny_laser_gun_overlay',
   frameWidth:128,
   frameHeight:128,
-
-  // Small gun. The center of the overlay frame is treated as the handle/grip.
-  // The index places that grip directly on Donny's weapon hand.
-  scale:0.40,
-
+  scale:0.34,
   directionFrame:{down:0,right:1,left:2,up:3},
-
-  // Donny's weapon-hand position from his foot/origin.
   hand:{
-    down:{x:16,y:-43},
-    right:{x:30,y:-47},
-    left:{x:-30,y:-47},
-    up:{x:-8,y:-60}
+    down:{x:12,y:-38},
+    right:{x:24,y:-41},
+    left:{x:-24,y:-41},
+    up:{x:-7,y:-52}
   }
 };
 
 const FUEL_CAN_PROP = {
   key:'fuel_can_hand_prop',
-
-  // Smaller hand prop. The same best fuel-can frame is repeated for every direction.
-  scale:0.52,
-
+  scale:0.42,
   directionFrame:{down:0,right:1,left:2,up:3},
-
-  // Center of the 128x128 prop frame is the grip/hand anchor.
   hand:{
-    down:{x:15,y:-44},
-    right:{x:29,y:-48},
-    left:{x:-29,y:-48},
-    up:{x:-8,y:-61}
+    down:{x:12,y:-38},
+    right:{x:24,y:-41},
+    left:{x:-24,y:-41},
+    up:{x:-7,y:-52}
   }
 };
 
@@ -294,19 +283,13 @@ const HOLSTER = {
   key:'donny_holster',
   frameWidth:128,
   frameHeight:128,
-
-  // Smaller hip holster. This is an overlay, not baked into Donny.
-  scale:0.34,
-
+  scale:0.28,
   directionFrame:{down:0,right:1,left:2,up:3},
-
-  // Offset from Donny's foot/origin to the hip dot shown in the screenshot.
-  // The right-facing holster is moved lower and farther forward to sit where the white dot was placed.
   hip:{
-    down:{x:18,y:-25},
-    right:{x:22,y:-24},
-    left:{x:-22,y:-24},
-    up:{x:16,y:-27}
+    down:{x:14,y:-22},
+    right:{x:17,y:-21},
+    left:{x:-17,y:-21},
+    up:{x:13,y:-23}
   }
 };
 
@@ -326,7 +309,7 @@ const VAN = {
 
   // Small physical footprint only around the van body.
   // This prevents a huge transparent sprite box from trapping Donny.
-  body:{w:112,h:48,offsetY:-24},
+  body:{w:78,h:32,offsetY:-18},
 
   exitOffset:{down:{x:0,y:92},up:{x:0,y:-92},right:{x:112,y:0},left:{x:-112,y:0}}
 };
@@ -721,6 +704,8 @@ class MapScene extends Phaser.Scene{
     this.actionType='';
     this.slideUntil=0;
     this.moveHoldStart=0;
+    this.lastMoveUntil=0;
+    this.lastMoveInput={x:0,y:1};
     this.jumpZ=0;
     this.jumpVel=0;
     this.routeCooldown=0;
@@ -816,7 +801,7 @@ class MapScene extends Phaser.Scene{
   createPlayerSprites(){
     if(!this.player){
       const texture=this.textures.exists('donny_idle')?'donny_idle':(this.textures.exists('donny_overhead')?'donny_overhead':'donny_fallback');
-      this.player=this.add.sprite(this.playerX,this.playerY,texture,0).setOrigin(.5,DONNY.originY || .82).setScale(DONNY.scale).setDepth(this.playerY+1000);
+      this.player=this.add.sprite(this.playerX,this.playerY,texture,0).setOrigin(.5,DONNY.originY || .88).setScale(DONNY.scale).setDepth(this.playerY+1000);
       this.gun=this.add.sprite(this.playerX,this.playerY,GUN_PROP.key,0).setOrigin(.5,.5).setScale(GUN_PROP.scale).setVisible(false).setDepth(this.playerY+1005);
       this.holster=this.add.sprite(this.playerX,this.playerY,HOLSTER.key,0).setOrigin(.5,.5).setScale(HOLSTER.scale).setVisible(false).setDepth(this.playerY+1004);
       this.fuelCan=this.add.sprite(this.playerX,this.playerY,FUEL_CAN_PROP.key,0).setOrigin(.5,.5).setScale(FUEL_CAN_PROP.scale).setVisible(false).setDepth(this.playerY+1007);
@@ -828,12 +813,21 @@ class MapScene extends Phaser.Scene{
   }
 
   spawnVanNearDonny(){
+    // Put the van in the road close to Donny so rear menu/refuel testing is reachable.
+    const vx=clamp(this.playerX-125,80,this.mapW-80);
+    const vy=clamp(this.playerY+35,80,this.mapH-80);
+
     if(!this.van){
-      this.van=this.add.sprite(this.playerX-165,this.playerY+105,VAN.activeDriveKey,VAN.idleFrame.right||0).setOrigin(.5,.68).setScale(VAN.renderScale).setDepth(this.playerY+900);
+      this.van=this.add.sprite(vx,vy,VAN.activeDriveKey,VAN.idleFrame.right||0).setOrigin(.5,.68).setScale(VAN.renderScale).setDepth(vy+900);
     } else {
-      this.van.setPosition(this.playerX-165,this.playerY+105).setVisible(true);
+      this.van.setPosition(vx,vy).setVisible(true);
     }
-    this.vanX=this.van.x;this.vanY=this.van.y;this.vanPage=this.pageId;this.vanDir='right';
+
+    this.vanX=this.van.x;
+    this.vanY=this.van.y;
+    this.vanPage=this.pageId;
+    this.vanDir='right';
+
     this.createVanLightObjects();
     this.enableVanPhysics();
   }
@@ -850,35 +844,20 @@ class MapScene extends Phaser.Scene{
     if(!Number.isFinite(x))x=0;
     if(!Number.isFinite(y))y=0;
 
-    // Deadzone small stick noise.
-    if(Math.abs(x)<.10)x=0;
-    if(Math.abs(y)<.10)y=0;
+    // Smaller deadzone so north/south works from the mobile stick.
+    if(Math.abs(x)<.06)x=0;
+    if(Math.abs(y)<.06)y=0;
 
-    // Reduce diagonal twitch. If one axis clearly wins, lock the minor axis to zero.
-    const ax=Math.abs(x);
-    const ay=Math.abs(y);
-    if(ax>ay*1.75)y=0;
-    if(ay>ax*1.75)x=0;
+    // Keep true vertical input. Do not erase y just because x has a little drift.
+    const len0=Math.hypot(x,y);
+    if(len0>1){x/=len0;y/=len0}
 
-    let len=Math.hypot(x,y);
-    if(len>1){x/=len;y/=len;len=1}
-
-    // Smooth touch-stick input so walking right does not jerk on mobile.
-    // Keyboard still stays responsive because target values are full-strength.
-    this.smoothInputX = (this.smoothInputX ?? 0) + (x - (this.smoothInputX ?? 0)) * .42;
-    this.smoothInputY = (this.smoothInputY ?? 0) + (y - (this.smoothInputY ?? 0)) * .42;
-
-    if(Math.abs(this.smoothInputX)<.06)this.smoothInputX=0;
-    if(Math.abs(this.smoothInputY)<.06)this.smoothInputY=0;
-
-    const sx=this.smoothInputX;
-    const sy=this.smoothInputY;
-    const sl=Math.min(1,Math.hypot(sx,sy));
+    const len=Math.min(1,Math.hypot(x,y));
 
     return {
-      x:Number.isFinite(sx)?sx:0,
-      y:Number.isFinite(sy)?sy:0,
-      len:Number.isFinite(sl)?sl:0
+      x:Number.isFinite(x)?x:0,
+      y:Number.isFinite(y)?y:0,
+      len:Number.isFinite(len)?len:0
     };
   }
 
@@ -889,15 +868,12 @@ class MapScene extends Phaser.Scene{
     const ax=Math.abs(x);
     const ay=Math.abs(y);
 
-    if(ax<.08 && ay<.08)return last;
+    if(ax<.06 && ay<.06)return last;
 
-    // Stable cardinal facing for 2.5D:
-    // If mostly horizontal, stay right/left even with small vertical drift.
-    // If mostly vertical, go up/down even with small side drift.
-    if(ax>=ay*1.22)return x>0?'right':'left';
-    if(ay>=ax*1.05)return y>0?'down':'up';
-
-    return ax>=ay ? (x>0?'right':'left') : (y>0?'down':'up');
+    // North/south should work. If y is a real input, allow up/down unless x clearly dominates.
+    if(ay>.12 && ay>=ax*.55)return y>0?'down':'up';
+    if(ax>.12)return x>0?'right':'left';
+    return y>0?'down':'up';
   }
 
   vanDirectionFromVector(x,y,last='right'){
@@ -950,7 +926,7 @@ class MapScene extends Phaser.Scene{
   moveDonnyWithCollision(dx,dy){
     if(!dx && !dy)return;
 
-    // Try full movement first.
+    // First try normal collision-safe move.
     const nx=this.playerX+dx;
     const ny=this.playerY+dy;
     if(this.canDonnyStandAt(nx,ny)){
@@ -959,13 +935,20 @@ class MapScene extends Phaser.Scene{
       return;
     }
 
-    // Then try vertical-only and horizontal-only.
-    // This fixes cases where the van blocks one axis but should not stop up/down walking.
+    // Axis separation. This prevents the van from blocking north/south if only one axis is bad.
     if(dy && this.canDonnyStandAt(this.playerX,this.playerY+dy)){
       this.playerY+=dy;
+      return;
     }
     if(dx && this.canDonnyStandAt(this.playerX+dx,this.playerY)){
       this.playerX+=dx;
+      return;
+    }
+
+    // Emergency vertical escape from previous large van-box builds.
+    // If user is pressing mostly up/down, let vertical movement happen so Donny can get unstuck.
+    if(Math.abs(dy)>Math.abs(dx)*.75){
+      this.playerY=clamp(this.playerY+dy,20,this.mapH-20);
     }
   }
 
@@ -1266,14 +1249,10 @@ class MapScene extends Phaser.Scene{
   setDonnyVisual(mode='idle'){
     if(!this.player)return;
 
-    let scale=DONNY.scale;
-    if(mode==='walk')scale=DONNY.walkScale || DONNY.scale;
-    if(mode==='run')scale=DONNY.runScale || DONNY.walkScale || DONNY.scale;
-    if(mode==='crawl')scale=DONNY.crawlScale || DONNY.scale;
-    if(mode==='action')scale=DONNY.actionScale || DONNY.scale;
-
+    // Uniform scale prevents the "small idle frame between walking frames" pop.
+    const scale=DONNY.scale;
     this.player.setScale(scale);
-    this.player.setOrigin(.5, DONNY.originY || .82);
+    this.player.setOrigin(.5, DONNY.originY || .88);
   }
 
   playDonnyAction(action){
@@ -1640,7 +1619,16 @@ class MapScene extends Phaser.Scene{
 
     if(this.isInventoryOpen){this.updateGunOverlay();this.updateFuelCanOverlay();return}
 
-    const moving=input.len>.08;
+    let moving=input.len>.055;
+    if(moving){
+      this.lastMoveUntil=now+180;
+      this.lastMoveInput={x:input.x,y:input.y};
+    } else if(now<this.lastMoveUntil){
+      moving=true;
+      input.x=this.lastMoveInput.x;
+      input.y=this.lastMoveInput.y;
+      input.len=Math.min(1,Math.hypot(input.x,input.y));
+    }
 
     if(this.inVan){
       if(moving && this.canDriveVan(input.len)){
