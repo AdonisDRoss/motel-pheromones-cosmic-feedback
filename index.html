@@ -105,7 +105,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-syntax-fixed-fast-2026-05-26-011';
+const VERSION = 'glasswell-astrovan-8dir-11x8-2026-05-26-012';
 
 // IMPORTANT:
 // Donny now uses the local files created tonight under assets/sprites/player/donny/props.
@@ -214,7 +214,7 @@ const WEAPON_ASSETS = {
 const WEAPON_DIR_FRAME = {down:0,right:1,left:2,up:3};
 
 const VAN_ASSETS = {
-  drive:'assets/sprites/vehicles/astro_van/astro_van_turn_movement_8x6_128x96_transparent.png',
+  drive:'assets/sprites/vehicles/astro_van/astro_van_8dir_drive_11x8_128x96_transparent.png',
   open:'assets/sprites/vehicles/astro_van/astro_van_open_8x4_204x164_transparent.png'
 };
 
@@ -233,11 +233,21 @@ const VAN = {
   // assets/sprites/vehicles/astro_van/astro_van_open_8x4_204x164_transparent.png
   openFrame:{w:204,h:164},
 
-  // Best starter direction frames from the 8x6 turn sheet.
-  // Stable frames only. These stop the van from spinning through mixed angle frames.
-  idleFrame:{down:0,right:3,left:24,up:13},
+  // 8-direction 11x8 sheet. Row order: down, downRight, right, upRight, up, upLeft, left, downLeft.
+  // Use row-based frames only so the van does not spin.
+  columns:11,
+  idleFrame:{down:0,downRight:11,right:22,upRight:33,up:44,upLeft:55,left:66,downLeft:77},
 
-  driveAnim:{down:'astro_van_drive_down',right:'astro_van_drive_right',left:'astro_van_drive_left',up:'astro_van_drive_up'},
+  driveAnim:{
+    down:'astro_van_drive_down',
+    downRight:'astro_van_drive_downRight',
+    right:'astro_van_drive_right',
+    upRight:'astro_van_drive_upRight',
+    up:'astro_van_drive_up',
+    upLeft:'astro_van_drive_upLeft',
+    left:'astro_van_drive_left',
+    downLeft:'astro_van_drive_downLeft'
+  },
 
   // Turning animations are available for later tuning.
   turnAnim:{
@@ -497,7 +507,7 @@ function createVanAnimations(scene){
   };
 
   if(scene.textures.exists(VAN.driveKey)){
-    const makeFrames=(animKey,frames,frameRate=7,repeat=-1)=>{
+    const makeFrames=(animKey,frames,frameRate=8,repeat=-1)=>{
       if(scene.anims.exists(animKey))return;
       scene.anims.create({
         key:animKey,
@@ -507,23 +517,16 @@ function createVanAnimations(scene){
       });
     };
 
-    // Stable single-frame drive anims. The source sheet contains mixed angles, so looping
-    // several frames makes the van spin. Use static direction frames for stable driving.
-    makeFrames('astro_van_drive_down',[0],1,-1);
-    makeFrames('astro_van_drive_right',[3],1,-1);
-    makeFrames('astro_van_drive_left',[24],1,-1);
-    makeFrames('astro_van_drive_up',[13],1,-1);
-
-    // Optional turn anims kept available for later, but NOT auto-played during driving.
-    makeFrames('astro_van_turn_down_to_right',[0,1,2,3],10,0);
-    makeFrames('astro_van_turn_right_to_up',[3,2,1,13],10,0);
-    makeFrames('astro_van_turn_up_to_left',[13,17,18,24],10,0);
-    makeFrames('astro_van_turn_left_to_down',[24,33,34,0],10,0);
-
-    makeFrames('astro_van_turn_down_to_left',[0,33,32,24],10,0);
-    makeFrames('astro_van_turn_left_to_up',[24,18,17,13],10,0);
-    makeFrames('astro_van_turn_up_to_right',[13,1,2,3],10,0);
-    makeFrames('astro_van_turn_right_to_down',[3,2,1,0],10,0);
+    // New 11x8 sheet: each direction owns one full row.
+    // This prevents spinning because no animation crosses into another direction row.
+    const cols=VAN.columns||11;
+    const dirs=['down','downRight','right','upRight','up','upLeft','left','downLeft'];
+    dirs.forEach((dir,row)=>{
+      const start=row*cols;
+      const frames=[];
+      for(let i=0;i<cols;i++)frames.push(start+i);
+      makeFrames(`astro_van_drive_${dir}`,frames,8,-1);
+    });
   }
 
   if(scene.textures.exists(VAN.openKey)){
@@ -532,6 +535,26 @@ function createVanAnimations(scene){
     make('astro_van_door_left',VAN.openKey,16,23,8,0);
     make('astro_van_door_back',VAN.openKey,24,31,8,0);
   }
+}
+
+
+function getVanDirection8(vx,vy){
+  if(Math.hypot(vx,vy)<.05)return null;
+  const deg=Phaser.Math.RadToDeg(Math.atan2(vy,vx));
+  if(deg>=-22.5 && deg<22.5)return 'right';
+  if(deg>=22.5 && deg<67.5)return 'downRight';
+  if(deg>=67.5 && deg<112.5)return 'down';
+  if(deg>=112.5 && deg<157.5)return 'downLeft';
+  if(deg>=157.5 || deg<-157.5)return 'left';
+  if(deg>=-157.5 && deg<-112.5)return 'upLeft';
+  if(deg>=-112.5 && deg<-67.5)return 'up';
+  return 'upRight';
+}
+
+function cardinalFrom8(dir){
+  if(dir==='downRight'||dir==='downLeft')return 'down';
+  if(dir==='upRight'||dir==='upLeft')return 'up';
+  return dir||'down';
 }
 
 class TitleScene extends Phaser.Scene{
@@ -1006,11 +1029,7 @@ class CityScene extends Phaser.Scene{
     if(moving){
       const oldDir=van.direction||'down';
 
-      if(Math.abs(vx)>Math.abs(vy)){
-        van.direction=vx>=0?'right':'left';
-      } else {
-        van.direction=vy>=0?'down':'up';
-      }
+      van.direction=getVanDirection8(vx,vy)||van.direction||'down';
 
       const nextX=van.x+vx*VAN.speed*delta/1000;
       const nextY=van.y+vy*VAN.speed*delta/1000;
@@ -1019,9 +1038,10 @@ class CityScene extends Phaser.Scene{
       if(this.canMove(van.x,nextY))van.y=Phaser.Math.Clamp(nextY,0,this.mapH);
 
       if(this.textures.exists(VAN.driveKey)){
-        // Use direct frame selection instead of looping animation to prevent spinning.
-        if(van.anims)van.anims.stop();
-        van.setTexture(VAN.driveKey,VAN.idleFrame[van.direction]||0);
+        // Play only the row assigned to the current direction. Never cross rows.
+        const anim=VAN.driveAnim[van.direction];
+        if(anim)van.play(anim,true);
+        else van.setTexture(VAN.driveKey,VAN.idleFrame[van.direction]||0);
       }
     } else {
       if(van.anims)van.anims.stop();
@@ -1351,7 +1371,7 @@ class CityScene extends Phaser.Scene{
     const van=this.astroVan;
     if(!van || !this.playerInVan)return false;
 
-    const dir=van.direction||'down';
+    const dir=cardinalFrom8(van.direction||'down');
     const off=VAN.exitOffset[dir]||VAN.exitOffset.down;
 
     van.hasDriver=false;
