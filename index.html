@@ -47,6 +47,15 @@ canvas{
   pointer-events:none;
   touch-action:none;
 }
+#moveZone{
+  position:absolute;
+  left:0;
+  top:0;
+  width:48vw;
+  height:100vh;
+  pointer-events:auto;
+  touch-action:none;
+}
 #stickBase{
   position:absolute;
   left:max(34px, calc(env(safe-area-inset-left) + 34px));
@@ -54,9 +63,9 @@ canvas{
   width:116px;
   height:116px;
   border-radius:50%;
-  border:3px solid rgba(255,255,255,.42);
-  background:rgba(0,0,0,.20);
-  box-shadow:0 0 0 2px rgba(103,220,232,.18) inset;
+  border:3px solid rgba(255,255,255,.46);
+  background:rgba(0,0,0,.22);
+  box-shadow:0 0 0 2px rgba(103,220,232,.22) inset;
   pointer-events:auto;
   touch-action:none;
 }
@@ -69,8 +78,8 @@ canvas{
   margin-left:-22px;
   margin-top:-22px;
   border-radius:50%;
-  background:rgba(255,255,255,.24);
-  border:3px solid rgba(103,220,232,.72);
+  background:rgba(255,255,255,.28);
+  border:3px solid rgba(103,220,232,.82);
   pointer-events:none;
 }
 #moveLabel{
@@ -80,8 +89,20 @@ canvas{
   bottom:-22px;
   text-align:center;
   font:800 10px Arial,sans-serif;
-  color:rgba(255,255,255,.62);
+  color:rgba(255,255,255,.70);
   letter-spacing:1px;
+  pointer-events:none;
+}
+#touchDebug{
+  position:absolute;
+  left:max(34px, calc(env(safe-area-inset-left) + 34px));
+  bottom:max(186px, calc(env(safe-area-inset-bottom) + 186px));
+  color:#9ff4ff;
+  background:rgba(0,0,0,.45);
+  border:1px solid rgba(159,244,255,.24);
+  border-radius:8px;
+  padding:4px 7px;
+  font:800 10px Arial,sans-serif;
   pointer-events:none;
 }
 .touchBtn{
@@ -89,8 +110,8 @@ canvas{
   width:66px;
   height:66px;
   border-radius:50%;
-  border:3px solid rgba(255,255,255,.48);
-  background:rgba(0,0,0,.42);
+  border:3px solid rgba(255,255,255,.52);
+  background:rgba(0,0,0,.46);
   color:#fff;
   font:900 18px Arial,sans-serif;
   display:flex;
@@ -123,8 +144,8 @@ canvas{
   width:116px;
   height:34px;
   border-radius:18px;
-  border:2px solid rgba(255,255,255,.46);
-  background:rgba(0,0,0,.48);
+  border:2px solid rgba(255,255,255,.50);
+  background:rgba(0,0,0,.50);
   color:#fff;
   font:900 12px Arial,sans-serif;
   letter-spacing:1px;
@@ -146,10 +167,12 @@ canvas{
 <div id="game"></div>
 
 <div id="touchControls">
+  <div id="moveZone"></div>
   <div id="stickBase">
     <div id="stickKnob"></div>
     <div id="moveLabel">MOVE</div>
   </div>
+  <div id="touchDebug">TOUCH LOADING</div>
   <div id="btnA" class="touchBtn">A</div>
   <div id="btnB" class="touchBtn">B</div>
   <div id="btnX" class="touchBtn">X</div>
@@ -157,6 +180,6 @@ canvas{
   <div id="btnStart">START</div>
 </div>
 
-<script src="scripts/game.js?v=glasswell-dom-controls-hard-fix-2026-05-25"></script>
+<script src="scripts/game.js?v=glasswell-global-touch-capture-fix-2026-05-25"></script>
 </body>
 </html>
