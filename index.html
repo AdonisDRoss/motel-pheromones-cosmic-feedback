@@ -2,41 +2,581 @@
 <html>
 <head>
 <meta charset="UTF-8" />
-<title>Cosmic Feedback — Glasswell City Start</title>
+<title>Cosmic Feedback: Glasswell</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+
 <style>
-*{box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;padding:0;background:#000;width:100%;height:100%;overflow:hidden;touch-action:none;overscroll-behavior:none}
-body{position:fixed;inset:0}
-#game{position:fixed;inset:0;width:100vw;height:100vh;touch-action:none}
-canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block;touch-action:none}
-#touchControls{position:fixed;inset:0;z-index:9999;pointer-events:none;touch-action:none}
-#moveZone{position:absolute;left:0;top:0;width:48vw;height:100vh;pointer-events:auto;touch-action:none}
-#stickBase{position:absolute;left:max(34px,calc(env(safe-area-inset-left) + 34px));bottom:max(58px,calc(env(safe-area-inset-bottom) + 58px));width:116px;height:116px;border-radius:50%;border:3px solid rgba(255,255,255,.46);background:rgba(0,0,0,.22);box-shadow:0 0 0 2px rgba(103,220,232,.22) inset;pointer-events:auto;touch-action:none}
-#stickKnob{position:absolute;left:50%;top:50%;width:44px;height:44px;margin-left:-22px;margin-top:-22px;border-radius:50%;background:rgba(255,255,255,.28);border:3px solid rgba(103,220,232,.82);pointer-events:none}
-#moveLabel{position:absolute;left:0;right:0;bottom:-22px;text-align:center;font:800 10px Arial,sans-serif;color:rgba(255,255,255,.70);letter-spacing:1px;pointer-events:none}
-.touchBtn{position:absolute;width:66px;height:66px;border-radius:50%;border:3px solid rgba(255,255,255,.52);background:rgba(0,0,0,.46);color:#fff;font:900 18px Arial,sans-serif;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none}
-#btnA{right:max(100px,calc(env(safe-area-inset-right) + 100px));bottom:max(154px,calc(env(safe-area-inset-bottom) + 154px))}
-#btnB{right:max(100px,calc(env(safe-area-inset-right) + 100px));bottom:max(38px,calc(env(safe-area-inset-bottom) + 38px))}
-#btnX{right:max(158px,calc(env(safe-area-inset-right) + 158px));bottom:max(96px,calc(env(safe-area-inset-bottom) + 96px))}
-#btnY{right:max(42px,calc(env(safe-area-inset-right) + 42px));bottom:max(96px,calc(env(safe-area-inset-bottom) + 96px))}
-#btnStart{position:absolute;left:50%;bottom:max(24px,calc(env(safe-area-inset-bottom) + 24px));transform:translateX(-50%);width:116px;height:34px;border-radius:18px;border:2px solid rgba(255,255,255,.50);background:rgba(0,0,0,.50);color:#fff;font:900 12px Arial,sans-serif;letter-spacing:1px;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none}
-.touchBtn:active,#btnStart:active{transform:scale(.96)}
-#btnStart:active{transform:translateX(-50%) scale(.96)}
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #000;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    touch-action: none;
+  }
+
+  #game {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
 </style>
 </head>
+
 <body>
 <div id="game"></div>
-<div id="touchControls">
-  <div id="moveZone"></div>
-  <div id="stickBase"><div id="stickKnob"></div><div id="moveLabel">MOVE</div></div>
-  <div id="btnA" class="touchBtn">A</div>
-  <div id="btnB" class="touchBtn">B</div>
-  <div id="btnX" class="touchBtn">X</div>
-  <div id="btnY" class="touchBtn">Y</div>
-  <div id="btnStart">START</div>
-</div>
-<script src="scripts/game.js?v=glasswell-fixed-now-rect-collision-2026-05-25"></script>
+
+<script>
+const VERSION = "glasswell-current-001";
+
+const GAME_W = 960;
+const GAME_H = 540;
+
+const ASSETS = {
+  title: "assets/title-screen.png",
+
+  maps: {
+    C3: "assets/maps/GLASSWELL_C3_base.png",
+    B3: "assets/maps/GLASSWELL_B3_base.png",
+    D3: "assets/maps/GLASSWELL_D3_base.png",
+    C2: "assets/maps/GLASSWELL_C2_base.png",
+    C4: "assets/maps/GLASSWELL_C4_base.png"
+  },
+
+  masks: {
+    C3: "assets/collision/GLASSWELL_C3_collision.png",
+    B3: "assets/collision/GLASSWELL_B3_collision.png",
+    D3: "assets/collision/GLASSWELL_D3_collision.png",
+    C2: "assets/collision/GLASSWELL_C2_collision.png",
+    C4: "assets/collision/GLASSWELL_C4_collision.png"
+  },
+
+  donny: "assets/sprites/player/donny/donny_idle.png",
+
+  astroVan: "assets/vehicles/astro_van_sprite_sheet.png"
+};
+
+const MAP_ORDER = ["C3", "B3", "D3", "C2", "C4"];
+
+const MAP_NAMES = {
+  C3: "GLASSWELL_C3 — Main Civic Gate",
+  B3: "GLASSWELL_B3 — Ration Gate Plaza",
+  D3: "GLASSWELL_D3 — Red Concord Checkpoint",
+  C2: "GLASSWELL_C2 — Civic Admin Street",
+  C4: "GLASSWELL_C4 — Transit Vendor Square"
+};
+
+class BootScene extends Phaser.Scene {
+  constructor() {
+    super("BootScene");
+  }
+
+  preload() {
+    this.load.image("title", ASSETS.title + "?v=" + VERSION);
+
+    for (const id of MAP_ORDER) {
+      this.load.image("map_" + id, ASSETS.maps[id] + "?v=" + VERSION);
+      this.load.image("mask_" + id, ASSETS.masks[id] + "?v=" + VERSION);
+    }
+
+    this.load.spritesheet("donny_idle", ASSETS.donny + "?v=" + VERSION, {
+      frameWidth: 128,
+      frameHeight: 128
+    });
+
+    this.load.spritesheet("astro_van", ASSETS.astroVan + "?v=" + VERSION, {
+      frameWidth: 320,
+      frameHeight: 256
+    });
+  }
+
+  create() {
+    createFallbackTextures(this);
+    this.scene.start("TitleScene");
+  }
+}
+
+class TitleScene extends Phaser.Scene {
+  constructor() {
+    super("TitleScene");
+  }
+
+  create() {
+    this.cameras.main.setBackgroundColor("#050505");
+
+    if (this.textures.exists("title")) {
+      const bg = this.add.image(GAME_W / 2, GAME_H / 2, "title");
+      bg.setDisplaySize(GAME_W, GAME_H);
+    } else {
+      this.add.rectangle(GAME_W / 2, GAME_H / 2, GAME_W, GAME_H, 0x07090c);
+    }
+
+    this.add.text(GAME_W / 2, 80, "COSMIC FEEDBACK", {
+      fontFamily: "monospace",
+      fontSize: "42px",
+      color: "#d9ecff",
+      stroke: "#000000",
+      strokeThickness: 6
+    }).setOrigin(0.5);
+
+    this.add.text(GAME_W / 2, 135, "GLASSWELL BUILD", {
+      fontFamily: "monospace",
+      fontSize: "22px",
+      color: "#ff4f91",
+      stroke: "#000000",
+      strokeThickness: 4
+    }).setOrigin(0.5);
+
+    this.add.text(GAME_W / 2, GAME_H - 120, "TAP / CLICK / PRESS ENTER TO START", {
+      fontFamily: "monospace",
+      fontSize: "20px",
+      color: "#ffffff",
+      stroke: "#000000",
+      strokeThickness: 5
+    }).setOrigin(0.5);
+
+    this.add.text(GAME_W / 2, GAME_H - 80, "Donny starts at the Main Civic Gate", {
+      fontFamily: "monospace",
+      fontSize: "16px",
+      color: "#9fb3c8"
+    }).setOrigin(0.5);
+
+    this.input.once("pointerdown", () => this.scene.start("GameScene", { mapId: "C3" }));
+
+    this.input.keyboard.once("keydown-ENTER", () => {
+      this.scene.start("GameScene", { mapId: "C3" });
+    });
+  }
+}
+
+class GameScene extends Phaser.Scene {
+  constructor() {
+    super("GameScene");
+
+    this.mapId = "C3";
+    this.mapImage = null;
+    this.player = null;
+    this.van = null;
+
+    this.keys = null;
+    this.touch = {
+      left: false,
+      right: false,
+      up: false,
+      down: false,
+      interact: false
+    };
+
+    this.speed = 190;
+    this.debugText = null;
+  }
+
+  init(data) {
+    this.mapId = data.mapId || "C3";
+  }
+
+  create() {
+    this.cameras.main.setBackgroundColor("#000000");
+
+    this.buildMap();
+    this.buildPlayer();
+    this.buildVehicle();
+    this.buildHUD();
+    this.buildControls();
+
+    this.keys = this.input.keyboard.addKeys({
+      up: "W",
+      down: "S",
+      left: "A",
+      right: "D",
+      up2: "UP",
+      down2: "DOWN",
+      left2: "LEFT",
+      right2: "RIGHT",
+      interact: "E",
+      next: "N",
+      prev: "P",
+      menu: "ESC"
+    });
+
+    this.input.keyboard.on("keydown-N", () => this.changeMap(1));
+    this.input.keyboard.on("keydown-P", () => this.changeMap(-1));
+    this.input.keyboard.on("keydown-ESC", () => this.scene.start("TitleScene"));
+  }
+
+  buildMap() {
+    const key = "map_" + this.mapId;
+
+    if (this.textures.exists(key)) {
+      this.mapImage = this.add.image(0, 0, key).setOrigin(0, 0);
+    } else {
+      this.mapImage = this.add.image(0, 0, "fallback_map").setOrigin(0, 0);
+    }
+
+    const mapW = this.mapImage.width;
+    const mapH = this.mapImage.height;
+
+    this.physics.world.setBounds(0, 0, mapW, mapH);
+    this.cameras.main.setBounds(0, 0, mapW, mapH);
+  }
+
+  buildPlayer() {
+    const start = getStartPosition(this.mapId);
+
+    if (this.textures.exists("donny_idle")) {
+      this.player = this.physics.add.sprite(start.x, start.y, "donny_idle", 0);
+      this.player.setScale(1.5);
+    } else {
+      this.player = this.physics.add.sprite(start.x, start.y, "fallback_player");
+      this.player.setScale(1);
+    }
+
+    this.player.setCollideWorldBounds(true);
+    this.player.body.setSize(46, 72);
+    this.player.body.setOffset(41, 48);
+
+    this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+  }
+
+  buildVehicle() {
+    const pos = getVanPosition(this.mapId);
+
+    if (this.textures.exists("astro_van")) {
+      this.van = this.add.sprite(pos.x, pos.y, "astro_van", 0);
+      this.van.setScale(0.72);
+    } else {
+      this.van = this.add.image(pos.x, pos.y, "fallback_van");
+      this.van.setScale(1);
+    }
+
+    this.van.setDepth(5);
+  }
+
+  buildHUD() {
+    this.add.rectangle(0, 0, GAME_W, 42, 0x000000, 0.68)
+      .setOrigin(0, 0)
+      .setScrollFactor(0)
+      .setDepth(1000);
+
+    this.debugText = this.add.text(14, 12, MAP_NAMES[this.mapId], {
+      fontFamily: "monospace",
+      fontSize: "15px",
+      color: "#ffffff"
+    })
+    .setScrollFactor(0)
+    .setDepth(1001);
+
+    this.add.text(GAME_W - 14, 12, "N/P = MAP  |  E = INTERACT", {
+      fontFamily: "monospace",
+      fontSize: "14px",
+      color: "#b9d8ff"
+    })
+    .setOrigin(1, 0)
+    .setScrollFactor(0)
+    .setDepth(1001);
+  }
+
+  buildControls() {
+    const z = 2000;
+
+    const pad = this.add.circle(95, GAME_H - 92, 68, 0xffffff, 0.08)
+      .setStrokeStyle(3, 0xffffff, 0.25)
+      .setScrollFactor(0)
+      .setDepth(z);
+
+    const stick = this.add.circle(95, GAME_H - 92, 28, 0xffffff, 0.14)
+      .setStrokeStyle(2, 0xffffff, 0.35)
+      .setScrollFactor(0)
+      .setDepth(z + 1);
+
+    pad.setInteractive();
+
+    pad.on("pointermove", pointer => {
+      const localX = pointer.x - 95;
+      const localY = pointer.y - (GAME_H - 92);
+
+      this.touch.left = localX < -18;
+      this.touch.right = localX > 18;
+      this.touch.up = localY < -18;
+      this.touch.down = localY > 18;
+
+      const clampedX = Phaser.Math.Clamp(localX, -38, 38);
+      const clampedY = Phaser.Math.Clamp(localY, -38, 38);
+      stick.setPosition(95 + clampedX, GAME_H - 92 + clampedY);
+    });
+
+    pad.on("pointerout", () => this.resetStick(stick));
+    pad.on("pointerup", () => this.resetStick(stick));
+
+    this.makeButton(GAME_W - 82, GAME_H - 92, "A", () => {
+      this.touch.interact = true;
+      this.time.delayedCall(140, () => this.touch.interact = false);
+    });
+
+    this.makeButton(GAME_W - 145, GAME_H - 92, "B", () => {});
+    this.makeButton(GAME_W - 82, GAME_H - 155, "X", () => {});
+    this.makeButton(GAME_W - 145, GAME_H - 155, "Y", () => {});
+
+    this.makeButton(GAME_W / 2, GAME_H - 48, "MENU", () => {
+      this.scene.start("TitleScene");
+    }, 72, 34);
+  }
+
+  makeButton(x, y, label, callback, w = 52, h = 52) {
+    const bg = this.add.rectangle(x, y, w, h, 0xffffff, 0.10)
+      .setStrokeStyle(2, 0xffffff, 0.35)
+      .setScrollFactor(0)
+      .setDepth(2100)
+      .setInteractive();
+
+    const txt = this.add.text(x, y, label, {
+      fontFamily: "monospace",
+      fontSize: label.length > 1 ? "13px" : "20px",
+      color: "#ffffff"
+    })
+    .setOrigin(0.5)
+    .setScrollFactor(0)
+    .setDepth(2101);
+
+    bg.on("pointerdown", callback);
+
+    return { bg, txt };
+  }
+
+  resetStick(stick) {
+    this.touch.left = false;
+    this.touch.right = false;
+    this.touch.up = false;
+    this.touch.down = false;
+    stick.setPosition(95, GAME_H - 92);
+  }
+
+  update() {
+    if (!this.player) return;
+
+    let vx = 0;
+    let vy = 0;
+
+    const left = this.keys.left.isDown || this.keys.left2.isDown || this.touch.left;
+    const right = this.keys.right.isDown || this.keys.right2.isDown || this.touch.right;
+    const up = this.keys.up.isDown || this.keys.up2.isDown || this.touch.up;
+    const down = this.keys.down.isDown || this.keys.down2.isDown || this.touch.down;
+
+    if (left) vx -= this.speed;
+    if (right) vx += this.speed;
+    if (up) vy -= this.speed;
+    if (down) vy += this.speed;
+
+    if (vx !== 0 && vy !== 0) {
+      vx *= 0.707;
+      vy *= 0.707;
+    }
+
+    this.player.body.setVelocity(vx, vy);
+
+    if (this.keys.interact.isDown || this.touch.interact) {
+      this.tryInteract();
+    }
+
+    this.depthSort();
+  }
+
+  tryInteract() {
+    if (!this.van || !this.player) return;
+
+    const dist = Phaser.Math.Distance.Between(
+      this.player.x,
+      this.player.y,
+      this.van.x,
+      this.van.y
+    );
+
+    if (dist < 150) {
+      this.flashMessage("Astro van door FX hook ready.");
+    }
+  }
+
+  flashMessage(message) {
+    if (this.messageText) this.messageText.destroy();
+
+    this.messageText = this.add.text(GAME_W / 2, 70, message, {
+      fontFamily: "monospace",
+      fontSize: "16px",
+      color: "#ffffff",
+      backgroundColor: "#000000",
+      padding: { x: 10, y: 6 }
+    })
+    .setOrigin(0.5)
+    .setScrollFactor(0)
+    .setDepth(3000);
+
+    this.time.delayedCall(1200, () => {
+      if (this.messageText) this.messageText.destroy();
+    });
+  }
+
+  depthSort() {
+    if (this.player) this.player.setDepth(this.player.y);
+    if (this.van) this.van.setDepth(this.van.y - 20);
+  }
+
+  changeMap(dir) {
+    const currentIndex = MAP_ORDER.indexOf(this.mapId);
+    const nextIndex = Phaser.Math.Wrap(currentIndex + dir, 0, MAP_ORDER.length);
+    this.scene.restart({ mapId: MAP_ORDER[nextIndex] });
+  }
+}
+
+function getStartPosition(mapId) {
+  const starts = {
+    C3: { x: 480, y: 390 },
+    B3: { x: 480, y: 390 },
+    D3: { x: 480, y: 390 },
+    C2: { x: 480, y: 390 },
+    C4: { x: 480, y: 390 }
+  };
+
+  return starts[mapId] || starts.C3;
+}
+
+function getVanPosition(mapId) {
+  const vans = {
+    C3: { x: 710, y: 355 },
+    B3: { x: 720, y: 370 },
+    D3: { x: 720, y: 360 },
+    C2: { x: 720, y: 370 },
+    C4: { x: 720, y: 360 }
+  };
+
+  return vans[mapId] || vans.C3;
+}
+
+function createFallbackTextures(scene) {
+  if (!scene.textures.exists("fallback_map")) {
+    const g = scene.make.graphics({ x: 0, y: 0, add: false });
+
+    g.fillStyle(0x101319, 1);
+    g.fillRect(0, 0, 1280, 720);
+
+    g.fillStyle(0x1d232d, 1);
+    g.fillRect(0, 420, 1280, 300);
+
+    g.fillStyle(0x2b3442, 1);
+    g.fillRect(0, 370, 1280, 80);
+
+    g.fillStyle(0x3d1d2d, 1);
+    g.fillRect(120, 160, 220, 230);
+
+    g.fillStyle(0x171b22, 1);
+    g.fillRect(420, 120, 360, 280);
+
+    g.fillStyle(0x261825, 1);
+    g.fillRect(860, 170, 240, 220);
+
+    g.lineStyle(4, 0xff4f91, 0.65);
+    g.strokeRect(120, 160, 220, 230);
+    g.strokeRect(420, 120, 360, 280);
+    g.strokeRect(860, 170, 240, 220);
+
+    g.generateTexture("fallback_map", 1280, 720);
+    g.destroy();
+  }
+
+  if (!scene.textures.exists("fallback_player")) {
+    const g = scene.make.graphics({ x: 0, y: 0, add: false });
+
+    g.fillStyle(0x000000, 0);
+    g.fillRect(0, 0, 128, 128);
+
+    g.fillStyle(0x111111, 1);
+    g.fillRect(48, 32, 32, 56);
+
+    g.fillStyle(0xdec8a0, 1);
+    g.fillRect(49, 18, 30, 24);
+
+    g.fillStyle(0x0a0a0a, 1);
+    g.fillRect(42, 42, 12, 36);
+    g.fillRect(74, 42, 12, 36);
+
+    g.fillStyle(0x222244, 1);
+    g.fillRect(50, 86, 12, 30);
+    g.fillRect(66, 86, 12, 30);
+
+    g.fillStyle(0xff4f91, 1);
+    g.fillRect(44, 54, 40, 8);
+
+    g.generateTexture("fallback_player", 128, 128);
+    g.destroy();
+  }
+
+  if (!scene.textures.exists("fallback_van")) {
+    const g = scene.make.graphics({ x: 0, y: 0, add: false });
+
+    g.fillStyle(0x000000, 0);
+    g.fillRect(0, 0, 320, 256);
+
+    g.fillStyle(0x17191d, 1);
+    g.fillRoundedRect(55, 85, 210, 90, 12);
+
+    g.fillStyle(0x2a2f38, 1);
+    g.fillRoundedRect(80, 55, 160, 55, 8);
+
+    g.fillStyle(0x0c1721, 1);
+    g.fillRect(82, 95, 42, 32);
+    g.fillRect(132, 95, 42, 32);
+    g.fillRect(184, 95, 42, 32);
+
+    g.fillStyle(0xff4f91, 1);
+    g.fillRect(88, 170, 118, 6);
+
+    g.fillStyle(0x2be4ff, 1);
+    g.fillRect(190, 65, 42, 5);
+
+    g.fillStyle(0x050505, 1);
+    g.fillCircle(88, 178, 18);
+    g.fillCircle(232, 178, 18);
+
+    g.fillStyle(0xffa02a, 1);
+    g.fillTriangle(267, 124, 305, 112, 305, 136);
+
+    g.generateTexture("fallback_van", 320, 256);
+    g.destroy();
+  }
+}
+
+const config = {
+  type: Phaser.AUTO,
+  parent: "game",
+  width: GAME_W,
+  height: GAME_H,
+  backgroundColor: "#000000",
+  pixelArt: true,
+  roundPixels: true,
+  physics: {
+    default: "arcade",
+    arcade: {
+      gravity: { y: 0 },
+      debug: false
+    }
+  },
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: GAME_W,
+    height: GAME_H
+  },
+  scene: [BootScene, TitleScene, GameScene]
+};
+
+new Phaser.Game(config);
+</script>
 </body>
 </html>
