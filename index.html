@@ -82,7 +82,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-van-path-candidate-fix-2026-05-26-002';
+const VERSION = 'glasswell-holster-gun-position-fix-2026-05-26-004';
 
 function version(path){ return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`; }
 function key(id,type){return `${id}_${type}`}
@@ -122,6 +122,15 @@ const VAN_FOLDER = 'assets/sprites/vehicles/astro_van/';
 const VAN_ASSETS = {
   open: VAN_FOLDER + 'astro_van_open_8x4_204x164_transparent.png',
   candidates:[
+    {
+      key:'astro_van_8dir_drive_11x8_128x96_TRANSPARENT_FIXED',
+      path: VAN_FOLDER + 'astro_van_8dir_drive_11x8_128x96_TRANSPARENT_FIXED.png',
+      frameWidth:128,
+      frameHeight:96,
+      columns:11,
+      rows:8,
+      layout:'8dir11'
+    },
     {
       key:'astro_van_drive_8dir_11x8_128x96',
       path: VAN_FOLDER + 'astro_van_8dir_drive_11x8_128x96_transparent.png',
@@ -223,26 +232,43 @@ const ACTION = {
 
 const GUN_PROP = {
   key:'donny_laser_gun_overlay',
-  scale:1.0,
+  frameWidth:128,
+  frameHeight:128,
+
+  // Smaller gun. The center of the overlay frame is treated as the handle/grip.
+  // The index places that grip directly on Donny's weapon hand.
+  scale:0.46,
+
   directionFrame:{down:0,right:1,left:2,up:3},
-  // Position of Donny's weapon hand from Donny foot/origin.
+
+  // Donny's weapon-hand position from his foot/origin.
+  // Right/left views place the grip on the front fist.
   hand:{
-    down:{x:13,y:-44},
-    right:{x:27,y:-48},
-    left:{x:-27,y:-48},
-    up:{x:-8,y:-61}
+    down:{x:15,y:-45},
+    right:{x:29,y:-49},
+    left:{x:-29,y:-49},
+    up:{x:-9,y:-62}
   }
 };
 
 const HOLSTER = {
+  enabled:true,
   key:'donny_holster',
-  scale:1.0,
+  frameWidth:128,
+  frameHeight:128,
+
+  // Smaller hip holster. This is an overlay, not baked into Donny.
+  scale:0.42,
+
   directionFrame:{down:0,right:1,left:2,up:3},
+
+  // Offset from Donny's foot/origin to his hip.
+  // Positive x = Donny's screen-right hip, negative x = screen-left hip.
   hip:{
-    down:{x:18,y:-30},
-    right:{x:11,y:-32},
-    left:{x:-11,y:-32},
-    up:{x:16,y:-34}
+    down:{x:19,y:-32},
+    right:{x:13,y:-34},
+    left:{x:-13,y:-34},
+    up:{x:18,y:-35}
   }
 };
 
@@ -746,13 +772,35 @@ class MapScene extends Phaser.Scene{
 
   updateGunOverlay(){
     if(!this.gun || !this.holster)return;
+
     const now=this.time?.now||0;
-    const shooting=this.weaponEquipped && this.actionType==='shoot' && now>=this.actionUntil-ACTION.shootDuration+ACTION.gunShowDelay && now<this.actionUntil-ACTION.gunHideBeforeEnd;
-    const frame=GUN_PROP.directionFrame[this.playerDir]??1;
-    const hand=GUN_PROP.hand[this.playerDir]||GUN_PROP.hand.right;
-    this.gun.setFrame(frame).setPosition(this.playerX+hand.x,this.playerY+hand.y-this.jumpZ).setDepth(this.playerY+1006).setVisible(shooting && !this.inVan);
-    const hip=HOLSTER.hip[this.playerDir]||HOLSTER.hip.down;
-    this.holster.setFrame(HOLSTER.directionFrame[this.playerDir]??0).setPosition(this.playerX+hip.x,this.playerY+hip.y-this.jumpZ).setDepth(this.playerY+1004).setVisible(this.weaponEquipped && !shooting && !this.inVan && !this.isCrawling);
+    const shooting =
+      this.weaponEquipped &&
+      this.actionType==='shoot' &&
+      now>=this.actionUntil-ACTION.shootDuration+ACTION.gunShowDelay &&
+      now<this.actionUntil-ACTION.gunHideBeforeEnd;
+
+    const gunFrame = GUN_PROP.directionFrame[this.playerDir] ?? 1;
+    const hand = GUN_PROP.hand[this.playerDir] || GUN_PROP.hand.right;
+
+    // Small gun: handle/grip sits at Donny's hand.
+    this.gun
+      .setFrame(gunFrame)
+      .setScale(GUN_PROP.scale)
+      .setPosition(this.playerX+hand.x, this.playerY+hand.y-this.jumpZ)
+      .setDepth(this.playerY+1006)
+      .setVisible(shooting && !this.inVan);
+
+    const holsterFrame = HOLSTER.directionFrame[this.playerDir] ?? 0;
+    const hip = HOLSTER.hip[this.playerDir] || HOLSTER.hip.down;
+
+    // Small holster: always on hip when pistol is equipped and Donny is not actively shooting.
+    this.holster
+      .setFrame(holsterFrame)
+      .setScale(HOLSTER.scale)
+      .setPosition(this.playerX+hip.x, this.playerY+hip.y-this.jumpZ)
+      .setDepth(this.playerY+1004)
+      .setVisible(HOLSTER.enabled && this.weaponEquipped && !shooting && !this.inVan && !this.isCrawling);
   }
 
   toggleInventory(){
