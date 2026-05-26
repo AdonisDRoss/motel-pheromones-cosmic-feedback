@@ -4,8 +4,6 @@
 <meta charset="UTF-8" />
 <title>Cosmic Feedback: Glasswell</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-<meta name="screen-orientation" content="landscape" />
-<meta name="x5-orientation" content="landscape" />
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js" crossorigin="anonymous"></script>
 <script>
 if(!window.Phaser){
@@ -54,27 +52,12 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 <script>
 /*
 COSMIC FEEDBACK — GLASSWELL
-
-2.5D GTA-style open-city sci-fi RPG / brawler prototype.
-This is NOT a side-scroller.
-
-Included in this index:
-- real Glasswell map layer paths
-- real Donny sprite paths from staging
-- Donny walk animation
-- Donny punch action
-- Donny pistol action
-- holster overlay on hip
-- pistol appears when action fires, then disappears
-- holster hides during pistol action, then reappears
-- Red Concord weapon pickup / held weapon overlay
-- Astro Van driving sheet
-- Astro Van open-door sheet
-- closest-door entry logic
-- driveable van after Donny enters
-- van starts next to Donny for immediate testing
-- empty desert drive-test screen west/left of C3
-- exit van with B
+Updated fix:
+- Astro Van drive asset uses the exact filename this index expects.
+- If the van asset is still missing, Phaser creates a visible fallback van instead of failing silently.
+- Donny is scaled down slightly.
+- Pistol is hand-anchored: the handle sits at Donny's hand; the pistol is hand-sized.
+- Y enters van / picks up / interacts. B exits van.
 */
 
 function showBootError(message){
@@ -85,18 +68,12 @@ function showBootError(message){
 }
 window.addEventListener('error', e => {
   const msg = e.message || 'unknown error';
-  if(String(msg).toLowerCase().includes('failed to start the audio device')){
-    console.warn('Ignored browser audio warning:', msg);
-    return;
-  }
+  if(String(msg).toLowerCase().includes('failed to start the audio device')) return;
   showBootError('GAME ERROR: ' + msg);
 });
 window.addEventListener('unhandledrejection', e => {
   const msg = (e.reason && (e.reason.message || e.reason)) || 'unhandled promise rejection';
-  if(String(msg).toLowerCase().includes('failed to start the audio device')){
-    console.warn('Ignored browser audio warning:', msg);
-    return;
-  }
+  if(String(msg).toLowerCase().includes('failed to start the audio device')) return;
   showBootError('GAME ERROR: ' + msg);
 });
 window.addEventListener('contextmenu', e => e.preventDefault());
@@ -105,27 +82,14 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-inventory-menu-donny-smaller-van-left-fix-2026-05-26-016';
+const VERSION = 'glasswell-van-path-candidate-fix-2026-05-26-002';
 
-// IMPORTANT:
-// Donny now uses the local files created tonight under assets/sprites/player/donny/props.
-// This removes the remote raw-GitHub dependency that was causing the fallback block-man.
-const DONNY_ROOT = '';
-
-const GAME_IDENTITY = {
-  title:'Cosmic Feedback: Glasswell',
-  genre:'2.5D GTA-style open-city sci-fi RPG / brawler',
-  camera:'top-down / 2.5D orthographic city camera',
-  rule:'free-roam Glasswell city chunks, not a side-scroller'
-};
-
-function version(path){
-  if(!path)return path;
-  return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`;
-}
+function version(path){ return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`; }
 function key(id,type){return `${id}_${type}`}
 function rectHit(r,x,y){return r && x>=r.x && x<=r.x+r.w && y>=r.y && y<=r.y+r.h}
 function pct(w,h,a,b,c,d){return{x:a*w,y:b*h,w:c*w,h:d*h}}
+function dist(a,b,c,d){return Math.hypot(a-c,b-d)}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
 
 const PAGES = {
   GLASSWELL_B3_DESERT_TEST:{id:'GLASSWELL_B3_DESERT_TEST',label:'B3 — Empty Dust-9 Desert Drive Test',synthetic:true,width:1800,height:1200},
@@ -136,33 +100,110 @@ const PAGES = {
 };
 
 const DONNY_ASSETS = {
-  // Main Donny body/action sheets.
-  idle: DONNY_ROOT + 'assets/sprites/player/donny/donny_idle_4dir.png',
-  move: DONNY_ROOT + 'assets/sprites/player/donny/donny_walk_4dir.png',
-  run: DONNY_ROOT + 'assets/sprites/player/donny/donny_run_4dir.png',
-  jump: DONNY_ROOT + 'assets/sprites/player/donny/donny_jump_4dir.png',
-  slide: DONNY_ROOT + 'assets/sprites/player/donny/donny_slide_4dir.png',
-  crawl: DONNY_ROOT + 'assets/sprites/player/donny/donny_crawl_4dir.png',
-  pistol: DONNY_ROOT + 'assets/sprites/player/donny/donny_shoot_4dir.png',
-  punch: DONNY_ROOT + 'assets/sprites/player/donny/donny_punch_4dir.png',
-  kick: DONNY_ROOT + 'assets/sprites/player/donny/donny_kick_4dir.png',
+  idle:'assets/sprites/player/donny/donny_idle_4dir.png',
+  move:'assets/sprites/player/donny/donny_walk_4dir.png',
+  run:'assets/sprites/player/donny/donny_run_4dir.png',
+  jump:'assets/sprites/player/donny/donny_jump_4dir.png',
+  slide:'assets/sprites/player/donny/donny_slide_4dir.png',
+  crawl:'assets/sprites/player/donny/donny_crawl_4dir.png',
+  pistol:'assets/sprites/player/donny/donny_shoot_4dir.png',
+  punch:'assets/sprites/player/donny/donny_punch_4dir.png',
+  kick:'assets/sprites/player/donny/donny_kick_4dir.png',
+  laserOverlay:'assets/sprites/player/donny/props/donny_laser_gun_overlay_4dir_128.png',
+  holster:'assets/sprites/player/donny/props/donny_laser_holster_4dir_128.png'
+};
 
-  // Separate prop overlay. Holster stays disabled for now.
-  laserOverlay: DONNY_ROOT + 'assets/sprites/player/donny/props/donny_laser_gun_overlay_4dir_128.png',
-  holster: DONNY_ROOT + 'assets/sprites/player/donny/props/donny_laser_holster_4dir_128.png',
+const VAN_FOLDER = 'assets/sprites/vehicles/astro_van/';
 
-  oldVan: null
+// Van files are in this folder on GitHub:
+// assets/sprites/vehicles/astro_van/
+// This loader tries the most likely filenames from that folder and uses the first one that loads.
+// That lets us keep the previous game updates without breaking if the final van filename is slightly different.
+const VAN_ASSETS = {
+  open: VAN_FOLDER + 'astro_van_open_8x4_204x164_transparent.png',
+  candidates:[
+    {
+      key:'astro_van_drive_8dir_11x8_128x96',
+      path: VAN_FOLDER + 'astro_van_8dir_drive_11x8_128x96_transparent.png',
+      frameWidth:128,
+      frameHeight:96,
+      columns:11,
+      rows:8,
+      layout:'8dir11'
+    },
+    {
+      key:'astro_van_drive_8dir_11x8_128x128',
+      path: VAN_FOLDER + 'astro_van_8dir_drive_11x8_128x128_transparent.png',
+      frameWidth:128,
+      frameHeight:128,
+      columns:11,
+      rows:8,
+      layout:'8dir11'
+    },
+    {
+      key:'astro_van_drive_8dir_11x8_128x96_plain',
+      path: VAN_FOLDER + 'astro_van_8dir_drive_11x8_128x96.png',
+      frameWidth:128,
+      frameHeight:96,
+      columns:11,
+      rows:8,
+      layout:'8dir11'
+    },
+    {
+      key:'astro_van_drive_8dir_11x8_128x128_plain',
+      path: VAN_FOLDER + 'astro_van_8dir_drive_11x8_128x128.png',
+      frameWidth:128,
+      frameHeight:128,
+      columns:11,
+      rows:8,
+      layout:'8dir11'
+    },
+    {
+      key:'astro_van_drive_4x4_256x128',
+      path: VAN_FOLDER + 'astro_van_drive_4x4_256x128_transparent.png',
+      frameWidth:256,
+      frameHeight:128,
+      columns:4,
+      rows:4,
+      layout:'4dir4'
+    },
+    {
+      key:'astro_van_drive_4x4_256x192',
+      path: VAN_FOLDER + 'astro_van_drive_4x4_256x192_transparent.png',
+      frameWidth:256,
+      frameHeight:192,
+      columns:4,
+      rows:4,
+      layout:'4dir4'
+    },
+    {
+      key:'astro_van_drive_4x4_256x256',
+      path: VAN_FOLDER + 'astro_van_drive_4x4_256x256_transparent.png',
+      frameWidth:256,
+      frameHeight:256,
+      columns:4,
+      rows:4,
+      layout:'4dir4'
+    },
+    {
+      key:'astro_van_v1_sheet',
+      path: VAN_FOLDER + 'astro_van_v1_sheet.png',
+      frameWidth:128,
+      frameHeight:128,
+      columns:4,
+      rows:4,
+      layout:'4dir4'
+    }
+  ]
 };
 
 const DONNY = {
   frameWidth:128,
   frameHeight:128,
-  scale:0.88,
-  speed:230,
-  runSpeed:335,
-  crawlSpeed:95,
-
-  // 8 columns x 4 rows. Row order: down, right, left, up.
+  scale:0.80,
+  speed:215,
+  runSpeed:315,
+  crawlSpeed:90,
   directionFrame:{down:0,right:8,left:16,up:24},
   anims:{
     down:[0,1,2,3,4,5,6,7],
@@ -173,205 +214,65 @@ const DONNY = {
 };
 
 const ACTION = {
-  frameWidth:128,
-  frameHeight:128,
-  scale:0.88,
+  scale:0.80,
   duration:280,
   shootDuration:360,
-  gunShowDelay:90,
-  gunHideBeforeEnd:70,
-
-  // 8 columns x 4 rows. Row order: down, right, left, up.
-  directionFrame:{down:0,right:8,left:16,up:24}
-};
-
-const HOLSTER = {
-  enabled:false,
-  key:'donny_holster',
-  frameWidth:128,
-  frameHeight:128,
-  scale:0.88,
-  directionFrame:{down:0,right:1,left:2,up:3},
-  offset:{down:{x:0,y:0},right:{x:0,y:0},left:{x:0,y:0},up:{x:0,y:0}}
+  gunShowDelay:55,
+  gunHideBeforeEnd:45
 };
 
 const GUN_PROP = {
   key:'donny_laser_gun_overlay',
-  frameWidth:128,
-  frameHeight:128,
-  // Same scale/origin as Donny body so the prop aligns with his hand.
-  scale:1.08,
+  scale:1.0,
   directionFrame:{down:0,right:1,left:2,up:3},
-  offset:{
-    down:{x:0,y:0},
-    right:{x:0,y:0},
-    left:{x:0,y:0},
-    up:{x:0,y:0}
+  // Position of Donny's weapon hand from Donny foot/origin.
+  hand:{
+    down:{x:13,y:-44},
+    right:{x:27,y:-48},
+    left:{x:-27,y:-48},
+    up:{x:-8,y:-61}
   }
 };
 
-const WEAPON_ASSETS = {
-  pickups:'assets/sprites/weapons/red_concord/red_concord_weapon_pickups.png',
-  overlay:'assets/sprites/weapons/red_concord/red_concord_weapons_4dir_overlay.png',
-  fx:'assets/fx/red_concord/red_concord_weapon_fx.png'
+const HOLSTER = {
+  key:'donny_holster',
+  scale:1.0,
+  directionFrame:{down:0,right:1,left:2,up:3},
+  hip:{
+    down:{x:18,y:-30},
+    right:{x:11,y:-32},
+    left:{x:-11,y:-32},
+    up:{x:16,y:-34}
+  }
 };
-const WEAPON_DIR_FRAME = {down:0,right:1,left:2,up:3};
 
-const VAN_ASSETS = {
-  drive:'assets/sprites/vehicles/astro_van/astro_van_8dir_drive_11x8_128x96_transparent.png',
-  open:'assets/sprites/vehicles/astro_van/astro_van_open_8x4_204x164_transparent.png'
-};
-
-const AUDIO_ASSETS = {
-  glasswellTheme:'assets/audio/glasswell/checkpoint_4_am.mp3'
-};
 const VAN = {
-  driveKey:'astro_van_drive',
+  driveKey:'astro_van_drive_fallback',
+  activeDriveKey:'astro_van_drive_fallback',
+  activeLayout:'fallback',
   openKey:'astro_van_open',
-
-  // New 8-direction Astro Van sheet.
-  // assets/sprites/vehicles/astro_van/astro_van_8dir_drive_11x8_128x96_transparent.png
   driveFrame:{w:128,h:96},
-
-  // Door sheet stays separate.
   openFrame:{w:204,h:164},
-
-  // 11 columns x 8 rows.
-  // Row order: down, downRight, right, upRight, up, upLeft, left, downLeft.
   columns:11,
-  idleFrame:{
-    down:0,
-    downRight:11,
-    right:22,
-    upRight:33,
-    up:44,
-    upLeft:55,
-    left:66,
-    downLeft:77
-  },
-
-  driveAnim:{
-    down:'astro_van_drive_down',
-    downRight:'astro_van_drive_downRight',
-    right:'astro_van_drive_right',
-    upRight:'astro_van_drive_upRight',
-    up:'astro_van_drive_up',
-    upLeft:'astro_van_drive_upLeft',
-    left:'astro_van_drive_left',
-    downLeft:'astro_van_drive_downLeft'
-  },
-
-  doorAnim:{down:'astro_van_door_front',right:'astro_van_door_right',left:'astro_van_door_left',up:'astro_van_door_back'},
-  doorStartFrame:{down:0,right:8,left:16,up:24},
-  speed:265,
-  enterDistance:125,
+  idleFrame:{down:0,downRight:11,right:22,upRight:33,up:44,upLeft:55,left:66,downLeft:77},
+  anim:{down:'astro_van_drive_down',downRight:'astro_van_drive_downRight',right:'astro_van_drive_right',upRight:'astro_van_drive_upRight',up:'astro_van_drive_up',upLeft:'astro_van_drive_upLeft',left:'astro_van_drive_left',downLeft:'astro_van_drive_downLeft'},
+  speed:285,
+  enterDistance:105,
   renderScale:1.35,
-  exitOffset:{
-    down:{x:0,y:96},
-    up:{x:0,y:-96},
-    right:{x:118,y:0},
-    left:{x:-118,y:0}
-  }
+  exitOffset:{down:{x:0,y:92},up:{x:0,y:-92},right:{x:112,y:0},left:{x:-112,y:0}}
 };
-
-function buildPageData(id,w,h){
-  const data={routes:[],spawns:{},weapons:[],interiors:[]};
-
-  if(id==='GLASSWELL_C3'){
-    data.spawns={
-      donny_city_start:{x:w*.50,y:h*.55},
-      north_entry_from_C2:{x:w*.50,y:h*.18},
-      south_entry_from_C4:{x:w*.50,y:h*.82},
-      east_entry_from_D3:{x:w*.88,y:h*.50},
-      west_entry_from_B3:{x:w*.12,y:h*.52}
-    };
-    data.routes=[
-      {id:'c3_to_c2',to:'GLASSWELL_C2',r:pct(w,h,.38,0,.24,.10),spawn:'south_entry_from_C3',label:'north to Civic Admin Street'},
-      {id:'c3_to_c4',to:'GLASSWELL_C4',r:pct(w,h,.38,.90,.24,.10),spawn:'north_entry_from_C3',label:'south to Transit Vendor Square'},
-      {id:'c3_to_d3',to:'GLASSWELL_D3',r:pct(w,h,.92,.38,.08,.24),spawn:'west_entry_from_C3',label:'east to Red Concord Checkpoint'},
-      {id:'c3_to_b3_desert',to:'GLASSWELL_B3_DESERT_TEST',r:pct(w,h,0,.38,.08,.24),spawn:'east_entry_from_C3',label:'west to empty Dust-9 desert test road'}
-    ];
-    data.weapons=[{id:'red_concord_baton_c3',name:'Red Concord stun baton',x:w*.57,y:h*.58,frame:0,type:'melee'}];
-    data.interiors=[
-      {id:'c3_gate_office',label:'Gate Custody Room',x:w*.43,y:h*.32,w:w*.14,h:h*.10,msg:'Door hook reserved: Gate Custody Room / Red Concord processing.'},
-      {id:'c3_safe_gap',label:'Sable Kin Route Gap',x:w*.16,y:h*.55,w:w*.10,h:h*.10,msg:'Hidden route reserved: Sable Kin water network.'}
-    ];
-  }
-
-  if(id==='GLASSWELL_C2'){
-    data.spawns={south_entry_from_C3:{x:w*.50,y:h*.84}};
-    data.routes=[
-      {id:'c2_to_c3',to:'GLASSWELL_C3',r:pct(w,h,.39,.91,.22,.09),spawn:'north_entry_from_C2',label:'south to Main Civic Gate'},
-      {id:'c2_to_c1_reserved',msg:'C1 reserved for next Glasswell page',r:pct(w,h,.41,0,.18,.09),label:'north reserved'}
-    ];
-    data.weapons=[{id:'admin_shock_pistol_c2',name:'Confiscated shock pistol',x:w*.48,y:h*.54,frame:1,type:'sidearm'}];
-    data.interiors=[
-      {id:'c2_varric_office',label:'House Varric Permit Office',x:w*.61,y:h*.30,w:w*.13,h:h*.12,msg:'Interior reserved: water-credit / permit office.'},
-      {id:'c2_debt_room',label:'Debt Clerk Room',x:w*.28,y:h*.60,w:w*.13,h:h*.12,msg:'Interior reserved: House Varric debt records.'}
-    ];
-  }
-
-  if(id==='GLASSWELL_C4'){
-    data.spawns={north_entry_from_C3:{x:w*.50,y:h*.16},west_entry_from_B4:{x:w*.10,y:h*.50},east_entry_from_D4:{x:w*.90,y:h*.50}};
-    data.routes=[
-      {id:'c4_to_c3',to:'GLASSWELL_C3',r:pct(w,h,.43,0,.14,.10),spawn:'south_entry_from_C4',label:'north to Main Civic Gate'},
-      {id:'c4_to_c5_reserved',msg:'C5 reserved for lower transit lanes',r:pct(w,h,.43,.91,.14,.09),label:'south reserved'},
-      {id:'c4_to_b4_reserved',msg:'B4 reserved for ration market approach',r:pct(w,h,0,.38,.08,.24),label:'west reserved'},
-      {id:'c4_to_d4_reserved',msg:'D4 reserved for checkpoint service road',r:pct(w,h,.92,.38,.08,.24),label:'east reserved'}
-    ];
-    data.weapons=[{id:'vendor_pipe_c4',name:'Scrap pipe',x:w*.41,y:h*.64,frame:2,type:'melee'}];
-    data.interiors=[
-      {id:'c4_vendor_stall',label:'Transit Vendor Stall',x:w*.42,y:h*.40,w:w*.16,h:h*.13,msg:'Interior/vendor hook reserved: transit market stall.'},
-      {id:'c4_alley_kids_den',label:'Alley Kids Hideout',x:w*.20,y:h*.50,w:w*.13,h:h*.12,msg:'Interior reserved: alley kids den / safe corner.'}
-    ];
-  }
-
-  if(id==='GLASSWELL_D3'){
-    data.spawns={west_entry_from_C3:{x:w*.12,y:h*.50}};
-    data.routes=[
-      {id:'d3_to_c3',to:'GLASSWELL_C3',r:pct(w,h,0,.38,.08,.24),spawn:'east_entry_from_D3',label:'west to Main Civic Gate'},
-      {id:'d3_to_e3_reserved',msg:'E3 reserved for Red Concord custody road',r:pct(w,h,.92,.38,.08,.24),label:'east reserved'}
-    ];
-    data.weapons=[{id:'checkpoint_rifle_d3',name:'Red Concord rifle',x:w*.55,y:h*.50,frame:3,type:'rifle'}];
-    data.interiors=[
-      {id:'d3_checkpoint_booth',label:'Checkpoint Booth',x:w*.45,y:h*.28,w:w*.14,h:h*.12,msg:'Interior reserved: checkpoint booth / patrol terminal.'},
-      {id:'d3_custody_cell',label:'Custody Holding Room',x:w*.68,y:h*.62,w:w*.13,h:h*.12,msg:'Interior reserved: Red Concord holding room.'}
-    ];
-  }
-
-  if(id==='GLASSWELL_B3_DESERT_TEST'){
-    data.spawns={
-      east_entry_from_C3:{x:w*.86,y:h*.52},
-      desert_start:{x:w*.52,y:h*.55}
-    };
-    data.routes=[
-      {id:'b3_desert_to_c3',to:'GLASSWELL_C3',r:pct(w,h,.92,.36,.08,.28),spawn:'west_entry_from_B3',label:'east back to Glasswell Main Civic Gate'}
-    ];
-    data.weapons=[];
-    data.interiors=[
-      {id:'desert_test_marker',label:'Empty Desert Drive Test',x:w*.42,y:h*.44,w:w*.18,h:h*.10,msg:'Open Dust-9 desert test space for driving the Astro Van.'}
-    ];
-  }
-
-  return data;
-}
 
 const TOUCH = {x:0,y:0,active:false,a:false,b:false,xBtn:false,y:false,start:false};
 
 function setupTouch(){
   if(window.__GLASSWELL_TOUCH_READY)return;
   window.__GLASSWELL_TOUCH_READY=true;
-
   const knob=document.getElementById('stickKnob');
   const label=document.getElementById('moveLabel');
   let active=null,center=null;
   const max=52;
   const prevent=e=>{if(e&&e.cancelable)e.preventDefault()};
-  const getCenter=()=>{
-    const el=document.getElementById('stickBase');
-    const r=el.getBoundingClientRect();
-    return{x:r.left+r.width/2,y:r.top+r.height/2};
-  };
+  const getCenter=()=>{const el=document.getElementById('stickBase');const r=el.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2};};
   const set=(x,y)=>{
     center=center||getCenter();
     let dx=x-center.x,dy=y-center.y;
@@ -384,62 +285,58 @@ function setupTouch(){
     if(label)label.textContent='MOVE ON';
   };
   const stop=()=>{
-    active=null;center=null;
-    TOUCH.x=0;TOUCH.y=0;TOUCH.active=false;
+    active=null;center=null;TOUCH.x=0;TOUCH.y=0;TOUCH.active=false;
     if(knob)knob.style.transform='translate(0,0)';
     if(label)label.textContent='MOVE';
   };
-
   document.addEventListener('pointerdown',e=>{
     if(e.target.closest&&e.target.closest('.touchBtn,#btnStart'))return;
-    if(e.clientX<innerWidth*.50){
-      active=e.pointerId;center=getCenter();set(e.clientX,e.clientY);prevent(e);
-    }
+    if(e.clientX<innerWidth*.50){active=e.pointerId;center=getCenter();set(e.clientX,e.clientY);prevent(e);}
   },{capture:true,passive:false});
-
-  document.addEventListener('pointermove',e=>{
-    if(e.pointerId===active){set(e.clientX,e.clientY);prevent(e)}
-  },{capture:true,passive:false});
-
-  document.addEventListener('pointerup',e=>{
-    if(e.pointerId===active){stop();prevent(e)}
-  },{capture:true,passive:false});
-
+  document.addEventListener('pointermove',e=>{if(e.pointerId===active){set(e.clientX,e.clientY);prevent(e)}},{capture:true,passive:false});
+  document.addEventListener('pointerup',e=>{if(e.pointerId===active){stop();prevent(e)}},{capture:true,passive:false});
   const bind=(id,prop)=>{
     const el=document.getElementById(id);
     if(!el||el.dataset.bound)return;
     el.dataset.bound='1';
-    el.addEventListener('pointerdown',e=>{
-      prevent(e);
-      TOUCH[prop]=true;
-      setTimeout(()=>TOUCH[prop]=false,120);
-    }, {passive:false});
+    el.addEventListener('pointerdown',e=>{prevent(e);TOUCH[prop]=true;setTimeout(()=>TOUCH[prop]=false,120);},{passive:false});
   };
-  bind('btnA','a');
-  bind('btnB','b');
-  bind('btnX','xBtn');
-  bind('btnY','y');
-  bind('btnStart','start');
+  bind('btnA','a'); bind('btnB','b'); bind('btnX','xBtn'); bind('btnY','y'); bind('btnStart','start');
+}
+
+function buildPageData(id,w,h){
+  const data={routes:[],spawns:{},interiors:[],weapons:[]};
+  if(id==='GLASSWELL_C3'){
+    data.spawns={donny_city_start:{x:w*.50,y:h*.55},west_entry_from_B3:{x:w*.12,y:h*.52},north_entry_from_C2:{x:w*.50,y:h*.18},south_entry_from_C4:{x:w*.50,y:h*.82},east_entry_from_D3:{x:w*.88,y:h*.50}};
+    data.routes=[
+      {to:'GLASSWELL_C2',r:pct(w,h,.38,0,.24,.10),spawn:'south_entry_from_C3',label:'north to Civic Admin Street'},
+      {to:'GLASSWELL_C4',r:pct(w,h,.38,.90,.24,.10),spawn:'north_entry_from_C3',label:'south to Transit Vendor Square'},
+      {to:'GLASSWELL_D3',r:pct(w,h,.92,.38,.08,.24),spawn:'west_entry_from_C3',label:'east to Red Concord Checkpoint'},
+      {to:'GLASSWELL_B3_DESERT_TEST',r:pct(w,h,0,.38,.08,.24),spawn:'east_entry_from_C3',label:'west to desert drive test'}
+    ];
+  } else if(id==='GLASSWELL_C2'){
+    data.spawns={south_entry_from_C3:{x:w*.50,y:h*.84}};
+    data.routes=[{to:'GLASSWELL_C3',r:pct(w,h,.39,.91,.22,.09),spawn:'north_entry_from_C2',label:'south to Main Civic Gate'}];
+  } else if(id==='GLASSWELL_C4'){
+    data.spawns={north_entry_from_C3:{x:w*.50,y:h*.16}};
+    data.routes=[{to:'GLASSWELL_C3',r:pct(w,h,.43,0,.14,.10),spawn:'south_entry_from_C4',label:'north to Main Civic Gate'}];
+  } else if(id==='GLASSWELL_D3'){
+    data.spawns={west_entry_from_C3:{x:w*.12,y:h*.50}};
+    data.routes=[{to:'GLASSWELL_C3',r:pct(w,h,0,.38,.08,.24),spawn:'east_entry_from_D3',label:'west to Main Civic Gate'}];
+  } else if(id==='GLASSWELL_B3_DESERT_TEST'){
+    data.spawns={east_entry_from_C3:{x:w*.86,y:h*.52}};
+    data.routes=[{to:'GLASSWELL_C3',r:pct(w,h,.92,.36,.08,.28),spawn:'west_entry_from_B3',label:'east back to Main Civic Gate'}];
+  }
+  return data;
 }
 
 class BootScene extends Phaser.Scene{
   constructor(){super('BootScene')}
-
   preload(){
     this.cameras.main.setBackgroundColor('#050608');
-    this.add.text(480,240,'LOADING GLASSWELL...',{
-      fontFamily:'Arial Black',
-      fontSize:'26px',
-      color:'#9ff4ff'
-    }).setOrigin(.5);
-    this.add.text(480,278,'Loading maps, Donny, van, weapons, and audio',{
-      fontFamily:'Courier New',
-      fontSize:'15px',
-      color:'#ffffff'
-    }).setOrigin(.5);
-    this.load.setCORS('anonymous');
+    this.add.text(480,240,'LOADING GLASSWELL...', {fontFamily:'Arial Black',fontSize:'26px',color:'#9ff4ff'}).setOrigin(.5);
     this.badAssets=[];
-    this.load.on('loaderror', file => this.badAssets.push(file && (file.src || file.key) || 'unknown asset'));
+    this.load.on('loaderror', file => { this.badAssets.push(file && (file.src || file.key) || 'unknown asset'); console.warn('Asset failed:', file); });
 
     Object.values(PAGES).forEach(p=>{
       if(p.synthetic)return;
@@ -448,38 +345,69 @@ class BootScene extends Phaser.Scene{
       this.load.image(key(p.id,'mask'),version(p.root+p.mask));
     });
 
-    this.load.spritesheet('donny_idle',version(DONNY_ASSETS.idle),{frameWidth:DONNY.frameWidth,frameHeight:DONNY.frameHeight});
-    this.load.spritesheet('donny_overhead',version(DONNY_ASSETS.move),{frameWidth:DONNY.frameWidth,frameHeight:DONNY.frameHeight});
-    this.load.spritesheet('donny_run',version(DONNY_ASSETS.run),{frameWidth:DONNY.frameWidth,frameHeight:DONNY.frameHeight});
-    this.load.spritesheet('donny_jump',version(DONNY_ASSETS.jump),{frameWidth:ACTION.frameWidth,frameHeight:ACTION.frameHeight});
-    this.load.spritesheet('donny_slide',version(DONNY_ASSETS.slide),{frameWidth:ACTION.frameWidth,frameHeight:ACTION.frameHeight});
-    this.load.spritesheet('donny_crawl',version(DONNY_ASSETS.crawl),{frameWidth:DONNY.frameWidth,frameHeight:DONNY.frameHeight});
-    this.load.spritesheet('donny_pistol',version(DONNY_ASSETS.pistol),{frameWidth:ACTION.frameWidth,frameHeight:ACTION.frameHeight});
-    this.load.spritesheet('donny_punch',version(DONNY_ASSETS.punch),{frameWidth:ACTION.frameWidth,frameHeight:ACTION.frameHeight});
-    this.load.spritesheet('donny_kick',version(DONNY_ASSETS.kick),{frameWidth:ACTION.frameWidth,frameHeight:ACTION.frameHeight});
-    this.load.spritesheet('donny_laser_gun_overlay',version(DONNY_ASSETS.laserOverlay),{frameWidth:GUN_PROP.frameWidth,frameHeight:GUN_PROP.frameHeight});
+    this.load.spritesheet('donny_idle',version(DONNY_ASSETS.idle),{frameWidth:128,frameHeight:128});
+    this.load.spritesheet('donny_overhead',version(DONNY_ASSETS.move),{frameWidth:128,frameHeight:128});
+    this.load.spritesheet('donny_run',version(DONNY_ASSETS.run),{frameWidth:128,frameHeight:128});
+    this.load.spritesheet('donny_jump',version(DONNY_ASSETS.jump),{frameWidth:128,frameHeight:128});
+    this.load.spritesheet('donny_slide',version(DONNY_ASSETS.slide),{frameWidth:128,frameHeight:128});
+    this.load.spritesheet('donny_crawl',version(DONNY_ASSETS.crawl),{frameWidth:128,frameHeight:128});
+    this.load.spritesheet('donny_pistol',version(DONNY_ASSETS.pistol),{frameWidth:128,frameHeight:128});
+    this.load.spritesheet('donny_punch',version(DONNY_ASSETS.punch),{frameWidth:128,frameHeight:128});
+    this.load.spritesheet('donny_kick',version(DONNY_ASSETS.kick),{frameWidth:128,frameHeight:128});
+    this.load.spritesheet(GUN_PROP.key,version(DONNY_ASSETS.laserOverlay),{frameWidth:128,frameHeight:128});
+    this.load.spritesheet(HOLSTER.key,version(DONNY_ASSETS.holster),{frameWidth:128,frameHeight:128});
 
-    this.load.spritesheet('weapon_pickups',version(WEAPON_ASSETS.pickups),{frameWidth:128,frameHeight:128});
-    this.load.spritesheet('weapon_overlay',version(WEAPON_ASSETS.overlay),{frameWidth:128,frameHeight:128});
-    this.load.spritesheet('weapon_fx',version(WEAPON_ASSETS.fx),{frameWidth:128,frameHeight:128});
-
-    this.load.spritesheet(VAN.driveKey,version(VAN_ASSETS.drive),{frameWidth:VAN.driveFrame.w,frameHeight:VAN.driveFrame.h,margin:0,spacing:0});
+    VAN_ASSETS.candidates.forEach(v=>{
+      this.load.spritesheet(v.key,version(v.path),{frameWidth:v.frameWidth,frameHeight:v.frameHeight,margin:0,spacing:0});
+    });
     this.load.spritesheet(VAN.openKey,version(VAN_ASSETS.open),{frameWidth:VAN.openFrame.w,frameHeight:VAN.openFrame.h,margin:0,spacing:0});
-    if(DONNY_ASSETS.oldVan){ this.load.spritesheet('astro_van_old',version(DONNY_ASSETS.oldVan),{frameWidth:320,frameHeight:320}); }
-
-    this.load.audio('glasswell_theme', version(AUDIO_ASSETS.glasswellTheme));
   }
-
   create(){
     createFallbackTextures(this);
     createDonnyAnimations(this);
     createVanAnimations(this);
-
-    if(this.badAssets.length){
-      console.warn('Missing/failed assets:',this.badAssets);
-    }
-
+    if(this.badAssets.length)console.warn('Missing assets loaded with fallback where possible:',this.badAssets);
     this.scene.start('TitleScene');
+  }
+}
+
+function createFallbackTextures(scene){
+  if(!scene.textures.exists('donny_fallback')){
+    const g=scene.add.graphics();
+    g.fillStyle(0,0.35).fillEllipse(64,108,44,10);
+    g.fillStyle(0x111111).fillRect(52,84,9,24).fillRect(68,84,9,24);
+    g.fillStyle(0x09090b).fillRoundedRect(45,50,38,38,7);
+    g.lineStyle(2,0x2f3338).strokeRoundedRect(45,50,38,38,7);
+    g.fillStyle(0x2b1b12).fillRoundedRect(54,33,22,18,5);
+    g.fillStyle(0x0b0b0c).fillRoundedRect(48,25,34,12,5);
+    g.fillStyle(0xd89a25).fillCircle(68,29,3);
+    g.generateTexture('donny_fallback',128,128);
+    g.destroy();
+  }
+  if(!scene.textures.exists(VAN.driveKey)){
+    const g=scene.add.graphics();
+    g.fillStyle(0x000000,.32).fillEllipse(64,80,90,18);
+    g.fillStyle(0x101820).fillRoundedRect(15,28,98,42,8);
+    g.fillStyle(0x26333b).fillRoundedRect(20,32,88,32,5);
+    g.fillStyle(0x78eaff).fillRect(38,35,28,11);
+    g.fillStyle(0xff2aa1).fillRect(35,52,54,5);
+    g.fillStyle(0x080808).fillCircle(32,70,11).fillCircle(96,70,11);
+    g.generateTexture(VAN.driveKey,128,96);
+    g.destroy();
+  }
+  if(!scene.textures.exists('pickup_dot')){
+    const g=scene.add.graphics();
+    g.fillStyle(0x76f5ff,1).fillCircle(10,10,8);
+    g.lineStyle(2,0x222222,1).strokeCircle(10,10,8);
+    g.generateTexture('pickup_dot',20,20);
+    g.destroy();
+  }
+  if(!scene.textures.exists('laser_bolt')){
+    const g=scene.add.graphics();
+    g.lineStyle(5,0x9ff4ff,1).lineBetween(0,4,34,4);
+    g.lineStyle(2,0xffffff,1).lineBetween(6,4,34,4);
+    g.generateTexture('laser_bolt',36,8);
+    g.destroy();
   }
 }
 
@@ -490,20 +418,13 @@ function createDonnyAnimations(scene){
     dirs.forEach(dir=>{
       const animKey=`${prefix}_${dir}`;
       if(scene.anims.exists(animKey))return;
-      scene.anims.create({
-        key:animKey,
-        frames:DONNY.anims[dir].map(frame=>({key:textureKey,frame})),
-        frameRate,
-        repeat
-      });
+      scene.anims.create({key:animKey,frames:DONNY.anims[dir].map(frame=>({key:textureKey,frame})),frameRate,repeat});
     });
   };
-
+  make('donny_idle','donny_idle',6,-1);
   make('donny_walk','donny_overhead',8,-1);
   make('donny_run','donny_run',11,-1);
   make('donny_crawl','donny_crawl',6,-1);
-
-  // Action sheets use 8 frames per direction row.
   make('donny_punch','donny_punch',14,0);
   make('donny_kick','donny_kick',14,0);
   make('donny_jump','donny_jump',10,0);
@@ -511,1328 +432,458 @@ function createDonnyAnimations(scene){
   make('donny_shoot','donny_pistol',12,0);
 }
 
+function selectVanDriveTexture(scene){
+  const found = VAN_ASSETS.candidates.find(v=>scene.textures.exists(v.key));
+  if(found){
+    VAN.activeDriveKey = found.key;
+    VAN.activeLayout = found.layout;
+    VAN.driveFrame = {w:found.frameWidth,h:found.frameHeight};
+    VAN.columns = found.columns;
+    console.log('Using Astro Van asset:', found.path);
+    return found;
+  }
+
+  VAN.activeDriveKey = VAN.driveKey;
+  VAN.activeLayout = 'fallback';
+  VAN.columns = 1;
+  console.warn('No Astro Van drive asset found in', VAN_FOLDER, 'using generated fallback van.');
+  return null;
+}
+
 function createVanAnimations(scene){
-  const make=(animKey,textureKey,start,end,frameRate,repeat)=>{
-    if(scene.anims.exists(animKey))return;
-    scene.anims.create({
-      key:animKey,
-      frames:scene.anims.generateFrameNumbers(textureKey,{start,end}),
-      frameRate,
-      repeat
-    });
-  };
+  const found = selectVanDriveTexture(scene);
+  const driveKey = VAN.activeDriveKey;
 
-  if(scene.textures.exists(VAN.driveKey)){
-    const makeFrames=(animKey,frames,frameRate=8,repeat=-1)=>{
+  if(!scene.textures.exists(driveKey))return;
+
+  if(found && found.layout === '8dir11'){
+    const rows=['down','downRight','right','upRight','up','upLeft','left','downLeft'];
+    rows.forEach((dir,row)=>{
+      const animKey=VAN.anim[dir];
       if(scene.anims.exists(animKey))return;
-      scene.anims.create({
-        key:animKey,
-        frames:frames.map(frame=>({key:VAN.driveKey,frame})),
-        frameRate,
-        repeat
-      });
-    };
-
-    // New 11x8 sheet: each direction owns one full row.
-    // This prevents spinning because animation never crosses into another direction row.
-    const cols=VAN.columns||11;
-    const dirs=['down','downRight','right','upRight','up','upLeft','left','downLeft'];
-
-    dirs.forEach((dir,row)=>{
-      const start=row*cols;
       const frames=[];
-      for(let i=0;i<cols;i++)frames.push(start+i);
-      makeFrames(`astro_van_drive_${dir}`,frames,8,-1);
+      for(let c=0;c<11;c++)frames.push({key:driveKey,frame:row*11+c});
+      scene.anims.create({key:animKey,frames,frameRate:8,repeat:-1});
     });
+    VAN.idleFrame={down:0,downRight:11,right:22,upRight:33,up:44,upLeft:55,left:66,downLeft:77};
+    return;
   }
 
-  if(scene.textures.exists(VAN.openKey)){
-    make('astro_van_door_front',VAN.openKey,0,7,8,0);
-    make('astro_van_door_right',VAN.openKey,8,15,8,0);
-    make('astro_van_door_left',VAN.openKey,16,23,8,0);
-    make('astro_van_door_back',VAN.openKey,24,31,8,0);
+  if(found && found.layout === '4dir4'){
+    const map={down:0,right:4,left:8,up:12,downRight:4,upRight:4,upLeft:8,downLeft:8};
+    Object.entries(map).forEach(([dir,start])=>{
+      const animKey=VAN.anim[dir];
+      if(scene.anims.exists(animKey))return;
+      const frames=[];
+      for(let c=0;c<4;c++)frames.push({key:driveKey,frame:start+c});
+      scene.anims.create({key:animKey,frames,frameRate:6,repeat:-1});
+    });
+    VAN.idleFrame={down:0,downRight:4,right:4,upRight:4,up:12,upLeft:8,left:8,downLeft:8};
+    return;
   }
-}
 
-
-function getVanDirection8(vx,vy){
-  const ax=Math.abs(vx);
-  const ay=Math.abs(vy);
-  if(Math.hypot(vx,vy)<.05)return null;
-
-  // Favor clean cardinals. This stops a mostly-left thumbstick push from becoming up-left/down-left.
-  if(ax > ay*1.45)return vx>=0?'right':'left';
-  if(ay > ax*1.45)return vy>=0?'down':'up';
-
-  if(vx>=0 && vy>=0)return 'downRight';
-  if(vx>=0 && vy<0)return 'upRight';
-  if(vx<0 && vy<0)return 'upLeft';
-  return 'downLeft';
-}
-
-function cardinalFrom8(dir){
-  if(dir==='downRight'||dir==='downLeft')return 'down';
-  if(dir==='upRight'||dir==='upLeft')return 'up';
-  return dir||'down';
+  // Fallback generated single-frame van.
+  Object.keys(VAN.anim).forEach(dir=>{
+    const animKey=VAN.anim[dir];
+    if(scene.anims.exists(animKey))return;
+    scene.anims.create({key:animKey,frames:[{key:driveKey,frame:0}],frameRate:1,repeat:-1});
+  });
+  VAN.idleFrame={down:0,downRight:0,right:0,upRight:0,up:0,upLeft:0,left:0,downLeft:0};
 }
 
 class TitleScene extends Phaser.Scene{
   constructor(){super('TitleScene')}
-
   create(){
-    setupTouch();
-    const w=this.scale.width,h=this.scale.height;
-    this.cameras.main.setBackgroundColor('#040608');
-
-    const g=this.add.graphics();
-    g.fillGradientStyle(0x091018,0x091018,0x130715,0x06080e,1,1,1,1).fillRect(0,0,w,h);
-    for(let i=0;i<44;i++){
-      const x=(i*97)%w, y=(i*53)%h;
-      g.fillStyle(i%2?0xff2aa1:0x24dfff,.10).fillRect(x,y,Phaser.Math.Between(30,110),2);
-    }
-
-    this.add.text(w/2,70,'COSMIC FEEDBACK',{fontFamily:'Arial Black',fontSize:'34px',color:'#e8e1cf'}).setOrigin(.5);
-    this.add.text(w/2,122,'GLASSWELL',{fontFamily:'Arial Black',fontSize:'52px',color:'#9ff4ff'}).setOrigin(.5).setShadow(0,0,'#67dce8',10,true,true);
-    this.add.text(w/2,172,'2.5D GTA-STYLE OPEN CITY BUILD',{fontFamily:'Arial Black',fontSize:'20px',color:'#ff6ab7'}).setOrigin(.5);
-
-    this.add.text(w/2,232,
-      'Donny starts at the Main Civic Gate\nPause inventory + pistol equip/put away + X punch/shoot + Y jump + fixed 8-direction Astro Van',
-      {fontFamily:'Courier New',fontSize:'17px',color:'#d8c99d',align:'center',lineSpacing:7}
-    ).setOrigin(.5);
-
-    this.add.text(w/2,345,
-      'Move: left stick / WASD / arrows\nSTART = pause / inventory | Inventory A = equip / put away pistol/items\nX = punch if pistol put away, shoot if pistol equipped\nY = jump | A = interact only | B = kick/slide/drop/exit',
-      {fontFamily:'Courier New',fontSize:'16px',color:'#ffffff',align:'center',lineSpacing:8}
-    ).setOrigin(.5);
-
-    this.add.text(w/2,h-48,'Maps first → assets second → NPCs third → missions fourth',{fontFamily:'Arial Black',fontSize:'14px',color:'#9fb3c8'}).setOrigin(.5);
-
-    const go=()=>this.scene.start('CityScene',{pageId:'GLASSWELL_C3',spawn:'donny_city_start'});
-    this.input.once('pointerdown',go);
-    this.input.keyboard.once('keydown-ENTER',go);
-    this.input.keyboard.once('keydown-SPACE',go);
+    this.cameras.main.setBackgroundColor('#050607');
+    this.add.text(480,88,'COSMIC FEEDBACK',{fontFamily:'Arial Black',fontSize:'30px',color:'#e8e1cf'}).setOrigin(.5);
+    this.add.text(480,138,'GLASSWELL',{fontFamily:'Arial Black',fontSize:'46px',color:'#9ff4ff'}).setOrigin(.5).setShadow(0,0,'#67dce8',8,true,true);
+    this.add.text(480,195,'2.5D GTA-style open-city sci-fi RPG / brawler',{fontFamily:'Courier New',fontSize:'18px',color:'#d9b46a'}).setOrigin(.5);
+    this.add.text(480,302,'A jump | X punch/shoot | B kick/slide/crawl | Y interact/enter van\nHold direction to run | START inventory | B exits van',{fontFamily:'Courier New',fontSize:'17px',color:'#d5c7a3',align:'center',lineSpacing:8}).setOrigin(.5);
+    const start=()=>this.scene.start('MapScene',{pageId:'GLASSWELL_C3',spawn:'donny_city_start'});
+    this.input.once('pointerdown',start);
+    this.input.keyboard.once('keydown-ENTER',start);
+    this.input.keyboard.once('keydown-SPACE',start);
   }
 }
 
-class CityScene extends Phaser.Scene{
+class MapScene extends Phaser.Scene{
   constructor(){
-    super('CityScene');
-    this.speed=DONNY.speed;
-    this.debug=false;
-    this.lastDir='down';
-    this.cool=0;
-    this.heldWeapon=null;
-    this.weaponSprites=[];
-    this.playerInVan=false;
-    this.activeVehicle=null;
-    this.pistolActionActive=false;
-    this.punchActionActive=false;
-    this.kickActionActive=false;
-    this.jumpActionActive=false;
-    this.slideActionActive=false;
-    this.crawlMode=false;
-    this.pausedForInventory=false;
-    this.pistolEquipped=false;
-    this.inventoryItems=[];
-    this.inventoryIndex=0;
-    this.inventoryNavCool=0;
+    super('MapScene');
+    this.pageId='GLASSWELL_C3';
+    this.playerDir='down';
+    this.inVan=false;
+    this.vanDir='right';
+    this.isCrawling=false;
+    this.isInventoryOpen=false;
+    this.weaponEquipped=true;
+    this.pistolAmmo=24;
+    this.bag=[];
+    this.actionUntil=0;
+    this.actionType='';
+    this.slideUntil=0;
+    this.moveHoldStart=0;
+    this.jumpZ=0;
+    this.jumpVel=0;
+    this.routeCooldown=0;
   }
 
-  init(d){
-    this.startPage=d?.pageId||'GLASSWELL_C3';
-    this.startSpawn=d?.spawn||'donny_city_start';
-  }
+  init(data){this.startPage=data?.pageId||'GLASSWELL_C3';this.startSpawn=data?.spawn||'donny_city_start'}
 
   create(){
     setupTouch();
-
-    this.keys=this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,E,X,B,Y,J,K,C,I,P,SHIFT,ESC,SPACE');
-    this.input.keyboard.on('keydown-E',()=>this.interact());
-    this.input.keyboard.on('keydown-SPACE',()=>this.jump());
-    this.input.keyboard.on('keydown-X',()=>this.primaryXAction());
-    this.input.keyboard.on('keydown-Y',()=>this.jump());
-    this.input.keyboard.on('keydown-J',()=>this.punch());
-    this.input.keyboard.on('keydown-K',()=>this.kick());
-    this.input.keyboard.on('keydown-C',()=>this.toggleCrawl());
-    this.input.keyboard.on('keydown-I',()=>this.togglePauseInventory());
-    this.input.keyboard.on('keydown-P',()=>this.togglePauseInventory());
-    this.input.keyboard.on('keydown-ENTER',()=>{ if(this.pausedForInventory)this.activateInventorySelection(); });
-    this.input.keyboard.on('keydown-B',()=>this.smartBAction());
-    this.input.keyboard.on('keydown-ESC',()=>this.togglePauseInventory());
+    this.keys=this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,X,J,B,K,Y,E,ENTER,I,TAB,ESC');
+    this.input.keyboard.on('keydown-SPACE',()=>this.handleA());
+    this.input.keyboard.on('keydown-X',()=>this.handleX());
+    this.input.keyboard.on('keydown-J',()=>this.handleX());
+    this.input.keyboard.on('keydown-B',()=>this.handleB());
+    this.input.keyboard.on('keydown-K',()=>this.handleB());
+    this.input.keyboard.on('keydown-Y',()=>this.handleY());
+    this.input.keyboard.on('keydown-E',()=>this.handleY());
+    this.input.keyboard.on('keydown-ENTER',()=>this.toggleInventory());
+    this.input.keyboard.on('keydown-I',()=>this.toggleInventory());
+    this.input.keyboard.on('keydown-TAB',()=>this.toggleInventory());
+    this.input.keyboard.on('keydown-ESC',()=>this.isInventoryOpen?this.toggleInventory():this.scene.start('TitleScene'));
 
     this.makeHud();
     this.loadPage(this.startPage,this.startSpawn);
-    this.startGlasswellMusic();
   }
 
   makeHud(){
-    this.hud=this.add.text(10,8,'',{
-      fontFamily:'Arial Black',
-      fontSize:'13px',
-      color:'#d7faff',
-      backgroundColor:'rgba(0,0,0,.60)',
-      padding:{x:8,y:5}
-    }).setScrollFactor(0).setDepth(20000);
-
-    this.prompt=this.add.text(10,this.scale.height-42,'',{
-      fontFamily:'Arial',
-      fontSize:'14px',
-      color:'#f0e5be',
-      backgroundColor:'rgba(0,0,0,.68)',
-      padding:{x:8,y:6}
-    }).setScrollFactor(0).setDepth(20000);
-
-    this.weaponHud=this.add.text(this.scale.width-10,8,'Weapon: empty',{
-      fontFamily:'Arial Black',
-      fontSize:'13px',
-      color:'#ffe0a8',
-      backgroundColor:'rgba(0,0,0,.60)',
-      padding:{x:8,y:5}
-    }).setOrigin(1,0).setScrollFactor(0).setDepth(20000);
-
-    this.pauseShade=this.add.rectangle(this.scale.width/2,this.scale.height/2,this.scale.width,this.scale.height,0x000000,.66)
-      .setScrollFactor(0)
-      .setDepth(30000)
-      .setVisible(false);
-
-    this.pausePanel=this.add.rectangle(this.scale.width/2,this.scale.height/2,460,292,0x07090f,.92)
-      .setStrokeStyle(3,0xff2aa1,.8)
-      .setScrollFactor(0)
-      .setDepth(30001)
-      .setVisible(false);
-
-    this.pauseText=this.add.text(this.scale.width/2,this.scale.height/2,'',{
-      fontFamily:'Courier New',
-      fontSize:'17px',
-      color:'#ffffff',
-      align:'left',
-      lineSpacing:8
-    }).setOrigin(.5).setScrollFactor(0).setDepth(30002).setVisible(false);
+    this.hud=this.add.text(10,8,'',{fontFamily:'Arial Black',fontSize:'13px',color:'#d7faff',backgroundColor:'rgba(0,0,0,.55)',padding:{x:8,y:5}}).setScrollFactor(0).setDepth(20000);
+    this.status=this.add.text(GAME_W-14,8,'',{fontFamily:'Arial Black',fontSize:'13px',color:'#f0e5be',backgroundColor:'rgba(0,0,0,.55)',padding:{x:8,y:5}}).setOrigin(1,0).setScrollFactor(0).setDepth(20000);
+    this.prompt=this.add.text(10,GAME_H-34,'',{fontFamily:'Arial',fontSize:'14px',color:'#f0e5be',backgroundColor:'rgba(0,0,0,.62)',padding:{x:8,y:6}}).setScrollFactor(0).setDepth(20000);
   }
 
-  startGlasswellMusic(){
-    if(!this.sound || !this.cache.audio.exists('glasswell_theme'))return;
-
-    const existing=this.sound.get('glasswell_theme');
-    if(existing && existing.isPlaying)return;
-
-    try{
-      this.glasswellMusic=this.sound.add('glasswell_theme',{
-        loop:true,
-        volume:0.42
-      });
-
-      this.glasswellMusic.play();
-    }catch(e){
-      // iPhone/Safari can block audio until a tap. The game already starts from a tap,
-      // but keep this safe so audio never black-screens the game.
-      console.warn('Glasswell music start blocked:',e);
-    }
-  }
-
-  getInventoryMenuItems(){
-    return [
-      {kind:'pistol', name:'Laser pistol'},
-      ...this.inventoryItems.map(item=>({kind:'item', name:item.name, item}))
-    ];
-  }
-
-  togglePauseInventory(){
-    this.pausedForInventory=!this.pausedForInventory;
-    this.updatePauseInventoryUI();
-  }
-
-  updatePauseInventoryUI(){
-    const visible=!!this.pausedForInventory;
-    if(this.pauseShade)this.pauseShade.setVisible(visible);
-    if(this.pausePanel)this.pausePanel.setVisible(visible);
-
-    if(this.pauseText){
-      this.pauseText.setVisible(visible);
-      if(!visible)return;
-
-      const items=this.getInventoryMenuItems();
-      if(this.inventoryIndex>=items.length)this.inventoryIndex=Math.max(0,items.length-1);
-
-      const lines=items.map((entry,i)=>{
-        const cursor=i===this.inventoryIndex?'>':' ';
-        let status='';
-
-        if(entry.kind==='pistol'){
-          status=this.pistolEquipped?'EQUIPPED':'put away';
-        } else {
-          status=this.heldWeapon && this.heldWeapon.id===entry.item.id ? 'EQUIPPED' : 'in bag';
-        }
-
-        return `${cursor} ${entry.name} — ${status}`;
-      }).join('\n');
-
-      this.pauseText.setText(
-        'PAUSED — INVENTORY\n\n' +
-        lines +
-        '\n\nA / Enter / E = equip or put away\n' +
-        'X / Y or Up / Down = select item\n' +
-        'B / START / Esc = resume'
-      );
-    }
-  }
-
-  moveInventorySelection(dir){
-    const items=this.getInventoryMenuItems();
-    if(!items.length)return;
-    this.inventoryIndex=(this.inventoryIndex+dir+items.length)%items.length;
-    this.updatePauseInventoryUI();
-  }
-
-  activateInventorySelection(){
-    const items=this.getInventoryMenuItems();
-    const entry=items[this.inventoryIndex];
-    if(!entry)return;
-
-    if(entry.kind==='pistol'){
-      this.pistolEquipped=!this.pistolEquipped;
-      if(this.pistolEquipped){
-        this.heldWeapon=null;
-      }
-      if(this.gunOverlay)this.gunOverlay.setVisible(false);
-      this.message(this.pistolEquipped?'Pistol equipped':'Pistol put away');
-      this.updatePauseInventoryUI();
-      return;
-    }
-
-    if(entry.kind==='item'){
-      const currentlyEquipped=this.heldWeapon && this.heldWeapon.id===entry.item.id;
-      if(currentlyEquipped){
-        this.heldWeapon=null;
-        this.message(`${entry.item.name} put away`);
-      } else {
-        this.heldWeapon=entry.item;
-        this.pistolEquipped=false;
-        this.message(`${entry.item.name} equipped`);
-      }
-      this.updatePauseInventoryUI();
-    }
-  }
-
-  handlePauseInput(){
-    const now=this.time.now;
-
-    if(TOUCH.start){
-      TOUCH.start=false;
-      this.togglePauseInventory();
-      return;
-    }
-
-    if(TOUCH.b){
-      TOUCH.b=false;
-      this.pausedForInventory=false;
-      this.updatePauseInventoryUI();
-      return;
-    }
-
-    if(TOUCH.a){
-      TOUCH.a=false;
-      this.activateInventorySelection();
-      return;
-    }
-
-    if(TOUCH.xBtn && now>this.inventoryNavCool){
-      TOUCH.xBtn=false;
-      this.inventoryNavCool=now+180;
-      this.moveInventorySelection(1);
-      return;
-    }
-
-    if(TOUCH.y && now>this.inventoryNavCool){
-      TOUCH.y=false;
-      this.inventoryNavCool=now+180;
-      this.moveInventorySelection(-1);
-      return;
-    }
-
-    if(now>this.inventoryNavCool){
-      if(TOUCH.y>.45 || this.keys.DOWN?.isDown){
-        this.inventoryNavCool=now+180;
-        this.moveInventorySelection(1);
-      } else if(TOUCH.y<-.45 || this.keys.UP?.isDown){
-        this.inventoryNavCool=now+180;
-        this.moveInventorySelection(-1);
-      }
-    }
-
-    if(Phaser.Input.Keyboard.JustDown(this.keys.E)){
-      this.activateInventorySelection();
-    }
-  }
-
-  clearPage(){
-    this.children.list.filter(o=>o.getData&&o.getData('mapObj')).forEach(o=>o.destroy());
-    this.weaponSprites=[];
-    this.maskCtx=null;
-    this.base=null;
-    this.fg=null;
-    this.debugG=null;
-    this.astroVan=null;
-  }
-
-  loadPage(id,spawnId,options={}){
-    this.clearPage();
-
+  loadPage(id,spawnId){
+    this.children.list.filter(o=>o.mapObj).forEach(o=>o.destroy());
     this.pageId=id;
-    this.cfg=PAGES[id];
-
-    const baseKey=key(id,'base');
-    const fgKey=key(id,'fg');
-    const maskKey=key(id,'mask');
-
-    const isSynthetic=!!this.cfg.synthetic;
-    const baseTexture=isSynthetic?'fallback_desert':(this.textures.exists(baseKey)?baseKey:'fallback_map');
-    this.base=this.add.image(0,0,baseTexture).setOrigin(0).setDepth(0).setData('mapObj',true);
-    this.mapW=isSynthetic?(this.cfg.width||this.base.width):this.base.width;
-    this.mapH=isSynthetic?(this.cfg.height||this.base.height):this.base.height;
-
-    if(isSynthetic){
-      this.base.setDisplaySize(this.mapW,this.mapH);
-    }
-
-    this.data=buildPageData(id,this.mapW,this.mapH);
-    this.prepareMask(isSynthetic?null:maskKey);
-
-    const sp=this.data.spawns[spawnId]||this.data.spawns.donny_city_start||this.data.spawns.desert_start||Object.values(this.data.spawns)[0]||{x:this.mapW/2,y:this.mapH/2};
-    this.currentSpawn=sp;
-    this.pendingKeepDriving=!!options.keepDriving;
-
-    if(!this.player){
-      this.createPlayer(sp.x,sp.y);
-    } else {
-      this.player.setPosition(sp.x,sp.y);
-      this.player.setVisible(true);
-      if(this.player.body)this.player.body.enable=true;
-    }
-
-    this.placeVan(options);
-    this.placeWeapons();
-    this.placeInteriorMarkers();
-
-    if(!isSynthetic && this.textures.exists(fgKey)){
-      this.fg=this.add.image(0,0,fgKey).setOrigin(0).setDepth(9000).setData('mapObj',true);
-    }
-
-    this.cameras.main.setBounds(0,0,this.mapW,this.mapH);
-    this.physics.world.setBounds(0,0,this.mapW,this.mapH);
-    if(options.keepDriving && this.astroVan){
-      this.playerInVan=true;
-      this.activeVehicle=this.astroVan;
-      this.astroVan.hasDriver=true;
-      this.player.setVisible(false);
-      if(this.player.body)this.player.body.enable=false;
-      if(this.holster)this.holster.setVisible(false);
-      if(this.weaponOverlay)this.weaponOverlay.setVisible(false);
-      this.cameras.main.startFollow(this.astroVan,true,.12,.12);
-    } else {
-      this.playerInVan=false;
-      this.activeVehicle=null;
-      this.cameras.main.startFollow(this.player,true,.12,.12);
-    }
-
-    this.cameras.main.fadeIn(140,0,0,0);
-
-    this.cool=this.time.now+500;
-    this.drawDebug();
-    this.message(this.cfg.label);
-  }
-
-  createPlayer(x,y){
-    const tex=this.textures.exists('donny_overhead')?'donny_overhead':'fallback_player';
-    this.player=this.physics.add.sprite(x,y,tex,0);
-    this.player.setOrigin(.5,.82);
-    this.player.setScale(tex==='donny_overhead'?DONNY.scale:1);
-    this.player.setCollideWorldBounds(true);
-
-    if(this.player.body){
-      this.player.body.setSize(42,58);
-      this.player.body.setOffset(43,62);
-    }
-
-    // Holster is intentionally removed for now.
-    this.holster=null;
-
-    // Held Red Concord weapon overlay when a pickup is equipped.
-    this.weaponOverlay=this.add.sprite(x,y,this.textures.exists('weapon_overlay')?'weapon_overlay':'fallback_weapon',0)
-      .setVisible(false)
-      .setOrigin(.5,.82)
-      .setScale(this.textures.exists('weapon_overlay')?.72:1);
-
-    // Laser gun prop appears only during shooting, then disappears.
-    this.gunOverlay=this.add.sprite(x,y,this.textures.exists('donny_laser_gun_overlay')?'donny_laser_gun_overlay':'fallback_weapon',0)
-      .setVisible(false)
-      .setOrigin(.5,.82)
-      .setScale(this.textures.exists('donny_laser_gun_overlay')?GUN_PROP.scale:1);
-  }
-
-  prepareMask(maskKey){
-    this.maskCtx=null;
-    if(!maskKey || !this.textures.exists(maskKey))return;
-
-    try{
-      const img=this.textures.get(maskKey).getSourceImage();
-      const canvas=document.createElement('canvas');
-      canvas.width=img.width;
-      canvas.height=img.height;
-      const ctx=canvas.getContext('2d',{willReadFrequently:true});
-      ctx.drawImage(img,0,0);
-      this.maskCtx=ctx;
-      this.maskW=canvas.width;
-      this.maskH=canvas.height;
-    }catch(e){
-      console.warn('Mask sampling disabled:',e);
-    }
-  }
-
-  placeVan(options={}){
-    if(this.pageId!=='GLASSWELL_C3' && this.pageId!=='GLASSWELL_B3_DESERT_TEST')return;
-
-    const useDrive=this.textures.exists(VAN.driveKey);
-    const tex=useDrive?VAN.driveKey:(this.textures.exists('astro_van_old')?'astro_van_old':'fallback_van');
-    const frame=useDrive?VAN.idleFrame.down:0;
-
-    const spawn=this.currentSpawn||{x:this.mapW*.50,y:this.mapH*.55};
-    const vanX=options.keepDriving?spawn.x:(this.pageId==='GLASSWELL_C3'?spawn.x+190:spawn.x-130);
-    const vanY=options.keepDriving?spawn.y:(this.pageId==='GLASSWELL_C3'?spawn.y+30:spawn.y+10);
-
-    this.astroVan=this.physics.add.sprite(vanX,vanY,tex,frame)
-      .setOrigin(.5,.72)
-      .setDepth(vanY+700)
-      .setData('mapObj',true);
-
-    this.astroVan.direction='down';
-    this.astroVan.hasDriver=false;
-    this.astroVan.isDoorAnimating=false;
-    this.astroVan.setScale(useDrive?VAN.renderScale:.50);
-    this.astroVan.setCollideWorldBounds(true);
-
-    if(this.astroVan.body){
-      this.astroVan.body.setImmovable(false);
-      this.astroVan.body.setSize(useDrive?90:175,useDrive?48:108);
-      this.astroVan.body.setOffset(useDrive?19:72,useDrive?38:105);
-    }
-
-    // No visible label in-game. Keep a hidden label object so older update code remains safe.
-    this.vanLabel=this.add.text(this.astroVan.x,this.astroVan.y+78,'',{
-      fontFamily:'Arial Black',
-      fontSize:'14px',
-      color:'#9ff4ff',
-      backgroundColor:'rgba(0,0,0,0)',
-      padding:{x:0,y:0}
-    }).setOrigin(.5).setDepth(this.astroVan.depth+1).setVisible(false).setData('mapObj',true);
-  }
-
-  placeWeapons(){
-    this.data.weapons.forEach(w=>{
-      if(sessionStorage.getItem('picked_'+w.id))return;
-
-      const tex=this.textures.exists('weapon_pickups')?'weapon_pickups':'fallback_weapon';
-      const s=this.add.sprite(w.x,w.y,tex,w.frame||0)
-        .setScale(tex==='weapon_pickups'?.78:1)
-        .setDepth(w.y+500)
-        .setData('mapObj',true);
-
-      s.weaponData=w;
-      this.weaponSprites.push(s);
-    });
-  }
-
-  placeInteriorMarkers(){
-    this.data.interiors.forEach(d=>{
-      const r=this.add.rectangle(d.x+d.w/2,d.y+d.h/2,d.w,d.h,0x24dfff,.07)
-        .setStrokeStyle(2,0x24dfff,.18)
-        .setDepth(20)
-        .setData('mapObj',true);
-      r.interiorData=d;
-
-      const t=this.add.text(d.x+d.w/2,d.y+d.h/2,d.label,{
-        fontFamily:'Arial Black',
-        fontSize:'12px',
-        color:'#bdefff',
-        backgroundColor:'rgba(0,0,0,.45)',
-        padding:{x:5,y:2}
-      }).setOrigin(.5).setDepth(21).setData('mapObj',true);
-
-      t.setVisible(false);
-      r.labelText=t;
-    });
-  }
-
-  walkable(x,y){
-    if(x<8||y<8||x>this.mapW-8||y>this.mapH-8)return false;
-    if(!this.maskCtx)return true;
-
-    const sx=Math.floor(Phaser.Math.Clamp(x,0,this.maskW-1));
-    const sy=Math.floor(Phaser.Math.Clamp(y,0,this.maskH-1));
-
-    try{
-      const p=this.maskCtx.getImageData(sx,sy,1,1).data;
-      return p[0]>=220 && p[1]>=220 && p[2]>=220;
-    }catch(e){
-      return true;
-    }
-  }
-
-  canMove(nx,ny){
-    const samples=[[0,0],[-15,5],[15,5],[0,18]];
-    return samples.every(([ox,oy])=>this.walkable(nx+ox,ny+oy));
-  }
-
-  update(_,delta){
-    if(TOUCH.start){
-      TOUCH.start=false;
-      this.togglePauseInventory();
-    }
-
-    if(this.pausedForInventory){
-      this.handlePauseInput();
-      return;
-    }
-
-    if(this.playerInVan && this.astroVan){
-      this.updateVanDriving(delta);
-
-      if(TOUCH.b){
-        TOUCH.b=false;
-        this.exitVan();
-      }
-
-      this.hud.setText(`${this.cfg.label} | Driving Astro Van — Donny inside | ${Math.round(this.astroVan.x)},${Math.round(this.astroVan.y)} | ${GAME_IDENTITY.genre}`);
-      this.weaponHud.setText('Vehicle: Astro Van');
-      return;
-    }
-
-    this.updateDonnyMovement(delta);
-    this.updatePromptHints();
-    this.updateOverlays();
-
-    if(TOUCH.a){TOUCH.a=false;this.interact()}
-    if(TOUCH.xBtn){TOUCH.xBtn=false;this.primaryXAction()}
-    if(TOUCH.y){TOUCH.y=false;this.jump()}
-    if(TOUCH.b){TOUCH.b=false;this.smartBAction()}
-
-    this.hud.setText(`${this.cfg.label} | Donny | ${Math.round(this.player.x)},${Math.round(this.player.y)} | ${GAME_IDENTITY.genre}`);
-    this.weaponHud.setText(`Weapon: ${this.heldWeapon?this.heldWeapon.name:'empty'} | Pistol: ${this.pistolEquipped?'equipped':'put away'} | Bag: ${this.inventoryItems.length}`);
-  }
-
-  updateDonnyMovement(delta){
-    if(!this.player || this.anyBlockingAction())return;
-
-    let vx=TOUCH.x,vy=TOUCH.y;
-
-    if(this.keys.LEFT.isDown||this.keys.A.isDown)vx--;
-    if(this.keys.RIGHT.isDown||this.keys.D.isDown)vx++;
-    if(this.keys.UP.isDown||this.keys.W.isDown)vy--;
-    if(this.keys.DOWN.isDown||this.keys.S.isDown)vy++;
-
-    const len=Math.hypot(vx,vy);
-    const rawLen=len;
-    if(len>1){vx/=len;vy/=len}
-
-    if(Math.abs(vx)>Math.abs(vy)){
-      if(vx>0)this.lastDir='right';
-      else if(vx<0)this.lastDir='left';
-    } else {
-      if(vy>0)this.lastDir='down';
-      else if(vy<0)this.lastDir='up';
-    }
-
-    const wantsRun=!this.crawlMode && (rawLen>.78 || this.keys.SHIFT?.isDown);
-    const moveSpeed=this.crawlMode?DONNY.crawlSpeed:(wantsRun?DONNY.runSpeed:DONNY.speed);
-    const step=moveSpeed*delta/1000;
-    const nx=this.player.x+vx*step;
-    const ny=this.player.y+vy*step;
-
-    if(this.canMove(nx,this.player.y))this.player.x=Phaser.Math.Clamp(nx,0,this.mapW);
-    if(this.canMove(this.player.x,ny))this.player.y=Phaser.Math.Clamp(ny,0,this.mapH);
-
-    this.animateDonny(vx,vy,wantsRun);
-    this.depthActors();
-  }
-
-  animateDonny(vx,vy,wantsRun=false){
-    if(!this.textures.exists('donny_overhead'))return;
-
-    const moving=Math.hypot(vx,vy)>.05;
-
-    if(moving){
-      let anim=`donny_walk_${this.lastDir}`;
-      if(this.crawlMode && this.textures.exists('donny_crawl'))anim=`donny_crawl_${this.lastDir}`;
-      else if(wantsRun && this.textures.exists('donny_run'))anim=`donny_run_${this.lastDir}`;
-
-      if(this.player.anims.currentAnim?.key!==anim)this.player.play(anim,true);
-    } else {
-      this.player.anims.stop();
-      const idleTex=this.crawlMode && this.textures.exists('donny_crawl')?'donny_crawl':(this.textures.exists('donny_idle')?'donny_idle':'donny_overhead');
-      this.player.setTexture(idleTex);
-      this.player.setFrame(DONNY.directionFrame[this.lastDir]||0);
-      this.player.setScale(DONNY.scale);
-    }
-  }
-
-  depthActors(){
-    if(this.player)this.player.setDepth(this.player.y+1000);
-    if(this.gunOverlay)this.gunOverlay.setDepth(this.player.depth+6);
-    if(this.weaponOverlay)this.weaponOverlay.setDepth(this.player.depth+5);
-    if(this.astroVan)this.astroVan.setDepth(this.astroVan.y+700);
-    if(this.vanLabel&&this.astroVan){
-      this.vanLabel.setPosition(this.astroVan.x,this.astroVan.y+78);
-      this.vanLabel.setDepth(this.astroVan.depth+1);
-    }
-    this.weaponSprites.forEach(s=>s.setDepth(s.y+500));
-  }
-
-  updateOverlays(){
-    if(!this.player)return;
-
-    const offset=HOLSTER.offset[this.lastDir]||{x:0,y:0};
-
-    // No separate holster prop for now.
-    if(this.gunOverlay){
-      const gunOffset=GUN_PROP.offset[this.lastDir]||{x:0,y:0};
-      this.gunOverlay.setPosition(this.player.x+gunOffset.x,this.player.y+gunOffset.y);
-      this.gunOverlay.setFrame(GUN_PROP.directionFrame[this.lastDir]||0);
-      // Visibility is controlled precisely inside pistolAction().
-    }
-
-    if(this.weaponOverlay){
-      if(!this.heldWeapon || !this.textures.exists('weapon_overlay')){
-        this.weaponOverlay.setVisible(false);
+    const p=PAGES[id];
+    let w,h;
+    if(p.synthetic){w=p.width;h=p.height;this.createDesertMap(w,h);}
+    else{
+      const tex=this.textures.exists(key(id,'base'))?key(id,'base'):null;
+      if(tex){
+        const img=this.textures.get(tex).getSourceImage();
+        w=img.width;h=img.height;
+        this.add.image(0,0,tex).setOrigin(0).setDepth(0).setData('mapObj',true);
       } else {
-        this.weaponOverlay.setVisible(true);
-        this.weaponOverlay.setPosition(this.player.x,this.player.y-2);
-        this.weaponOverlay.setFrame(WEAPON_DIR_FRAME[this.lastDir]||0);
+        w=1536;h=1152;this.createDesertMap(w,h);
       }
     }
-  }
+    this.mapW=w;this.mapH=h;this.data=buildPageData(id,w,h);
 
-  updateVanDriving(delta){
-    const van=this.astroVan;
-    if(!van || van.isDoorAnimating)return;
+    const sp=this.data.spawns[spawnId]||this.data.spawns.donny_city_start||Object.values(this.data.spawns)[0]||{x:w*.5,y:h*.55};
+    this.playerX=sp.x;this.playerY=sp.y;
+    this.createPlayerSprites();
 
-    let vx=TOUCH.x,vy=TOUCH.y;
-
-    if(this.keys.LEFT.isDown||this.keys.A.isDown)vx--;
-    if(this.keys.RIGHT.isDown||this.keys.D.isDown)vx++;
-    if(this.keys.UP.isDown||this.keys.W.isDown)vy--;
-    if(this.keys.DOWN.isDown||this.keys.S.isDown)vy++;
-
-    const len=Math.hypot(vx,vy);
-    if(len>1){vx/=len;vy/=len}
-
-    const moving=Math.hypot(vx,vy)>.05;
-
-    if(moving){
-      const oldDir=van.direction||'down';
-
-      van.direction=getVanDirection8(vx,vy)||van.direction||'down';
-
-      const nextX=van.x+vx*VAN.speed*delta/1000;
-      const nextY=van.y+vy*VAN.speed*delta/1000;
-
-      if(this.canMove(nextX,van.y))van.x=Phaser.Math.Clamp(nextX,0,this.mapW);
-      if(this.canMove(van.x,nextY))van.y=Phaser.Math.Clamp(nextY,0,this.mapH);
-
-      if(this.textures.exists(VAN.driveKey)){
-        // Play only the row assigned to the current direction. Never cross rows.
-        const anim=VAN.driveAnim[van.direction];
-        if(anim)van.play(anim,true);
-        else van.setTexture(VAN.driveKey,VAN.idleFrame[van.direction]||0);
-      }
+    if(!this.van || id==='GLASSWELL_C3'){
+      this.spawnVanNearDonny();
     } else {
-      if(van.anims)van.anims.stop();
-      if(this.textures.exists(VAN.driveKey)){
-        van.setTexture(VAN.driveKey,VAN.idleFrame[van.direction]||0);
-      }
+      this.van.setVisible(id===this.vanPage);
     }
 
-    van.setDepth(van.y+700);
-
-    if(this.player){
-      this.player.setPosition(van.x,van.y);
+    if(!p.synthetic && this.textures.exists(key(id,'fg'))){
+      this.add.image(0,0,key(id,'fg')).setOrigin(0).setDepth(9000).setData('mapObj',true);
     }
+    this.cameras.main.setBounds(0,0,w,h);
+    this.cameras.main.startFollow(this.inVan?this.van:this.player,true,.12,.12);
+    this.message(p.label);
+  }
 
-    if(this.vanLabel){
-      this.vanLabel.setPosition(van.x,van.y+78).setDepth(van.depth+1);
+  createDesertMap(w,h){
+    const g=this.add.graphics().setDepth(0).setData('mapObj',true);
+    g.fillStyle(0x171411,1).fillRect(0,0,w,h);
+    g.fillStyle(0x2a241c,1);
+    for(let y=0;y<h;y+=96)g.fillRect(0,y+46,w,2);
+    g.fillStyle(0x3a3127,.8);
+    for(let x=0;x<w;x+=160)g.fillRect(x,0,2,h);
+    g.lineStyle(4,0x6f6254,.9);
+    g.strokeRect(80,80,w-160,h-160);
+  }
+
+  createPlayerSprites(){
+    if(!this.player){
+      const texture=this.textures.exists('donny_idle')?'donny_idle':(this.textures.exists('donny_overhead')?'donny_overhead':'donny_fallback');
+      this.player=this.add.sprite(this.playerX,this.playerY,texture,0).setOrigin(.5,.72).setScale(DONNY.scale).setDepth(this.playerY+1000);
+      this.gun=this.add.sprite(this.playerX,this.playerY,GUN_PROP.key,0).setOrigin(.5,.5).setScale(GUN_PROP.scale).setVisible(false).setDepth(this.playerY+1005);
+      this.holster=this.add.sprite(this.playerX,this.playerY,HOLSTER.key,0).setOrigin(.5,.5).setScale(HOLSTER.scale).setVisible(false).setDepth(this.playerY+1004);
     }
+    this.player.setPosition(this.playerX,this.playerY).setVisible(!this.inVan).setDepth(this.playerY+1000);
+    this.updateGunOverlay();
+    this.setDonnyIdle();
+  }
 
-    const route=this.routeAt(van.x,van.y+12);
-    if(route && !route.msg){
-      this.route(route,'vehicle');
+  spawnVanNearDonny(){
+    if(!this.van){
+      this.van=this.add.sprite(this.playerX-165,this.playerY+105,VAN.activeDriveKey,VAN.idleFrame.right||0).setOrigin(.5,.68).setScale(VAN.renderScale).setDepth(this.playerY+900);
+    } else {
+      this.van.setPosition(this.playerX-165,this.playerY+105).setVisible(true);
     }
+    this.vanX=this.van.x;this.vanY=this.van.y;this.vanPage=this.pageId;this.vanDir='right';
   }
 
-  nearestWeapon(){
-    let best=null,bestD=999999;
-
-    this.weaponSprites.forEach(s=>{
-      const d=Phaser.Math.Distance.Between(this.player.x,this.player.y,s.x,s.y);
-      if(d<bestD){best=s;bestD=d}
-    });
-
-    return bestD<70?best:null;
+  inputVector(){
+    let x=TOUCH.x,y=TOUCH.y;
+    if(this.keys.LEFT.isDown||this.keys.A.isDown)x-=1;
+    if(this.keys.RIGHT.isDown||this.keys.D.isDown)x+=1;
+    if(this.keys.UP.isDown||this.keys.W.isDown)y-=1;
+    if(this.keys.DOWN.isDown||this.keys.S.isDown)y+=1;
+    const l=Math.hypot(x,y);
+    if(l>1){x/=l;y/=l}
+    return {x,y,len:Math.min(1,l)};
   }
 
-  routeAt(x,y){
-    return this.data.routes.find(t=>rectHit(t.r,x,y));
+  directionFromVector(x,y,last='down'){
+    if(Math.abs(x)<.05 && Math.abs(y)<.05)return last;
+    if(Math.abs(x)>Math.abs(y))return x>0?'right':'left';
+    return y>0?'down':'up';
   }
 
-  currentRoute(){
-    const x=this.player.x,y=this.player.y+12;
-    return this.routeAt(x,y);
+  vanDirectionFromVector(x,y,last='right'){
+    if(Math.abs(x)<.05 && Math.abs(y)<.05)return last;
+    const ang=Math.atan2(y,x);
+    const oct=Math.round(ang/(Math.PI/4));
+    const dirs={0:'right',1:'downRight',2:'down',3:'downLeft',4:'left',"-4":'left',"-3":'upLeft',"-2":'up',"-1":'upRight'};
+    return dirs[oct]||last;
   }
 
-  currentInterior(){
-    const x=this.player.x,y=this.player.y+8;
-    return this.data.interiors.find(t=>rectHit(t,x,y));
+  handleA(){
+    if(this.isInventoryOpen){this.useInventory();return}
+    if(this.inVan)return;
+    if(this.jumpZ>1 || this.isCrawling)return;
+    this.jumpVel=8.8;
+    this.actionType='jump';
+    this.actionUntil=this.time.now+420;
+    this.playDonnyAction('jump');
   }
 
-  nearVan(){
-    return this.astroVan && Phaser.Math.Distance.Between(this.player.x,this.player.y,this.astroVan.x,this.astroVan.y)<VAN.enterDistance;
+  handleX(){
+    if(this.isInventoryOpen){this.nextInventory();return}
+    if(this.inVan)return;
+    if(this.weaponEquipped)this.shootPistol();
+    else this.punch();
   }
 
-  updatePromptHints(){
-    const w=this.nearestWeapon();
-    if(w){this.prompt.setText(`A/E: pick up ${w.weaponData.name}`);return}
-
-    if(this.nearVan()){this.prompt.setText('A/E: enter Astro Van');return}
-
-    const interior=this.currentInterior();
-    if(interior){this.prompt.setText(`A/E: ${interior.label}`);return}
-
-    const r=this.currentRoute();
-    if(r){this.prompt.setText(r.msg?r.msg:`A/E: ${r.label}`);return}
-  }
-
-  anyBlockingAction(){
-    return this.pistolActionActive || this.punchActionActive || this.kickActionActive || this.jumpActionActive || this.slideActionActive;
-  }
-
-  isTryingToMove(){
-    return Math.hypot(TOUCH.x,TOUCH.y)>.08 ||
-      this.keys.LEFT?.isDown || this.keys.RIGHT?.isDown || this.keys.UP?.isDown || this.keys.DOWN?.isDown ||
-      this.keys.A?.isDown || this.keys.D?.isDown || this.keys.W?.isDown || this.keys.S?.isDown;
-  }
-
-  actionOrJump(){
-    if(this.playerInVan)return;
-    if(this.nearestWeapon() || this.nearVan() || this.currentInterior() || this.currentRoute()){
-      this.interact();
-      return;
-    }
-    this.jump();
-  }
-
-  smartBAction(){
-    if(this.playerInVan){
-      this.exitVan();
-      return;
-    }
-    if(this.heldWeapon){
-      this.dropWeapon();
-      return;
-    }
-    if(this.isTryingToMove()){
-      this.slide();
-      return;
-    }
+  handleB(){
+    if(this.isInventoryOpen){this.dropInventory();return}
+    if(this.inVan){this.exitVan();return}
+    const input=this.inputVector();
+    if(this.isCrawling){this.isCrawling=false;this.setDonnyIdle();this.message('Crawl off');return}
+    if(input.y>.55){this.isCrawling=true;this.message('Crawl on');return}
+    if(input.len>.25){this.slide(input);return}
     this.kick();
   }
 
-  toggleCrawl(){
-    if(this.anyBlockingAction() || this.playerInVan)return;
-    this.crawlMode=!this.crawlMode;
-    this.restoreDonnyBaseFrame();
-    this.message(this.crawlMode?'Crawl mode on':'Crawl mode off');
-  }
-
-  interact(){
-    if(this.playerInVan)return;
-
-    const w=this.nearestWeapon();
-    if(w){this.pickWeapon(w);return}
-
+  handleY(){
+    if(this.isInventoryOpen){this.toggleInventory();return}
     if(this.nearVan()){this.enterVan();return}
-
-    const interior=this.currentInterior();
-    if(interior){this.message(interior.msg);return}
-
-    const r=this.currentRoute();
-    if(r){this.route(r);return}
-
     this.message('No interaction here');
   }
 
-  pickWeapon(sprite){
-    if(this.heldWeapon){
-      this.message('Already holding a weapon. Press B to drop it.');
-      return;
-    }
-
-    const item=Object.assign({},sprite.weaponData);
-    if(!this.inventoryItems.some(i=>i.id===item.id)){
-      this.inventoryItems.push(item);
-    }
-    this.heldWeapon=item;
-    this.pistolEquipped=false;
-    sessionStorage.setItem('picked_'+item.id,'1');
-    sprite.destroy();
-    this.weaponSprites=this.weaponSprites.filter(s=>s!==sprite);
-    this.message(`Picked up and equipped ${item.name}`);
-  }
-
-  dropOrExit(){
-    if(this.playerInVan){
-      this.exitVan();
-      return;
-    }
-    this.dropWeapon();
-  }
-
-  dropWeapon(){
-    if(!this.heldWeapon){
-      this.message('No weapon to drop');
-      return;
-    }
-
-    const w=this.heldWeapon;
-    this.heldWeapon=null;
-    this.inventoryItems=this.inventoryItems.filter(i=>i.id!==w.id);
-    sessionStorage.removeItem('picked_'+w.id);
-
-    w.x=this.player.x+(this.lastDir==='right'?45:this.lastDir==='left'?-45:0);
-    w.y=this.player.y+(this.lastDir==='down'?45:this.lastDir==='up'?-45:0);
-
-    const tex=this.textures.exists('weapon_pickups')?'weapon_pickups':'fallback_weapon';
-    const s=this.add.sprite(w.x,w.y,tex,w.frame||0)
-      .setScale(tex==='weapon_pickups'?.78:1)
-      .setDepth(w.y+500)
-      .setData('mapObj',true);
-
-    s.weaponData=w;
-    this.weaponSprites.push(s);
-    this.message(`Dropped ${w.name}`);
-  }
-
-  primaryXAction(){
-    if(this.playerInVan)return;
-    if(this.time.now<this.cool)return;
-
-    if(this.heldWeapon){
-      this.cool=this.time.now+260;
-      this.weaponAttack();
-      return;
-    }
-
-    if(this.pistolEquipped){
-      this.cool=this.time.now+360;
-      this.pistolAction();
-      return;
-    }
-
-    // No weapon and pistol put away: X punches.
-    this.punch();
-  }
-
-  firePistolOrWeapon(){
-    this.primaryXAction();
-  }
-
-  pistolAction(){
-    if(this.anyBlockingAction())return;
-    this.pistolActionActive=true;
-    this.crawlMode=false;
-
-    if(this.weaponOverlay)this.weaponOverlay.setVisible(false);
-    if(this.gunOverlay)this.gunOverlay.setVisible(false);
-
-    if(this.textures.exists('donny_pistol')){
-      this.player.anims.stop();
-      const anim=`donny_shoot_${this.lastDir}`;
-      if(this.anims.exists(anim))this.player.play(anim,true);
-      else this.player.setTexture('donny_pistol',ACTION.directionFrame[this.lastDir]||0);
-      this.player.setScale(ACTION.scale);
-    }
-
-    // Gun appears when the shooting animation reaches the hand-out pose.
-    this.time.delayedCall(ACTION.gunShowDelay,()=>{
-      if(!this.pistolActionActive || !this.gunOverlay)return;
-      const gunOffset=GUN_PROP.offset[this.lastDir]||{x:0,y:0};
-      this.gunOverlay.setPosition(this.player.x+gunOffset.x,this.player.y+gunOffset.y);
-      this.gunOverlay.setFrame(GUN_PROP.directionFrame[this.lastDir]||0);
-      this.gunOverlay.setScale(GUN_PROP.scale);
-      this.gunOverlay.setVisible(true);
-      this.spawnMuzzleFx();
-    });
-
-    // Gun disappears before Donny drops his hand.
-    this.time.delayedCall(Math.max(0,ACTION.shootDuration-ACTION.gunHideBeforeEnd),()=>{
-      if(this.gunOverlay)this.gunOverlay.setVisible(false);
-    });
-
-    this.time.delayedCall(ACTION.shootDuration,()=>{
-      this.pistolActionActive=false;
-      if(this.gunOverlay)this.gunOverlay.setVisible(false);
-      this.restoreDonnyBaseFrame();
-    });
-  }
-
-  punch(){
-    if(this.playerInVan || this.anyBlockingAction())return;
-    if(this.time.now<this.cool)return;
-    this.cool=this.time.now+260;
-    this.crawlMode=false;
-    this.playDonnyAction('punch','donny_punch','punchActionActive',ACTION.duration);
-  }
-
-  kick(){
-    if(this.playerInVan || this.anyBlockingAction())return;
-    if(this.time.now<this.cool)return;
-    this.cool=this.time.now+280;
-    this.crawlMode=false;
-    this.playDonnyAction('kick','donny_kick','kickActionActive',ACTION.duration);
-  }
-
-  jump(){
-    if(this.playerInVan || this.anyBlockingAction())return;
-    if(this.time.now<this.cool)return;
-    this.cool=this.time.now+360;
-    this.crawlMode=false;
-    this.playDonnyAction('jump','donny_jump','jumpActionActive',360,40);
-  }
-
-  slide(){
-    if(this.playerInVan || this.anyBlockingAction())return;
-    if(this.time.now<this.cool)return;
-    this.cool=this.time.now+420;
-    this.crawlMode=false;
-    this.playDonnyAction('slide','donny_slide','slideActionActive',380,70);
-  }
-
-  playDonnyAction(label,textureKey,flag,duration,movePush=0){
-    this[flag]=true;
-
-    if(this.textures.exists(textureKey)){
-      this.player.anims.stop();
-      const anim=`${label==='shoot'?'donny_shoot':textureKey}_${this.lastDir}`;
-      if(this.anims.exists(anim)){
-        this.player.play(anim,true);
-      } else {
-        this.player.setTexture(textureKey,ACTION.directionFrame[this.lastDir]||0);
-      }
-      this.player.setScale(ACTION.scale);
-    }
-
-    if(movePush){
-      const dx=this.lastDir==='right'?1:this.lastDir==='left'?-1:0;
-      const dy=this.lastDir==='down'?1:this.lastDir==='up'?-1:0;
-      this.tweens.add({
-        targets:this.player,
-        x:this.player.x+dx*movePush,
-        y:this.player.y+dy*movePush,
-        duration:duration*.55,
-        ease:'Quad.easeOut'
-      });
-    }
-
-    this.time.delayedCall(duration,()=>{
-      this[flag]=false;
-      this.restoreDonnyBaseFrame();
-    });
-  }
-
-  weaponAttack(){
-    this.spawnHitFx();
-    this.message(`${this.heldWeapon.name} attack`);
-  }
-
-  restoreDonnyBaseFrame(){
-    if(this.gunOverlay)this.gunOverlay.setVisible(false);
-
-    const baseTex=this.crawlMode && this.textures.exists('donny_crawl')?'donny_crawl':(this.textures.exists('donny_idle')?'donny_idle':'donny_overhead');
-    if(this.textures.exists(baseTex)){
-      this.player.setTexture(baseTex,DONNY.directionFrame[this.lastDir]||0);
-      this.player.setScale(DONNY.scale);
-    } else {
-      this.player.setTexture('fallback_player');
-      this.player.setScale(1);
-    }
-  }
-
-  spawnMuzzleFx(){
-    // Tiny muzzle spark only. Do not use the weapon_fx sprite sheet here because it can look
-    // like a flame near Donny's feet when frame origins differ.
-    const ox=this.lastDir==='right'?36:this.lastDir==='left'?-36:0;
-    const oy=this.lastDir==='down'?30:this.lastDir==='up'?-34:0;
-
-    const spark=this.add.graphics()
-      .setDepth(this.player.depth+12)
-      .setData('mapObj',true);
-
-    spark.lineStyle(3,0x9ff4ff,.95);
-    spark.strokeCircle(this.player.x+ox,this.player.y+oy,7);
-    spark.lineStyle(2,0xff2aa1,.85);
-    spark.lineBetween(this.player.x+ox,this.player.y+oy,this.player.x+ox+(this.lastDir==='right'?15:this.lastDir==='left'?-15:0),this.player.y+oy+(this.lastDir==='down'?15:this.lastDir==='up'?-15:0));
-
-    this.tweens.add({
-      targets:spark,
-      alpha:0,
-      duration:110,
-      onComplete:()=>spark.destroy()
-    });
-  }
-
-  spawnHitFx(){
-    const ox=this.lastDir==='right'?65:this.lastDir==='left'?-65:0;
-    const oy=this.lastDir==='down'?55:this.lastDir==='up'?-70:0;
-    const tex=this.textures.exists('weapon_fx')?'weapon_fx':'fallback_fx';
-
-    const fx=this.add.sprite(this.player.x+ox,this.player.y+oy,tex,0)
-      .setScale(.75)
-      .setDepth(this.player.depth+10)
-      .setData('mapObj',true);
-
-    fx.setAlpha(.92);
-
-    this.tweens.add({
-      targets:fx,
-      alpha:0,
-      scale:1.05,
-      duration:180,
-      onComplete:()=>fx.destroy()
-    });
-  }
-
-  getDirectionFromVanToPlayer(){
-    const van=this.astroVan;
-    const dx=this.player.x-van.x;
-    const dy=this.player.y-van.y;
-
-    if(Math.abs(dx)>Math.abs(dy)){
-      return dx>=0?'right':'left';
-    }
-
-    return dy>=0?'down':'up';
-  }
+  nearVan(){return this.van && this.van.visible && dist(this.playerX,this.playerY,this.van.x,this.van.y)<VAN.enterDistance}
 
   enterVan(){
-    const van=this.astroVan;
-    if(!van || van.hasDriver || van.isDoorAnimating)return false;
-
-    const dist=Phaser.Math.Distance.Between(this.player.x,this.player.y,van.x,van.y);
-    if(dist>VAN.enterDistance){
-      this.message('Move closer to Astro Van');
-      return false;
-    }
-
-    const doorDir=this.getDirectionFromVanToPlayer();
-    van.direction=doorDir;
-    van.isDoorAnimating=true;
-
+    this.inVan=true;
     this.player.setVisible(false);
-    if(this.player.body)this.player.body.enable=false;
-    if(this.holster)this.holster.setVisible(false);
-    if(this.gunOverlay)this.gunOverlay.setVisible(false);
-    if(this.weaponOverlay)this.weaponOverlay.setVisible(false);
-
-    if(this.textures.exists(VAN.openKey)){
-      van.setTexture(VAN.openKey,VAN.doorStartFrame[doorDir]||0);
-      van.setOrigin(.5,.72);
-      van.play(VAN.doorAnim[doorDir]);
-
-      van.once(Phaser.Animations.Events.ANIMATION_COMPLETE,()=>{
-        this.finishEnterVan(doorDir);
-      });
-    } else {
-      this.finishEnterVan(doorDir);
-    }
-
-    this.message(`Entering Astro Van — ${doorDir} door`);
-    return true;
-  }
-
-  finishEnterVan(doorDir){
-    const van=this.astroVan;
-    if(!van)return;
-
-    van.hasDriver=true;
-    van.isDoorAnimating=false;
-    this.playerInVan=true;
-    this.activeVehicle=van;
-
-    if(this.textures.exists(VAN.driveKey)){
-      van.setTexture(VAN.driveKey,VAN.idleFrame[doorDir]||0);
-    }
-
-    van.direction=doorDir;
-    this.cameras.main.startFollow(van,true,.12,.12);
-    this.message('Driving Astro Van — B exits');
+    this.gun.setVisible(false);
+    this.holster.setVisible(false);
+    this.cameras.main.startFollow(this.van,true,.12,.12);
+    this.message('Entered Astro Van — B exits');
   }
 
   exitVan(){
-    const van=this.astroVan;
-    if(!van || !this.playerInVan)return false;
-
-    const dir=cardinalFrom8(van.direction||'down');
-    const off=VAN.exitOffset[dir]||VAN.exitOffset.down;
-
-    van.hasDriver=false;
-    van.isDoorAnimating=false;
-    this.playerInVan=false;
-    this.activeVehicle=null;
-
-    if(van.anims)van.anims.stop();
-
-    if(this.textures.exists(VAN.driveKey)){
-      van.setTexture(VAN.driveKey,VAN.idleFrame[dir]||0);
-    }
-
-    this.player.setPosition(van.x+off.x,van.y+off.y);
-    this.player.setVisible(true);
-    if(this.player.body)this.player.body.enable=true;
-
-    this.restoreDonnyBaseFrame();
-
-    if(this.gunOverlay)this.gunOverlay.setVisible(false);
-    if(this.holster)this.holster.setVisible(false);
-
+    const off=VAN.exitOffset[this.playerDir]||VAN.exitOffset.down;
+    this.inVan=false;
+    this.playerX=clamp(this.van.x+off.x,20,this.mapW-20);
+    this.playerY=clamp(this.van.y+off.y,20,this.mapH-20);
+    this.player.setPosition(this.playerX,this.playerY).setVisible(true);
     this.cameras.main.startFollow(this.player,true,.12,.12);
+    this.setDonnyIdle();
     this.message('Exited Astro Van');
-    return true;
   }
 
-  route(t,mode='player'){
-    if(this.time.now<this.cool)return;
+  punch(){this.actionType='punch';this.actionUntil=this.time.now+280;this.playDonnyAction('punch');this.message('Punch')}
+  kick(){this.actionType='kick';this.actionUntil=this.time.now+320;this.playDonnyAction('kick');this.message('Kick')}
+  slide(input){
+    this.actionType='slide';this.slideUntil=this.time.now+360;this.actionUntil=this.slideUntil;this.slideVec={x:input.x,y:input.y};
+    this.playerDir=this.directionFromVector(input.x,input.y,this.playerDir);
+    this.playDonnyAction('slide');
+    this.message('Slide');
+  }
 
-    if(t.msg){
-      this.message(t.msg);
-      this.cool=this.time.now+450;
-      return;
+  shootPistol(){
+    if(this.pistolAmmo<=0){this.message('Pistol empty');return}
+    this.pistolAmmo--;
+    this.actionType='shoot';
+    this.actionUntil=this.time.now+ACTION.shootDuration;
+    this.playDonnyAction('shoot');
+    this.spawnLaserBolt();
+    this.message('Pistol fired');
+  }
+
+  spawnLaserBolt(){
+    const v={down:{x:0,y:1},right:{x:1,y:0},left:{x:-1,y:0},up:{x:0,y:-1}}[this.playerDir]||{x:1,y:0};
+    const h=GUN_PROP.hand[this.playerDir]||GUN_PROP.hand.right;
+    const bolt=this.add.image(this.playerX+h.x+v.x*22,this.playerY+h.y+v.y*22,'laser_bolt').setDepth(this.playerY+1200);
+    if(this.playerDir==='down')bolt.setAngle(90);
+    if(this.playerDir==='up')bolt.setAngle(-90);
+    if(this.playerDir==='left')bolt.setAngle(180);
+    this.tweens.add({targets:bolt,x:bolt.x+v.x*220,y:bolt.y+v.y*220,alpha:0,duration:280,onComplete:()=>bolt.destroy()});
+  }
+
+  playDonnyAction(action){
+    const keyName= action==='shoot' ? 'donny_shoot' : `donny_${action}`;
+    const anim=`${keyName}_${this.playerDir}`;
+    if(this.anims.exists(anim))this.player.play(anim,true);
+  }
+
+  setDonnyIdle(){
+    const texture=this.textures.exists('donny_idle')?'donny_idle':(this.textures.exists('donny_overhead')?'donny_overhead':'donny_fallback');
+    this.player.stop();
+    this.player.setTexture(texture);
+    this.player.setFrame(DONNY.directionFrame[this.playerDir]||0);
+  }
+
+  updateGunOverlay(){
+    if(!this.gun || !this.holster)return;
+    const now=this.time?.now||0;
+    const shooting=this.weaponEquipped && this.actionType==='shoot' && now>=this.actionUntil-ACTION.shootDuration+ACTION.gunShowDelay && now<this.actionUntil-ACTION.gunHideBeforeEnd;
+    const frame=GUN_PROP.directionFrame[this.playerDir]??1;
+    const hand=GUN_PROP.hand[this.playerDir]||GUN_PROP.hand.right;
+    this.gun.setFrame(frame).setPosition(this.playerX+hand.x,this.playerY+hand.y-this.jumpZ).setDepth(this.playerY+1006).setVisible(shooting && !this.inVan);
+    const hip=HOLSTER.hip[this.playerDir]||HOLSTER.hip.down;
+    this.holster.setFrame(HOLSTER.directionFrame[this.playerDir]??0).setPosition(this.playerX+hip.x,this.playerY+hip.y-this.jumpZ).setDepth(this.playerY+1004).setVisible(this.weaponEquipped && !shooting && !this.inVan && !this.isCrawling);
+  }
+
+  toggleInventory(){
+    this.isInventoryOpen=!this.isInventoryOpen;
+    if(this.isInventoryOpen)this.openInventory(); else this.closeInventory();
+  }
+  openInventory(){
+    if(!this.invBox){
+      this.invBox=this.add.container(0,0).setScrollFactor(0).setDepth(30000);
+      const bg=this.add.rectangle(480,270,740,410,0x030506,.93).setStrokeStyle(3,0x67dce8,.85);
+      this.invText=this.add.text(140,110,'',{fontFamily:'Courier New',fontSize:'16px',color:'#f4e7c2',lineSpacing:8});
+      const title=this.add.text(140,70,'DONNY INVENTORY',{fontFamily:'Arial Black',fontSize:'24px',color:'#9ff4ff'});
+      const help=this.add.text(140,430,'A equip/unequip/use | B drop | X next | Y/START close',{fontFamily:'Courier New',fontSize:'14px',color:'#d9b46a'});
+      this.invBox.add([bg,title,this.invText,help]);
     }
-
-    this.cool=this.time.now+700;
-    this.cameras.main.fadeOut(130,0,0,0);
-
-    const keepDriving = mode==='vehicle' || this.playerInVan;
-
-    this.time.delayedCall(150,()=>{
-      this.loadPage(t.to,t.spawn,{keepDriving});
-    });
+    this.invBox.setVisible(true);this.refreshInventory();
   }
-
-  toggleDebug(){
-    this.debug=!this.debug;
-    this.drawDebug();
-    this.message(`Debug ${this.debug?'on':'off'}`);
+  closeInventory(){if(this.invBox)this.invBox.setVisible(false);this.message('Inventory closed')}
+  refreshInventory(){
+    if(!this.invText)return;
+    this.invText.setText([
+      `Weapon: ${this.weaponEquipped?'Pistol equipped':'empty'}`,
+      `Ammo: ${this.pistolAmmo}/24`,
+      `Bag: ${this.bag.length}`,
+      '',
+      'Selected:',
+      '▶ Dust-9 Laser Pistol',
+      '',
+      'Press A to equip/unequip pistol.'
+    ].join('\n'));
   }
-
-  drawDebug(){
-    if(this.debugG)this.debugG.destroy();
-    this.debugG=this.add.graphics().setDepth(14000).setData('mapObj',true);
-
-    if(!this.debug)return;
-
-    this.debugG.lineStyle(3,0x24dfff,.85);
-    this.data.routes.forEach(t=>this.debugG.strokeRect(t.r.x,t.r.y,t.r.w,t.r.h));
-
-    this.debugG.lineStyle(2,0xff2aa1,.65);
-    this.data.interiors.forEach(t=>this.debugG.strokeRect(t.x,t.y,t.w,t.h));
-
-    this.debugG.fillStyle(0xffd166,.35);
-    this.weaponSprites.forEach(s=>this.debugG.fillCircle(s.x,s.y,18));
-  }
+  useInventory(){this.weaponEquipped=!this.weaponEquipped;this.refreshInventory();this.message(this.weaponEquipped?'Pistol equipped':'Pistol unequipped')}
+  nextInventory(){this.refreshInventory()}
+  dropInventory(){if(this.weaponEquipped){this.weaponEquipped=false;this.refreshInventory();this.message('Dropped/unequipped pistol')}}
 
   message(t){
     this.prompt.setText(t);
-    this.time.delayedCall(1700,()=>{
-      if(this.prompt.text===t)this.prompt.setText('');
-    });
-  }
-}
-
-function createFallbackTextures(scene){
-  const g=scene.add.graphics();
-
-  if(!scene.textures.exists('fallback_map')){
-    g.clear();
-    g.fillStyle(0x101319,1).fillRect(0,0,1536,1152);
-    g.fillStyle(0x222a35,1).fillRect(0,500,1536,270);
-    g.fillStyle(0x121820,1).fillRect(0,0,1536,230).fillRect(0,900,1536,252);
-    g.lineStyle(6,0xff2aa1,.40).strokeRect(160,190,380,250).strokeRect(920,180,360,260);
-    g.generateTexture('fallback_map',1536,1152);
+    this.time.delayedCall(1700,()=>{if(this.prompt.text===t)this.prompt.setText('')});
   }
 
-  if(!scene.textures.exists('fallback_player')){
-    g.clear();
-    g.fillStyle(0x000000,0).fillRect(0,0,128,128);
-    g.fillStyle(0x09090b,1).fillRoundedRect(46,34,36,46,8);
-    g.fillStyle(0xc79d72,1).fillRoundedRect(50,18,28,22,6);
-    g.fillStyle(0x202035,1).fillRect(49,78,12,34).fillRect(67,78,12,34);
-    g.lineStyle(4,0x2a2a2a,1).lineBetween(86,38,86,94);
-    g.fillStyle(0x24dfff,1).fillRect(54,27,5,3).fillRect(68,27,5,3);
-    g.generateTexture('fallback_player',128,128);
-  }
-
-  if(!scene.textures.exists('fallback_holster')){
-    g.clear();
-    g.fillStyle(0x000000,0).fillRect(0,0,128,128);
-    g.fillStyle(0x5a321f,1).fillRoundedRect(74,68,12,24,4);
-    g.lineStyle(2,0xd8a76d,1).strokeRoundedRect(74,68,12,24,4);
-    g.generateTexture('fallback_holster',128,128);
-  }
-
-  if(!scene.textures.exists('fallback_weapon')){
-    g.clear();
-    g.fillStyle(0x000000,0).fillRect(0,0,128,128);
-    g.lineStyle(8,0xd7d7d7,1).lineBetween(35,86,94,38);
-    g.lineStyle(3,0xff2aa1,1).lineBetween(42,80,88,43);
-    g.generateTexture('fallback_weapon',128,128);
-  }
-
-  if(!scene.textures.exists('fallback_fx')){
-    g.clear();
-    g.fillStyle(0x000000,0).fillRect(0,0,128,128);
-    g.lineStyle(8,0x24dfff,.85).strokeCircle(64,64,34);
-    g.lineStyle(4,0xff2aa1,.85).strokeCircle(64,64,22);
-    g.generateTexture('fallback_fx',128,128);
-  }
-
-  if(!scene.textures.exists('fallback_desert')){
-    g.clear();
-    g.fillStyle(0x9f8c65,1).fillRect(0,0,1800,1200);
-    g.fillStyle(0x88744f,1).fillRect(0,520,1800,210);
-    g.fillStyle(0x6f6047,.55).fillRect(0,612,1800,18);
-    g.fillStyle(0xc1aa78,.42);
-    for(let i=0;i<120;i++){
-      const x=(i*137)%1800;
-      const y=(i*83)%1200;
-      g.fillRect(x,y,Phaser.Math.Between(12,48),Phaser.Math.Between(2,8));
+  checkRoutes(){
+    if(this.time.now<this.routeCooldown)return;
+    const routes=this.data?.routes||[];
+    const x=this.inVan?this.van.x:this.playerX;
+    const y=this.inVan?this.van.y:this.playerY;
+    const r=routes.find(rt=>rectHit(rt.r,x,y));
+    if(r&&r.to){
+      this.routeCooldown=this.time.now+800;
+      this.loadPage(r.to,r.spawn);
     }
-    g.lineStyle(4,0xe8d29a,.32);
-    g.lineBetween(0,610,1800,610);
-    g.lineBetween(0,735,1800,735);
-    g.lineStyle(3,0x24dfff,.30);
-    g.strokeRect(1540,435,160,300);
-    g.generateTexture('fallback_desert',1800,1200);
   }
 
-  if(!scene.textures.exists('fallback_van')){
-    g.clear();
-    g.fillStyle(0x000000,0).fillRect(0,0,256,140);
-    g.fillStyle(0x17191d,1).fillRoundedRect(36,52,184,58,10);
-    g.fillStyle(0x2a2f38,1).fillRoundedRect(70,28,116,38,7);
-    g.fillStyle(0x0c1721,1).fillRect(78,60,32,20).fillRect(116,60,32,20).fillRect(156,60,32,20);
-    g.fillStyle(0xff2aa1,1).fillRect(78,108,96,5);
-    g.fillStyle(0x050505,1).fillCircle(64,112,14).fillCircle(196,112,14);
-    g.generateTexture('fallback_van',256,140);
+  updateJump(delta){
+    if(this.jumpZ>0 || this.jumpVel>0){
+      this.jumpZ+=this.jumpVel*delta/16.67;
+      this.jumpVel-=0.65*delta/16.67;
+      if(this.jumpZ<=0){this.jumpZ=0;this.jumpVel=0}
+    }
   }
 
-  g.destroy();
+  update(_,delta){
+    const now=this.time.now;
+    if(TOUCH.a){TOUCH.a=false;this.handleA()}
+    if(TOUCH.xBtn){TOUCH.xBtn=false;this.handleX()}
+    if(TOUCH.b){TOUCH.b=false;this.handleB()}
+    if(TOUCH.y){TOUCH.y=false;this.handleY()}
+    if(TOUCH.start){TOUCH.start=false;this.toggleInventory()}
+
+    this.updateJump(delta);
+    if(this.isInventoryOpen){this.updateGunOverlay();return}
+
+    const input=this.inputVector();
+    const moving=input.len>.08;
+
+    if(this.inVan){
+      if(moving){
+        this.vanDir=this.vanDirectionFromVector(input.x,input.y,this.vanDir);
+        this.van.x=clamp(this.van.x+input.x*VAN.speed*delta/1000,20,this.mapW-20);
+        this.van.y=clamp(this.van.y+input.y*VAN.speed*delta/1000,20,this.mapH-20);
+        const anim=VAN.anim[this.vanDir];
+        if(this.anims.exists(anim))this.van.play(anim,true);
+        else this.van.setFrame(VAN.idleFrame[this.vanDir]||0);
+      } else {
+        this.van.stop();
+        this.van.setFrame(VAN.idleFrame[this.vanDir] ?? 0);
+      }
+      this.van.setDepth(this.van.y+900);
+      this.checkRoutes();
+      this.hud.setText(`${PAGES[this.pageId].label} | Astro Van | ${Math.round(this.van.x)},${Math.round(this.van.y)}`);
+      this.status.setText(`Driving | B exits | Pistol ammo: ${this.pistolAmmo}`);
+      return;
+    }
+
+    if(moving){
+      if(this.moveHoldStart===0)this.moveHoldStart=now;
+      this.playerDir=this.directionFromVector(input.x,input.y,this.playerDir);
+    } else {
+      this.moveHoldStart=0;
+    }
+
+    let speed=DONNY.speed;
+    let mode='WALK';
+    if(this.isCrawling){speed=DONNY.crawlSpeed;mode='CRAWL'}
+    else if(moving && input.len>.72 && now-this.moveHoldStart>350){speed=DONNY.runSpeed;mode='RUN'}
+
+    if(this.actionType==='slide' && now<this.slideUntil){
+      const sv=this.slideVec||input;
+      this.playerX=clamp(this.playerX+sv.x*390*delta/1000,20,this.mapW-20);
+      this.playerY=clamp(this.playerY+sv.y*390*delta/1000,20,this.mapH-20);
+    } else if(moving && !(now<this.actionUntil && ['punch','kick','shoot'].includes(this.actionType))){
+      this.playerX=clamp(this.playerX+input.x*speed*delta/1000,20,this.mapW-20);
+      this.playerY=clamp(this.playerY+input.y*speed*delta/1000,20,this.mapH-20);
+    }
+
+    if(now>this.actionUntil && this.actionType){this.actionType='';}
+    if(!this.actionType){
+      if(this.isCrawling && moving && this.anims.exists(`donny_crawl_${this.playerDir}`))this.player.play(`donny_crawl_${this.playerDir}`,true);
+      else if(mode==='RUN' && moving && this.anims.exists(`donny_run_${this.playerDir}`))this.player.play(`donny_run_${this.playerDir}`,true);
+      else if(moving && this.anims.exists(`donny_walk_${this.playerDir}`))this.player.play(`donny_walk_${this.playerDir}`,true);
+      else if(this.anims.exists(`donny_idle_${this.playerDir}`))this.player.play(`donny_idle_${this.playerDir}`,true);
+      else this.setDonnyIdle();
+    }
+
+    this.player.setPosition(this.playerX,this.playerY-this.jumpZ).setDepth(this.playerY+1000);
+    this.updateGunOverlay();
+    this.checkRoutes();
+
+    if(this.nearVan())this.prompt.setText('Y: enter Astro Van');
+    this.hud.setText(`${PAGES[this.pageId].label} | Donny | ${Math.round(this.playerX)},${Math.round(this.playerY)} | 2.5D GTA-style open-city sci-fi RPG / brawler`);
+    this.status.setText(`Weapon: ${this.weaponEquipped?'Pistol equipped':'empty'} | Bag: ${this.bag.length}`);
+  }
 }
 
 new Phaser.Game({
@@ -1841,22 +892,9 @@ new Phaser.Game({
   width:GAME_W,
   height:GAME_H,
   backgroundColor:'#000',
-  pixelArt:true,
-  roundPixels:true,
-  physics:{
-    default:'arcade',
-    arcade:{
-      gravity:{y:0},
-      debug:false
-    }
-  },
-  scale:{
-    mode:Phaser.Scale.FIT,
-    autoCenter:Phaser.Scale.CENTER_BOTH,
-    width:GAME_W,
-    height:GAME_H
-  },
-  scene:[BootScene,TitleScene,CityScene]
+  scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},
+  render:{pixelArt:true,antialias:false},
+  scene:[BootScene,TitleScene,MapScene]
 });
 </script>
 </body>
