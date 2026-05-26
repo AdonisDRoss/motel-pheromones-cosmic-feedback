@@ -82,7 +82,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-single-fuel-can-car-inventory-2026-05-26-013';
+const VERSION = 'glasswell-donny-walk-error-scale-fix-2026-05-26-015';
 
 function version(path){ return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`; }
 function key(id,type){return `${id}_${type}`}
@@ -219,10 +219,21 @@ const VAN_ASSETS = {
 const DONNY = {
   frameWidth:128,
   frameHeight:128,
-  scale:0.80,
-  speed:215,
-  runSpeed:315,
+
+  // Base Donny size. Walk/run sheets were reading smaller, so movement gets its own scale.
+  scale:0.86,
+  walkScale:0.96,
+  runScale:0.96,
+  crawlScale:0.86,
+  actionScale:0.88,
+
+  // Anchor closer to feet so he does not look like he is floating.
+  originY:0.82,
+
+  speed:205,
+  runSpeed:300,
   crawlSpeed:90,
+
   directionFrame:{down:0,right:8,left:16,up:24},
   anims:{
     down:[0,1,2,3,4,5,6,7],
@@ -322,7 +333,7 @@ const VAN = {
 
 
 const HEADLIGHTS = {
-  enabledByDefault:true,
+  enabledByDefault:false,
   alpha:0.34,
   coreAlpha:0.50,
   length:285,
@@ -375,7 +386,19 @@ function formatWeight(n){
 
 
 
-const TOUCH = {x:0,y:0,active:false,a:false,b:false,xBtn:false,y:false,start:false};
+const TOUCH = {
+  x:0,
+  y:0,
+  active:false,
+  a:false,
+  b:false,
+  xBtn:false,
+  y:false,
+  yHold:false,
+  yDown:false,
+  yDownAt:0,
+  start:false
+};
 
 function setupTouch(){
   if(window.__GLASSWELL_TOUCH_READY)return;
@@ -414,7 +437,35 @@ function setupTouch(){
     el.dataset.bound='1';
     el.addEventListener('pointerdown',e=>{prevent(e);TOUCH[prop]=true;setTimeout(()=>TOUCH[prop]=false,120);},{passive:false});
   };
-  bind('btnA','a'); bind('btnB','b'); bind('btnX','xBtn'); bind('btnY','y'); bind('btnStart','start');
+
+  const bindYHold=()=>{
+    const el=document.getElementById('btnY');
+    if(!el||el.dataset.bound)return;
+    el.dataset.bound='1';
+
+    el.addEventListener('pointerdown',e=>{
+      prevent(e);
+      TOUCH.yDown=true;
+      TOUCH.yDownAt=performance.now();
+    },{passive:false});
+
+    el.addEventListener('pointerup',e=>{
+      prevent(e);
+      const held=performance.now()-(TOUCH.yDownAt||0);
+      TOUCH.yDown=false;
+      if(held>=520)TOUCH.yHold=true;
+      else TOUCH.y=true;
+      TOUCH.yDownAt=0;
+    },{passive:false});
+
+    el.addEventListener('pointercancel',e=>{
+      prevent(e);
+      TOUCH.yDown=false;
+      TOUCH.yDownAt=0;
+    },{passive:false});
+  };
+
+  bind('btnA','a'); bind('btnB','b'); bind('btnX','xBtn'); bindYHold(); bind('btnStart','start');
 }
 
 function buildPageData(id,w,h){
@@ -613,7 +664,7 @@ class TitleScene extends Phaser.Scene{
     this.add.text(480,88,'COSMIC FEEDBACK',{fontFamily:'Arial Black',fontSize:'30px',color:'#e8e1cf'}).setOrigin(.5);
     this.add.text(480,138,'GLASSWELL',{fontFamily:'Arial Black',fontSize:'46px',color:'#9ff4ff'}).setOrigin(.5).setShadow(0,0,'#67dce8',8,true,true);
     this.add.text(480,195,'2.5D GTA-style open-city sci-fi RPG / brawler',{fontFamily:'Courier New',fontSize:'18px',color:'#d9b46a'}).setOrigin(.5);
-    this.add.text(480,302,'On foot: A jump | X punch/shoot | B kick/slide/crawl | Y enter/interact\nVan: stick drive uses fuel | B rear menu on foot | X headlights | Y horn',{fontFamily:'Courier New',fontSize:'17px',color:'#d5c7a3',align:'center',lineSpacing:8}).setOrigin(.5);
+    this.add.text(480,302,'On foot: A jump | X punch/shoot | B kick/slide/crawl | Y enter/interact\nVan: stick drive uses fuel | B rear menu on foot | hold Y headlights | tap Y horn',{fontFamily:'Courier New',fontSize:'17px',color:'#d5c7a3',align:'center',lineSpacing:8}).setOrigin(.5);
     const start=()=>this.scene.start('MapScene',{pageId:'GLASSWELL_C3',spawn:'donny_city_start'});
     this.input.once('pointerdown',start);
     this.input.keyboard.once('keydown-ENTER',start);
@@ -685,7 +736,19 @@ class MapScene extends Phaser.Scene{
     this.input.keyboard.on('keydown-J',()=>this.handleX());
     this.input.keyboard.on('keydown-B',()=>this.handleB());
     this.input.keyboard.on('keydown-K',()=>this.handleB());
-    this.input.keyboard.on('keydown-Y',()=>this.handleY());
+    this.yKeyDownAt=0;
+    this.input.keyboard.on('keydown-Y',e=>{
+      if(e.repeat)return;
+      this.yKeyDownAt=this.time.now;
+    });
+    this.input.keyboard.on('keyup-Y',()=>{
+      const held=this.time.now-(this.yKeyDownAt||0);
+      this.yKeyDownAt=0;
+      if(this.inVan && held>=520)this.toggleHeadlights();
+      else this.handleY();
+    });
+
+    // E remains a quick interact key for desktop testing.
     this.input.keyboard.on('keydown-E',()=>this.handleY());
     this.input.keyboard.on('keydown-R',()=>this.refillVanFuel(FUEL.max));
     this.input.keyboard.on('keydown-ENTER',()=>this.toggleInventory());
@@ -753,7 +816,7 @@ class MapScene extends Phaser.Scene{
   createPlayerSprites(){
     if(!this.player){
       const texture=this.textures.exists('donny_idle')?'donny_idle':(this.textures.exists('donny_overhead')?'donny_overhead':'donny_fallback');
-      this.player=this.add.sprite(this.playerX,this.playerY,texture,0).setOrigin(.5,.72).setScale(DONNY.scale).setDepth(this.playerY+1000);
+      this.player=this.add.sprite(this.playerX,this.playerY,texture,0).setOrigin(.5,DONNY.originY || .82).setScale(DONNY.scale).setDepth(this.playerY+1000);
       this.gun=this.add.sprite(this.playerX,this.playerY,GUN_PROP.key,0).setOrigin(.5,.5).setScale(GUN_PROP.scale).setVisible(false).setDepth(this.playerY+1005);
       this.holster=this.add.sprite(this.playerX,this.playerY,HOLSTER.key,0).setOrigin(.5,.5).setScale(HOLSTER.scale).setVisible(false).setDepth(this.playerY+1004);
       this.fuelCan=this.add.sprite(this.playerX,this.playerY,FUEL_CAN_PROP.key,0).setOrigin(.5,.5).setScale(FUEL_CAN_PROP.scale).setVisible(false).setDepth(this.playerY+1007);
@@ -787,14 +850,54 @@ class MapScene extends Phaser.Scene{
     if(!Number.isFinite(x))x=0;
     if(!Number.isFinite(y))y=0;
 
-    const l=Math.hypot(x,y);
-    if(l>1){x/=l;y/=l}
+    // Deadzone small stick noise.
+    if(Math.abs(x)<.10)x=0;
+    if(Math.abs(y)<.10)y=0;
+
+    // Reduce diagonal twitch. If one axis clearly wins, lock the minor axis to zero.
+    const ax=Math.abs(x);
+    const ay=Math.abs(y);
+    if(ax>ay*1.75)y=0;
+    if(ay>ax*1.75)x=0;
+
+    let len=Math.hypot(x,y);
+    if(len>1){x/=len;y/=len;len=1}
+
+    // Smooth touch-stick input so walking right does not jerk on mobile.
+    // Keyboard still stays responsive because target values are full-strength.
+    this.smoothInputX = (this.smoothInputX ?? 0) + (x - (this.smoothInputX ?? 0)) * .42;
+    this.smoothInputY = (this.smoothInputY ?? 0) + (y - (this.smoothInputY ?? 0)) * .42;
+
+    if(Math.abs(this.smoothInputX)<.06)this.smoothInputX=0;
+    if(Math.abs(this.smoothInputY)<.06)this.smoothInputY=0;
+
+    const sx=this.smoothInputX;
+    const sy=this.smoothInputY;
+    const sl=Math.min(1,Math.hypot(sx,sy));
 
     return {
-      x:Number.isFinite(x)?x:0,
-      y:Number.isFinite(y)?y:0,
-      len:Number.isFinite(l)?Math.min(1,l):0
+      x:Number.isFinite(sx)?sx:0,
+      y:Number.isFinite(sy)?sy:0,
+      len:Number.isFinite(sl)?sl:0
     };
+  }
+
+  directionFromVector(x,y,last='down'){
+    x=Number(x)||0;
+    y=Number(y)||0;
+
+    const ax=Math.abs(x);
+    const ay=Math.abs(y);
+
+    if(ax<.08 && ay<.08)return last;
+
+    // Stable cardinal facing for 2.5D:
+    // If mostly horizontal, stay right/left even with small vertical drift.
+    // If mostly vertical, go up/down even with small side drift.
+    if(ax>=ay*1.22)return x>0?'right':'left';
+    if(ay>=ax*1.05)return y>0?'down':'up';
+
+    return ax>=ay ? (x>0?'right':'left') : (y>0?'down':'up');
   }
 
   vanDirectionFromVector(x,y,last='right'){
@@ -1071,7 +1174,7 @@ class MapScene extends Phaser.Scene{
     if(this.rearMenuOpen){this.nextRearMenuOption();return}
     if(this.isInventoryOpen){this.nextInventory();return}
     if(this.inVan){
-      this.toggleHeadlights();
+      this.message('Radio/music toggle later');
       return;
     }
     if(this.fuelCanEquipped){
@@ -1160,19 +1263,34 @@ class MapScene extends Phaser.Scene{
     this.tweens.add({targets:bolt,x:bolt.x+v.x*220,y:bolt.y+v.y*220,alpha:0,duration:280,onComplete:()=>bolt.destroy()});
   }
 
+  setDonnyVisual(mode='idle'){
+    if(!this.player)return;
+
+    let scale=DONNY.scale;
+    if(mode==='walk')scale=DONNY.walkScale || DONNY.scale;
+    if(mode==='run')scale=DONNY.runScale || DONNY.walkScale || DONNY.scale;
+    if(mode==='crawl')scale=DONNY.crawlScale || DONNY.scale;
+    if(mode==='action')scale=DONNY.actionScale || DONNY.scale;
+
+    this.player.setScale(scale);
+    this.player.setOrigin(.5, DONNY.originY || .82);
+  }
+
   playDonnyAction(action){
+    this.setDonnyVisual('action');
     const keyName= action==='shoot' ? 'donny_shoot' : `donny_${action}`;
     const anim=`${keyName}_${this.playerDir}`;
     if(this.anims.exists(anim))this.player.play(anim,true);
   }
 
-  forceDirectionalSheet(textureKey){
+  forceDirectionalSheet(textureKey,mode='walk'){
     if(!this.textures.exists(textureKey))return false;
     const base=DONNY.directionFrame[this.playerDir] ?? 0;
-    const frame=base + (Math.floor(this.time.now/95)%8);
+    const frame=base + (Math.floor(this.time.now/105)%8);
     this.player.stop();
     this.player.setTexture(textureKey);
     this.player.setFrame(frame);
+    this.setDonnyVisual(mode);
     return true;
   }
 
@@ -1181,6 +1299,7 @@ class MapScene extends Phaser.Scene{
     this.player.stop();
     this.player.setTexture(texture);
     this.player.setFrame(DONNY.directionFrame[this.playerDir]||0);
+    this.setDonnyVisual('idle');
   }
 
   updateFuelCanOverlay(){
@@ -1503,6 +1622,7 @@ class MapScene extends Phaser.Scene{
     if(TOUCH.a){TOUCH.a=false;this.handleA()}
     if(TOUCH.xBtn){TOUCH.xBtn=false;this.handleX()}
     if(TOUCH.b){TOUCH.b=false;this.handleB()}
+    if(TOUCH.yHold){TOUCH.yHold=false;if(this.inVan)this.toggleHeadlights();else this.handleY()}
     if(TOUCH.y){TOUCH.y=false;this.handleY()}
     if(TOUCH.start){TOUCH.start=false;this.toggleInventory()}
 
@@ -1540,7 +1660,7 @@ class MapScene extends Phaser.Scene{
       this.updateVanHeadlights();
       this.checkRoutes();
       this.hud.setText(`${PAGES[this.pageId].label} | Astro Van | ${Math.round(this.van.x)},${Math.round(this.van.y)}`);
-      this.status.setText(`Fuel: ${this.fuelText()} | Car Load ${formatWeight(this.getCarWeight())}/${formatWeight(this.getCarWeightLimit())} | B exits | X lights | Y horn`);
+      this.status.setText(`Fuel: ${this.fuelText()} | Car Load ${formatWeight(this.getCarWeight())}/${formatWeight(this.getCarWeightLimit())} | B exits | hold Y lights | tap Y horn`);
       return;
     }
 
@@ -1565,11 +1685,11 @@ class MapScene extends Phaser.Scene{
 
     if(now>this.actionUntil && this.actionType){this.actionType='';}
     if(!this.actionType){
-      if(this.isCrawling && moving && this.anims.exists(`donny_crawl_${this.playerDir}`))this.player.play(`donny_crawl_${this.playerDir}`,true);
-      else if(mode==='RUN' && moving && this.anims.exists(`donny_run_${this.playerDir}`))this.player.play(`donny_run_${this.playerDir}`,true);
-      else if(moving && this.anims.exists(`donny_walk_${this.playerDir}`))this.player.play(`donny_walk_${this.playerDir}`,true);
-      else if(moving && this.forceDirectionalSheet('donny_overhead')){}
-      else if(this.anims.exists(`donny_idle_${this.playerDir}`))this.player.play(`donny_idle_${this.playerDir}`,true);
+      if(this.isCrawling && moving && this.anims.exists(`donny_crawl_${this.playerDir}`)){this.setDonnyVisual('crawl');this.player.play(`donny_crawl_${this.playerDir}`,true);}
+      else if(mode==='RUN' && moving && this.anims.exists(`donny_run_${this.playerDir}`)){this.setDonnyVisual('run');this.player.play(`donny_run_${this.playerDir}`,true);}
+      else if(moving && this.anims.exists(`donny_walk_${this.playerDir}`)){this.setDonnyVisual('walk');this.player.play(`donny_walk_${this.playerDir}`,true);}
+      else if(moving && this.forceDirectionalSheet('donny_overhead','walk')){}
+      else if(this.anims.exists(`donny_idle_${this.playerDir}`)){this.setDonnyVisual('idle');this.player.play(`donny_idle_${this.playerDir}`,true);}
       else this.setDonnyIdle();
     }
 
