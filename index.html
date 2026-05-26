@@ -1183,7 +1183,7 @@ class CityScene extends Phaser.Scene{
     });
   }
 
-  punch(){  punch(){
+  punch(){
     if(this.playerInVan)return;
     if(this.time.now<this.cool)return;
 
@@ -1242,7 +1242,7 @@ class CityScene extends Phaser.Scene{
     });
   }
 
-  spawnHitFx(){  spawnHitFx(){
+  spawnHitFx(){
     const ox=this.lastDir==='right'?65:this.lastDir==='left'?-65:0;
     const oy=this.lastDir==='down'?55:this.lastDir==='up'?-70:0;
     const tex=this.textures.exists('weapon_fx')?'weapon_fx':'fallback_fx';
