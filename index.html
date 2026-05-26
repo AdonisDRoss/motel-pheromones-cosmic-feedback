@@ -91,14 +91,21 @@ window.addEventListener('error', e => {
   }
   showBootError('GAME ERROR: ' + msg);
 });
-window.addEventListener('unhandledrejection', e => showBootError('GAME ERROR: ' + ((e.reason && (e.reason.message || e.reason)) || 'unhandled promise rejection')));
+window.addEventListener('unhandledrejection', e => {
+  const msg = (e.reason && (e.reason.message || e.reason)) || 'unhandled promise rejection';
+  if(String(msg).toLowerCase().includes('failed to start the audio device')){
+    console.warn('Ignored browser audio warning:', msg);
+    return;
+  }
+  showBootError('GAME ERROR: ' + msg);
+});
 window.addEventListener('contextmenu', e => e.preventDefault());
 window.addEventListener('gesturestart', e => e.preventDefault());
 document.addEventListener('touchmove', e => e.preventDefault(), { passive:false });
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-donny-shoot-gun-overlay-no-holster-2026-05-26-009';
+const VERSION = 'glasswell-syntax-fixed-fast-2026-05-26-011';
 
 // IMPORTANT:
 // Donny now uses the local files created tonight under assets/sprites/player/donny/props.
@@ -409,6 +416,17 @@ class BootScene extends Phaser.Scene{
   constructor(){super('BootScene')}
 
   preload(){
+    this.cameras.main.setBackgroundColor('#050608');
+    this.add.text(480,240,'LOADING GLASSWELL...',{
+      fontFamily:'Arial Black',
+      fontSize:'26px',
+      color:'#9ff4ff'
+    }).setOrigin(.5);
+    this.add.text(480,278,'Loading maps, Donny, van, weapons, and audio',{
+      fontFamily:'Courier New',
+      fontSize:'15px',
+      color:'#ffffff'
+    }).setOrigin(.5);
     this.load.setCORS('anonymous');
     this.badAssets=[];
     this.load.on('loaderror', file => this.badAssets.push(file && (file.src || file.key) || 'unknown asset'));
