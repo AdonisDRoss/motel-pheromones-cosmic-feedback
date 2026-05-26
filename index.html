@@ -40,10 +40,123 @@ canvas{
   display:block;
   touch-action:none;
 }
+#touchControls{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  pointer-events:none;
+  touch-action:none;
+}
+#stickBase{
+  position:absolute;
+  left:max(34px, calc(env(safe-area-inset-left) + 34px));
+  bottom:max(58px, calc(env(safe-area-inset-bottom) + 58px));
+  width:116px;
+  height:116px;
+  border-radius:50%;
+  border:3px solid rgba(255,255,255,.42);
+  background:rgba(0,0,0,.20);
+  box-shadow:0 0 0 2px rgba(103,220,232,.18) inset;
+  pointer-events:auto;
+  touch-action:none;
+}
+#stickKnob{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:44px;
+  height:44px;
+  margin-left:-22px;
+  margin-top:-22px;
+  border-radius:50%;
+  background:rgba(255,255,255,.24);
+  border:3px solid rgba(103,220,232,.72);
+  pointer-events:none;
+}
+#moveLabel{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:-22px;
+  text-align:center;
+  font:800 10px Arial,sans-serif;
+  color:rgba(255,255,255,.62);
+  letter-spacing:1px;
+  pointer-events:none;
+}
+.touchBtn{
+  position:absolute;
+  width:66px;
+  height:66px;
+  border-radius:50%;
+  border:3px solid rgba(255,255,255,.48);
+  background:rgba(0,0,0,.42);
+  color:#fff;
+  font:900 18px Arial,sans-serif;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  pointer-events:auto;
+  touch-action:none;
+}
+#btnA{
+  right:max(100px, calc(env(safe-area-inset-right) + 100px));
+  bottom:max(154px, calc(env(safe-area-inset-bottom) + 154px));
+}
+#btnB{
+  right:max(100px, calc(env(safe-area-inset-right) + 100px));
+  bottom:max(38px, calc(env(safe-area-inset-bottom) + 38px));
+}
+#btnX{
+  right:max(158px, calc(env(safe-area-inset-right) + 158px));
+  bottom:max(96px, calc(env(safe-area-inset-bottom) + 96px));
+}
+#btnY{
+  right:max(42px, calc(env(safe-area-inset-right) + 42px));
+  bottom:max(96px, calc(env(safe-area-inset-bottom) + 96px));
+}
+#btnStart{
+  position:absolute;
+  left:50%;
+  bottom:max(24px, calc(env(safe-area-inset-bottom) + 24px));
+  transform:translateX(-50%);
+  width:116px;
+  height:34px;
+  border-radius:18px;
+  border:2px solid rgba(255,255,255,.46);
+  background:rgba(0,0,0,.48);
+  color:#fff;
+  font:900 12px Arial,sans-serif;
+  letter-spacing:1px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  pointer-events:auto;
+  touch-action:none;
+}
+.touchBtn:active,#btnStart:active{
+  transform:scale(.96);
+}
+#btnStart:active{
+  transform:translateX(-50%) scale(.96);
+}
 </style>
 </head>
 <body>
 <div id="game"></div>
-<script src="scripts/game.js?v=glasswell-city-so-far-donny-controls-fix-2026-05-25"></script>
+
+<div id="touchControls">
+  <div id="stickBase">
+    <div id="stickKnob"></div>
+    <div id="moveLabel">MOVE</div>
+  </div>
+  <div id="btnA" class="touchBtn">A</div>
+  <div id="btnB" class="touchBtn">B</div>
+  <div id="btnX" class="touchBtn">X</div>
+  <div id="btnY" class="touchBtn">Y</div>
+  <div id="btnStart">START</div>
+</div>
+
+<script src="scripts/game.js?v=glasswell-dom-controls-hard-fix-2026-05-25"></script>
 </body>
 </html>
