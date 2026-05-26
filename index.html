@@ -82,7 +82,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-holster-gun-position-fix-2026-05-26-004';
+const VERSION = 'glasswell-donny-updown-holster-dot-fix-2026-05-26-005';
 
 function version(path){ return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`; }
 function key(id,type){return `${id}_${type}`}
@@ -235,19 +235,18 @@ const GUN_PROP = {
   frameWidth:128,
   frameHeight:128,
 
-  // Smaller gun. The center of the overlay frame is treated as the handle/grip.
+  // Small gun. The center of the overlay frame is treated as the handle/grip.
   // The index places that grip directly on Donny's weapon hand.
-  scale:0.46,
+  scale:0.40,
 
   directionFrame:{down:0,right:1,left:2,up:3},
 
   // Donny's weapon-hand position from his foot/origin.
-  // Right/left views place the grip on the front fist.
   hand:{
-    down:{x:15,y:-45},
-    right:{x:29,y:-49},
-    left:{x:-29,y:-49},
-    up:{x:-9,y:-62}
+    down:{x:16,y:-43},
+    right:{x:30,y:-47},
+    left:{x:-30,y:-47},
+    up:{x:-8,y:-60}
   }
 };
 
@@ -258,17 +257,17 @@ const HOLSTER = {
   frameHeight:128,
 
   // Smaller hip holster. This is an overlay, not baked into Donny.
-  scale:0.42,
+  scale:0.34,
 
   directionFrame:{down:0,right:1,left:2,up:3},
 
-  // Offset from Donny's foot/origin to his hip.
-  // Positive x = Donny's screen-right hip, negative x = screen-left hip.
+  // Offset from Donny's foot/origin to the hip dot shown in the screenshot.
+  // The right-facing holster is moved lower and farther forward to sit where the white dot was placed.
   hip:{
-    down:{x:19,y:-32},
-    right:{x:13,y:-34},
-    left:{x:-13,y:-34},
-    up:{x:18,y:-35}
+    down:{x:18,y:-25},
+    right:{x:22,y:-24},
+    left:{x:-22,y:-24},
+    up:{x:16,y:-27}
   }
 };
 
@@ -661,7 +660,13 @@ class MapScene extends Phaser.Scene{
 
   directionFromVector(x,y,last='down'){
     if(Math.abs(x)<.05 && Math.abs(y)<.05)return last;
-    if(Math.abs(x)>Math.abs(y))return x>0?'right':'left';
+
+    // Favor clean up/down walking when the stick is mostly vertical.
+    // Mobile sticks often send a little x drift, so vertical must win sooner.
+    const ax=Math.abs(x);
+    const ay=Math.abs(y);
+    if(ay>.28 && ay>=ax*.65)return y>0?'down':'up';
+    if(ax>.20)return x>0?'right':'left';
     return y>0?'down':'up';
   }
 
@@ -763,6 +768,16 @@ class MapScene extends Phaser.Scene{
     if(this.anims.exists(anim))this.player.play(anim,true);
   }
 
+  forceDirectionalSheet(textureKey){
+    if(!this.textures.exists(textureKey))return false;
+    const base=DONNY.directionFrame[this.playerDir] ?? 0;
+    const frame=base + (Math.floor(this.time.now/95)%8);
+    this.player.stop();
+    this.player.setTexture(textureKey);
+    this.player.setFrame(frame);
+    return true;
+  }
+
   setDonnyIdle(){
     const texture=this.textures.exists('donny_idle')?'donny_idle':(this.textures.exists('donny_overhead')?'donny_overhead':'donny_fallback');
     this.player.stop();
@@ -783,7 +798,6 @@ class MapScene extends Phaser.Scene{
     const gunFrame = GUN_PROP.directionFrame[this.playerDir] ?? 1;
     const hand = GUN_PROP.hand[this.playerDir] || GUN_PROP.hand.right;
 
-    // Small gun: handle/grip sits at Donny's hand.
     this.gun
       .setFrame(gunFrame)
       .setScale(GUN_PROP.scale)
@@ -794,7 +808,7 @@ class MapScene extends Phaser.Scene{
     const holsterFrame = HOLSTER.directionFrame[this.playerDir] ?? 0;
     const hip = HOLSTER.hip[this.playerDir] || HOLSTER.hip.down;
 
-    // Small holster: always on hip when pistol is equipped and Donny is not actively shooting.
+    // Hip placement matches the white dot reference from the screenshot.
     this.holster
       .setFrame(holsterFrame)
       .setScale(HOLSTER.scale)
@@ -920,6 +934,7 @@ class MapScene extends Phaser.Scene{
       if(this.isCrawling && moving && this.anims.exists(`donny_crawl_${this.playerDir}`))this.player.play(`donny_crawl_${this.playerDir}`,true);
       else if(mode==='RUN' && moving && this.anims.exists(`donny_run_${this.playerDir}`))this.player.play(`donny_run_${this.playerDir}`,true);
       else if(moving && this.anims.exists(`donny_walk_${this.playerDir}`))this.player.play(`donny_walk_${this.playerDir}`,true);
+      else if(moving && this.forceDirectionalSheet('donny_overhead')){}
       else if(this.anims.exists(`donny_idle_${this.playerDir}`))this.player.play(`donny_idle_${this.playerDir}`,true);
       else this.setDonnyIdle();
     }
