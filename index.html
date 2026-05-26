@@ -82,7 +82,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-donny-updown-holster-dot-fix-2026-05-26-005';
+const VERSION = 'glasswell-van-physics-updown-movement-fix-2026-05-26-006';
 
 function version(path){ return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`; }
 function key(id,type){return `${id}_${type}`}
@@ -284,6 +284,11 @@ const VAN = {
   speed:285,
   enterDistance:105,
   renderScale:1.35,
+
+  // Small physical footprint only around the van body.
+  // This prevents a huge transparent sprite box from trapping Donny.
+  body:{w:112,h:48,offsetY:-24},
+
   exitOffset:{down:{x:0,y:92},up:{x:0,y:-92},right:{x:112,y:0},left:{x:-112,y:0}}
 };
 
@@ -645,6 +650,7 @@ class MapScene extends Phaser.Scene{
       this.van.setPosition(this.playerX-165,this.playerY+105).setVisible(true);
     }
     this.vanX=this.van.x;this.vanY=this.van.y;this.vanPage=this.pageId;this.vanDir='right';
+    this.enableVanPhysics();
   }
 
   inputVector(){
@@ -661,12 +667,13 @@ class MapScene extends Phaser.Scene{
   directionFromVector(x,y,last='down'){
     if(Math.abs(x)<.05 && Math.abs(y)<.05)return last;
 
-    // Favor clean up/down walking when the stick is mostly vertical.
-    // Mobile sticks often send a little x drift, so vertical must win sooner.
+    // Strict 2.5D control rule:
+    // If the stick has real up/down input, Donny must be allowed to face and walk up/down.
+    // This prevents sideways drift from stealing vertical movement on iPhone touch controls.
     const ax=Math.abs(x);
     const ay=Math.abs(y);
-    if(ay>.28 && ay>=ax*.65)return y>0?'down':'up';
-    if(ax>.20)return x>0?'right':'left';
+    if(ay>.18 && ay>=ax*.45)return y>0?'down':'up';
+    if(ax>.18)return x>0?'right':'left';
     return y>0?'down':'up';
   }
 
@@ -676,6 +683,81 @@ class MapScene extends Phaser.Scene{
     const oct=Math.round(ang/(Math.PI/4));
     const dirs={0:'right',1:'downRight',2:'down',3:'downLeft',4:'left',"-4":'left',"-3":'upLeft',"-2":'up',"-1":'upRight'};
     return dirs[oct]||last;
+  }
+
+  getVanFootprint(){
+    if(!this.van || !this.van.visible || this.inVan)return null;
+    const bw=VAN.body?.w || 112;
+    const bh=VAN.body?.h || 48;
+    const oy=VAN.body?.offsetY || -24;
+    return {
+      x:this.van.x-bw/2,
+      y:this.van.y+oy-bh/2,
+      w:bw,
+      h:bh
+    };
+  }
+
+  pointInRect(r,x,y){
+    return !!r && x>=r.x && x<=r.x+r.w && y>=r.y && y<=r.y+r.h;
+  }
+
+  canDonnyStandAt(x,y){
+    // Keep Donny in the page.
+    if(x<20 || y<20 || x>this.mapW-20 || y>this.mapH-20)return false;
+
+    // Van uses a small body/footprint, not the full image rectangle.
+    const vanBox=this.getVanFootprint();
+    if(!vanBox)return true;
+
+    // If Donny is already inside the van body from a previous build, allow movement that escapes.
+    const currentlyInside=this.pointInRect(vanBox,this.playerX,this.playerY);
+    const nextInside=this.pointInRect(vanBox,x,y);
+    if(!nextInside)return true;
+    if(currentlyInside){
+      const cx=vanBox.x+vanBox.w/2;
+      const cy=vanBox.y+vanBox.h/2;
+      const oldD=Math.hypot(this.playerX-cx,this.playerY-cy);
+      const newD=Math.hypot(x-cx,y-cy);
+      return newD>oldD;
+    }
+    return false;
+  }
+
+  moveDonnyWithCollision(dx,dy){
+    if(!dx && !dy)return;
+
+    // Try full movement first.
+    const nx=this.playerX+dx;
+    const ny=this.playerY+dy;
+    if(this.canDonnyStandAt(nx,ny)){
+      this.playerX=nx;
+      this.playerY=ny;
+      return;
+    }
+
+    // Then try vertical-only and horizontal-only.
+    // This fixes cases where the van blocks one axis but should not stop up/down walking.
+    if(dy && this.canDonnyStandAt(this.playerX,this.playerY+dy)){
+      this.playerY+=dy;
+    }
+    if(dx && this.canDonnyStandAt(this.playerX+dx,this.playerY)){
+      this.playerX+=dx;
+    }
+  }
+
+  enableVanPhysics(){
+    if(!this.physics || !this.van)return;
+    if(!this.van.body)this.physics.add.existing(this.van);
+    if(this.van.body){
+      this.van.body.setAllowGravity(false);
+      this.van.body.setImmovable(true);
+      this.van.body.setSize(VAN.body?.w || 112, VAN.body?.h || 48, false);
+      this.van.body.setOffset(
+        (VAN.driveFrame.w-(VAN.body?.w || 112))/2,
+        (VAN.driveFrame.h*.58)+(VAN.body?.offsetY || -24)
+      );
+    }
   }
 
   handleA(){
@@ -894,6 +976,7 @@ class MapScene extends Phaser.Scene{
         this.vanDir=this.vanDirectionFromVector(input.x,input.y,this.vanDir);
         this.van.x=clamp(this.van.x+input.x*VAN.speed*delta/1000,20,this.mapW-20);
         this.van.y=clamp(this.van.y+input.y*VAN.speed*delta/1000,20,this.mapH-20);
+        if(this.van.body)this.van.body.updateFromGameObject();
         const anim=VAN.anim[this.vanDir];
         if(this.anims.exists(anim))this.van.play(anim,true);
         else this.van.setFrame(VAN.idleFrame[this.vanDir]||0);
@@ -922,11 +1005,9 @@ class MapScene extends Phaser.Scene{
 
     if(this.actionType==='slide' && now<this.slideUntil){
       const sv=this.slideVec||input;
-      this.playerX=clamp(this.playerX+sv.x*390*delta/1000,20,this.mapW-20);
-      this.playerY=clamp(this.playerY+sv.y*390*delta/1000,20,this.mapH-20);
+      this.moveDonnyWithCollision(sv.x*390*delta/1000, sv.y*390*delta/1000);
     } else if(moving && !(now<this.actionUntil && ['punch','kick','shoot'].includes(this.actionType))){
-      this.playerX=clamp(this.playerX+input.x*speed*delta/1000,20,this.mapW-20);
-      this.playerY=clamp(this.playerY+input.y*speed*delta/1000,20,this.mapH-20);
+      this.moveDonnyWithCollision(input.x*speed*delta/1000, input.y*speed*delta/1000);
     }
 
     if(now>this.actionUntil && this.actionType){this.actionType='';}
@@ -944,7 +1025,7 @@ class MapScene extends Phaser.Scene{
     this.checkRoutes();
 
     if(this.nearVan())this.prompt.setText('Y: enter Astro Van');
-    this.hud.setText(`${PAGES[this.pageId].label} | Donny | ${Math.round(this.playerX)},${Math.round(this.playerY)} | 2.5D GTA-style open-city sci-fi RPG / brawler`);
+    this.hud.setText(`${PAGES[this.pageId].label} | Donny | ${Math.round(this.playerX)},${Math.round(this.playerY)} | input ${input.x.toFixed(2)},${input.y.toFixed(2)} | 2.5D GTA-style open-city sci-fi RPG / brawler`);
     this.status.setText(`Weapon: ${this.weaponEquipped?'Pistol equipped':'empty'} | Bag: ${this.bag.length}`);
   }
 }
@@ -956,6 +1037,13 @@ new Phaser.Game({
   height:GAME_H,
   backgroundColor:'#000',
   scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},
+  physics:{
+    default:'arcade',
+    arcade:{
+      gravity:{x:0,y:0},
+      debug:false
+    }
+  },
   render:{pixelArt:true,antialias:false},
   scene:[BootScene,TitleScene,MapScene]
 });
