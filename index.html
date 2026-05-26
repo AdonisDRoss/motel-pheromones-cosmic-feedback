@@ -82,7 +82,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-action-enter-van-crop-direction-fix-2026-05-26-017';
+const VERSION = 'glasswell-touch-axis-van-placeholder-holster-2026-05-26-018';
 
 function version(path){ return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`; }
 function key(id,type){return `${id}_${type}`}
@@ -219,21 +219,15 @@ const VAN_ASSETS = {
 const DONNY = {
   frameWidth:128,
   frameHeight:128,
-
-  // Smaller uniform Donny. Same scale for every state prevents idle/walk/run popping.
   scale:0.70,
   walkScale:0.70,
   runScale:0.70,
   crawlScale:0.70,
   actionScale:0.70,
-
-  // Feet anchor closer to the bottom of the frame.
   originY:0.90,
-
-  speed:205,
-  runSpeed:205,
+  speed:210,
+  runSpeed:210,
   crawlSpeed:86,
-
   directionFrame:{down:0,right:8,left:16,up:24},
   anims:{
     down:[0,1,2,3,4,5,6,7],
@@ -283,13 +277,16 @@ const HOLSTER = {
   key:'donny_holster',
   frameWidth:128,
   frameHeight:128,
-  scale:0.24,
+
+  // Tiny holster, placed on Donny's hip instead of floating near his hand.
+  scale:0.18,
+
   directionFrame:{down:0,right:1,left:2,up:3},
   hip:{
-    down:{x:11,y:-19},
-    right:{x:14,y:-18},
-    left:{x:-14,y:-18},
-    up:{x:11,y:-20}
+    down:{x:9,y:-19},
+    right:{x:10,y:-20},
+    left:{x:-10,y:-20},
+    up:{x:8,y:-20}
   }
 };
 
@@ -309,11 +306,11 @@ const VAN = {
   anim:{down:'astro_van_drive_down',downRight:'astro_van_drive_downRight',right:'astro_van_drive_right',upRight:'astro_van_drive_upRight',up:'astro_van_drive_up',upLeft:'astro_van_drive_upLeft',left:'astro_van_drive_left',downLeft:'astro_van_drive_downLeft'},
   speed:285,
   enterDistance:72,
-  renderScale:1.04,
+  renderScale:1.12,
 
   // Small physical footprint only around the van body.
   // This prevents a huge transparent sprite box from trapping Donny.
-  body:{w:70,h:28,offsetY:-16},
+  body:{w:82,h:34,offsetY:-16},
 
   exitOffset:{down:{x:0,y:92},up:{x:0,y:-92},right:{x:112,y:0},left:{x:-112,y:0}}
 };
@@ -374,16 +371,18 @@ function formatWeight(n){
 
 
 const TOUCH = {
-  x:0,
-  y:0,
+  moveX:0,
+  moveY:0,
   active:false,
+
   a:false,
   b:false,
   xBtn:false,
-  y:false,
+  btnY:false,
   yHold:false,
   yDown:false,
   yDownAt:0,
+
   start:false
 };
 
@@ -401,14 +400,14 @@ function setupTouch(){
     let dx=x-center.x,dy=y-center.y;
     const len=Math.hypot(dx,dy);
     if(len>max){dx=dx/len*max;dy=dy/len*max}
-    TOUCH.x=Math.abs(dx/max)<.08?0:dx/max;
-    TOUCH.y=Math.abs(dy/max)<.08?0:dy/max;
+    TOUCH.moveX=Math.abs(dx/max)<.06?0:dx/max;
+    TOUCH.moveY=Math.abs(dy/max)<.06?0:dy/max;
     TOUCH.active=true;
     if(knob)knob.style.transform=`translate(${dx}px,${dy}px)`;
     if(label)label.textContent='MOVE ON';
   };
   const stop=()=>{
-    active=null;center=null;TOUCH.x=0;TOUCH.y=0;TOUCH.active=false;
+    active=null;center=null;TOUCH.moveX=0;TOUCH.moveY=0;TOUCH.active=false;
     if(knob)knob.style.transform='translate(0,0)';
     if(label)label.textContent='MOVE';
   };
@@ -441,7 +440,7 @@ function setupTouch(){
       const held=performance.now()-(TOUCH.yDownAt||0);
       TOUCH.yDown=false;
       if(held>=520)TOUCH.yHold=true;
-      else TOUCH.y=true;
+      else TOUCH.btnY=true;
       TOUCH.yDownAt=0;
     },{passive:false});
 
@@ -460,7 +459,7 @@ function buildPageData(id,w,h){
   if(id==='GLASSWELL_C3'){
     data.spawns={donny_city_start:{x:w*.50,y:h*.55},west_entry_from_B3:{x:w*.12,y:h*.52},north_entry_from_C2:{x:w*.50,y:h*.18},south_entry_from_C4:{x:w*.50,y:h*.82},east_entry_from_D3:{x:w*.88,y:h*.50}};
     data.routes=[
-      {to:'GLASSWELL_C2',r:pct(w,h,.38,0,.24,.10),spawn:'south_entry_from_C3',label:'north to Civic Admin Street'},
+      {to:'GLASSWELL_C2',r:pct(w,h,.20,0,.60,.16),spawn:'south_entry_from_C3',label:'north to Civic Admin Street'},
       {to:'GLASSWELL_C4',r:pct(w,h,.38,.90,.24,.10),spawn:'north_entry_from_C3',label:'south to Transit Vendor Square'},
       {to:'GLASSWELL_D3',r:pct(w,h,.92,.38,.08,.24),spawn:'west_entry_from_C3',label:'east to Red Concord Checkpoint'},
       {to:'GLASSWELL_B3_DESERT_TEST',r:pct(w,h,0,.38,.08,.24),spawn:'east_entry_from_C3',label:'west to desert drive test'}
@@ -541,17 +540,9 @@ function createFallbackTextures(scene){
     g.generateTexture('donny_fallback',128,128);
     g.destroy();
   }
-  if(!scene.textures.exists(VAN.driveKey)){
-    const g=scene.add.graphics();
-    g.fillStyle(0x000000,.32).fillEllipse(64,80,90,18);
-    g.fillStyle(0x101820).fillRoundedRect(15,28,98,42,8);
-    g.fillStyle(0x26333b).fillRoundedRect(20,32,88,32,5);
-    g.fillStyle(0x78eaff).fillRect(38,35,28,11);
-    g.fillStyle(0xff2aa1).fillRect(35,52,54,5);
-    g.fillStyle(0x080808).fillCircle(32,70,11).fillCircle(96,70,11);
-    g.generateTexture(VAN.driveKey,128,96);
-    g.destroy();
-  }
+
+  createGeneratedVanTextures(scene);
+
   if(!scene.textures.exists('pickup_dot')){
     const g=scene.add.graphics();
     g.fillStyle(0x76f5ff,1).fillCircle(10,10,8);
@@ -566,6 +557,62 @@ function createFallbackTextures(scene){
     g.generateTexture('laser_bolt',36,8);
     g.destroy();
   }
+}
+
+function createGeneratedVanTextures(scene){
+  if(scene.textures.exists('astro_van_generated_right'))return;
+
+  const makeSide=(key,flip=false)=>{
+    const g=scene.add.graphics();
+    g.fillStyle(0x000000,.28).fillEllipse(64,82,96,17);
+    g.fillStyle(0x090b12,1).fillRoundedRect(18,34,92,38,8);
+    g.fillStyle(0x29313e,1).fillRoundedRect(23,29,74,36,6);
+    g.fillStyle(0x151923,1).fillRect(31,25,40,9);
+    g.fillStyle(0x63c9d5,1).fillRect(42,34,28,11);
+    g.fillStyle(0x2a303a,1).fillRect(73,36,20,12);
+    g.fillStyle(0x89216f,1).fillRect(30,54,62,5);
+    g.fillStyle(0x08090c,1).fillCircle(35,72,10).fillCircle(91,72,10);
+    g.fillStyle(0xb0b7b8,1).fillCircle(35,72,4).fillCircle(91,72,4);
+    g.fillStyle(0x1d2330,1).fillRect(47,18,36,10);
+    g.fillStyle(0xb78736,1).fillRect(100,43,8,5);
+    g.generateTexture(key,128,96);
+    g.destroy();
+    if(flip){
+      const src=scene.textures.get(key).getSourceImage();
+      const canvas=scene.textures.createCanvas(key+'_tmp',128,96);
+      const ctx=canvas.getContext();
+      ctx.translate(128,0);ctx.scale(-1,1);ctx.drawImage(src,0,0);
+      canvas.refresh();
+      scene.textures.remove(key);
+      scene.textures.renameTexture(key+'_tmp',key);
+    }
+  };
+
+  const makeFront=(key,back=false)=>{
+    const g=scene.add.graphics();
+    g.fillStyle(0x000000,.25).fillEllipse(64,82,58,16);
+    g.fillStyle(0x090b12,1).fillRoundedRect(38,21,52,58,7);
+    g.fillStyle(0x29313e,1).fillRoundedRect(43,25,42,49,5);
+    g.fillStyle(0x63c9d5,1).fillRect(52,30,24,12);
+    g.fillStyle(0x89216f,1).fillRect(47,54,34,5);
+    g.fillStyle(0x08090c,1).fillRect(31,45,9,26).fillRect(88,45,9,26);
+    if(back){
+      g.fillStyle(0xd02030,1).fillRect(45,67,8,6).fillRect(76,67,8,6);
+    }else{
+      g.fillStyle(0xd8f7ff,1).fillRect(45,21,10,5).fillRect(73,21,10,5);
+    }
+    g.generateTexture(key,128,96);
+    g.destroy();
+  };
+
+  makeSide('astro_van_generated_right',false);
+  makeSide('astro_van_generated_left',true);
+  makeFront('astro_van_generated_down',false);
+  makeFront('astro_van_generated_up',true);
+  makeSide('astro_van_generated_downRight',false);
+  makeSide('astro_van_generated_upRight',false);
+  makeSide('astro_van_generated_downLeft',true);
+  makeSide('astro_van_generated_upLeft',true);
 }
 
 function createDonnyAnimations(scene){
@@ -821,13 +868,11 @@ class MapScene extends Phaser.Scene{
   }
 
   spawnVanNearDonny(){
-    // Put the van in the middle of the road for testing. It will not auto-enter Donny.
-    const vx=clamp(this.mapW*.42,100,this.mapW-100);
-    const vy=clamp(this.mapH*.60,100,this.mapH-100);
+    // Put the van in the road, reachable from Donny, and use clean generated van textures.
+    const vx=clamp(this.mapW*.46,100,this.mapW-100);
+    const vy=clamp(this.mapH*.56,100,this.mapH-100);
 
-    this.ensureVanCropTexture();
-
-    const texture=this.textures.exists(VAN.cropKey) ? VAN.cropKey : VAN.activeDriveKey;
+    const texture=this.vanTextureForDir ? this.vanTextureForDir('right') : 'astro_van_generated_right';
 
     if(!this.van){
       this.van=this.add.sprite(vx,vy,texture,0).setOrigin(.5,.68).setScale(VAN.renderScale).setDepth(vy+900);
@@ -846,8 +891,8 @@ class MapScene extends Phaser.Scene{
   }
 
   inputVector(){
-    let x = Number(TOUCH.x) || 0;
-    let y = Number(TOUCH.y) || 0;
+    let x = Number(TOUCH.moveX) || 0;
+    let y = Number(TOUCH.moveY) || 0;
 
     if(this.keys.LEFT.isDown||this.keys.A.isDown)x-=1;
     if(this.keys.RIGHT.isDown||this.keys.D.isDown)x+=1;
@@ -857,11 +902,9 @@ class MapScene extends Phaser.Scene{
     if(!Number.isFinite(x))x=0;
     if(!Number.isFinite(y))y=0;
 
-    // Smaller deadzone so north/south works from the mobile stick.
-    if(Math.abs(x)<.06)x=0;
-    if(Math.abs(y)<.06)y=0;
+    if(Math.abs(x)<.05)x=0;
+    if(Math.abs(y)<.05)y=0;
 
-    // Keep true vertical input. Do not erase y just because x has a little drift.
     const len0=Math.hypot(x,y);
     if(len0>1){x/=len0;y/=len0}
 
@@ -880,12 +923,10 @@ class MapScene extends Phaser.Scene{
 
     const ax=Math.abs(x);
     const ay=Math.abs(y);
+    if(ax<.05 && ay<.05)return last;
 
-    if(ax<.06 && ay<.06)return last;
-
-    // North/south should work. If y is a real input, allow up/down unless x clearly dominates.
-    if(ay>.12 && ay>=ax*.55)return y>0?'down':'up';
-    if(ax>.12)return x>0?'right':'left';
+    if(ay>=ax*.55 && ay>.08)return y>0?'down':'up';
+    if(ax>.08)return x>0?'right':'left';
     return y>0?'down':'up';
   }
 
@@ -1013,6 +1054,20 @@ class MapScene extends Phaser.Scene{
     return `${Math.max(0,Math.ceil(this.vanFuel))}%`;
   }
 
+  vanTextureForDir(dir=this.vanDir){
+    const keyMap={
+      right:'astro_van_generated_right',
+      left:'astro_van_generated_left',
+      down:'astro_van_generated_down',
+      up:'astro_van_generated_up',
+      downRight:'astro_van_generated_downRight',
+      upRight:'astro_van_generated_upRight',
+      downLeft:'astro_van_generated_downLeft',
+      upLeft:'astro_van_generated_upLeft'
+    };
+    return keyMap[dir] || 'astro_van_generated_right';
+  }
+
   ensureVanCropTexture(){
     if(this.vanCropReady)return this.textures.exists(VAN.cropKey);
 
@@ -1040,31 +1095,12 @@ class MapScene extends Phaser.Scene{
 
   updateVanVisual(animated=false){
     if(!this.van)return;
-
-    if(this.ensureVanCropTexture()){
-      const src=this.textures.get(VAN.fullImageKey).getSourceImage();
-      const tex=this.textures.get(VAN.cropKey);
-      const ctx=tex.getContext();
-      const fw=VAN.cropFrame.w;
-      const fh=VAN.cropFrame.h;
-
-      const rows={down:0,downRight:1,right:2,upRight:3,up:4,upLeft:5,left:6,downLeft:7};
-      const row=rows[this.vanDir] ?? 2;
-      const col=animated ? Math.floor(this.time.now/95)%11 : 0;
-
-      ctx.clearRect(0,0,fw,fh);
-      ctx.drawImage(src,col*fw,row*fh,fw,fh,0,0,fw,fh);
-      tex.refresh();
-
-      this.van.setTexture(VAN.cropKey);
-      this.van.setOrigin(.5,.68);
-      this.van.setScale(VAN.renderScale);
-      return;
+    const tex=this.vanTextureForDir(this.vanDir);
+    if(this.textures.exists(tex) && this.van.texture.key!==tex){
+      this.van.setTexture(tex);
     }
-
-    // Fallback if image crop texture is unavailable.
-    const frame=VAN.idleFrame[this.vanDir] ?? 0;
-    if(this.van.setFrame)this.van.setFrame(frame);
+    this.van.setOrigin(.5,.68);
+    this.van.setScale(VAN.renderScale);
   }
 
   createVanLightObjects(){
@@ -1326,7 +1362,7 @@ class MapScene extends Phaser.Scene{
   setDonnyVisual(mode='idle'){
     if(!this.player)return;
     this.player.setScale(DONNY.scale);
-    this.player.setOrigin(.5, DONNY.originY || .90);
+    this.player.setOrigin(.5,DONNY.originY || .90);
   }
 
   playDonnyAction(action){
@@ -1652,9 +1688,19 @@ class MapScene extends Phaser.Scene{
 
   checkRoutes(){
     if(this.time.now<this.routeCooldown)return;
-    const routes=this.data?.routes||[];
+
     const x=this.inVan?this.van.x:this.playerX;
     const y=this.inVan?this.van.y:this.playerY;
+
+    // Reliable north/south/east/west page transitions for C3 testing.
+    if(this.pageId==='GLASSWELL_C3'){
+      if(y < this.mapH*.12){this.routeCooldown=this.time.now+800;this.loadPage('GLASSWELL_C2','south_entry_from_C3');return;}
+      if(y > this.mapH*.88){this.routeCooldown=this.time.now+800;this.loadPage('GLASSWELL_C4','north_entry_from_C3');return;}
+      if(x > this.mapW*.92){this.routeCooldown=this.time.now+800;this.loadPage('GLASSWELL_D3','west_entry_from_C3');return;}
+      if(x < this.mapW*.08){this.routeCooldown=this.time.now+800;this.loadPage('GLASSWELL_B3_DESERT_TEST','east_entry_from_C3');return;}
+    }
+
+    const routes=this.data?.routes||[];
     const r=routes.find(rt=>rectHit(rt.r,x,y));
     if(r&&r.to){
       this.routeCooldown=this.time.now+800;
@@ -1676,7 +1722,7 @@ class MapScene extends Phaser.Scene{
     if(TOUCH.xBtn){TOUCH.xBtn=false;this.handleX()}
     if(TOUCH.b){TOUCH.b=false;this.handleB()}
     if(TOUCH.yHold){TOUCH.yHold=false;if(this.inVan)this.toggleHeadlights();else this.handleY()}
-    if(TOUCH.y){TOUCH.y=false;this.handleY()}
+    if(TOUCH.btnY){TOUCH.btnY=false;this.handleY()}
     if(TOUCH.start){TOUCH.start=false;this.toggleInventory()}
 
     this.updateJump(delta);
@@ -1695,7 +1741,7 @@ class MapScene extends Phaser.Scene{
 
     let moving=input.len>.055;
     if(moving){
-      this.lastMoveUntil=now+300;
+      this.lastMoveUntil=now+80;
       this.lastMoveInput={x:input.x,y:input.y};
     } else if(now<this.lastMoveUntil){
       moving=true;
@@ -1754,6 +1800,7 @@ class MapScene extends Phaser.Scene{
 
     this.player.setPosition(this.playerX,this.playerY-this.jumpZ).setDepth(this.playerY+1000);
     this.updateGunOverlay();
+    this.updateFuelCanOverlay();
     this.updateVanHeadlights();
     this.checkRoutes();
 
