@@ -91,12 +91,13 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-donny-vehicle-weapons-2026-05-26-001';
+const VERSION = 'glasswell-donny-van-turn-movement-2026-05-26-003';
 
 // IMPORTANT:
-// Your Donny files currently exist under the staging folder in the cosmic-feedback repo.
-// If you move those files into the real assets folder later, change DONNY_ROOT to "".
-const DONNY_ROOT = 'space_game_missing_assets_staging/';
+// Donny is loaded from the verified cosmic-feedback staging folder using an absolute raw GitHub URL.
+// This avoids fallback block-man sprites when GitHub Pages is served from a different repo/root domain.
+// Better long-term: copy Donny PNGs into assets/sprites/player/donny/ and set DONNY_ROOT to ''.
+const DONNY_ROOT = 'https://raw.githubusercontent.com/AdonisDRoss/motel-pheromones-cosmic-feedback/main/space_game_missing_assets_staging/';
 
 const GAME_IDENTITY = {
   title:'Cosmic Feedback: Glasswell',
@@ -170,20 +171,43 @@ const WEAPON_ASSETS = {
 const WEAPON_DIR_FRAME = {down:0,right:1,left:2,up:3};
 
 const VAN_ASSETS = {
-  drive:'assets/sprites/vehicles/astro_van/astro_van_drive_4x4_256x140_transparent.png',
+  drive:'assets/sprites/vehicles/astro_van/astro_van_turn_movement_8x6_128x96_transparent.png',
   open:'assets/sprites/vehicles/astro_van/astro_van_open_8x4_204x164_transparent.png'
 };
 const VAN = {
   driveKey:'astro_van_drive',
   openKey:'astro_van_open',
-  driveFrame:{w:256,h:140},
+
+  // New turn/movement sheet:
+  // assets/sprites/vehicles/astro_van/astro_van_turn_movement_8x6_128x96_transparent.png
+  driveFrame:{w:128,h:96},
+
+  // Door sheet stays separate:
+  // assets/sprites/vehicles/astro_van/astro_van_open_8x4_204x164_transparent.png
   openFrame:{w:204,h:164},
-  idleFrame:{down:0,right:4,left:8,up:12},
+
+  // Best starter direction frames from the 8x6 turn sheet.
+  idleFrame:{down:0,right:3,left:24,up:13},
+
   driveAnim:{down:'astro_van_drive_down',right:'astro_van_drive_right',left:'astro_van_drive_left',up:'astro_van_drive_up'},
+
+  // Turning animations are available for later tuning.
+  turnAnim:{
+    down_to_right:'astro_van_turn_down_to_right',
+    right_to_up:'astro_van_turn_right_to_up',
+    up_to_left:'astro_van_turn_up_to_left',
+    left_to_down:'astro_van_turn_left_to_down',
+    down_to_left:'astro_van_turn_down_to_left',
+    left_to_up:'astro_van_turn_left_to_up',
+    up_to_right:'astro_van_turn_up_to_right',
+    right_to_down:'astro_van_turn_right_to_down'
+  },
+
   doorAnim:{down:'astro_van_door_front',right:'astro_van_door_right',left:'astro_van_door_left',up:'astro_van_door_back'},
   doorStartFrame:{down:0,right:8,left:16,up:24},
   speed:265,
   enterDistance:125,
+  renderScale:1.35,
   exitOffset:{
     down:{x:0,y:96},
     up:{x:0,y:-96},
@@ -410,10 +434,31 @@ function createVanAnimations(scene){
   };
 
   if(scene.textures.exists(VAN.driveKey)){
-    make('astro_van_drive_down',VAN.driveKey,0,3,7,-1);
-    make('astro_van_drive_right',VAN.driveKey,4,7,7,-1);
-    make('astro_van_drive_left',VAN.driveKey,8,11,7,-1);
-    make('astro_van_drive_up',VAN.driveKey,12,15,7,-1);
+    const makeFrames=(animKey,frames,frameRate=7,repeat=-1)=>{
+      if(scene.anims.exists(animKey))return;
+      scene.anims.create({
+        key:animKey,
+        frames:frames.map(frame=>({key:VAN.driveKey,frame})),
+        frameRate,
+        repeat
+      });
+    };
+
+    // 8x6 turn/movement sheet starter maps.
+    makeFrames('astro_van_drive_down',[0,4,44,47],7,-1);
+    makeFrames('astro_van_drive_right',[3,7,15,23],7,-1);
+    makeFrames('astro_van_drive_left',[24,31,32,39],7,-1);
+    makeFrames('astro_van_drive_up',[13,14,40,41],7,-1);
+
+    makeFrames('astro_van_turn_down_to_right',[0,1,2,3],10,0);
+    makeFrames('astro_van_turn_right_to_up',[7,10,11,13],10,0);
+    makeFrames('astro_van_turn_up_to_left',[13,17,18,24],10,0);
+    makeFrames('astro_van_turn_left_to_down',[24,33,34,44],10,0);
+
+    makeFrames('astro_van_turn_down_to_left',[0,33,32,24],10,0);
+    makeFrames('astro_van_turn_left_to_up',[24,18,17,13],10,0);
+    makeFrames('astro_van_turn_up_to_right',[13,11,10,7],10,0);
+    makeFrames('astro_van_turn_right_to_down',[3,2,1,0],10,0);
   }
 
   if(scene.textures.exists(VAN.openKey)){
@@ -664,13 +709,13 @@ class CityScene extends Phaser.Scene{
     this.astroVan.direction='down';
     this.astroVan.hasDriver=false;
     this.astroVan.isDoorAnimating=false;
-    this.astroVan.setScale(useDrive?1:.50);
+    this.astroVan.setScale(useDrive?VAN.renderScale:.50);
     this.astroVan.setCollideWorldBounds(true);
 
     if(this.astroVan.body){
       this.astroVan.body.setImmovable(false);
-      this.astroVan.body.setSize(useDrive?150:175,useDrive?70:108);
-      this.astroVan.body.setOffset(useDrive?53:72,useDrive?52:105);
+      this.astroVan.body.setSize(useDrive?90:175,useDrive?48:108);
+      this.astroVan.body.setOffset(useDrive?19:72,useDrive?38:105);
     }
 
     this.vanLabel=this.add.text(this.astroVan.x,this.astroVan.y+78,'ASTRO VAN',{
@@ -867,6 +912,8 @@ class CityScene extends Phaser.Scene{
     const moving=Math.hypot(vx,vy)>.05;
 
     if(moving){
+      const oldDir=van.direction||'down';
+
       if(Math.abs(vx)>Math.abs(vy)){
         van.direction=vx>=0?'right':'left';
       } else {
