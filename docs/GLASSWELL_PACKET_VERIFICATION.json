@@ -1,0 +1,80 @@
+{
+  "packet": "glasswell_city_so_far_donny_start_upload_packet",
+  "start": {
+    "character": "Donny",
+    "page": "GLASSWELL_C3",
+    "spawn": "donny_city_start"
+  },
+  "pages": {
+    "GLASSWELL_C2": {
+      "folder": "c2",
+      "canvas": {
+        "width": 1448,
+        "height": 1086
+      },
+      "files": {
+        "base": "assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_base.png",
+        "foregroundOverlay": "assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_foreground_overlay.png",
+        "collisionMask": "assets/maps/dust9/glasswell/c2/masks/GLASSWELL_C2_collision_mask.png",
+        "pageJson": "assets/maps/dust9/glasswell/c2/data/GLASSWELL_C2_page.json",
+        "depthZones": "assets/maps/dust9/glasswell/c2/data/GLASSWELL_C2_depth_zones.json",
+        "transitions": "assets/maps/dust9/glasswell/c2/data/GLASSWELL_C2_transitions.json",
+        "spawnPoints": "assets/maps/dust9/glasswell/c2/data/GLASSWELL_C2_spawn_points.json"
+      }
+    },
+    "GLASSWELL_C3": {
+      "folder": "c3",
+      "canvas": {
+        "width": 1536,
+        "height": 1152
+      },
+      "files": {
+        "base": "assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_base.png",
+        "foregroundOverlay": "assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_foreground_overlay.png",
+        "collisionMask": "assets/maps/dust9/glasswell/c3/masks/GLASSWELL_C3_collision_mask.png",
+        "pageJson": "assets/maps/dust9/glasswell/c3/data/GLASSWELL_C3_page.json",
+        "depthZones": "assets/maps/dust9/glasswell/c3/data/GLASSWELL_C3_depth_zones.json",
+        "transitions": "assets/maps/dust9/glasswell/c3/data/GLASSWELL_C3_transitions.json",
+        "spawnPoints": "assets/maps/dust9/glasswell/c3/data/GLASSWELL_C3_spawn_points.json"
+      }
+    },
+    "GLASSWELL_C4": {
+      "folder": "c4",
+      "canvas": {
+        "width": 1448,
+        "height": 1086
+      },
+      "files": {
+        "base": "assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_base.png",
+        "foregroundOverlay": "assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_foreground_overlay.png",
+        "collisionMask": "assets/maps/dust9/glasswell/c4/masks/GLASSWELL_C4_collision_mask.png",
+        "pageJson": "assets/maps/dust9/glasswell/c4/data/GLASSWELL_C4_page.json",
+        "depthZones": "assets/maps/dust9/glasswell/c4/data/GLASSWELL_C4_depth_zones.json",
+        "transitions": "assets/maps/dust9/glasswell/c4/data/GLASSWELL_C4_transitions.json",
+        "spawnPoints": "assets/maps/dust9/glasswell/c4/data/GLASSWELL_C4_spawn_points.json"
+      }
+    },
+    "GLASSWELL_D3": {
+      "folder": "d3",
+      "canvas": {
+        "width": 1448,
+        "height": 1086
+      },
+      "files": {
+        "base": "assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_base.png",
+        "foregroundOverlay": "assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_foreground_overlay.png",
+        "collisionMask": "assets/maps/dust9/glasswell/d3/masks/GLASSWELL_D3_collision_mask.png",
+        "pageJson": "assets/maps/dust9/glasswell/d3/data/GLASSWELL_D3_page.json",
+        "depthZones": "assets/maps/dust9/glasswell/d3/data/GLASSWELL_D3_depth_zones.json",
+        "transitions": "assets/maps/dust9/glasswell/d3/data/GLASSWELL_D3_transitions.json",
+        "spawnPoints": "assets/maps/dust9/glasswell/d3/data/GLASSWELL_D3_spawn_points.json"
+      }
+    }
+  },
+  "required_root_files": {
+    "index.html": true,
+    "src/game.js": true,
+    "README.md": true,
+    "page_registry.json": true
+  }
+}
