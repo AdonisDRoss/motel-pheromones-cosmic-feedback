@@ -1,0 +1,81 @@
+{
+  "chunk": "GLASSWELL_C1",
+  "version": "v067",
+  "npc_zones": [
+    {
+      "id": "public_records_queue",
+      "x": 30,
+      "y": 720,
+      "w": 420,
+      "h": 380,
+      "types": [
+        "civilian",
+        "paper_waiter",
+        "admin_clerk"
+      ],
+      "countRange": [
+        5,
+        12
+      ]
+    },
+    {
+      "id": "registry_vault_guards",
+      "x": 455,
+      "y": 345,
+      "w": 650,
+      "h": 420,
+      "types": [
+        "civic_patrol_guard",
+        "registry_guard"
+      ],
+      "countRange": [
+        4,
+        8
+      ]
+    },
+    {
+      "id": "permit_vault_clerks",
+      "x": 525,
+      "y": 190,
+      "w": 520,
+      "h": 160,
+      "types": [
+        "admin_clerk",
+        "House Varric clerk watcher"
+      ],
+      "countRange": [
+        3,
+        7
+      ]
+    },
+    {
+      "id": "varric_annex_watch",
+      "x": 1100,
+      "y": 720,
+      "w": 400,
+      "h": 390,
+      "types": [
+        "House Varric clerk watcher",
+        "record guard"
+      ],
+      "countRange": [
+        3,
+        7
+      ]
+    },
+    {
+      "id": "deep_lantern_records_listener",
+      "x": 350,
+      "y": 845,
+      "w": 380,
+      "h": 180,
+      "types": [
+        "Deep Lantern watcher"
+      ],
+      "countRange": [
+        0,
+        2
+      ]
+    }
+  ]
+}

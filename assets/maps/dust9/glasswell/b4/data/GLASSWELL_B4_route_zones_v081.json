@@ -1,0 +1,30 @@
+{
+  "chunk": "GLASSWELL_B4",
+  "version": "v081",
+  "routes": [
+    {
+      "from": "B4",
+      "to": "B3",
+      "direction": "north",
+      "kind": "Dryline Outer Road"
+    },
+    {
+      "from": "B4",
+      "to": "C4",
+      "direction": "east",
+      "kind": "Transit Vendor Square"
+    },
+    {
+      "from": "B4",
+      "to": "A4",
+      "direction": "west",
+      "kind": "Badlands Cut"
+    },
+    {
+      "from": "B4",
+      "to": "B5",
+      "direction": "south",
+      "kind": "Black Road Drains"
+    }
+  ]
+}

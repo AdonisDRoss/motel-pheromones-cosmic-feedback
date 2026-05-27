@@ -1,0 +1,76 @@
+{
+  "chunk": "GLASSWELL_D1",
+  "version": "v068",
+  "solid_rects": [
+    {
+      "name": "monitor_room",
+      "x": 545,
+      "y": 185,
+      "w": 415,
+      "h": 220
+    },
+    {
+      "name": "relay_station",
+      "x": 1010,
+      "y": 120,
+      "w": 355,
+      "h": 220
+    },
+    {
+      "name": "varric_roof_access",
+      "x": 1090,
+      "y": 690,
+      "w": 446,
+      "h": 462
+    },
+    {
+      "name": "records_roof_block",
+      "x": 0,
+      "y": 35,
+      "w": 385,
+      "h": 330
+    },
+    {
+      "name": "vents",
+      "count": 21
+    },
+    {
+      "name": "surveillance_pylons",
+      "count": 6
+    }
+  ],
+  "open_edges": [
+    {
+      "to": "GLASSWELL_C1_Civic_Admin_Core",
+      "edge": "west",
+      "x": 0,
+      "y": 405,
+      "w": 185,
+      "h": 300
+    },
+    {
+      "to": "future_GLASSWELL_E1_surveillance_roofs",
+      "edge": "east",
+      "x": 1340,
+      "y": 330,
+      "w": 196,
+      "h": 310
+    },
+    {
+      "to": "future_GLASSWELL_D0_upper_rooftops",
+      "edge": "north",
+      "x": 630,
+      "y": 0,
+      "w": 380,
+      "h": 165
+    },
+    {
+      "to": "GLASSWELL_D2_Varric_Service_Alley",
+      "edge": "south",
+      "x": 610,
+      "y": 995,
+      "w": 525,
+      "h": 157
+    }
+  ]
+}

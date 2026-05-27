@@ -1,0 +1,82 @@
+{
+  "chunk": "GLASSWELL_D2",
+  "version": "v066",
+  "npc_zones": [
+    {
+      "id": "varric_clerk_queue",
+      "x": 440,
+      "y": 500,
+      "w": 260,
+      "h": 160,
+      "types": [
+        "House Varric clerk",
+        "civilian",
+        "debt_waiter"
+      ],
+      "countRange": [
+        4,
+        9
+      ]
+    },
+    {
+      "id": "water_credit_routing_workers",
+      "x": 560,
+      "y": 300,
+      "w": 390,
+      "h": 230,
+      "types": [
+        "water_credit_worker",
+        "civic_patrol_guard"
+      ],
+      "countRange": [
+        2,
+        5
+      ]
+    },
+    {
+      "id": "archive_watchers",
+      "x": 1000,
+      "y": 835,
+      "w": 450,
+      "h": 260,
+      "types": [
+        "House Varric clerk watcher",
+        "record guard"
+      ],
+      "countRange": [
+        3,
+        7
+      ]
+    },
+    {
+      "id": "service_alley_civilians",
+      "x": 120,
+      "y": 430,
+      "w": 1210,
+      "h": 320,
+      "types": [
+        "civilian",
+        "runner",
+        "Deep Lantern watcher"
+      ],
+      "countRange": [
+        5,
+        12
+      ]
+    },
+    {
+      "id": "checkpoint_backservice_patrol",
+      "x": 620,
+      "y": 820,
+      "w": 500,
+      "h": 310,
+      "types": [
+        "civic_patrol_guard"
+      ],
+      "countRange": [
+        2,
+        5
+      ]
+    }
+  ]
+}

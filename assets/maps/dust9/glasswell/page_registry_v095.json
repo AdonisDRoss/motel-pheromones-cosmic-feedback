@@ -1,0 +1,368 @@
+{
+  "version": "v095",
+  "defaultStartPage": "GLASSWELL_C3",
+  "chunkSize": {
+    "width": 1536,
+    "height": 1152
+  },
+  "pages": {
+    "GLASSWELL_C1": {
+      "title": "Civic Admin Core",
+      "cell": "C1",
+      "version": "v067",
+      "base": "assets/maps/dust9/glasswell/c1/layers/GLASSWELL_C1_base.png",
+      "foreground": "assets/maps/dust9/glasswell/c1/layers/GLASSWELL_C1_foreground_overlay.png",
+      "collisionMask": "assets/maps/dust9/glasswell/c1/masks/GLASSWELL_C1_collision_mask.png",
+      "neighbors": {
+        "east": "GLASSWELL_D1",
+        "south": "GLASSWELL_C2"
+      },
+      "spawn": {
+        "x": 768,
+        "y": 640
+      }
+    },
+    "GLASSWELL_D1": {
+      "title": "Admin Rooftop Service",
+      "cell": "D1",
+      "version": "v068",
+      "base": "assets/maps/dust9/glasswell/d1/layers/GLASSWELL_D1_base.png",
+      "foreground": "assets/maps/dust9/glasswell/d1/layers/GLASSWELL_D1_foreground_overlay.png",
+      "collisionMask": "assets/maps/dust9/glasswell/d1/masks/GLASSWELL_D1_collision_mask.png",
+      "neighbors": {
+        "west": "GLASSWELL_C1",
+        "east": "GLASSWELL_E1",
+        "south": "GLASSWELL_D2"
+      },
+      "spawn": {
+        "x": 768,
+        "y": 640
+      }
+    },
+    "GLASSWELL_E1": {
+      "title": "Surveillance Roofs",
+      "cell": "E1",
+      "version": "v070",
+      "base": "assets/maps/dust9/glasswell/e1/layers/GLASSWELL_E1_base.png",
+      "foreground": "assets/maps/dust9/glasswell/e1/layers/GLASSWELL_E1_foreground_overlay.png",
+      "collisionMask": "assets/maps/dust9/glasswell/e1/masks/GLASSWELL_E1_collision_mask.png",
+      "neighbors": {
+        "west": "GLASSWELL_D1",
+        "south": "GLASSWELL_E2"
+      },
+      "spawn": {
+        "x": 768,
+        "y": 640
+      }
+    },
+    "GLASSWELL_C2": {
+      "title": "Civic Admin Street",
+      "cell": "C2",
+      "version": "v085",
+      "base": "assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_base.png",
+      "foreground": "assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_foreground_overlay.png",
+      "collisionMask": "assets/maps/dust9/glasswell/c2/masks/GLASSWELL_C2_collision_mask.png",
+      "neighbors": {
+        "east": "GLASSWELL_D2",
+        "north": "GLASSWELL_C1",
+        "south": "GLASSWELL_C3"
+      },
+      "spawn": {
+        "x": 768,
+        "y": 640
+      }
+    },
+    "GLASSWELL_D2": {
+      "title": "Varric Service Alley",
+      "cell": "D2",
+      "version": "v066",
+      "base": "assets/maps/dust9/glasswell/d2/layers/GLASSWELL_D2_base.png",
+      "foreground": "assets/maps/dust9/glasswell/d2/layers/GLASSWELL_D2_foreground_overlay.png",
+      "collisionMask": "assets/maps/dust9/glasswell/d2/masks/GLASSWELL_D2_collision_mask.png",
+      "neighbors": {
+        "west": "GLASSWELL_C2",
+        "east": "GLASSWELL_E2",
+        "north": "GLASSWELL_D1",
+        "south": "GLASSWELL_D3"
+      },
+      "spawn": {
+        "x": 768,
+        "y": 640
+      }
+    },
+    "GLASSWELL_E2": {
+      "title": "Debt Corridor",
+      "cell": "E2",
+      "version": "v069",
+      "base": "assets/maps/dust9/glasswell/e2/layers/GLASSWELL_E2_base.png",
+      "foreground": "assets/maps/dust9/glasswell/e2/layers/GLASSWELL_E2_foreground_overlay.png",
+      "collisionMask": "assets/maps/dust9/glasswell/e2/masks/GLASSWELL_E2_collision_mask.png",
+      "neighbors": {
+        "west": "GLASSWELL_D2",
+        "north": "GLASSWELL_E1",
+        "south": "GLASSWELL_E3"
+      },
+      "spawn": {
+        "x": 768,
+        "y": 640
+      }
+    },
+    "GLASSWELL_A3": {
+      "title": "Dryline Outer Route",
+      "cell": "A3",
+      "version": "v080",
+      "base": "assets/maps/dust9/glasswell/a3/layers/GLASSWELL_A3_base.png",
+      "foreground": "assets/maps/dust9/glasswell/a3/layers/GLASSWELL_A3_foreground_overlay.png",
+      "collisionMask": "assets/maps/dust9/glasswell/a3/masks/GLASSWELL_A3_collision_mask.png",
+      "neighbors": {
+        "east": "GLASSWELL_B3",
+        "south": "GLASSWELL_A4"
+      },
+      "spawn": {
+        "x": 768,
+        "y": 640
+      }
+    },
+    "GLASSWELL_B3": {
+      "title": "Dryline Outer Road",
+      "cell": "B3",
+      "version": "v082",
+      "base": "assets/maps/dust9/glasswell/b3/layers/GLASSWELL_B3_base.png",
+      "foreground": "assets/maps/dust9/glasswell/b3/layers/GLASSWELL_B3_foreground_overlay.png",
+      "collisionMask": "assets/maps/dust9/glasswell/b3/masks/GLASSWELL_B3_collision_mask.png",
+      "neighbors": {
+        "west": "GLASSWELL_A3",
+        "east": "GLASSWELL_C3",
+        "south": "GLASSWELL_B4"
+      },
+      "spawn": {
+        "x": 768,
+        "y": 640
+      }
+    },
+    "GLASSWELL_C3": {
+      "title": "Main Civic Gate",
+      "cell": "C3",
+      "version": "v086",
+      "base": "assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_base.png",
+      "foreground": "assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_foreground_overlay.png",
+      "collisionMask": "assets/maps/dust9/glasswell/c3/masks/GLASSWELL_C3_collision_mask.png",
+      "neighbors": {
+        "west": "GLASSWELL_B3",
+        "east": "GLASSWELL_D3",
+        "north": "GLASSWELL_C2",
+        "south": "GLASSWELL_C4"
+      },
+      "spawn": {
+        "x": 768,
+        "y": 640
+      }
+    },
+    "GLASSWELL_D3": {
+      "title": "Red Concord Checkpoint",
+      "cell": "D3",
+      "version": "v084",
+      "base": "assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_base.png",
+      "foreground": "assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_foreground_overlay.png",
+      "collisionMask": "assets/maps/dust9/glasswell/d3/masks/GLASSWELL_D3_collision_mask.png",
+      "neighbors": {
+        "west": "GLASSWELL_C3",
+        "east": "GLASSWELL_E3",
+        "north": "GLASSWELL_D2",
+        "south": "GLASSWELL_D4"
+      },
+      "spawn": {
+        "x": 768,
+        "y": 640
+      }
+    },
+    "GLASSWELL_E3": {
+      "title": "Red Route Control",
+      "cell": "E3",
+      "version": "v087",
+      "base": "assets/maps/dust9/glasswell/e3/layers/GLASSWELL_E3_base.png",
+      "foreground": "assets/maps/dust9/glasswell/e3/layers/GLASSWELL_E3_foreground_overlay.png",
+      "collisionMask": "assets/maps/dust9/glasswell/e3/masks/GLASSWELL_E3_collision_mask.png",
+      "neighbors": {
+        "west": "GLASSWELL_D3",
+        "north": "GLASSWELL_E2",
+        "south": "GLASSWELL_E4"
+      },
+      "spawn": {
+        "x": 768,
+        "y": 640
+      }
+    },
+    "GLASSWELL_A4": {
+      "title": "Badlands Cut",
+      "cell": "A4",
+      "version": "v079",
+      "base": "assets/maps/dust9/glasswell/a4/layers/GLASSWELL_A4_base.png",
+      "foreground": "assets/maps/dust9/glasswell/a4/layers/GLASSWELL_A4_foreground_overlay.png",
+      "collisionMask": "assets/maps/dust9/glasswell/a4/masks/GLASSWELL_A4_collision_mask.png",
+      "neighbors": {
+        "east": "GLASSWELL_B4",
+        "north": "GLASSWELL_A3",
+        "south": "GLASSWELL_A5"
+      },
+      "spawn": {
+        "x": 768,
+        "y": 640
+      }
+    },
+    "GLASSWELL_B4": {
+      "title": "Black Road Cut",
+      "cell": "B4",
+      "version": "v081",
+      "base": "assets/maps/dust9/glasswell/b4/layers/GLASSWELL_B4_base.png",
+      "foreground": "assets/maps/dust9/glasswell/b4/layers/GLASSWELL_B4_foreground_overlay.png",
+      "collisionMask": "assets/maps/dust9/glasswell/b4/masks/GLASSWELL_B4_collision_mask.png",
+      "neighbors": {
+        "west": "GLASSWELL_A4",
+        "east": "GLASSWELL_C4",
+        "north": "GLASSWELL_B3",
+        "south": "GLASSWELL_B5"
+      },
+      "spawn": {
+        "x": 768,
+        "y": 640
+      }
+    },
+    "GLASSWELL_C4": {
+      "title": "Transit Vendor Square",
+      "cell": "C4",
+      "version": "v083",
+      "base": "assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_base.png",
+      "foreground": "assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_foreground_overlay.png",
+      "collisionMask": "assets/maps/dust9/glasswell/c4/masks/GLASSWELL_C4_collision_mask.png",
+      "neighbors": {
+        "west": "GLASSWELL_B4",
+        "east": "GLASSWELL_D4",
+        "north": "GLASSWELL_C3",
+        "south": "GLASSWELL_C5"
+      },
+      "spawn": {
+        "x": 768,
+        "y": 640
+      }
+    },
+    "GLASSWELL_D4": {
+      "title": "Vendor Backroute / Checkpoint Backlot",
+      "cell": "D4",
+      "version": "v088",
+      "base": "assets/maps/dust9/glasswell/d4/layers/GLASSWELL_D4_base.png",
+      "foreground": "assets/maps/dust9/glasswell/d4/layers/GLASSWELL_D4_foreground_overlay.png",
+      "collisionMask": "assets/maps/dust9/glasswell/d4/masks/GLASSWELL_D4_collision_mask.png",
+      "neighbors": {
+        "west": "GLASSWELL_C4",
+        "east": "GLASSWELL_E4",
+        "north": "GLASSWELL_D3",
+        "south": "GLASSWELL_D5"
+      },
+      "spawn": {
+        "x": 768,
+        "y": 640
+      }
+    },
+    "GLASSWELL_E4": {
+      "title": "Logistics Route",
+      "cell": "E4",
+      "version": "v089",
+      "base": "assets/maps/dust9/glasswell/e4/layers/GLASSWELL_E4_base.png",
+      "foreground": "assets/maps/dust9/glasswell/e4/layers/GLASSWELL_E4_foreground_overlay.png",
+      "collisionMask": "assets/maps/dust9/glasswell/e4/masks/GLASSWELL_E4_collision_mask.png",
+      "neighbors": {
+        "west": "GLASSWELL_D4",
+        "north": "GLASSWELL_E3",
+        "south": "GLASSWELL_E5"
+      },
+      "spawn": {
+        "x": 768,
+        "y": 640
+      }
+    },
+    "GLASSWELL_A5": {
+      "title": "Badlands Drain Route",
+      "cell": "A5",
+      "version": "v094",
+      "base": "assets/maps/dust9/glasswell/a5/layers/GLASSWELL_A5_base.png",
+      "foreground": "assets/maps/dust9/glasswell/a5/layers/GLASSWELL_A5_foreground_overlay.png",
+      "collisionMask": "assets/maps/dust9/glasswell/a5/masks/GLASSWELL_A5_collision_mask.png",
+      "neighbors": {
+        "east": "GLASSWELL_B5",
+        "north": "GLASSWELL_A4"
+      },
+      "spawn": {
+        "x": 768,
+        "y": 640
+      }
+    },
+    "GLASSWELL_B5": {
+      "title": "Black Road Drains",
+      "cell": "B5",
+      "version": "v093",
+      "base": "assets/maps/dust9/glasswell/b5/layers/GLASSWELL_B5_base.png",
+      "foreground": "assets/maps/dust9/glasswell/b5/layers/GLASSWELL_B5_foreground_overlay.png",
+      "collisionMask": "assets/maps/dust9/glasswell/b5/masks/GLASSWELL_B5_collision_mask.png",
+      "neighbors": {
+        "west": "GLASSWELL_A5",
+        "east": "GLASSWELL_C5",
+        "north": "GLASSWELL_B4"
+      },
+      "spawn": {
+        "x": 768,
+        "y": 640
+      }
+    },
+    "GLASSWELL_C5": {
+      "title": "Transit Drain Market",
+      "cell": "C5",
+      "version": "v092",
+      "base": "assets/maps/dust9/glasswell/c5/layers/GLASSWELL_C5_base.png",
+      "foreground": "assets/maps/dust9/glasswell/c5/layers/GLASSWELL_C5_foreground_overlay.png",
+      "collisionMask": "assets/maps/dust9/glasswell/c5/masks/GLASSWELL_C5_collision_mask.png",
+      "neighbors": {
+        "west": "GLASSWELL_B5",
+        "east": "GLASSWELL_D5",
+        "north": "GLASSWELL_C4"
+      },
+      "spawn": {
+        "x": 768,
+        "y": 640
+      }
+    },
+    "GLASSWELL_D5": {
+      "title": "Pressure Service Route",
+      "cell": "D5",
+      "version": "v091",
+      "base": "assets/maps/dust9/glasswell/d5/layers/GLASSWELL_D5_base.png",
+      "foreground": "assets/maps/dust9/glasswell/d5/layers/GLASSWELL_D5_foreground_overlay.png",
+      "collisionMask": "assets/maps/dust9/glasswell/d5/masks/GLASSWELL_D5_collision_mask.png",
+      "neighbors": {
+        "west": "GLASSWELL_C5",
+        "east": "GLASSWELL_E5",
+        "north": "GLASSWELL_D4"
+      },
+      "spawn": {
+        "x": 768,
+        "y": 640
+      }
+    },
+    "GLASSWELL_E5": {
+      "title": "Custody Convoy Yard",
+      "cell": "E5",
+      "version": "v090",
+      "base": "assets/maps/dust9/glasswell/e5/layers/GLASSWELL_E5_base.png",
+      "foreground": "assets/maps/dust9/glasswell/e5/layers/GLASSWELL_E5_foreground_overlay.png",
+      "collisionMask": "assets/maps/dust9/glasswell/e5/masks/GLASSWELL_E5_collision_mask.png",
+      "neighbors": {
+        "west": "GLASSWELL_D5",
+        "north": "GLASSWELL_E4"
+      },
+      "spawn": {
+        "x": 768,
+        "y": 640
+      }
+    }
+  }
+}

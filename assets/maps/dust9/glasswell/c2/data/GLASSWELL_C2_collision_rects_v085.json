@@ -1,0 +1,83 @@
+{
+  "chunk": "GLASSWELL_C2",
+  "version": "v085",
+  "solid_rects": [
+    {
+      "name": "civic_registry_records_building",
+      "x": 45,
+      "y": 45,
+      "w": 465,
+      "h": 350
+    },
+    {
+      "name": "house_varric_water_credit_hall",
+      "x": 1085,
+      "y": 50,
+      "w": 451,
+      "h": 340
+    },
+    {
+      "name": "red_records_impound",
+      "x": 1005,
+      "y": 725,
+      "w": 531,
+      "h": 427
+    },
+    {
+      "name": "central_ration_water_credit_counter",
+      "x": 535,
+      "y": 315,
+      "w": 495,
+      "h": 270
+    },
+    {
+      "name": "sable_deep_lantern_clerk_cellar",
+      "x": 0,
+      "y": 770,
+      "w": 540,
+      "h": 382
+    },
+    {
+      "name": "queue_rails",
+      "count": 10
+    },
+    {
+      "name": "admin_scanner_pylons",
+      "count": 10
+    }
+  ],
+  "open_edges": [
+    {
+      "to": "GLASSWELL_C3_Main_Civic_Gate",
+      "edge": "south",
+      "x": 510,
+      "y": 995,
+      "w": 725,
+      "h": 157
+    },
+    {
+      "to": "future_GLASSWELL_B2_Admin_Service_Cut",
+      "edge": "west",
+      "x": 0,
+      "y": 335,
+      "w": 185,
+      "h": 500
+    },
+    {
+      "to": "future_GLASSWELL_D2_Upper_Checkpoint_Admin",
+      "edge": "east",
+      "x": 1350,
+      "y": 380,
+      "w": 186,
+      "h": 475
+    },
+    {
+      "to": "future_GLASSWELL_C1_Civic_Hall",
+      "edge": "north",
+      "x": 525,
+      "y": 0,
+      "w": 565,
+      "h": 170
+    }
+  ]
+}

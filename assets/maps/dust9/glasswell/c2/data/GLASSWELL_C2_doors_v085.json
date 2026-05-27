@@ -1,0 +1,56 @@
+{
+  "chunk": "GLASSWELL_C2",
+  "version": "v085",
+  "doors": [
+    {
+      "id": "c2_civic_registry",
+      "label": "Civic Registry",
+      "x": 255,
+      "y": 305,
+      "w": 115,
+      "h": 90,
+      "state": "locked",
+      "futureInterior": "C2_INT_CIVIC_REGISTRY"
+    },
+    {
+      "id": "c2_varric_water_credit_hall",
+      "label": "House Varric Water-Credit Hall",
+      "x": 1170,
+      "y": 285,
+      "w": 110,
+      "h": 85,
+      "state": "locked",
+      "futureInterior": "C2_INT_VARRIC_WATER_CREDIT_HALL"
+    },
+    {
+      "id": "c2_clerk_cellar",
+      "label": "Clerk Cellar",
+      "x": 180,
+      "y": 970,
+      "w": 70,
+      "h": 70,
+      "state": "locked",
+      "futureInterior": "C2_INT_CLERK_CELLAR"
+    },
+    {
+      "id": "c2_ration_counter",
+      "label": "Ration / Water-Credit Counter",
+      "x": 625,
+      "y": 445,
+      "w": 130,
+      "h": 105,
+      "state": "locked",
+      "futureInterior": "C2_INT_RATION_COUNTER"
+    },
+    {
+      "id": "c2_south_main_gate_route",
+      "label": "Main Civic Gate",
+      "x": 700,
+      "y": 1010,
+      "w": 220,
+      "h": 125,
+      "state": "route",
+      "target": "GLASSWELL_C3"
+    }
+  ]
+}

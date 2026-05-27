@@ -1,0 +1,63 @@
+{
+  "chunk": "GLASSWELL_E1",
+  "version": "v070",
+  "vehicle_lanes": [
+    {
+      "id": "small_rooftop_cart_lane",
+      "kind": "small_service_cart_only",
+      "nodes": [
+        {
+          "x": 120,
+          "y": 540
+        },
+        {
+          "x": 360,
+          "y": 520
+        },
+        {
+          "x": 720,
+          "y": 505
+        },
+        {
+          "x": 1080,
+          "y": 485
+        },
+        {
+          "x": 1420,
+          "y": 470
+        }
+      ]
+    },
+    {
+      "id": "south_service_lift_lane",
+      "kind": "service_lift_route",
+      "nodes": [
+        {
+          "x": 830,
+          "y": 1120
+        },
+        {
+          "x": 810,
+          "y": 920
+        },
+        {
+          "x": 775,
+          "y": 710
+        },
+        {
+          "x": 740,
+          "y": 515
+        },
+        {
+          "x": 735,
+          "y": 220
+        }
+      ]
+    }
+  ],
+  "vehicle_rules": [
+    "Use foot patrols and small service carts.",
+    "Full cars should not normally spawn on E1.",
+    "Astro Van should not enter E1 unless a future service lift route is intentionally unlocked."
+  ]
+}

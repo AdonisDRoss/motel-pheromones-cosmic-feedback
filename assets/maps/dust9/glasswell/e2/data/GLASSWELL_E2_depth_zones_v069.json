@@ -1,0 +1,39 @@
+{
+  "chunk": "GLASSWELL_E2",
+  "version": "v069",
+  "depth_rules": [
+    {
+      "name": "foreground_overlay",
+      "path": "assets/maps/dust9/glasswell/e2/layers/GLASSWELL_E2_foreground_overlay.png",
+      "depth": "above_player"
+    },
+    {
+      "name": "ledger_pipe_bridge",
+      "x": 100,
+      "y": 225,
+      "w": 1300,
+      "h": 175,
+      "depth": "above_player_when_player_y_less_than_405"
+    },
+    {
+      "name": "top_pipe_occlusion",
+      "x": 0,
+      "y": 100,
+      "w": 1536,
+      "h": 135,
+      "depth": "above_player"
+    },
+    {
+      "name": "bottom_pipe_occlusion",
+      "x": 0,
+      "y": 985,
+      "w": 1536,
+      "h": 140,
+      "depth": "above_player"
+    },
+    {
+      "name": "ground_items",
+      "rule": "Credchips, debt slips, seized items, fuel cans render below bodies."
+    }
+  ]
+}

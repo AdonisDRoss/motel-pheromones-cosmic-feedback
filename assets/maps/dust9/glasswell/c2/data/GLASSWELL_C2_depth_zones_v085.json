@@ -1,0 +1,47 @@
+{
+  "chunk": "GLASSWELL_C2",
+  "version": "v085",
+  "depth_rules": [
+    {
+      "name": "foreground_overlay",
+      "path": "assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_foreground_overlay.png",
+      "depth": "above_player"
+    },
+    {
+      "name": "civic_admin_gantry",
+      "x": 25,
+      "y": 190,
+      "w": 1420,
+      "h": 250,
+      "depth": "above_player_when_player_y_less_than_455"
+    },
+    {
+      "name": "overhead_admin_arms",
+      "x": 460,
+      "y": 290,
+      "w": 910,
+      "h": 585,
+      "depth": "above_player"
+    },
+    {
+      "name": "top_pipe_occlusion",
+      "x": 0,
+      "y": 95,
+      "w": 1536,
+      "h": 145,
+      "depth": "above_player"
+    },
+    {
+      "name": "bottom_pipe_occlusion",
+      "x": 0,
+      "y": 985,
+      "w": 1536,
+      "h": 145,
+      "depth": "above_player"
+    },
+    {
+      "name": "ground_items",
+      "rule": "Credchips, ration papers, water-credit forms, fuel cans, scrap pickups render below bodies."
+    }
+  ]
+}

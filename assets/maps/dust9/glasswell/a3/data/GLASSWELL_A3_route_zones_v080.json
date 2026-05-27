@@ -1,0 +1,30 @@
+{
+  "chunk": "GLASSWELL_A3",
+  "version": "v080",
+  "routes": [
+    {
+      "from": "A3",
+      "to": "A4",
+      "direction": "south",
+      "kind": "Badlands Cut"
+    },
+    {
+      "from": "A3",
+      "to": "B3",
+      "direction": "east",
+      "kind": "Dryline Outer Road"
+    },
+    {
+      "from": "A3",
+      "to": "OuterBadlands_future",
+      "direction": "west",
+      "kind": "outer badlands route"
+    },
+    {
+      "from": "A3",
+      "to": "A2_future",
+      "direction": "north",
+      "kind": "Dryline north route"
+    }
+  ]
+}

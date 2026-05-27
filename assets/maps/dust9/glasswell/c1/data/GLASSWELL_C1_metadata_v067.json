@@ -1,0 +1,20 @@
+{
+  "chunk": "GLASSWELL_C1",
+  "title": "Civic Admin Core",
+  "version": "v067",
+  "canvas": {
+    "width": 1536,
+    "height": 1152
+  },
+  "runtime_paths": {
+    "base": "assets/maps/dust9/glasswell/c1/layers/GLASSWELL_C1_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/c1/layers/GLASSWELL_C1_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/c1/masks/GLASSWELL_C1_collision_mask.png"
+  },
+  "notes": [
+    "Extends north from C2 Civic Admin Street.",
+    "Core Red Concord / House Varric permit and registry bureaucracy area.",
+    "Contains sealed registry vault, public records queue, permit vault, and Varric annex.",
+    "Ground items render below Donny/NPC bodies."
+  ]
+}

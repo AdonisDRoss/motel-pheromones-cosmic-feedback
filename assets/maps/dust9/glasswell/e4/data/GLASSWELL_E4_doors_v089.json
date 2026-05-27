@@ -1,0 +1,56 @@
+{
+  "chunk": "GLASSWELL_E4",
+  "version": "v089",
+  "doors": [
+    {
+      "id": "e4_handoff_office",
+      "label": "Vendor Route Handoff Office",
+      "x": 255,
+      "y": 305,
+      "w": 115,
+      "h": 90,
+      "state": "locked",
+      "futureInterior": "E4_INT_HANDOFF_OFFICE"
+    },
+    {
+      "id": "e4_supply_authority",
+      "label": "Supply Authority Office",
+      "x": 1170,
+      "y": 292,
+      "w": 120,
+      "h": 90,
+      "state": "locked",
+      "futureInterior": "E4_INT_SUPPLY_AUTHORITY"
+    },
+    {
+      "id": "e4_dispatch_room",
+      "label": "Convoy Dispatch Room",
+      "x": 180,
+      "y": 970,
+      "w": 70,
+      "h": 70,
+      "state": "locked",
+      "futureInterior": "E4_INT_DISPATCH_ROOM"
+    },
+    {
+      "id": "e4_convoy_reader",
+      "label": "Convoy Reader",
+      "x": 625,
+      "y": 445,
+      "w": 130,
+      "h": 105,
+      "state": "locked",
+      "futureInterior": "E4_INT_CONVOY_READER"
+    },
+    {
+      "id": "e4_fuel_pad",
+      "label": "Fuel Depot Pad",
+      "x": 1010,
+      "y": 485,
+      "w": 130,
+      "h": 90,
+      "state": "locked",
+      "futureInterior": "E4_INT_FUEL_DEPOT"
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "chunk": "GLASSWELL_A3",
+  "version": "v080",
+  "solid_rects": [
+    {
+      "name": "black_road_lookout",
+      "x": 45,
+      "y": 45,
+      "w": 455,
+      "h": 345
+    },
+    {
+      "name": "route_signal_gate",
+      "x": 1085,
+      "y": 50,
+      "w": 451,
+      "h": 340
+    },
+    {
+      "name": "red_patrol_spillover_yard",
+      "x": 1005,
+      "y": 725,
+      "w": 531,
+      "h": 427
+    },
+    {
+      "name": "central_tanker_route_booth",
+      "x": 535,
+      "y": 315,
+      "w": 495,
+      "h": 270
+    },
+    {
+      "name": "sable_kin_scout_cache",
+      "x": 0,
+      "y": 770,
+      "w": 540,
+      "h": 382
+    },
+    {
+      "name": "road_posts",
+      "count": 8
+    },
+    {
+      "name": "pipe_nodes",
+      "count": 8
+    }
+  ],
+  "open_edges": [
+    {
+      "to": "GLASSWELL_A4_Badlands_Cut",
+      "edge": "south",
+      "x": 510,
+      "y": 995,
+      "w": 725,
+      "h": 157
+    },
+    {
+      "to": "GLASSWELL_B3_Dryline_Outer_Road",
+      "edge": "east",
+      "x": 1350,
+      "y": 360,
+      "w": 186,
+      "h": 515
+    },
+    {
+      "to": "future_GLASSWELL_OUTER_BADLANDS",
+      "edge": "west",
+      "x": 0,
+      "y": 310,
+      "w": 185,
+      "h": 540
+    },
+    {
+      "to": "future_GLASSWELL_A2_Dryline_North",
+      "edge": "north",
+      "x": 535,
+      "y": 0,
+      "w": 535,
+      "h": 170
+    }
+  ]
+}

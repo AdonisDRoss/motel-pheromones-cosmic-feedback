@@ -1,0 +1,131 @@
+{
+  "chunk": "GLASSWELL_C5",
+  "version": "v092",
+  "solid_rects": [
+    {
+      "name": "transit_stair_service_office",
+      "x": 45,
+      "y": 45,
+      "w": 465,
+      "h": 350
+    },
+    {
+      "name": "pressure_control_spill_office",
+      "x": 1085,
+      "y": 50,
+      "w": 451,
+      "h": 348
+    },
+    {
+      "name": "red_utility_confiscation_cage",
+      "x": 1005,
+      "y": 725,
+      "w": 531,
+      "h": 427
+    },
+    {
+      "name": "central_drain_market_counter",
+      "x": 535,
+      "y": 315,
+      "w": 495,
+      "h": 270
+    },
+    {
+      "name": "pressure_valve_deck",
+      "x": 885,
+      "y": 420,
+      "w": 425,
+      "h": 212
+    },
+    {
+      "name": "sable_water_cache_cellar",
+      "x": 0,
+      "y": 770,
+      "w": 540,
+      "h": 382
+    },
+    {
+      "name": "flooded_center_channel",
+      "points": [
+        [
+          205,
+          500
+        ],
+        [
+          650,
+          455
+        ],
+        [
+          1165,
+          510
+        ],
+        [
+          1240,
+          650
+        ],
+        [
+          735,
+          725
+        ],
+        [
+          165,
+          655
+        ]
+      ]
+    },
+    {
+      "name": "market_tarps",
+      "count": 4
+    },
+    {
+      "name": "valves",
+      "count": 5
+    },
+    {
+      "name": "pipe_nodes",
+      "count": 9
+    },
+    {
+      "name": "service_barricades",
+      "count": 12
+    },
+    {
+      "name": "market_pylons",
+      "count": 12
+    }
+  ],
+  "open_edges": [
+    {
+      "to": "GLASSWELL_C4_Transit_Vendor_Square",
+      "edge": "north",
+      "x": 525,
+      "y": 0,
+      "w": 575,
+      "h": 170
+    },
+    {
+      "to": "GLASSWELL_B5_Black_Road_Drains",
+      "edge": "west",
+      "x": 0,
+      "y": 300,
+      "w": 185,
+      "h": 560
+    },
+    {
+      "to": "GLASSWELL_D5_Pressure_Service_Route",
+      "edge": "east",
+      "x": 1350,
+      "y": 350,
+      "w": 186,
+      "h": 550
+    },
+    {
+      "to": "future_GLASSWELL_C6_Lower_Drain_Line",
+      "edge": "south",
+      "x": 510,
+      "y": 995,
+      "w": 730,
+      "h": 157
+    }
+  ]
+}

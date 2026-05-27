@@ -1,0 +1,56 @@
+{
+  "chunk": "GLASSWELL_C5",
+  "version": "v092",
+  "doors": [
+    {
+      "id": "c5_transit_service_office",
+      "label": "Transit Service Office",
+      "x": 255,
+      "y": 305,
+      "w": 115,
+      "h": 90,
+      "state": "locked",
+      "futureInterior": "C5_INT_TRANSIT_SERVICE_OFFICE"
+    },
+    {
+      "id": "c5_pressure_spill_office",
+      "label": "Pressure Spill Office",
+      "x": 1170,
+      "y": 292,
+      "w": 120,
+      "h": 90,
+      "state": "locked",
+      "futureInterior": "C5_INT_PRESSURE_SPILL_OFFICE"
+    },
+    {
+      "id": "c5_sable_water_cache",
+      "label": "Sable Water Cache",
+      "x": 180,
+      "y": 970,
+      "w": 70,
+      "h": 70,
+      "state": "locked",
+      "futureInterior": "C5_INT_SABLE_WATER_CACHE"
+    },
+    {
+      "id": "c5_drain_market_counter",
+      "label": "Drain Market Counter",
+      "x": 625,
+      "y": 445,
+      "w": 130,
+      "h": 105,
+      "state": "locked",
+      "futureInterior": "C5_INT_DRAIN_MARKET_COUNTER"
+    },
+    {
+      "id": "c5_valve_deck",
+      "label": "Drain Valve Deck",
+      "x": 965,
+      "y": 500,
+      "w": 170,
+      "h": 90,
+      "state": "locked",
+      "futureInterior": "C5_INT_VALVE_DECK"
+    }
+  ]
+}

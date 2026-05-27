@@ -1,0 +1,76 @@
+{
+  "chunk": "GLASSWELL_E2",
+  "version": "v069",
+  "solid_rects": [
+    {
+      "name": "varric_collection_hall",
+      "x": 55,
+      "y": 35,
+      "w": 425,
+      "h": 330
+    },
+    {
+      "name": "red_concord_compliance_office",
+      "x": 1115,
+      "y": 35,
+      "w": 421,
+      "h": 290
+    },
+    {
+      "name": "water_shutoff_station",
+      "x": 565,
+      "y": 275,
+      "w": 405,
+      "h": 240
+    },
+    {
+      "name": "seized_property_cage",
+      "x": 1010,
+      "y": 765,
+      "w": 526,
+      "h": 387
+    },
+    {
+      "name": "payment_kiosks",
+      "count": 4
+    },
+    {
+      "name": "cable_column_supports",
+      "count": 8
+    }
+  ],
+  "open_edges": [
+    {
+      "to": "GLASSWELL_D2_Varric_Service_Alley",
+      "edge": "west",
+      "x": 0,
+      "y": 340,
+      "w": 185,
+      "h": 390
+    },
+    {
+      "to": "future_GLASSWELL_F2_collection_vaults",
+      "edge": "east",
+      "x": 1350,
+      "y": 320,
+      "w": 186,
+      "h": 440
+    },
+    {
+      "to": "future_GLASSWELL_E1_surveillance_roofs",
+      "edge": "north",
+      "x": 570,
+      "y": 0,
+      "w": 465,
+      "h": 170
+    },
+    {
+      "to": "future_GLASSWELL_E3_red_route_control",
+      "edge": "south",
+      "x": 590,
+      "y": 995,
+      "w": 595,
+      "h": 157
+    }
+  ]
+}

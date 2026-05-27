@@ -1,0 +1,39 @@
+{
+  "chunk": "GLASSWELL_E1",
+  "version": "v070",
+  "depth_rules": [
+    {
+      "name": "foreground_overlay",
+      "path": "assets/maps/dust9/glasswell/e1/layers/GLASSWELL_E1_foreground_overlay.png",
+      "depth": "above_player"
+    },
+    {
+      "name": "surveillance_cable_bridge",
+      "x": 80,
+      "y": 185,
+      "w": 1390,
+      "h": 180,
+      "depth": "above_player_when_player_y_less_than_370"
+    },
+    {
+      "name": "top_pipe_occlusion",
+      "x": 0,
+      "y": 85,
+      "w": 1536,
+      "h": 150,
+      "depth": "above_player"
+    },
+    {
+      "name": "bottom_pipe_occlusion",
+      "x": 0,
+      "y": 990,
+      "w": 1536,
+      "h": 140,
+      "depth": "above_player"
+    },
+    {
+      "name": "ground_items",
+      "rule": "Credchips, camera parts, papers, tools render below bodies."
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "chunk": "GLASSWELL_D1",
+  "version": "v068",
+  "doors": [
+    {
+      "id": "d1_monitor_room",
+      "label": "Monitor Room",
+      "x": 735,
+      "y": 340,
+      "w": 100,
+      "h": 65,
+      "state": "locked",
+      "futureInterior": "D1_INT_MONITOR_ROOM"
+    },
+    {
+      "id": "d1_relay_station",
+      "label": "Relay Station",
+      "x": 1110,
+      "y": 245,
+      "w": 85,
+      "h": 85,
+      "state": "locked",
+      "futureInterior": "D1_INT_RELAY_STATION"
+    },
+    {
+      "id": "d1_varric_roof_access",
+      "label": "Varric Roof Access",
+      "x": 1215,
+      "y": 1010,
+      "w": 110,
+      "h": 125,
+      "state": "locked",
+      "futureInterior": "D1_INT_VARRIC_ROOF_ACCESS"
+    },
+    {
+      "id": "d1_ladder_well_south",
+      "label": "South Ladder Well",
+      "x": 710,
+      "y": 890,
+      "w": 135,
+      "h": 120,
+      "state": "route",
+      "target": "GLASSWELL_D2"
+    },
+    {
+      "id": "d1_ladder_well_west",
+      "label": "West Ladder Well",
+      "x": 315,
+      "y": 555,
+      "w": 105,
+      "h": 115,
+      "state": "future",
+      "target": "GLASSWELL_C1"
+    }
+  ]
+}

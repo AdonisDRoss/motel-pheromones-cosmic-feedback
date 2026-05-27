@@ -1,0 +1,30 @@
+{
+  "chunk": "GLASSWELL_D1",
+  "version": "v068",
+  "routes": [
+    {
+      "from": "D1",
+      "to": "C1",
+      "direction": "west",
+      "kind": "admin core rooftop/service route"
+    },
+    {
+      "from": "D1",
+      "to": "D2",
+      "direction": "south",
+      "kind": "Varric service alley ladder/service route"
+    },
+    {
+      "from": "D1",
+      "to": "E1_future",
+      "direction": "east",
+      "kind": "surveillance rooftops"
+    },
+    {
+      "from": "D1",
+      "to": "D0_future",
+      "direction": "north",
+      "kind": "upper rooftops"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "chunk": "GLASSWELL_C2",
+  "title": "Civic Admin Street",
+  "version": "v085",
+  "replaces": "C2 placeholder/greybox art",
+  "canvas": {
+    "width": 1536,
+    "height": 1152
+  },
+  "runtime_paths": {
+    "base": "assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/c2/masks/GLASSWELL_C2_collision_mask.png"
+  },
+  "preview": "docs/GLASSWELL_C2_preview_v085.png",
+  "notes": [
+    "Art upgrade for C2 Civic Admin Street.",
+    "Connects south to C3 Main Civic Gate.",
+    "Civic paperwork layer with registry office, House Varric water-credit hall, ration counter, records impound, and clerk cellar.",
+    "Ground items render below Donny/NPC bodies."
+  ]
+}

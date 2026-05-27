@@ -1,0 +1,20 @@
+{
+  "chunk": "GLASSWELL_E2",
+  "title": "Debt Corridor",
+  "version": "v069",
+  "canvas": {
+    "width": 1536,
+    "height": 1152
+  },
+  "runtime_paths": {
+    "base": "assets/maps/dust9/glasswell/e2/layers/GLASSWELL_E2_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/e2/layers/GLASSWELL_E2_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/e2/masks/GLASSWELL_E2_collision_mask.png"
+  },
+  "notes": [
+    "Extends east from D2 Varric Service Alley.",
+    "House Varric / Red Concord debt-control corridor.",
+    "Contains collection hall, compliance office, water shutoff station, seized-property cage, and payment queues.",
+    "Ground items render below Donny/NPC bodies."
+  ]
+}

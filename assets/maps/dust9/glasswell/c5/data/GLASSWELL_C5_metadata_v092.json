@@ -1,0 +1,21 @@
+{
+  "chunk": "GLASSWELL_C5",
+  "title": "Transit Drain Market",
+  "version": "v092",
+  "canvas": {
+    "width": 1536,
+    "height": 1152
+  },
+  "runtime_paths": {
+    "base": "assets/maps/dust9/glasswell/c5/layers/GLASSWELL_C5_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/c5/layers/GLASSWELL_C5_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/c5/masks/GLASSWELL_C5_collision_mask.png"
+  },
+  "preview": "docs/GLASSWELL_C5_preview_v092.png",
+  "notes": [
+    "Connects C4 Transit Vendor Square, B5 Black Road Drains, D5 Pressure Service Route, and future C6 Lower Drain Line.",
+    "Flooded transit drain market with raised market platforms, Sable water cache, Black Road crawl marks, drain-market stalls, and pressure-valve clutter.",
+    "Flooded center is mostly blocked; raised platforms and outer service lanes remain walkable/driveable.",
+    "Ground items render below Donny/NPC bodies."
+  ]
+}

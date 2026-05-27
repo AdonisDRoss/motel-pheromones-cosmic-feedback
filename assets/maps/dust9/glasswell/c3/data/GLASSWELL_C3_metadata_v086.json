@@ -1,0 +1,22 @@
+{
+  "chunk": "GLASSWELL_C3",
+  "title": "Main Civic Gate",
+  "version": "v086",
+  "replaces": "core hub C3 map art",
+  "canvas": {
+    "width": 1536,
+    "height": 1152
+  },
+  "runtime_paths": {
+    "base": "assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/c3/masks/GLASSWELL_C3_collision_mask.png"
+  },
+  "preview": "docs/GLASSWELL_C3_preview_v086.png",
+  "notes": [
+    "Final art upgrade for core hub C3 Main Civic Gate.",
+    "Connects B3, D3, C2, and C4.",
+    "Main civic gate with Red Concord arch, scanner/ration gate, Varric annex, Dryline intake office, and impound spillover.",
+    "Ground items render below Donny/NPC bodies."
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "chunk": "GLASSWELL_D2",
+  "title": "Varric Service Alley",
+  "version": "v066",
+  "canvas": {
+    "width": 1536,
+    "height": 1152
+  },
+  "runtime_paths": {
+    "base": "assets/maps/dust9/glasswell/d2/layers/GLASSWELL_D2_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/d2/layers/GLASSWELL_D2_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/d2/masks/GLASSWELL_D2_collision_mask.png"
+  },
+  "notes": [
+    "Connects from C2 Civic Admin Street toward D3 Red Concord Checkpoint.",
+    "House Varric ledger/service infrastructure chunk.",
+    "Supports debt office, water-credit routing, clerk archive, and hidden utility access.",
+    "Ground items render below Donny/NPC bodies."
+  ]
+}

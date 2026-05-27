@@ -1,0 +1,30 @@
+{
+  "chunk": "GLASSWELL_B3",
+  "version": "v082",
+  "routes": [
+    {
+      "from": "B3",
+      "to": "A3",
+      "direction": "west",
+      "kind": "Dryline Outer Route"
+    },
+    {
+      "from": "B3",
+      "to": "C3",
+      "direction": "east",
+      "kind": "Main Civic Gate"
+    },
+    {
+      "from": "B3",
+      "to": "B4",
+      "direction": "south",
+      "kind": "Black Road Cut"
+    },
+    {
+      "from": "B3",
+      "to": "B2_future",
+      "direction": "north",
+      "kind": "Dryline north route"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "chunk": "GLASSWELL_C4",
+  "title": "Transit Vendor Square",
+  "version": "v083",
+  "replaces": "C4 placeholder/greybox art",
+  "canvas": {
+    "width": 1536,
+    "height": 1152
+  },
+  "runtime_paths": {
+    "base": "assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/c4/masks/GLASSWELL_C4_collision_mask.png"
+  },
+  "preview": "docs/GLASSWELL_C4_preview_v083.png",
+  "notes": [
+    "Art upgrade for C4 Transit Vendor Square.",
+    "Connects C3, B4, D4, and C5.",
+    "Vendor market / transit platform square with ration exchange, patrol confiscation bay, Sable/Deep Lantern cellar, and old transit infrastructure.",
+    "Ground items render below Donny/NPC bodies."
+  ]
+}

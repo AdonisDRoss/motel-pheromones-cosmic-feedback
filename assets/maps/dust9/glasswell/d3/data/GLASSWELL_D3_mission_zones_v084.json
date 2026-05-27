@@ -1,0 +1,46 @@
+{
+  "chunk": "GLASSWELL_D3",
+  "version": "v084",
+  "mission_hooks": [
+    {
+      "id": "d3_checkpoint_scan_event",
+      "x": 535,
+      "y": 315,
+      "w": 495,
+      "h": 270,
+      "trigger": "checkpoint_scan_event"
+    },
+    {
+      "id": "d3_gatehouse_bypass",
+      "x": 45,
+      "y": 65,
+      "w": 465,
+      "h": 350,
+      "trigger": "gatehouse_bypass"
+    },
+    {
+      "id": "d3_impound_inspection",
+      "x": 1005,
+      "y": 775,
+      "w": 500,
+      "h": 330,
+      "trigger": "vehicle_impound_event"
+    },
+    {
+      "id": "d3_custody_service_hint",
+      "x": 60,
+      "y": 820,
+      "w": 455,
+      "h": 300,
+      "trigger": "custody_service_hint"
+    },
+    {
+      "id": "d3_checkpoint_hidden_mark",
+      "x": 330,
+      "y": 665,
+      "w": 450,
+      "h": 190,
+      "trigger": "spot_checkpoint_hidden_mark"
+    }
+  ]
+}

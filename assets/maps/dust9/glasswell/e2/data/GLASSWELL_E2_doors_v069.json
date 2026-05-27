@@ -1,0 +1,56 @@
+{
+  "chunk": "GLASSWELL_E2",
+  "version": "v069",
+  "doors": [
+    {
+      "id": "e2_collection_hall",
+      "label": "Varric Collection Hall",
+      "x": 250,
+      "y": 285,
+      "w": 95,
+      "h": 80,
+      "state": "locked",
+      "futureInterior": "E2_INT_COLLECTION_HALL"
+    },
+    {
+      "id": "e2_compliance_office",
+      "label": "Compliance Office",
+      "x": 1160,
+      "y": 235,
+      "w": 95,
+      "h": 80,
+      "state": "locked",
+      "futureInterior": "E2_INT_COMPLIANCE_OFFICE"
+    },
+    {
+      "id": "e2_water_shutoff_station",
+      "label": "Water Shutoff Station",
+      "x": 650,
+      "y": 385,
+      "w": 85,
+      "h": 95,
+      "state": "locked",
+      "futureInterior": "E2_INT_WATER_SHUTOFF"
+    },
+    {
+      "id": "e2_seized_property_cage",
+      "label": "Seized Property Cage",
+      "x": 1120,
+      "y": 930,
+      "w": 120,
+      "h": 125,
+      "state": "locked",
+      "futureInterior": "E2_INT_SEIZED_PROPERTY_CAGE"
+    },
+    {
+      "id": "e2_south_red_route",
+      "label": "Red Route Control",
+      "x": 710,
+      "y": 1015,
+      "w": 320,
+      "h": 110,
+      "state": "route",
+      "target": "future_GLASSWELL_E3"
+    }
+  ]
+}

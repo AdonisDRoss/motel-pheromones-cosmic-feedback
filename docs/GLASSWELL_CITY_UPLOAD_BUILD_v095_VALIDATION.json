@@ -1,0 +1,194 @@
+{
+  "missing": [],
+  "present_chunks": [
+    {
+      "id": "GLASSWELL_C1",
+      "version": "v067",
+      "files": {
+        "base": true,
+        "foreground_overlay": true,
+        "collision_mask": true
+      }
+    },
+    {
+      "id": "GLASSWELL_D1",
+      "version": "v068",
+      "files": {
+        "base": true,
+        "foreground_overlay": true,
+        "collision_mask": true
+      }
+    },
+    {
+      "id": "GLASSWELL_E1",
+      "version": "v070",
+      "files": {
+        "base": true,
+        "foreground_overlay": true,
+        "collision_mask": true
+      }
+    },
+    {
+      "id": "GLASSWELL_C2",
+      "version": "v085",
+      "files": {
+        "base": true,
+        "foreground_overlay": true,
+        "collision_mask": true
+      }
+    },
+    {
+      "id": "GLASSWELL_D2",
+      "version": "v066",
+      "files": {
+        "base": true,
+        "foreground_overlay": true,
+        "collision_mask": true
+      }
+    },
+    {
+      "id": "GLASSWELL_E2",
+      "version": "v069",
+      "files": {
+        "base": true,
+        "foreground_overlay": true,
+        "collision_mask": true
+      }
+    },
+    {
+      "id": "GLASSWELL_A3",
+      "version": "v080",
+      "files": {
+        "base": true,
+        "foreground_overlay": true,
+        "collision_mask": true
+      }
+    },
+    {
+      "id": "GLASSWELL_B3",
+      "version": "v082",
+      "files": {
+        "base": true,
+        "foreground_overlay": true,
+        "collision_mask": true
+      }
+    },
+    {
+      "id": "GLASSWELL_C3",
+      "version": "v086",
+      "files": {
+        "base": true,
+        "foreground_overlay": true,
+        "collision_mask": true
+      }
+    },
+    {
+      "id": "GLASSWELL_D3",
+      "version": "v084",
+      "files": {
+        "base": true,
+        "foreground_overlay": true,
+        "collision_mask": true
+      }
+    },
+    {
+      "id": "GLASSWELL_E3",
+      "version": "v087",
+      "files": {
+        "base": true,
+        "foreground_overlay": true,
+        "collision_mask": true
+      }
+    },
+    {
+      "id": "GLASSWELL_A4",
+      "version": "v079",
+      "files": {
+        "base": true,
+        "foreground_overlay": true,
+        "collision_mask": true
+      }
+    },
+    {
+      "id": "GLASSWELL_B4",
+      "version": "v081",
+      "files": {
+        "base": true,
+        "foreground_overlay": true,
+        "collision_mask": true
+      }
+    },
+    {
+      "id": "GLASSWELL_C4",
+      "version": "v083",
+      "files": {
+        "base": true,
+        "foreground_overlay": true,
+        "collision_mask": true
+      }
+    },
+    {
+      "id": "GLASSWELL_D4",
+      "version": "v088",
+      "files": {
+        "base": true,
+        "foreground_overlay": true,
+        "collision_mask": true
+      }
+    },
+    {
+      "id": "GLASSWELL_E4",
+      "version": "v089",
+      "files": {
+        "base": true,
+        "foreground_overlay": true,
+        "collision_mask": true
+      }
+    },
+    {
+      "id": "GLASSWELL_A5",
+      "version": "v094",
+      "files": {
+        "base": true,
+        "foreground_overlay": true,
+        "collision_mask": true
+      }
+    },
+    {
+      "id": "GLASSWELL_B5",
+      "version": "v093",
+      "files": {
+        "base": true,
+        "foreground_overlay": true,
+        "collision_mask": true
+      }
+    },
+    {
+      "id": "GLASSWELL_C5",
+      "version": "v092",
+      "files": {
+        "base": true,
+        "foreground_overlay": true,
+        "collision_mask": true
+      }
+    },
+    {
+      "id": "GLASSWELL_D5",
+      "version": "v091",
+      "files": {
+        "base": true,
+        "foreground_overlay": true,
+        "collision_mask": true
+      }
+    },
+    {
+      "id": "GLASSWELL_E5",
+      "version": "v090",
+      "files": {
+        "base": true,
+        "foreground_overlay": true,
+        "collision_mask": true
+      }
+    }
+  ]
+}

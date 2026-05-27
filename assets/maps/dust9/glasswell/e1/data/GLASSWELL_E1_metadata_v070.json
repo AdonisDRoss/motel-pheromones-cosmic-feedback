@@ -1,0 +1,21 @@
+{
+  "chunk": "GLASSWELL_E1",
+  "title": "Surveillance Roofs",
+  "version": "v070",
+  "canvas": {
+    "width": 1536,
+    "height": 1152
+  },
+  "runtime_paths": {
+    "base": "assets/maps/dust9/glasswell/e1/layers/GLASSWELL_E1_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/e1/layers/GLASSWELL_E1_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/e1/masks/GLASSWELL_E1_collision_mask.png"
+  },
+  "preview": "docs/GLASSWELL_E1_preview_v070.png",
+  "notes": [
+    "Connects east from D1 and north from E2.",
+    "Rooftop surveillance district with command room, signal tower, camera pylons, and patrol catwalks.",
+    "Foot patrols and small service carts only; full cars should not normally spawn here.",
+    "Ground items render below Donny/NPC bodies."
+  ]
+}

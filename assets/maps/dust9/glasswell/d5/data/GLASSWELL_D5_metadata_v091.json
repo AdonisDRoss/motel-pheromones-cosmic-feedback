@@ -1,0 +1,21 @@
+{
+  "chunk": "GLASSWELL_D5",
+  "title": "Pressure Service Route",
+  "version": "v091",
+  "canvas": {
+    "width": 1536,
+    "height": 1152
+  },
+  "runtime_paths": {
+    "base": "assets/maps/dust9/glasswell/d5/layers/GLASSWELL_D5_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/d5/layers/GLASSWELL_D5_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/d5/masks/GLASSWELL_D5_collision_mask.png"
+  },
+  "preview": "docs/GLASSWELL_D5_preview_v091.png",
+  "notes": [
+    "Connects D4 Vendor Backroute / Checkpoint Backlot, C5 Transit Drain Market, E5 Custody Convoy Yard, and future D6 Pressure Pipeworks.",
+    "Pressure service layer with valve-control booth, pressure valves, pipe cellar, Red utility patrol cage, service office, and hidden rescue marks.",
+    "Designed for Astro Van, utility vehicles, Civic Patrol cruisers, and Sable/Deep Lantern route movement.",
+    "Ground items render below Donny/NPC bodies."
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "chunk": "GLASSWELL_B5",
+  "version": "v093",
+  "routes": [
+    {
+      "from": "B5",
+      "to": "B4",
+      "direction": "north",
+      "kind": "Black Road Cut"
+    },
+    {
+      "from": "B5",
+      "to": "C5",
+      "direction": "east",
+      "kind": "Transit Drain Market"
+    },
+    {
+      "from": "B5",
+      "to": "A5_future",
+      "direction": "west",
+      "kind": "Badlands Drain Route"
+    },
+    {
+      "from": "B5",
+      "to": "B6_future",
+      "direction": "south",
+      "kind": "Lower Black Road"
+    }
+  ]
+}

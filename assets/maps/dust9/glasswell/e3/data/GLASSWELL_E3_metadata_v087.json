@@ -1,0 +1,21 @@
+{
+  "chunk": "GLASSWELL_E3",
+  "title": "Red Route Control",
+  "version": "v087",
+  "canvas": {
+    "width": 1536,
+    "height": 1152
+  },
+  "runtime_paths": {
+    "base": "assets/maps/dust9/glasswell/e3/layers/GLASSWELL_E3_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/e3/layers/GLASSWELL_E3_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/e3/masks/GLASSWELL_E3_collision_mask.png"
+  },
+  "preview": "docs/GLASSWELL_E3_preview_v087.png",
+  "notes": [
+    "Connects D3 Red Concord Checkpoint to future east Red Concord road-control territory.",
+    "Red Route Control layer with route-control tower, signal gate, scanner lanes, dispatch room, seizure cage, relay banks, and road-law barricades.",
+    "Designed for Civic Patrol cruisers, blockade cars, custody vans, and Astro Van pressure/scanner gameplay.",
+    "Ground items render below Donny/NPC bodies."
+  ]
+}

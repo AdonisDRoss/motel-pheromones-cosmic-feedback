@@ -1,0 +1,65 @@
+{
+  "chunk": "GLASSWELL_E1",
+  "version": "v070",
+  "npc_zones": [
+    {
+      "id": "surveillance_roof_patrol",
+      "x": 315,
+      "y": 360,
+      "w": 900,
+      "h": 390,
+      "types": [
+        "civic_patrol_guard",
+        "surveillance_guard"
+      ],
+      "countRange": [
+        4,
+        8
+      ]
+    },
+    {
+      "id": "signal_technicians",
+      "x": 1045,
+      "y": 125,
+      "w": 370,
+      "h": 260,
+      "types": [
+        "admin_technician",
+        "House Varric clerk watcher"
+      ],
+      "countRange": [
+        2,
+        5
+      ]
+    },
+    {
+      "id": "deep_lantern_roof_mark",
+      "x": 290,
+      "y": 690,
+      "w": 490,
+      "h": 210,
+      "types": [
+        "Deep Lantern watcher"
+      ],
+      "countRange": [
+        0,
+        2
+      ]
+    },
+    {
+      "id": "debt_roof_watch",
+      "x": 1020,
+      "y": 760,
+      "w": 460,
+      "h": 360,
+      "types": [
+        "record guard",
+        "surveillance_guard"
+      ],
+      "countRange": [
+        2,
+        6
+      ]
+    }
+  ]
+}

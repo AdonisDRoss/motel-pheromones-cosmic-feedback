@@ -1,0 +1,82 @@
+{
+  "chunk": "GLASSWELL_B4",
+  "version": "v081",
+  "npc_zones": [
+    {
+      "id": "black_road_cut_runners",
+      "x": 230,
+      "y": 430,
+      "w": 880,
+      "h": 390,
+      "types": [
+        "black_road_runner",
+        "smuggler",
+        "Sable Kin runner"
+      ],
+      "countRange": [
+        5,
+        11
+      ]
+    },
+    {
+      "id": "sable_deep_lantern_cache_watch",
+      "x": 60,
+      "y": 820,
+      "w": 455,
+      "h": 300,
+      "types": [
+        "Sable Kin runner",
+        "Deep Lantern watcher"
+      ],
+      "countRange": [
+        1,
+        4
+      ]
+    },
+    {
+      "id": "sensor_spillover_patrol",
+      "x": 1005,
+      "y": 775,
+      "w": 500,
+      "h": 330,
+      "types": [
+        "civic_patrol_guard",
+        "route_scanner"
+      ],
+      "countRange": [
+        2,
+        5
+      ]
+    },
+    {
+      "id": "vendor_route_civilians",
+      "x": 1070,
+      "y": 360,
+      "w": 430,
+      "h": 300,
+      "types": [
+        "civilian",
+        "vendor_runner",
+        "black_road_contact"
+      ],
+      "countRange": [
+        3,
+        8
+      ]
+    },
+    {
+      "id": "hidden_route_markers",
+      "x": 330,
+      "y": 665,
+      "w": 450,
+      "h": 190,
+      "types": [
+        "Deep Lantern watcher"
+      ],
+      "countRange": [
+        0,
+        3
+      ]
+    }
+  ]
+}

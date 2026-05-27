@@ -1,0 +1,95 @@
+{
+  "chunk": "GLASSWELL_E4",
+  "version": "v089",
+  "vehicle_lanes": [
+    {
+      "id": "d4_to_f4_supply_corridor",
+      "kind": "supply_corridor_lane",
+      "nodes": [
+        {
+          "x": 40,
+          "y": 520
+        },
+        {
+          "x": 300,
+          "y": 500
+        },
+        {
+          "x": 620,
+          "y": 540
+        },
+        {
+          "x": 915,
+          "y": 540
+        },
+        {
+          "x": 1200,
+          "y": 500
+        },
+        {
+          "x": 1490,
+          "y": 505
+        }
+      ]
+    },
+    {
+      "id": "e3_to_e5_convoy_line",
+      "kind": "convoy_service_lane",
+      "nodes": [
+        {
+          "x": 800,
+          "y": 40
+        },
+        {
+          "x": 790,
+          "y": 250
+        },
+        {
+          "x": 765,
+          "y": 520
+        },
+        {
+          "x": 770,
+          "y": 820
+        },
+        {
+          "x": 815,
+          "y": 1120
+        }
+      ]
+    },
+    {
+      "id": "fuel_depot_vehicle_loop",
+      "kind": "fuel_depot_loop",
+      "nodes": [
+        {
+          "x": 840,
+          "y": 1120
+        },
+        {
+          "x": 835,
+          "y": 900
+        },
+        {
+          "x": 1010,
+          "y": 805
+        },
+        {
+          "x": 1240,
+          "y": 900
+        },
+        {
+          "x": 1320,
+          "y": 1050
+        }
+      ]
+    }
+  ],
+  "vehicle_rules": [
+    "Astro Van can pass but should feel squeezed by logistics traffic.",
+    "Custody vans and logistics trucks use north/south convoy line.",
+    "Civic Patrol cruisers and blockade cars control the east/west supply corridor.",
+    "Fuel depot loop is for service vehicles and patrol staging.",
+    "Enemy vehicles must spawn with occupant/driver markers."
+  ]
+}

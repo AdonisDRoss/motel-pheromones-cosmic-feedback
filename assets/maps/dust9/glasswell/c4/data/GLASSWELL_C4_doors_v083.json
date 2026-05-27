@@ -1,0 +1,56 @@
+{
+  "chunk": "GLASSWELL_C4",
+  "version": "v083",
+  "doors": [
+    {
+      "id": "c4_ticket_office",
+      "label": "Old Transit Ticket Office",
+      "x": 255,
+      "y": 300,
+      "w": 110,
+      "h": 85,
+      "state": "locked",
+      "futureInterior": "C4_INT_TICKET_OFFICE"
+    },
+    {
+      "id": "c4_permit_kiosk",
+      "label": "Permit Pressure Kiosk",
+      "x": 1170,
+      "y": 285,
+      "w": 110,
+      "h": 85,
+      "state": "locked",
+      "futureInterior": "C4_INT_PERMIT_KIOSK"
+    },
+    {
+      "id": "c4_vendor_cellar",
+      "label": "Sable / Deep Lantern Cellar",
+      "x": 180,
+      "y": 970,
+      "w": 70,
+      "h": 70,
+      "state": "locked",
+      "futureInterior": "C4_INT_VENDOR_CELLAR"
+    },
+    {
+      "id": "c4_vendor_exchange",
+      "label": "Vendor Exchange",
+      "x": 625,
+      "y": 445,
+      "w": 130,
+      "h": 105,
+      "state": "locked",
+      "futureInterior": "C4_INT_VENDOR_EXCHANGE"
+    },
+    {
+      "id": "c4_east_backroute",
+      "label": "Vendor Backroute",
+      "x": 1380,
+      "y": 510,
+      "w": 140,
+      "h": 160,
+      "state": "route",
+      "target": "GLASSWELL_D4"
+    }
+  ]
+}

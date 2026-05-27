@@ -1,0 +1,56 @@
+{
+  "chunk": "GLASSWELL_E1",
+  "version": "v070",
+  "doors": [
+    {
+      "id": "e1_command_room",
+      "label": "Surveillance Command Room",
+      "x": 720,
+      "y": 355,
+      "w": 115,
+      "h": 70,
+      "state": "locked",
+      "futureInterior": "E1_INT_COMMAND_ROOM"
+    },
+    {
+      "id": "e1_signal_tower_room",
+      "label": "Signal Tower Room",
+      "x": 1160,
+      "y": 260,
+      "w": 95,
+      "h": 90,
+      "state": "locked",
+      "futureInterior": "E1_INT_SIGNAL_TOWER"
+    },
+    {
+      "id": "e1_debt_roof_access",
+      "label": "Debt Roof Access",
+      "x": 1205,
+      "y": 1010,
+      "w": 125,
+      "h": 125,
+      "state": "locked",
+      "futureInterior": "E1_INT_DEBT_ROOF_ACCESS"
+    },
+    {
+      "id": "e1_south_ladder_to_e2",
+      "label": "South Ladder to Debt Corridor",
+      "x": 700,
+      "y": 895,
+      "w": 150,
+      "h": 125,
+      "state": "route",
+      "target": "GLASSWELL_E2"
+    },
+    {
+      "id": "e1_west_ladder_to_d1",
+      "label": "West Service Link",
+      "x": 300,
+      "y": 555,
+      "w": 120,
+      "h": 125,
+      "state": "route",
+      "target": "GLASSWELL_D1"
+    }
+  ]
+}

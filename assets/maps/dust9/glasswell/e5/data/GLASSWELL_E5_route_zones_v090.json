@@ -1,0 +1,30 @@
+{
+  "chunk": "GLASSWELL_E5",
+  "version": "v090",
+  "routes": [
+    {
+      "from": "E5",
+      "to": "E4",
+      "direction": "north",
+      "kind": "Logistics Route"
+    },
+    {
+      "from": "E5",
+      "to": "D5",
+      "direction": "west",
+      "kind": "Pressure Service Route"
+    },
+    {
+      "from": "E5",
+      "to": "F5_future",
+      "direction": "east",
+      "kind": "Red Convoy Corridor"
+    },
+    {
+      "from": "E5",
+      "to": "E6_future",
+      "direction": "south",
+      "kind": "Custody Transfer Road"
+    }
+  ]
+}

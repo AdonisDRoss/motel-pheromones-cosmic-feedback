@@ -1,0 +1,83 @@
+{
+  "chunk": "GLASSWELL_C4",
+  "version": "v083",
+  "solid_rects": [
+    {
+      "name": "old_ticket_office",
+      "x": 45,
+      "y": 45,
+      "w": 460,
+      "h": 345
+    },
+    {
+      "name": "permit_pressure_kiosk",
+      "x": 1085,
+      "y": 50,
+      "w": 451,
+      "h": 340
+    },
+    {
+      "name": "patrol_confiscation_bay",
+      "x": 1005,
+      "y": 725,
+      "w": 531,
+      "h": 427
+    },
+    {
+      "name": "central_vendor_exchange",
+      "x": 535,
+      "y": 315,
+      "w": 495,
+      "h": 270
+    },
+    {
+      "name": "sable_deep_lantern_cellar",
+      "x": 0,
+      "y": 770,
+      "w": 540,
+      "h": 382
+    },
+    {
+      "name": "vendor_stalls",
+      "count": 6
+    },
+    {
+      "name": "pipe_nodes",
+      "count": 8
+    }
+  ],
+  "open_edges": [
+    {
+      "to": "GLASSWELL_C3_Main_Civic_Gate",
+      "edge": "north",
+      "x": 535,
+      "y": 0,
+      "w": 555,
+      "h": 170
+    },
+    {
+      "to": "GLASSWELL_B4_Black_Road_Cut",
+      "edge": "west",
+      "x": 0,
+      "y": 335,
+      "w": 185,
+      "h": 495
+    },
+    {
+      "to": "GLASSWELL_D4_Vendor_Backroute_Checkpoint_Backlot",
+      "edge": "east",
+      "x": 1350,
+      "y": 380,
+      "w": 186,
+      "h": 470
+    },
+    {
+      "to": "GLASSWELL_C5_Transit_Drain_Market",
+      "edge": "south",
+      "x": 510,
+      "y": 995,
+      "w": 720,
+      "h": 157
+    }
+  ]
+}

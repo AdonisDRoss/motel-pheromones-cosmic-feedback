@@ -1,0 +1,21 @@
+{
+  "chunk": "GLASSWELL_D4",
+  "title": "Vendor Backroute / Checkpoint Backlot",
+  "version": "v088",
+  "canvas": {
+    "width": 1536,
+    "height": 1152
+  },
+  "runtime_paths": {
+    "base": "assets/maps/dust9/glasswell/d4/layers/GLASSWELL_D4_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/d4/layers/GLASSWELL_D4_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/d4/masks/GLASSWELL_D4_collision_mask.png"
+  },
+  "preview": "docs/GLASSWELL_D4_preview_v088.png",
+  "notes": [
+    "Connector between C4, D3, E4, and D5.",
+    "Vendor backroute / checkpoint backlot with loading docks, logistics gate, checkpoint spillover, overflow cage, service cellar, and hidden route marks.",
+    "Designed for Astro Van, patrol cars, service vehicles, and smuggler traffic.",
+    "Ground items render below Donny/NPC bodies."
+  ]
+}

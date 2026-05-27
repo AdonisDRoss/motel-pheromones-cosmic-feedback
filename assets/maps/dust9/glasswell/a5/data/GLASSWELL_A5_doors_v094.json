@@ -1,0 +1,56 @@
+{
+  "chunk": "GLASSWELL_A5",
+  "version": "v094",
+  "doors": [
+    {
+      "id": "a5_badlands_culvert_office",
+      "label": "Badlands Culvert Office",
+      "x": 245,
+      "y": 305,
+      "w": 120,
+      "h": 95,
+      "state": "locked",
+      "futureInterior": "A5_INT_CULVERT_OFFICE"
+    },
+    {
+      "id": "a5_b5_pressure_gate",
+      "label": "B5 Drain Pressure Gate",
+      "x": 1170,
+      "y": 292,
+      "w": 120,
+      "h": 90,
+      "state": "locked",
+      "futureInterior": "A5_INT_PRESSURE_GATE"
+    },
+    {
+      "id": "a5_sable_cache_cell",
+      "label": "Sable Water-Cache Cell",
+      "x": 180,
+      "y": 970,
+      "w": 70,
+      "h": 70,
+      "state": "locked",
+      "futureInterior": "A5_INT_SABLE_CACHE"
+    },
+    {
+      "id": "a5_dead_drop_station",
+      "label": "Badlands Dead-Drop Station",
+      "x": 620,
+      "y": 445,
+      "w": 135,
+      "h": 107,
+      "state": "locked",
+      "futureInterior": "A5_INT_DEAD_DROP"
+    },
+    {
+      "id": "a5_crawl_deck",
+      "label": "Smuggler Crawl Deck",
+      "x": 965,
+      "y": 500,
+      "w": 170,
+      "h": 90,
+      "state": "locked",
+      "futureInterior": "A5_INT_CRAWL_DECK"
+    }
+  ]
+}

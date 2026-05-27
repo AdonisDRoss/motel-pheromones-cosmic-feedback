@@ -1,0 +1,131 @@
+{
+  "chunk": "GLASSWELL_B5",
+  "version": "v093",
+  "solid_rects": [
+    {
+      "name": "black_road_route_office",
+      "x": 45,
+      "y": 45,
+      "w": 465,
+      "h": 350
+    },
+    {
+      "name": "drain_market_pressure_office",
+      "x": 1085,
+      "y": 50,
+      "w": 451,
+      "h": 348
+    },
+    {
+      "name": "red_utility_captured_route_cage",
+      "x": 1005,
+      "y": 725,
+      "w": 531,
+      "h": 427
+    },
+    {
+      "name": "central_black_road_dead_drop",
+      "x": 535,
+      "y": 315,
+      "w": 495,
+      "h": 270
+    },
+    {
+      "name": "crawl_deck",
+      "x": 885,
+      "y": 420,
+      "w": 425,
+      "h": 212
+    },
+    {
+      "name": "lower_black_road_cell",
+      "x": 0,
+      "y": 770,
+      "w": 540,
+      "h": 382
+    },
+    {
+      "name": "flooded_black_road_channel",
+      "points": [
+        [
+          190,
+          490
+        ],
+        [
+          650,
+          445
+        ],
+        [
+          1180,
+          505
+        ],
+        [
+          1260,
+          660
+        ],
+        [
+          730,
+          735
+        ],
+        [
+          150,
+          660
+        ]
+      ]
+    },
+    {
+      "name": "market_tarps",
+      "count": 4
+    },
+    {
+      "name": "crawl_doors",
+      "count": 5
+    },
+    {
+      "name": "pipe_nodes",
+      "count": 11
+    },
+    {
+      "name": "route_barricades",
+      "count": 12
+    },
+    {
+      "name": "drain_pylons",
+      "count": 12
+    }
+  ],
+  "open_edges": [
+    {
+      "to": "GLASSWELL_B4_Black_Road_Cut",
+      "edge": "north",
+      "x": 525,
+      "y": 0,
+      "w": 575,
+      "h": 170
+    },
+    {
+      "to": "future_GLASSWELL_A5_Badlands_Drain_Route",
+      "edge": "west",
+      "x": 0,
+      "y": 300,
+      "w": 185,
+      "h": 560
+    },
+    {
+      "to": "GLASSWELL_C5_Transit_Drain_Market",
+      "edge": "east",
+      "x": 1350,
+      "y": 350,
+      "w": 186,
+      "h": 550
+    },
+    {
+      "to": "future_GLASSWELL_B6_Lower_Black_Road",
+      "edge": "south",
+      "x": 510,
+      "y": 995,
+      "w": 730,
+      "h": 157
+    }
+  ]
+}

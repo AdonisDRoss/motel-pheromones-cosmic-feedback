@@ -1,0 +1,22 @@
+{
+  "chunk": "GLASSWELL_D3",
+  "title": "Red Concord Checkpoint",
+  "version": "v084",
+  "replaces": "D3 placeholder/greybox art",
+  "canvas": {
+    "width": 1536,
+    "height": 1152
+  },
+  "runtime_paths": {
+    "base": "assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/d3/masks/GLASSWELL_D3_collision_mask.png"
+  },
+  "preview": "docs/GLASSWELL_D3_preview_v084.png",
+  "notes": [
+    "Art upgrade for D3 Red Concord Checkpoint.",
+    "Connects C3 Main Civic Gate, E3 Red Route Control, and D4 Vendor Backroute / Checkpoint Backlot.",
+    "Checkpoint gatehouse, route scanner, search lanes, barricades, vehicle impound, and custody/service backlot.",
+    "Ground items render below Donny/NPC bodies."
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "chunk": "GLASSWELL_E4",
+  "version": "v089",
+  "mission_hooks": [
+    {
+      "id": "e4_convoy_reader_event",
+      "x": 535,
+      "y": 315,
+      "w": 495,
+      "h": 270,
+      "trigger": "convoy_reader_event"
+    },
+    {
+      "id": "e4_supply_authority_event",
+      "x": 1085,
+      "y": 65,
+      "w": 440,
+      "h": 330,
+      "trigger": "supply_authority_event"
+    },
+    {
+      "id": "e4_fuel_depot_event",
+      "x": 890,
+      "y": 420,
+      "w": 415,
+      "h": 205,
+      "trigger": "fuel_depot_event"
+    },
+    {
+      "id": "e4_dispatch_room_event",
+      "x": 60,
+      "y": 820,
+      "w": 455,
+      "h": 300,
+      "trigger": "convoy_dispatch_event"
+    },
+    {
+      "id": "e4_hidden_logistics_mark",
+      "x": 330,
+      "y": 665,
+      "w": 450,
+      "h": 190,
+      "trigger": "spot_hidden_logistics_mark"
+    }
+  ]
+}

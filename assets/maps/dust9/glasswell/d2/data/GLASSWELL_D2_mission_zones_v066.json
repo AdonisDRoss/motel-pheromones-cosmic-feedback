@@ -1,0 +1,46 @@
+{
+  "chunk": "GLASSWELL_D2",
+  "version": "v066",
+  "mission_hooks": [
+    {
+      "id": "d2_false_debt_record",
+      "x": 90,
+      "y": 300,
+      "w": 380,
+      "h": 210,
+      "trigger": "discover_false_debt_record"
+    },
+    {
+      "id": "d2_water_credit_route",
+      "x": 550,
+      "y": 280,
+      "w": 410,
+      "h": 250,
+      "trigger": "trace_water_credit_routing"
+    },
+    {
+      "id": "d2_archive_break_in",
+      "x": 1000,
+      "y": 820,
+      "w": 500,
+      "h": 300,
+      "trigger": "clerk_archive_break_in"
+    },
+    {
+      "id": "d2_checkpoint_backservice",
+      "x": 610,
+      "y": 900,
+      "w": 525,
+      "h": 240,
+      "trigger": "enter_checkpoint_backservice_route"
+    },
+    {
+      "id": "d2_deep_lantern_ledger_mark",
+      "x": 420,
+      "y": 600,
+      "w": 520,
+      "h": 190,
+      "trigger": "spot_ledger_mark"
+    }
+  ]
+}

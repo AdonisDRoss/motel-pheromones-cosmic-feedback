@@ -1,0 +1,46 @@
+{
+  "chunk": "GLASSWELL_D1",
+  "version": "v068",
+  "mission_hooks": [
+    {
+      "id": "d1_surveillance_cut",
+      "x": 545,
+      "y": 185,
+      "w": 415,
+      "h": 220,
+      "trigger": "disable_admin_surveillance"
+    },
+    {
+      "id": "d1_relay_tap",
+      "x": 1010,
+      "y": 120,
+      "w": 355,
+      "h": 220,
+      "trigger": "tap_relay_station"
+    },
+    {
+      "id": "d1_rooftop_escape",
+      "x": 300,
+      "y": 470,
+      "w": 900,
+      "h": 300,
+      "trigger": "rooftop_escape_route"
+    },
+    {
+      "id": "d1_varric_roof_access",
+      "x": 1090,
+      "y": 720,
+      "w": 405,
+      "h": 390,
+      "trigger": "enter_varric_roof_access"
+    },
+    {
+      "id": "d1_deep_lantern_roof_mark",
+      "x": 300,
+      "y": 680,
+      "w": 460,
+      "h": 190,
+      "trigger": "spot_rooftop_route_mark"
+    }
+  ]
+}
