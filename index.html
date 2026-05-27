@@ -82,7 +82,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-use-clean-donny-sheets-2026-05-27-027';
+const VERSION = 'glasswell-van-ne-nw-pistol-back-fix-2026-05-27-028';
 
 function version(path){ return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`; }
 function key(id,type){return `${id}_${type}`}
@@ -304,11 +304,11 @@ const GUN_PROP = {
 
   directionFrame:{down:0,right:1,left:2,up:3},
 
-  // Tuned for the new empty-hand shooting sheet.
+  // Nudged back toward Donny's brown hand.
   hand:{
     down:{x:14,y:-48},
-    right:{x:54,y:-70},
-    left:{x:-54,y:-70},
+    right:{x:48,y:-70},
+    left:{x:-48,y:-70},
     up:{x:-8,y:-64}
   }
 };
@@ -1389,16 +1389,20 @@ class MapScene extends Phaser.Scene{
 
     if(fw<16 || fh<16)return false;
 
-    // Force left-facing directions by mirroring the right-facing rows.
-    // This fixes "driving left but van still points right."
+    // Direction correction:
+    // - left/downLeft mirror the right/downRight rows.
+    // - upRight/upLeft were visually reading as BACK-facing/reversing in-game.
+    //   They now use the front diagonal row so NE/NW do not look like the van
+    //   is driving backward.
     const sourceDirMap={
       left:'right',
       downLeft:'downRight',
-      upLeft:'upRight'
+      upRight:'downRight',
+      upLeft:'downRight'
     };
 
     const sourceDir=sourceDirMap[this.vanDir] || this.vanDir;
-    const flipX=sourceDir!==this.vanDir;
+    const flipX=(this.vanDir==='left' || this.vanDir==='downLeft' || this.vanDir==='upLeft');
 
     const rowMap={
       down:0,
