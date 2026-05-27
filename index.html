@@ -82,9 +82,28 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-bigger-astro-van-2026-05-27-042';
+const VERSION = 'glasswell-world-time-fix-vehicle-handling-2026-05-27-044';
 
 function version(path){ return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`; }
+
+// Global Dust-9 world clock config.
+// Kept near the top so TitleScene, MapScene, HUD, and day/night code can all read it safely.
+const WORLD_TIME = {
+  realSecondsPerGameDay:720,
+  startDay:0,
+  startHour:18,
+  startMinute:30,
+  weekdays:['MON','TUE','WED','THU','FRI','SAT','SUN']
+};
+
+const PAGE_LOCATION = {
+  GLASSWELL_B3_DESERT_TEST:{world:'DUST-9',city:'DRYLINE TEST ROAD',district:'B3 DESERT TEST'},
+  GLASSWELL_C2:{world:'DUST-9',city:'GLASSWELL',district:'C2 CIVIC ADMIN STREET'},
+  GLASSWELL_C3:{world:'DUST-9',city:'GLASSWELL',district:'C3 MAIN CIVIC GATE'},
+  GLASSWELL_C4:{world:'DUST-9',city:'GLASSWELL',district:'C4 TRANSIT VENDOR SQUARE'},
+  GLASSWELL_D3:{world:'DUST-9',city:'GLASSWELL',district:'D3 RED CONCORD CHECKPOINT'}
+};
+
 function key(id,type){return `${id}_${type}`}
 function rectHit(r,x,y){return r && x>=r.x && x<=r.x+r.w && y>=r.y && y<=r.y+r.h}
 function pct(w,h,a,b,c,d){return{x:a*w,y:b*h,w:c*w,h:d*h}}
@@ -398,26 +417,70 @@ const ASTRO_VAN_HANDLING = {
   // Heavy 2D GTA-style fake physics for the Astro Van.
   // Top speed below average, sluggish acceleration, wide turning radius,
   // acceptable braking, high durability.
-  accel:260,
-  maxSpeed:218,
-  reverseSpeed:72,
+  label:'Astro Van',
+  className:'heavy van',
+  accel:250,
+  maxSpeed:210,
+  reverseSpeed:68,
 
   // Higher friction persistence = heavier, overworked van feel.
-  coastFriction:0.992,
+  coastFriction:0.993,
   driveFriction:0.996,
 
   // Braking remains reliable compared to acceleration.
-  brakeFriction:0.58,
-  handBrakeFriction:0.955,
+  brakeFriction:0.56,
+  handBrakeFriction:0.960,
 
   // Higher lateral grip decay keeps old momentum longer and makes turns wide.
-  lateralGrip:0.88,
-  handBrakeGrip:0.46,
+  lateralGrip:0.90,
+  handBrakeGrip:0.52,
 
-  collisionBounce:0.22,
+  collisionBounce:0.18,
   durability:180,
   fuelBurnIdle:0.002,
   fuelBurnDrive:0.022
+};
+
+const VEHICLE_HANDLING = {
+  astroVan:ASTRO_VAN_HANDLING,
+
+  // Faster response, better speed, less durable than the van.
+  civicPatrolCruiser:{
+    label:'Civic Patrol Cruiser',
+    className:'patrol cruiser',
+    accel:345,
+    maxSpeed:285,
+    reverseSpeed:94,
+    coastFriction:0.985,
+    driveFriction:0.991,
+    brakeFriction:0.47,
+    handBrakeFriction:0.925,
+    lateralGrip:0.72,
+    handBrakeGrip:0.31,
+    collisionBounce:0.30,
+    durability:105,
+    fuelBurnIdle:0.003,
+    fuelBurnDrive:0.034
+  },
+
+  // Heavier roadblock car. Slower than cruiser, stronger, less slide.
+  civicPatrolBlockade:{
+    label:'Civic Patrol Blockade Car',
+    className:'blockade car',
+    accel:285,
+    maxSpeed:235,
+    reverseSpeed:82,
+    coastFriction:0.990,
+    driveFriction:0.994,
+    brakeFriction:0.50,
+    handBrakeFriction:0.945,
+    lateralGrip:0.84,
+    handBrakeGrip:0.42,
+    collisionBounce:0.24,
+    durability:135,
+    fuelBurnIdle:0.003,
+    fuelBurnDrive:0.030
+  }
 };
 
 
@@ -1335,8 +1398,8 @@ class MapScene extends Phaser.Scene{
 
     // Two Civic Patrol cars placed near the white-line marks from the screenshot.
     const cars=[
-      {x:this.mapW*.395,y:this.mapH*.432,frame:1,angle:-13},
-      {x:this.mapW*.612,y:this.mapH*.432,frame:7,angle:13}
+      {x:this.mapW*.395,y:this.mapH*.432,frame:1,angle:-13,handlingKey:'civicPatrolCruiser',vehicleName:'Civic Patrol Cruiser'},
+      {x:this.mapW*.612,y:this.mapH*.432,frame:7,angle:13,handlingKey:'civicPatrolBlockade',vehicleName:'Civic Patrol Blockade Car'}
     ];
 
     cars.forEach(c=>{
@@ -1808,7 +1871,9 @@ class MapScene extends Phaser.Scene{
     if(!this.inVan)return;
     if(this.vanFuel<=0)return;
 
-    const burn=(FUEL.burnPerSecond||2.8)*Math.max(0,inputLen||0)*delta/1000;
+    const h=this.activeVehicleHandling ? this.activeVehicleHandling() : ASTRO_VAN_HANDLING;
+    const burnRate=(FUEL.burnPerSecond||2.8) * ((h.fuelBurnDrive||0.028)/0.028);
+    const burn=burnRate*Math.max(0,inputLen||0)*delta/1000;
     this.vanFuel=clamp(this.vanFuel-burn,0,FUEL.max);
 
     if(this.vanFuel<=0){
@@ -2312,6 +2377,18 @@ class MapScene extends Phaser.Scene{
     this.kick();
   }
 
+  activeVehicleHandling(){
+    const vehicle=this.activeVehicle || this.van;
+    const key=(vehicle && vehicle.getData && vehicle.getData('handlingKey')) || (this.activeVehicleType==='civic'?'civicPatrolCruiser':'astroVan');
+    return VEHICLE_HANDLING[key] || ASTRO_VAN_HANDLING;
+  }
+
+  activeVehicleName(){
+    const vehicle=this.activeVehicle || this.van;
+    const h=this.activeVehicleHandling();
+    return (vehicle && vehicle.getData && vehicle.getData('vehicleName')) || h.label || (this.activeVehicleType==='civic'?'Civic Patrol Car':'Astro Van');
+  }
+
   getVanSpeed(){
     const v=this.vanVel||{x:0,y:0};
     return Math.hypot(v.x||0,v.y||0);
@@ -2323,17 +2400,19 @@ class MapScene extends Phaser.Scene{
       this.exitVan();
       return;
     }
-    this.vanVel.x*=0.45;
-    this.vanVel.y*=0.45;
-    this.message('Brake');
+    const h=this.activeVehicleHandling ? this.activeVehicleHandling() : ASTRO_VAN_HANDLING;
+    this.vanVel.x*=h.brakeFriction||0.45;
+    this.vanVel.y*=h.brakeFriction||0.45;
+    this.message(`${this.activeVehicleName()} brake`);
   }
 
   handBrakeVan(){
     if(!this.inVan)return;
-    this.vanHandBrakeUntil=this.time.now+480;
-    this.vanVel.x*=0.82;
-    this.vanVel.y*=0.82;
-    this.message('Handbrake slide');
+    const h=this.activeVehicleHandling ? this.activeVehicleHandling() : ASTRO_VAN_HANDLING;
+    this.vanHandBrakeUntil=this.time.now+(h.className==='heavy van'?560:420);
+    this.vanVel.x*=h.handBrakeFriction||0.82;
+    this.vanVel.y*=h.handBrakeFriction||0.82;
+    this.message(`${this.activeVehicleName()} handbrake`);
   }
 
   toggleVanMusic(){
@@ -2345,7 +2424,7 @@ class MapScene extends Phaser.Scene{
     if(!this.van)return;
 
     const dt=Math.min(.05,Math.max(0,delta/1000));
-    const h=ASTRO_VAN_HANDLING;
+    const h=this.activeVehicleHandling ? this.activeVehicleHandling() : ASTRO_VAN_HANDLING;
     this.vanVel=this.vanVel||{x:0,y:0};
 
     const movingInput=(input && input.len>.08);
@@ -2822,7 +2901,7 @@ class MapScene extends Phaser.Scene{
     if(this.civicCars && this.civicCars.length){
       this.civicCars.forEach(car=>{
         if(car && car.active && car.visible && !car.getData('wrecked')){
-          list.push({sprite:car,type:'civic',name:'Civic Patrol Car'});
+          list.push({sprite:car,type:'civic',name:car.getData('vehicleName')||'Civic Patrol Car'});
         }
       });
     }
@@ -2858,7 +2937,7 @@ class MapScene extends Phaser.Scene{
     this.holster.setVisible(false);
     if(this.fuelCan)this.fuelCan.setVisible(false);
 
-    this.vanVel=this.vanVel||{x:0,y:0};
+    this.vanVel={x:0,y:0};
     this.vanDir=this.vanDir || 'right';
 
     this.cameras.main.startFollow(this.van,true,.12,.12);
@@ -3418,8 +3497,9 @@ class MapScene extends Phaser.Scene{
       this.updateVanHeadlights();
       this.updateCarHudGauges();
       this.checkRoutes();
-      this.hud.setText(`${this.activeVehicleType==='civic'?'Civic Patrol Car':'Astro Van'} | Donny HP ${Math.ceil(this.playerHp||0)}/${this.playerMaxHp||100} | ${Math.round(this.van.x)},${Math.round(this.van.y)}`);
-      this.status.setText(`Fuel ${this.fuelText()} | Speed ${Math.round(this.getVanSpeed())} | ${this.musicOn?'Music on':'Music off'} | B brake/exit stopped | A handbrake | heavy van | hold Y lights | tap Y horn`);
+      this.hud.setText(`${this.activeVehicleName()} | Donny HP ${Math.ceil(this.playerHp||0)}/${this.playerMaxHp||100} | ${Math.round(this.van.x)},${Math.round(this.van.y)}`);
+      const handling=this.activeVehicleHandling();
+      this.status.setText(`Fuel ${this.fuelText()} | Speed ${Math.round(this.getVanSpeed())}/${handling.maxSpeed} | ${handling.className||'vehicle'} | ${this.musicOn?'Music on':'Music off'} | B brake/exit | A handbrake | hold Y lights | tap Y horn`);
       return;
     }
 
@@ -3468,6 +3548,10 @@ class MapScene extends Phaser.Scene{
     this.status.setText(`${this.fuelCanEquipped?'Fuel can equipped':(this.weaponEquipped?'Pistol equipped':'Hands empty')} | Credchips $${this.money||0} | Water ${this.waterRations||0} | Load ${formatWeight(this.getPlayerWeight())}/${formatWeight(this.playerWeightLimit)} | Car ${formatWeight(this.getCarWeight())}/${formatWeight(this.getCarWeightLimit())} | Fuel ${this.fuelText()}`);
   }
 }
+
+
+// Safety guard against partial uploads/merge mistakes.
+window.__GLASSWELL_WORLD_TIME_READY = typeof WORLD_TIME !== 'undefined';
 
 new Phaser.Game({
   type:Phaser.AUTO,
