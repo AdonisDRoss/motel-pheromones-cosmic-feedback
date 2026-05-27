@@ -82,7 +82,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-use-uploaded-up-down-filenames-2026-05-27-030';
+const VERSION = 'glasswell-fuelcan-hp-gauge-driving-rules-2026-05-27-033';
 
 function version(path){ return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`; }
 function key(id,type){return `${id}_${type}`}
@@ -383,7 +383,7 @@ const HEADLIGHTS = {
 
 const FUEL = {
   max:100,
-  start:100,
+  start:50,
 
   // Percent burned per second at full stick while driving.
   burnPerSecond:2.8,
@@ -391,6 +391,28 @@ const FUEL = {
   // Optional later fuel-station settings.
   stationRefillPerSecond:35,
   emptyWarningCooldown:1400
+};
+
+
+const ASTRO_VAN_HANDLING = {
+  // 2D GTA-style fake physics, not true 3D simulation.
+  accel:460,
+  maxSpeed:320,
+  reverseSpeed:120,
+
+  // Friction values are applied per frame using delta-normalized decay.
+  coastFriction:0.982,
+  driveFriction:0.990,
+  brakeFriction:0.78,
+  handBrakeFriction:0.93,
+
+  // Lateral grip controls powerslide. Lower = more sideways drift.
+  lateralGrip:0.72,
+  handBrakeGrip:0.30,
+
+  collisionBounce:0.34,
+  fuelBurnIdle:0.002,
+  fuelBurnDrive:0.018
 };
 
 const ITEM_DB = {
@@ -542,9 +564,8 @@ class BootScene extends Phaser.Scene{
     this.load.spritesheet('donny_shoot_right_empty_clean', version('assets/sprites/player/donny/donny_shoot_right_empty_clean.png'), { frameWidth:160, frameHeight:160 });
     this.load.spritesheet('donny_walk_right_clean', version('assets/sprites/player/donny/donny_walk_right_clean.png'), { frameWidth:160, frameHeight:160 });
     this.load.spritesheet('donny_idle_4dir_clean', version('assets/sprites/player/donny/donny_idle_4dir_clean.png'), { frameWidth:160, frameHeight:160 });
-    this.load.spritesheet('donny_walk_up_clean', version('assets/sprites/player/donny/63B5868A-BA40-4D0E-94B7-9ADDCD0ABAAC.PNG'), { frameWidth:160, frameHeight:160 });
-    this.load.spritesheet('donny_walk_down_clean', version('assets/sprites/player/donny/8E4D5C84-EAC5-4F65-8BCA-86683D32F966.PNG'), { frameWidth:160, frameHeight:160 });
-
+    this.load.spritesheet('donny_walk_down_clean', version('assets/sprites/player/donny/44D6A963-A74C-4AD8-B2FB-2C02797CB2D1_phaser.png'), { frameWidth:160, frameHeight:160 });
+    this.load.spritesheet('donny_walk_up_clean', version('assets/sprites/player/donny/0E6EC17A-C267-4107-BD2C-88F41B959573_phaser.png'), { frameWidth:160, frameHeight:160 });
 
     this.cameras.main.setBackgroundColor('#050608');
     this.add.text(480,240,'LOADING GLASSWELL...', {fontFamily:'Arial Black',fontSize:'26px',color:'#9ff4ff'}).setOrigin(.5);
@@ -844,20 +865,10 @@ function createDonnyCleanGameplayAnimations(scene){
     });
   }
   if(scene.textures.exists('donny_walk_up_clean') && !scene.anims.exists('donny_walk_up_clean_anim')){
-    scene.anims.create({
-      key:'donny_walk_up_clean_anim',
-      frames:scene.anims.generateFrameNumbers('donny_walk_up_clean',{start:0,end:7}),
-      frameRate:10,
-      repeat:-1
-    });
+    scene.anims.create({key:'donny_walk_up_clean_anim',frames:scene.anims.generateFrameNumbers('donny_walk_up_clean',{start:0,end:7}),frameRate:10,repeat:-1});
   }
   if(scene.textures.exists('donny_walk_down_clean') && !scene.anims.exists('donny_walk_down_clean_anim')){
-    scene.anims.create({
-      key:'donny_walk_down_clean_anim',
-      frames:scene.anims.generateFrameNumbers('donny_walk_down_clean',{start:0,end:7}),
-      frameRate:10,
-      repeat:-1
-    });
+    scene.anims.create({key:'donny_walk_down_clean_anim',frames:scene.anims.generateFrameNumbers('donny_walk_down_clean',{start:0,end:7}),frameRate:10,repeat:-1});
   }
 
 }
@@ -870,7 +881,7 @@ class TitleScene extends Phaser.Scene{
     this.add.text(480,88,'COSMIC FEEDBACK',{fontFamily:'Arial Black',fontSize:'30px',color:'#e8e1cf'}).setOrigin(.5);
     this.add.text(480,138,'GLASSWELL',{fontFamily:'Arial Black',fontSize:'46px',color:'#9ff4ff'}).setOrigin(.5).setShadow(0,0,'#67dce8',8,true,true);
     this.add.text(480,195,'2.5D GTA-style open-city sci-fi RPG / brawler',{fontFamily:'Courier New',fontSize:'18px',color:'#d9b46a'}).setOrigin(.5);
-    this.add.text(480,302,'On foot: Y action/enter | A jump | X punch/shoot | B kick/slide/crawl\nVan: stick drive uses fuel | B rear menu on foot | hold Y headlights | tap Y horn',{fontFamily:'Courier New',fontSize:'17px',color:'#d5c7a3',align:'center',lineSpacing:8}).setOrigin(.5);
+    this.add.text(480,302,'On foot: Y action/enter | A jump | X punch/shoot | B kick/slide/crawl\nVan: stick accel/steer | B brake/exit stopped | A handbrake | X music | hold Y lights | tap Y horn',{fontFamily:'Courier New',fontSize:'17px',color:'#d5c7a3',align:'center',lineSpacing:8}).setOrigin(.5);
     const start=()=>this.scene.start('MapScene',{pageId:'GLASSWELL_C3',spawn:'donny_city_start'});
     this.input.once('pointerdown',start);
     this.input.keyboard.once('keydown-ENTER',start);
@@ -887,10 +898,20 @@ class MapScene extends Phaser.Scene{
     this.vanFuel=FUEL.start;
     this.lastFuelWarning=0;
     this.vanDir='right';
+    this.playerMaxHp=100;
+    this.playerHp=100;
+
+    // 2D fake vehicle physics state.
+    this.vanVel={x:0,y:0};
+    this.vanHandBrakeUntil=0;
+    this.musicOn=false;
+
+    // Starting-map pickup state.
+    this.startFuelCanPicked=false;
     this.isCrawling=false;
     this.isInventoryOpen=false;
     this.weaponEquipped=true;
-    this.hasFuelCan=true;
+    this.hasFuelCan=false;
     this.fuelCanEquipped=false;
 
     // Inventory weight limits.
@@ -902,7 +923,6 @@ class MapScene extends Phaser.Scene{
     // Every item has a weight. Donny starts light enough to move.
     this.playerInventory=[
       makeInventoryItem('laser_pistol',1),
-      makeInventoryItem('fuel_can',1),
       makeInventoryItem('ration_gel',2),
       makeInventoryItem('water_vial',2)
     ];
@@ -972,6 +992,48 @@ class MapScene extends Phaser.Scene{
     this.hud=this.add.text(10,8,'',{fontFamily:'Arial Black',fontSize:'13px',color:'#d7faff',backgroundColor:'rgba(0,0,0,.55)',padding:{x:8,y:5}}).setScrollFactor(0).setDepth(20000);
     this.status=this.add.text(GAME_W-14,8,'',{fontFamily:'Arial Black',fontSize:'13px',color:'#f0e5be',backgroundColor:'rgba(0,0,0,.55)',padding:{x:8,y:5}}).setOrigin(1,0).setScrollFactor(0).setDepth(20000);
     this.prompt=this.add.text(10,GAME_H-34,'',{fontFamily:'Arial',fontSize:'14px',color:'#f0e5be',backgroundColor:'rgba(0,0,0,.62)',padding:{x:8,y:6}}).setScrollFactor(0).setDepth(20000);
+
+    // In-car HUD gauges: Donny HP on top, car fuel under it.
+    this.carGauge=this.add.graphics().setScrollFactor(0).setDepth(20001).setVisible(false);
+    this.hpGaugeLabel=this.add.text(12,42,'',{fontFamily:'Arial Black',fontSize:'12px',color:'#ffffff'}).setScrollFactor(0).setDepth(20002).setVisible(false);
+    this.fuelGaugeLabel=this.add.text(12,64,'',{fontFamily:'Arial Black',fontSize:'12px',color:'#ffffff'}).setScrollFactor(0).setDepth(20002).setVisible(false);
+  }
+
+  updateCarHudGauges(){
+    if(!this.carGauge || !this.hpGaugeLabel || !this.fuelGaugeLabel)return;
+    const show=!!this.inVan;
+    this.carGauge.setVisible(show);
+    this.hpGaugeLabel.setVisible(show);
+    this.fuelGaugeLabel.setVisible(show);
+
+    if(!show){
+      this.carGauge.clear();
+      return;
+    }
+
+    const x=10;
+    const y=40;
+    const w=180;
+    const h=10;
+    const gap=22;
+
+    const hpPct=clamp((this.playerHp||0)/(this.playerMaxHp||100),0,1);
+    const fuelPct=clamp((this.vanFuel||0)/(FUEL.max||100),0,1);
+
+    this.carGauge.clear();
+
+    // HP backing and fill.
+    this.carGauge.fillStyle(0x08090b,.88).fillRoundedRect(x,y,w,h,3);
+    this.carGauge.fillStyle(0x1fef69,1).fillRoundedRect(x,y,w*hpPct,h,3);
+    this.carGauge.lineStyle(1,0xffffff,.7).strokeRoundedRect(x,y,w,h,3);
+
+    // Fuel backing and fill.
+    this.carGauge.fillStyle(0x08090b,.88).fillRoundedRect(x,y+gap,w,h,3);
+    this.carGauge.fillStyle(0xffc43b,1).fillRoundedRect(x,y+gap,w*fuelPct,h,3);
+    this.carGauge.lineStyle(1,0xffffff,.7).strokeRoundedRect(x,y+gap,w,h,3);
+
+    this.hpGaugeLabel.setText(`DONNY HP ${Math.ceil(this.playerHp||0)}/${this.playerMaxHp||100}`).setPosition(x,y-17);
+    this.fuelGaugeLabel.setText(`ASTRO VAN FUEL ${Math.ceil(this.vanFuel||0)}%`).setPosition(x,y+gap-17);
   }
 
   loadPage(id,spawnId){
@@ -1002,12 +1064,60 @@ class MapScene extends Phaser.Scene{
       this.van.setVisible(id===this.vanPage);
     }
 
+    this.spawnStartingFuelCan();
+
     if(!p.synthetic && this.textures.exists(key(id,'fg'))){
       this.add.image(0,0,key(id,'fg')).setOrigin(0).setDepth(9000).setData('mapObj',true);
     }
     this.cameras.main.setBounds(0,0,w,h);
     this.cameras.main.startFollow(this.inVan?this.van:this.player,true,.12,.12);
     this.message(p.label);
+  }
+
+  spawnStartingFuelCan(){
+    if(this.pageId!=='GLASSWELL_C3')return;
+    if(this.startFuelCanPicked)return;
+
+    if(this.startFuelCan && this.startFuelCan.destroy)this.startFuelCan.destroy();
+
+    const x=clamp((this.playerX||this.mapW*.5)+92,60,this.mapW-60);
+    const y=clamp((this.playerY||this.mapH*.55)+46,60,this.mapH-60);
+
+    const tex=this.textures.exists('fuel_can_pickup') ? 'fuel_can_pickup' : 'pickup_dot';
+    this.startFuelCan=this.add.image(x,y,tex)
+      .setOrigin(.5,1)
+      .setScale(tex==='fuel_can_pickup' ? .55 : 1)
+      .setDepth(y+700)
+      .setData('mapObj',true);
+  }
+
+  nearFuelPickup(){
+    return !!(this.startFuelCan && this.startFuelCan.visible && !this.inVan && dist(this.playerX,this.playerY,this.startFuelCan.x,this.startFuelCan.y)<58);
+  }
+
+  addToPlayer(id,qty=1){
+    const item=makeInventoryItem(id,qty);
+    if(this.getPlayerWeight()+itemStackWeight(item)>this.playerWeightLimit){
+      this.message('Donny inventory full');
+      return false;
+    }
+    const existing=this.playerInventory.find(x=>x.id===id);
+    if(existing)existing.qty=(existing.qty||1)+qty;
+    else this.playerInventory.push(item);
+    this.bag=this.playerInventory;
+    this.syncInventoryFlags();
+    return true;
+  }
+
+  pickupStartingFuelCan(){
+    if(!this.nearFuelPickup())return false;
+    if(!this.addToPlayer('fuel_can',1))return true;
+
+    this.startFuelCanPicked=true;
+    if(this.startFuelCan)this.startFuelCan.destroy();
+    this.startFuelCan=null;
+    this.message('Picked up fuel can');
+    return true;
   }
 
   createDesertMap(w,h){
@@ -1648,7 +1758,7 @@ class MapScene extends Phaser.Scene{
   handleA(){
     if(this.rearMenuOpen){this.selectRearMenuOption();return}
     if(this.isInventoryOpen){this.useInventory();return}
-    if(this.inVan)return;
+    if(this.inVan){this.handBrakeVan();return}
     if(this.jumpZ>1 || this.isCrawling)return;
     this.jumpVel=8.8;
     this.actionType='jump';
@@ -1660,7 +1770,7 @@ class MapScene extends Phaser.Scene{
     if(this.rearMenuOpen){this.nextRearMenuOption();return}
     if(this.isInventoryOpen){this.nextInventory();return}
     if(this.inVan){
-      this.message('Radio/music toggle later');
+      this.toggleVanMusic();
       return;
     }
     if(this.fuelCanEquipped){
@@ -1678,13 +1788,127 @@ class MapScene extends Phaser.Scene{
   handleB(){
     if(this.rearMenuOpen){this.closeRearMenu();return}
     if(this.isInventoryOpen){this.dropInventory();return}
-    if(this.inVan){this.exitVan();return}
+    if(this.inVan){this.brakeVan();return}
     if(this.nearRearOfVan && this.nearRearOfVan()){this.openRearMenu();return}
     const input=this.inputVector();
     if(this.isCrawling){this.isCrawling=false;this.setDonnyIdle();this.message('Crawl off');return}
     if(input.y>.55){this.isCrawling=true;this.message('Crawl on');return}
     if(input.len>.25){this.slide(input);return}
     this.kick();
+  }
+
+  getVanSpeed(){
+    const v=this.vanVel||{x:0,y:0};
+    return Math.hypot(v.x||0,v.y||0);
+  }
+
+  brakeVan(){
+    const speed=this.getVanSpeed();
+    if(speed<=18){
+      this.exitVan();
+      return;
+    }
+    this.vanVel.x*=0.45;
+    this.vanVel.y*=0.45;
+    this.message('Brake');
+  }
+
+  handBrakeVan(){
+    if(!this.inVan)return;
+    this.vanHandBrakeUntil=this.time.now+480;
+    this.vanVel.x*=0.82;
+    this.vanVel.y*=0.82;
+    this.message('Handbrake slide');
+  }
+
+  toggleVanMusic(){
+    this.musicOn=!this.musicOn;
+    this.message(this.musicOn?'Music on':'Music off');
+  }
+
+  updateVanDrivingPhysics(input,delta){
+    if(!this.van)return;
+
+    const dt=Math.min(.05,Math.max(0,delta/1000));
+    const h=ASTRO_VAN_HANDLING;
+    this.vanVel=this.vanVel||{x:0,y:0};
+
+    const movingInput=(input && input.len>.08);
+    const handBraking=this.time.now<this.vanHandBrakeUntil;
+
+    if(movingInput && this.canDriveVan(input.len)){
+      const ix=input.x/input.len;
+      const iy=input.y/input.len;
+
+      // 8-direction visual facing follows steering input immediately.
+      this.vanDir=this.vanDirectionFromVector(input.x,input.y,this.vanDir);
+
+      // Break velocity into forward/input and lateral drift.
+      const vx=this.vanVel.x;
+      const vy=this.vanVel.y;
+      const forward=vx*ix + vy*iy;
+      const fx=ix*forward;
+      const fy=iy*forward;
+      let lx=vx-fx;
+      let ly=vy-fy;
+
+      const grip=handBraking ? h.handBrakeGrip : h.lateralGrip;
+      lx*=Math.pow(grip,delta/16.67);
+      ly*=Math.pow(grip,delta/16.67);
+
+      this.vanVel.x=fx+lx+ix*h.accel*input.len*dt;
+      this.vanVel.y=fy+ly+iy*h.accel*input.len*dt;
+
+      this.burnVanFuel(input.len*(.35+this.getVanSpeed()/Math.max(1,h.maxSpeed)),delta);
+    } else {
+      if(movingInput)this.canDriveVan(input.len);
+    }
+
+    const friction=handBraking ? h.handBrakeFriction : (movingInput ? h.driveFriction : h.coastFriction);
+    const decay=Math.pow(friction,delta/16.67);
+    this.vanVel.x*=decay;
+    this.vanVel.y*=decay;
+
+    // Clamp max speed.
+    const speed=this.getVanSpeed();
+    if(speed>h.maxSpeed){
+      const s=h.maxSpeed/speed;
+      this.vanVel.x*=s;
+      this.vanVel.y*=s;
+    }
+
+    // Very slow speed snaps to zero.
+    if(this.getVanSpeed()<3 && !movingInput){
+      this.vanVel.x=0;
+      this.vanVel.y=0;
+    }
+
+    let nx=this.van.x+this.vanVel.x*dt;
+    let ny=this.van.y+this.vanVel.y*dt;
+
+    // Simple crude collision/bounds bounce.
+    let bounced=false;
+    if(nx<20 || nx>this.mapW-20){
+      nx=clamp(nx,20,this.mapW-20);
+      this.vanVel.x*=-h.collisionBounce;
+      bounced=true;
+    }
+    if(ny<20 || ny>this.mapH-20){
+      ny=clamp(ny,20,this.mapH-20);
+      this.vanVel.y*=-h.collisionBounce;
+      bounced=true;
+    }
+    if(bounced && this.getVanSpeed()>35)this.message('Impact');
+
+    this.van.x=nx;
+    this.van.y=ny;
+
+    if(this.getVanSpeed()>18){
+      this.vanDir=this.vanDirectionFromVector(this.vanVel.x,this.vanVel.y,this.vanDir);
+    }
+
+    if(this.van.body)this.van.body.updateFromGameObject();
+    this.updateVanVisual(this.getVanSpeed()>10);
   }
 
   canEnterVanNow(){
@@ -1704,6 +1928,7 @@ class MapScene extends Phaser.Scene{
       this.honkHorn();
       return;
     }
+    if(this.pickupStartingFuelCan && this.pickupStartingFuelCan())return;
     if(this.canEnterVanNow()){this.enterVan();return}
     this.message('No interaction here');
   }
@@ -1794,7 +2019,7 @@ class MapScene extends Phaser.Scene{
   }
 
   forceDirectionalSheet(textureKey,mode='walk'){
-    // Use clean sheets first. Older sheets remain fallback.
+    // Use transparent Phaser-ready clean sheets first.
     if(mode==='walk'){
       if((this.playerDir==='right' || this.playerDir==='left') && this.textures.exists('donny_walk_right_clean')){
         this.player.stop();
@@ -2217,10 +2442,11 @@ class MapScene extends Phaser.Scene{
       this.updateRearMenuInput(now,input);
       this.updateGunOverlay();
       this.updateFuelCanOverlay();
+      this.updateCarHudGauges();
       return;
     }
 
-    if(this.isInventoryOpen){this.updateGunOverlay();this.updateFuelCanOverlay();return}
+    if(this.isInventoryOpen){this.updateGunOverlay();this.updateFuelCanOverlay();this.updateCarHudGauges();return}
 
     let moving=input.len>.055;
     if(moving){
@@ -2234,21 +2460,13 @@ class MapScene extends Phaser.Scene{
     }
 
     if(this.inVan){
-      if(moving && this.canDriveVan(input.len)){
-        this.vanDir=this.vanDirectionFromVector(input.x,input.y,this.vanDir);
-        this.burnVanFuel(input.len,delta);
-        this.van.x=clamp(this.van.x+input.x*VAN.speed*delta/1000,20,this.mapW-20);
-        this.van.y=clamp(this.van.y+input.y*VAN.speed*delta/1000,20,this.mapH-20);
-        if(this.van.body)this.van.body.updateFromGameObject();
-        this.updateVanVisual(true);
-      } else {
-        this.updateVanVisual(false);
-      }
+      this.updateVanDrivingPhysics(input,delta);
       this.van.setDepth(this.van.y+900);
       this.updateVanHeadlights();
+      this.updateCarHudGauges();
       this.checkRoutes();
       this.hud.setText(`${PAGES[this.pageId].label} | Astro Van | ${Math.round(this.van.x)},${Math.round(this.van.y)}`);
-      this.status.setText(`Fuel: ${this.fuelText()} | Van: ${this.vanRuntimeCropAvailable&&this.vanRuntimeCropAvailable()?'real-clean-crop':'fallback'} | B exits | hold Y lights | tap Y horn`);
+      this.status.setText(`Fuel ${this.fuelText()} | Speed ${Math.round(this.getVanSpeed())} | ${this.musicOn?'Music on':'Music off'} | B brake/exit stopped | A handbrake | hold Y lights | tap Y horn`);
       return;
     }
 
@@ -2286,9 +2504,12 @@ class MapScene extends Phaser.Scene{
     this.updateVanHeadlights();
     this.checkRoutes();
 
-    if(this.nearRearOfVan && this.nearRearOfVan())this.prompt.setText('B: rear menu');
+    this.updateCarHudGauges();
+
+    if(this.nearFuelPickup && this.nearFuelPickup())this.prompt.setText('Y: pick up fuel can');
+    else if(this.nearRearOfVan && this.nearRearOfVan())this.prompt.setText('B: rear menu');
     else if(this.nearVan())this.prompt.setText('Y: enter Astro Van (action)');
-    this.hud.setText(`${PAGES[this.pageId].label} | Donny | ${Math.round(this.playerX)},${Math.round(this.playerY)} | 2.5D GTA-style open-city sci-fi RPG / brawler`);
+    this.hud.setText(`${PAGES[this.pageId].label} | Donny | HP ${Math.ceil(this.playerHp||0)}/${this.playerMaxHp||100} | ${Math.round(this.playerX)},${Math.round(this.playerY)} | 2.5D GTA-style open-city sci-fi RPG / brawler`);
     this.status.setText(`${this.fuelCanEquipped?'Fuel can equipped':(this.weaponEquipped?'Pistol equipped':'Hands empty')} | Load ${formatWeight(this.getPlayerWeight())}/${formatWeight(this.playerWeightLimit)} | Car ${formatWeight(this.getCarWeight())}/${formatWeight(this.getCarWeightLimit())} | Fuel ${this.fuelText()}`);
   }
 }
