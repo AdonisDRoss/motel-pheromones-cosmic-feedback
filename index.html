@@ -82,7 +82,14 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-weighted-solid-vehicle-impact-2026-05-27-047';
+
+// Rendering rule:
+// Ground items always render under Donny/NPC bodies.
+// Donny uses depth around y+1000, guards use y+1300, cars use y+800.
+// Ground items use y+260 so pickups never cover Donny.
+const ITEM_GROUND_DEPTH_OFFSET = 260;
+
+const VERSION = 'glasswell-arcade-vehicle-physics-2026-05-27-049';
 
 function version(path){ return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`; }
 
@@ -441,7 +448,16 @@ const ASTRO_VAN_HANDLING = {
   fuelBurnDrive:0.022,
   mass:3200,
   impactDamage:70,
-  impactKnockback:132
+  impactKnockback:132,
+
+  // 2D GTA-style arcade handling.
+  turnGripLoss:0.055,
+  handBrakeRetention:0.986,
+  skidRetention:0.972,
+  turnAccelPenalty:0.70,
+  skidMinSpeed:70,
+  skidTrackMs:92,
+  bounceSpinChance:0.22
 };
 
 const VEHICLE_HANDLING = {
@@ -466,7 +482,16 @@ const VEHICLE_HANDLING = {
     fuelBurnDrive:0.034,
     mass:1800,
     impactDamage:70,
-    impactKnockback:118
+    impactKnockback:118,
+
+    // Faster cruiser: sharper, more skid-prone.
+    turnGripLoss:0.13,
+    handBrakeRetention:0.990,
+    skidRetention:0.982,
+    turnAccelPenalty:0.88,
+    skidMinSpeed:60,
+    skidTrackMs:70,
+    bounceSpinChance:0.40
   },
 
   // Heavier roadblock car. Slower than cruiser, stronger, less slide.
@@ -488,7 +513,16 @@ const VEHICLE_HANDLING = {
     fuelBurnDrive:0.030,
     mass:2600,
     impactDamage:70,
-    impactKnockback:142
+    impactKnockback:142,
+
+    // Blockade car: heavy, less slide, slower turning.
+    turnGripLoss:0.045,
+    handBrakeRetention:0.978,
+    skidRetention:0.955,
+    turnAccelPenalty:0.66,
+    skidMinSpeed:78,
+    skidTrackMs:115,
+    bounceSpinChance:0.16
   }
 };
 
@@ -1073,6 +1107,8 @@ class MapScene extends Phaser.Scene{
 
     // 2D fake vehicle physics state.
     this.vanVel={x:0,y:0};
+    this.lastDriveInput={x:0,y:1};
+    this.lastVehicleSkidAt=0;
     this.vanHandBrakeUntil=0;
     this.musicOn=false;
     // Any drivable vehicle can temporarily use the same driving physics.
@@ -1464,8 +1500,9 @@ class MapScene extends Phaser.Scene{
     this.startFuelCan=this.add.image(x,y,tex)
       .setOrigin(.5,1)
       .setScale(tex==='fuel_can_pickup' ? .55 : 1)
-      .setDepth(y+700)
-      .setData('mapObj',true);
+      .setDepth(y+ITEM_GROUND_DEPTH_OFFSET)
+      .setData('mapObj',true)
+      .setData('groundItem',true);
   }
 
   nearFuelPickup(){
@@ -2580,6 +2617,86 @@ class MapScene extends Phaser.Scene{
   }
 
 
+
+  arcadeTurnInfo(input,h){
+    const speed=this.getVanSpeed();
+    const v=this.vanVel||{x:0,y:0};
+
+    if(!input || input.len<=.08 || speed<4){
+      return {turnDot:1,turningHard:false,skidding:false,accelScale:1,lateralSpeed:0};
+    }
+
+    const ix=input.x/input.len;
+    const iy=input.y/input.len;
+    const vx=v.x/speed;
+    const vy=v.y/speed;
+
+    // Dot near 1 = same direction. Dot near 0 = hard side turn. Dot < 0 = reversal.
+    const turnDot=Phaser.Math.Clamp(ix*vx + iy*vy,-1,1);
+
+    const forward=(v.x*ix + v.y*iy);
+    const fx=ix*forward;
+    const fy=iy*forward;
+    const lateralSpeed=Math.hypot(v.x-fx,v.y-fy);
+
+    const turningHard=speed>38 && turnDot<.62;
+    const skidding=speed>(h.skidMinSpeed||70) && (turnDot<.45 || lateralSpeed>34 || this.time.now<this.vanHandBrakeUntil);
+
+    const accelScale=turningHard ? (h.turnAccelPenalty||.78) : 1;
+    return {turnDot,turningHard,skidding,accelScale,lateralSpeed};
+  }
+
+  spawnVehicleSkidTracks(vehicle,intensity=1){
+    if(!vehicle || !vehicle.active)return;
+
+    const h=this.activeVehicleHandling ? this.activeVehicleHandling() : ASTRO_VAN_HANDLING;
+    const now=this.time.now;
+    const delay=h.skidTrackMs || 90;
+    const last=vehicle.getData ? (vehicle.getData('lastSkidTrackAt')||0) : (this.lastVehicleSkidAt||0);
+    if(now-last<delay)return;
+
+    if(vehicle.setData)vehicle.setData('lastSkidTrackAt',now);
+    this.lastVehicleSkidAt=now;
+
+    const v=this.vehicleImpactVector ? this.vehicleImpactVector(vehicle,vehicle===this.van?this.vanVel:(vehicle.getData?.('aiVel')||{x:0,y:1})) : {x:0,y:1,mag:0};
+    const px=-v.y;
+    const py=v.x;
+
+    const length=Phaser.Math.Clamp(12+(v.mag||0)*.05,14,30);
+    const width=Phaser.Math.Clamp(2+intensity*2,2,5);
+    const back=18;
+
+    for(const side of [-1,1]){
+      const x=vehicle.x - v.x*back + px*side*15;
+      const y=vehicle.y - v.y*back + py*side*15;
+
+      const track=this.add.rectangle(x,y,length,width,0x050505,.46)
+        .setRotation(Math.atan2(v.y,v.x))
+        .setDepth(y+180)
+        .setData('mapObj',true)
+        .setData('skidTrack',true);
+
+      this.tweens.add({
+        targets:track,
+        alpha:0,
+        duration:3600,
+        onComplete:()=>track.destroy()
+      });
+    }
+  }
+
+  maybeSpinVehicleOnImpact(vehicle,h,speed){
+    if(!vehicle || speed<60)return;
+    const chance=h.bounceSpinChance||0;
+    if(Math.random()>chance)return;
+
+    const dirs=['down','downRight','right','upRight','up','upLeft','left','downLeft'];
+    const i=dirs.indexOf(this.vanDir);
+    const spin=Phaser.Math.Between(1,2) * (Math.random()<.5?-1:1);
+    this.vanDir=dirs[(i+spin+dirs.length)%dirs.length] || this.vanDir;
+  }
+
+
   updateVanDrivingPhysics(input,delta){
     if(!this.van)return;
 
@@ -2598,6 +2715,8 @@ class MapScene extends Phaser.Scene{
       this.vanDir=this.vanDirectionFromVector(input.x,input.y,this.vanDir);
 
       // Break velocity into forward/input and lateral drift.
+      // Old 2D GTA-style trick: the car is just an x/y vector, but grip,
+      // lateral drift, and sprite swaps make it feel like a vehicle.
       const vx=this.vanVel.x;
       const vy=this.vanVel.y;
       const forward=vx*ix + vy*iy;
@@ -2606,12 +2725,24 @@ class MapScene extends Phaser.Scene{
       let lx=vx-fx;
       let ly=vy-fy;
 
-      const grip=handBraking ? h.handBrakeGrip : h.lateralGrip;
-      lx*=Math.pow(grip,delta/16.67);
-      ly*=Math.pow(grip,delta/16.67);
+      const turn=this.arcadeTurnInfo ? this.arcadeTurnInfo(input,h) : {turningHard:false,skidding:false,accelScale:1,lateralSpeed:0};
 
-      this.vanVel.x=fx+lx+ix*h.accel*input.len*dt;
-      this.vanVel.y=fy+ly+iy*h.accel*input.len*dt;
+      // Higher retention means the sideways vector survives longer, creating
+      // skid/drift. The cruiser keeps more slide, the blockade keeps less.
+      let gripRetention=h.lateralGrip;
+      if(handBraking)gripRetention=h.handBrakeRetention || .985;
+      else if(turn.turningHard)gripRetention=h.skidRetention || Math.min(.985,(h.lateralGrip||.82)+(h.turnGripLoss||.08));
+
+      lx*=Math.pow(gripRetention,delta/16.67);
+      ly*=Math.pow(gripRetention,delta/16.67);
+
+      const accelScale=turn.accelScale || 1;
+      this.vanVel.x=fx+lx+ix*h.accel*input.len*accelScale*dt;
+      this.vanVel.y=fy+ly+iy*h.accel*input.len*accelScale*dt;
+
+      if(turn.skidding || handBraking){
+        this.spawnVehicleSkidTracks(this.van,handBraking?1.25:1);
+      }
 
       this.burnVanFuel(input.len*(.35+this.getVanSpeed()/Math.max(1,h.maxSpeed)),delta);
     } else {
@@ -2674,7 +2805,10 @@ class MapScene extends Phaser.Scene{
       this.checkVehicleImpactAgainstActors(this.van,nx,ny,this.vanVel);
     }
 
-    if(bounced && this.getVanSpeed()>35)this.message('Heavy impact');
+    if(bounced && this.getVanSpeed()>35){
+      this.maybeSpinVehicleOnImpact(this.van,h,this.getVanSpeed());
+      this.message('Heavy impact');
+    }
 
     this.van.x=nx;
     this.van.y=ny;
@@ -2772,6 +2906,25 @@ class MapScene extends Phaser.Scene{
   }
 
 
+
+  updateGroundItemDepths(){
+    // Hard rule: every dropped/pickup item stays under Donny and under NPC bodies.
+    if(this.startFuelCan && this.startFuelCan.active){
+      this.startFuelCan.setDepth(this.startFuelCan.y+ITEM_GROUND_DEPTH_OFFSET);
+      this.startFuelCan.setData('groundItem',true);
+    }
+
+    if(this.worldDrops && this.worldDrops.length){
+      this.worldDrops.forEach(drop=>{
+        if(drop && drop.active){
+          drop.setDepth(drop.y+ITEM_GROUND_DEPTH_OFFSET);
+          drop.setData('groundItem',true);
+        }
+      });
+    }
+  }
+
+
   updateCivicPatrolVehicleAI(delta){
     if(!this.civicCars || !this.civicCars.length)return;
     if(this.pageId!=='GLASSWELL_C3')return;
@@ -2822,6 +2975,11 @@ class MapScene extends Phaser.Scene{
 
       vel.x*=Math.pow(h.driveFriction||.99,delta/16.67);
       vel.y*=Math.pow(h.driveFriction||.99,delta/16.67);
+
+      const aiSpeed=Math.hypot(vel.x,vel.y);
+      if(aiSpeed>(h.skidMinSpeed||70)*.75 && d<260){
+        this.spawnVehicleSkidTracks(car,.75);
+      }
 
       let nx=car.x+vel.x*dt;
       let ny=car.y+vel.y*dt;
@@ -3054,8 +3212,9 @@ class MapScene extends Phaser.Scene{
     const drop=this.add.image(x,y,tex)
       .setOrigin(.5,1)
       .setScale(scale)
-      .setDepth(y+1250)
+      .setDepth(y+ITEM_GROUND_DEPTH_OFFSET)
       .setData('mapObj',true)
+      .setData('groundItem',true)
       .setData('worldDrop',true)
       .setData('itemId',id)
       .setData('qty',qty)
@@ -3713,6 +3872,7 @@ class MapScene extends Phaser.Scene{
     this.updateJump(delta);
     this.updateWorldClockHud();
     this.updateDayNightCycle();
+    this.updateGroundItemDepths();
     this.updateVanHeadlights();
     this.updateCivicPatrolCombat(delta);
     this.updateCivicPatrolVehicleAI(delta);
@@ -3749,7 +3909,7 @@ class MapScene extends Phaser.Scene{
       this.checkRoutes();
       this.hud.setText(`${this.activeVehicleName()} | Donny HP ${Math.ceil(this.playerHp||0)}/${this.playerMaxHp||100} | ${Math.round(this.van.x)},${Math.round(this.van.y)}`);
       const handling=this.activeVehicleHandling();
-      this.status.setText(`Fuel ${this.fuelText()} | Speed ${Math.round(this.getVanSpeed())}/${handling.maxSpeed} | ${handling.className||'vehicle'} | ${this.musicOn?'Music on':'Music off'} | B brake/exit | A handbrake | cars solid | impact 70 HP | hold Y lights | tap Y horn`);
+      this.status.setText(`Fuel ${this.fuelText()} | Speed ${Math.round(this.getVanSpeed())}/${handling.maxSpeed} | ${handling.className||'vehicle'} | ${this.musicOn?'Music on':'Music off'} | B brake/exit | A handbrake | arcade skid | solid cars | impact 70 HP | hold Y lights | tap Y horn`);
       return;
     }
 
