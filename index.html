@@ -82,7 +82,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-van-function-global-hardfix-2026-05-26-023';
+const VERSION = 'glasswell-van-crop-gun-hand-donny-size-fix-2026-05-26-024';
 
 function version(path){ return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`; }
 function key(id,type){return `${id}_${type}`}
@@ -252,13 +252,15 @@ const DONNY = {
   frameWidth:128,
   frameHeight:128,
 
-  // HARD FIX: one uniform Donny scale for every state.
-  // This stops idle/walk/action scale popping.
-  scale:0.70,
-  walkScale:0.70,
-  runScale:0.70,
-  crawlScale:0.70,
-  actionScale:0.70,
+  // Slightly bigger than the hardfix. Still small enough for the map.
+  scale:0.76,
+  walkScale:0.76,
+  runScale:0.76,
+  crawlScale:0.76,
+  actionScale:0.76,
+
+  // Small direction compensation. Left-facing frames were reading smaller.
+  dirScale:{down:0.76,right:0.76,left:0.80,up:0.76},
 
   // Feet anchor.
   originY:0.90,
@@ -289,13 +291,19 @@ const GUN_PROP = {
   key:'donny_laser_gun_overlay',
   frameWidth:128,
   frameHeight:128,
-  scale:0.28,
+
+  // Smaller overlay so it reads as a hand prop, not a floating second sprite.
+  scale:0.22,
+
   directionFrame:{down:0,right:1,left:2,up:3},
+
+  // These are tuned for Donny's shooting pose.
+  // The prop's center should sit on the weapon hand.
   hand:{
-    down:{x:10,y:-34},
-    right:{x:20,y:-36},
-    left:{x:-20,y:-36},
-    up:{x:-6,y:-46}
+    down:{x:5,y:-35},
+    right:{x:13,y:-39},
+    left:{x:-13,y:-39},
+    up:{x:-4,y:-49}
   }
 };
 
@@ -318,7 +326,7 @@ const HOLSTER = {
   frameWidth:128,
   frameHeight:128,
 
-  // Tiny overlay; anchored to hip/belt, not hand.
+  // Tiny hip holster. Keep this off the hand.
   scale:0.16,
 
   directionFrame:{down:0,right:1,left:2,up:3},
@@ -346,7 +354,7 @@ const VAN = {
   anim:{down:'astro_van_drive_down',downRight:'astro_van_drive_downRight',right:'astro_van_drive_right',upRight:'astro_van_drive_upRight',up:'astro_van_drive_up',upLeft:'astro_van_drive_upLeft',left:'astro_van_drive_left',downLeft:'astro_van_drive_downLeft'},
   speed:285,
   enterDistance:76,
-  renderScale:1.18,
+  renderScale:1.08,
 
   // Small physical footprint only around the van body.
   // This prevents a huge transparent sprite box from trapping Donny.
@@ -549,6 +557,8 @@ class BootScene extends Phaser.Scene{
     this.load.image('fuel_can_pickup',version(FUEL_CAN_ASSETS.pickup));
     this.load.spritesheet(GUN_PROP.key,version(DONNY_ASSETS.laserOverlay),{frameWidth:128,frameHeight:128});
     this.load.spritesheet(HOLSTER.key,version(DONNY_ASSETS.holster),{frameWidth:128,frameHeight:128});
+
+    this.load.image(VAN.fullImageKey,version(VAN_REAL_EXACT_PATH));
 
     // Load the van sheet as a normal image too. Runtime cropping uses the true image width/height,
     // which fixes bad Phaser frame slicing and van cropping.
@@ -938,18 +948,16 @@ class MapScene extends Phaser.Scene{
   }
 
   spawnVanNearDonny(){
-    // Van starts in the road and must always be visible.
+    // Van starts visible with safe fallback, then upgrades to runtime-cropped real sheet.
     const vx=clamp(this.mapW*.46,100,this.mapW-100);
     const vy=clamp(this.mapH*.56,100,this.mapH-100);
 
-    const texture=(this.canUseRealVan && this.canUseRealVan())
-      ? VAN.activeDriveKey
-      : (this.safeVanTextureForDir ? this.safeVanTextureForDir('right') : 'astro_van_safe_right');
+    const safeTex=(this.safeVanTextureForDir ? this.safeVanTextureForDir('right') : 'astro_van_safe_right');
 
     if(!this.van){
-      this.van=this.add.sprite(vx,vy,texture,0).setOrigin(.5,.68).setScale(VAN.renderScale).setDepth(vy+900);
+      this.van=this.add.sprite(vx,vy,safeTex,0).setOrigin(.5,.68).setScale(VAN.renderScale).setDepth(vy+900);
     } else {
-      this.van.setPosition(vx,vy).setVisible(true).setTexture(texture);
+      this.van.setPosition(vx,vy).setVisible(true).setTexture(safeTex);
     }
 
     this.vanX=this.van.x;
@@ -1217,15 +1225,82 @@ class MapScene extends Phaser.Scene{
     return true;
   }
 
+  vanRuntimeCropAvailable(){
+    return !!(this.textures.exists(VAN.fullImageKey) && this.textures.get(VAN.fullImageKey)?.getSourceImage());
+  }
+
+  renderVanRuntimeCrop(animated=false){
+    if(!this.van || !this.vanRuntimeCropAvailable())return false;
+
+    const img=this.textures.get(VAN.fullImageKey).getSourceImage();
+    if(!img || !img.width || !img.height)return false;
+
+    const cols=11;
+    const rows=8;
+
+    // Use true image dimensions. This fixes the "multiple vans / chopped van"
+    // problem when the uploaded sheet is not actually slicing cleanly at 128x96.
+    const fw=Math.floor(img.width/cols);
+    const fh=Math.floor(img.height/rows);
+
+    if(fw<16 || fh<16)return false;
+
+    const rowMap={
+      down:0,
+      downRight:1,
+      right:2,
+      upRight:3,
+      up:4,
+      upLeft:5,
+      left:6,
+      downLeft:7
+    };
+
+    const row=rowMap[this.vanDir] ?? 2;
+    const col=animated ? Math.floor(this.time.now/120)%cols : 0;
+
+    const key=VAN.cropKey || 'astro_van_drive_cropped_runtime';
+
+    if(!this.textures.exists(key)){
+      this.textures.createCanvas(key,fw,fh);
+      VAN.cropFrame={w:fw,h:fh};
+    }
+
+    const tex=this.textures.get(key);
+    const canvas=tex.getSourceImage();
+
+    // If the sheet dimensions changed, recreate the canvas texture.
+    if(canvas.width!==fw || canvas.height!==fh){
+      this.textures.remove(key);
+      this.textures.createCanvas(key,fw,fh);
+    }
+
+    const tex2=this.textures.get(key);
+    const ctx=tex2.getContext();
+
+    ctx.clearRect(0,0,fw,fh);
+    ctx.drawImage(img,col*fw,row*fh,fw,fh,0,0,fw,fh);
+    tex2.refresh();
+
+    this.van.setTexture(key);
+    this.van.setOrigin(.5,.68);
+    this.van.setScale(VAN.renderScale);
+    return true;
+  }
+
   updateVanVisual(animated=false){
     if(!this.van)return;
 
-    if(this.canUseRealVan && this.canUseRealVan()){
-      if(this.van.texture.key!==VAN.activeDriveKey)this.van.setTexture(VAN.activeDriveKey);
-      this.van.setFrame(this.realVanFrameForDir(this.vanDir,animated));
-    } else {
-      const tex=this.safeVanTextureForDir ? this.safeVanTextureForDir(this.vanDir) : 'astro_van_safe_right';
-      if(this.textures.exists(tex) && this.van.texture.key!==tex)this.van.setTexture(tex);
+    // First choice: runtime crop from the exact full Astro Van sheet.
+    // This prevents cut-off frames and multiple cars showing in one frame.
+    if(this.renderVanRuntimeCrop && this.renderVanRuntimeCrop(animated)){
+      return;
+    }
+
+    // Second choice: safe generated fallback, never invisible.
+    const tex=this.safeVanTextureForDir ? this.safeVanTextureForDir(this.vanDir) : 'astro_van_safe_right';
+    if(this.textures.exists(tex) && this.van.texture.key!==tex){
+      this.van.setTexture(tex);
     }
 
     this.van.setOrigin(.5,.68);
@@ -1490,7 +1565,9 @@ class MapScene extends Phaser.Scene{
 
   setDonnyVisual(mode='idle'){
     if(!this.player)return;
-    this.player.setScale(DONNY.scale);
+
+    const dirScale=(DONNY.dirScale && DONNY.dirScale[this.playerDir]) ? DONNY.dirScale[this.playerDir] : DONNY.scale;
+    this.player.setScale(dirScale);
     this.player.setOrigin(.5,DONNY.originY || .90);
   }
 
@@ -1894,7 +1971,7 @@ class MapScene extends Phaser.Scene{
       this.updateVanHeadlights();
       this.checkRoutes();
       this.hud.setText(`${PAGES[this.pageId].label} | Astro Van | ${Math.round(this.van.x)},${Math.round(this.van.y)}`);
-      this.status.setText(`Fuel: ${this.fuelText()} | Van: ${this.canUseRealVan&&this.canUseRealVan()?'real':'fallback'} | B exits | hold Y lights | tap Y horn`);
+      this.status.setText(`Fuel: ${this.fuelText()} | Van: ${this.vanRuntimeCropAvailable&&this.vanRuntimeCropAvailable()?'real-crop':'fallback'} | B exits | hold Y lights | tap Y horn`);
       return;
     }
 
