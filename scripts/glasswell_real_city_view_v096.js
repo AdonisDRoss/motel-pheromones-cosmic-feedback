@@ -1,0 +1,368 @@
+// GLASSWELL_REAL_CITY_VIEW_v096_FIX
+// Uses assets/maps/dust9/glasswell/glasswell_city_manifest_v095.json.
+// This file is optional backup because index.html also contains the runtime inline.
+
+(function(){
+  const MANIFEST_URL = "assets/maps/dust9/glasswell/glasswell_city_manifest_v095.json?v=096";
+  window.GLASSWELL_REAL_CITY_BOOT = function bootGlasswellRealCity() {
+    class BootScene extends Phaser.Scene {
+      constructor(){ super("BootScene"); }
+      preload(){ this.load.json("glasswellManifest", MANIFEST_URL); }
+      create(){
+        const manifest = this.cache.json.get("glasswellManifest");
+        this.scene.start("CityScene", { manifest });
+      }
+    }
+
+    class CityScene extends Phaser.Scene {
+      constructor(){ super("CityScene"); }
+
+      init(data){
+        this.manifest = data.manifest;
+        this.chunkById = new Map();
+        this.chunkLayers = new Map();
+        this.chunkLabels = [];
+        this.exitMarkers = [];
+        this.activeChunkId = "";
+        this.inVan = false;
+        this.showLabels = false;
+        this.showExits = false;
+      }
+
+      preload(){
+        for (const chunk of this.manifest.chunks) {
+          this.load.image(`${chunk.id}_base`, chunk.layers.base);
+          this.load.image(`${chunk.id}_fg`, chunk.layers.foreground_overlay);
+        }
+      }
+
+      create(){
+        this.manifest.chunks.forEach(c => this.chunkById.set(c.id, c));
+
+        const chunks = this.manifest.chunks;
+        const maxX = Math.max(...chunks.map(c => c.grid.worldX + c.canvas.width));
+        const maxY = Math.max(...chunks.map(c => c.grid.worldY + c.canvas.height));
+
+        this.physics.world.setBounds(0, 0, maxX, maxY);
+        this.cameras.main.setBounds(0, 0, maxX, maxY);
+        this.cameras.main.setBackgroundColor("#070707");
+        this.cameras.main.setZoom(this.getDefaultZoom());
+        this.cameras.main.setRoundPixels(true);
+
+        for (const chunk of chunks) this.addChunk(chunk);
+
+        const start = this.manifest.start || {
+          chunk: "GLASSWELL_C3",
+          spawn: { x: 768, y: 640 },
+          vehicle_spawn: { chunk: "GLASSWELL_C3", x: 705, y: 720 }
+        };
+
+        const startChunk = this.chunkById.get(start.chunk) || chunks[0];
+        const sx = startChunk.grid.worldX + (start.spawn?.x || 768);
+        const sy = startChunk.grid.worldY + (start.spawn?.y || 640);
+
+        this.createDonny(sx, sy);
+
+        const vanChunk = this.chunkById.get(start.vehicle_spawn?.chunk || start.chunk) || startChunk;
+        const vx = vanChunk.grid.worldX + (start.vehicle_spawn?.x || 705);
+        const vy = vanChunk.grid.worldY + (start.vehicle_spawn?.y || 720);
+        this.createAstroVan(vx, vy);
+
+        this.createInput();
+        this.createHud();
+
+        this.cameras.main.startFollow(this.donny, true, 0.14, 0.14);
+        this.updateVisibleChunks(true);
+      }
+
+      getDefaultZoom(){
+        const mobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+        return mobile ? 0.86 : 0.95;
+      }
+
+      addChunk(chunk){
+        const x = chunk.grid.worldX;
+        const y = chunk.grid.worldY;
+
+        const base = this.add.image(x, y, `${chunk.id}_base`)
+          .setOrigin(0, 0)
+          .setDepth(0);
+
+        const fg = this.add.image(x, y, `${chunk.id}_fg`)
+          .setOrigin(0, 0)
+          .setDepth(9000);
+
+        const label = this.add.text(x + 24, y + 24, `${chunk.id}\n${chunk.title}`, {
+          fontFamily: "monospace",
+          fontSize: "22px",
+          color: "#f4f0dd",
+          backgroundColor: "rgba(0,0,0,.58)",
+          padding: { x: 8, y: 6 }
+        }).setDepth(9500).setVisible(false);
+
+        this.chunkLabels.push(label);
+        this.chunkLayers.set(chunk.id, { chunk, base, fg, label });
+        this.addExitMarkers(chunk);
+      }
+
+      addExitMarkers(chunk){
+        const exits = chunk.adjacent_existing_chunks || {};
+        const x = chunk.grid.worldX;
+        const y = chunk.grid.worldY;
+        const w = chunk.canvas.width;
+        const h = chunk.canvas.height;
+
+        const defs = [
+          ["north", x + w / 2, y + 20, 280, 24],
+          ["south", x + w / 2, y + h - 20, 280, 24],
+          ["west", x + 20, y + h / 2, 24, 280],
+          ["east", x + w - 20, y + h / 2, 24, 280]
+        ];
+
+        defs.forEach(([side, cx, cy, rw, rh]) => {
+          if (!exits[side]) return;
+          this.exitMarkers.push(
+            this.add.rectangle(cx, cy, rw, rh, 0x4fd6d6, 0.28).setDepth(9400).setVisible(false)
+          );
+        });
+      }
+
+      createDonny(x, y){
+        const g = this.add.graphics();
+        g.fillStyle(0x111111, 1);
+        g.fillRoundedRect(7, 6, 26, 38, 7);
+        g.fillStyle(0x66d9ef, 1);
+        g.fillRect(10, 3, 20, 6);
+        g.fillStyle(0x8f1d1d, 1);
+        g.fillRect(16, 10, 8, 13);
+        g.fillStyle(0x2d2d2d, 1);
+        g.fillRect(13, 24, 14, 16);
+        g.generateTexture("donny_marker_v096", 40, 50);
+        g.destroy();
+
+        this.donny = this.physics.add.sprite(x, y, "donny_marker_v096")
+          .setDepth(5000)
+          .setCollideWorldBounds(true);
+
+        this.donny.body.setSize(22, 30, true);
+      }
+
+      createAstroVan(x, y){
+        const g = this.add.graphics();
+        g.fillStyle(0x171513, 1);
+        g.fillRoundedRect(8, 6, 68, 132, 10);
+        g.fillStyle(0x3a3028, 1);
+        g.fillRoundedRect(14, 14, 56, 116, 8);
+        g.fillStyle(0x94d9e8, 1);
+        g.fillRect(18, 26, 48, 14);
+        g.fillStyle(0xc0298f, 1);
+        g.fillRect(10, 64, 5, 52);
+        g.fillRect(69, 64, 5, 52);
+        g.fillStyle(0x661d1d, 1);
+        g.fillRect(22, 118, 40, 8);
+        g.fillStyle(0x090909, 1);
+        g.fillRect(4, 28, 7, 24);
+        g.fillRect(73, 28, 7, 24);
+        g.fillRect(4, 92, 7, 24);
+        g.fillRect(73, 92, 7, 24);
+        g.generateTexture("astro_van_marker_v096", 84, 150);
+        g.destroy();
+
+        this.van = this.physics.add.sprite(x, y, "astro_van_marker_v096")
+          .setDepth(4500)
+          .setCollideWorldBounds(true);
+
+        this.van.body.setSize(62, 122, true);
+      }
+
+      createInput(){
+        this.keys = this.input.keyboard.addKeys({
+          up: Phaser.Input.Keyboard.KeyCodes.W,
+          down: Phaser.Input.Keyboard.KeyCodes.S,
+          left: Phaser.Input.Keyboard.KeyCodes.A,
+          right: Phaser.Input.Keyboard.KeyCodes.D,
+          up2: Phaser.Input.Keyboard.KeyCodes.UP,
+          down2: Phaser.Input.Keyboard.KeyCodes.DOWN,
+          left2: Phaser.Input.Keyboard.KeyCodes.LEFT,
+          right2: Phaser.Input.Keyboard.KeyCodes.RIGHT,
+          e: Phaser.Input.Keyboard.KeyCodes.E,
+          m: Phaser.Input.Keyboard.KeyCodes.M,
+          x: Phaser.Input.Keyboard.KeyCodes.X,
+          z: Phaser.Input.Keyboard.KeyCodes.Z
+        });
+
+        this.input.keyboard.on("keydown-E", () => this.toggleVan());
+        this.input.keyboard.on("keydown-M", () => {
+          this.showLabels = !this.showLabels;
+          this.chunkLabels.forEach(l => l.setVisible(this.showLabels && this.isLabelNearActive(l)));
+        });
+        this.input.keyboard.on("keydown-X", () => {
+          this.showExits = !this.showExits;
+          this.exitMarkers.forEach(e => e.setVisible(this.showExits));
+        });
+        this.input.keyboard.on("keydown-Z", () => this.cycleZoom());
+
+        this.touch = { active:false, originX:0, originY:0, dx:0, dy:0 };
+        this.input.addPointer(2);
+
+        this.input.on("pointerdown", p => {
+          if (p.x < this.scale.width * 0.65) {
+            this.touch.active = true;
+            this.touch.originX = p.x;
+            this.touch.originY = p.y;
+          }
+        });
+        this.input.on("pointermove", p => {
+          if (!this.touch.active) return;
+          this.touch.dx = Phaser.Math.Clamp((p.x - this.touch.originX) / 70, -1, 1);
+          this.touch.dy = Phaser.Math.Clamp((p.y - this.touch.originY) / 70, -1, 1);
+        });
+        this.input.on("pointerup", () => {
+          this.touch.active = false;
+          this.touch.dx = 0;
+          this.touch.dy = 0;
+        });
+      }
+
+      createHud(){
+        this.hud = this.add.text(14, 14, "", {
+          fontFamily: "monospace",
+          fontSize: "15px",
+          color: "#f4f0dd",
+          backgroundColor: "rgba(0,0,0,.55)",
+          padding: { x: 9, y: 7 }
+        }).setScrollFactor(0).setDepth(10000);
+
+        this.help = this.add.text(14, 500, "E enter/exit van · Z zoom · M labels · X exits", {
+          fontFamily: "monospace",
+          fontSize: "13px",
+          color: "#d8d8d8",
+          backgroundColor: "rgba(0,0,0,.35)",
+          padding: { x: 8, y: 5 }
+        }).setScrollFactor(0).setDepth(10000);
+      }
+
+      isLabelNearActive(label){
+        const actor = this.inVan ? this.van : this.donny;
+        return Phaser.Math.Distance.Between(actor.x, actor.y, label.x, label.y) < 2500;
+      }
+
+      cycleZoom(){
+        const zooms = [0.74, 0.86, 0.95, 1.08, 1.2];
+        const current = this.cameras.main.zoom;
+        let next = zooms.find(z => z > current + 0.01);
+        if (!next) next = zooms[0];
+        this.cameras.main.setZoom(next);
+      }
+
+      toggleVan(){
+        const dist = Phaser.Math.Distance.Between(this.donny.x, this.donny.y, this.van.x, this.van.y);
+
+        if (!this.inVan && dist <= 125) {
+          this.inVan = true;
+          this.donny.setVisible(false);
+          this.donny.body.enable = false;
+          this.van.setDepth(5100);
+          this.cameras.main.startFollow(this.van, true, 0.14, 0.14);
+          return;
+        }
+
+        if (this.inVan) {
+          this.inVan = false;
+          this.donny.body.enable = true;
+          this.donny.setPosition(this.van.x + 50, this.van.y + 20);
+          this.donny.setVisible(true);
+          this.van.setDepth(4500);
+          this.cameras.main.startFollow(this.donny, true, 0.14, 0.14);
+        }
+      }
+
+      getMoveVector(){
+        let vx = 0, vy = 0;
+        if (this.keys.left.isDown || this.keys.left2.isDown) vx -= 1;
+        if (this.keys.right.isDown || this.keys.right2.isDown) vx += 1;
+        if (this.keys.up.isDown || this.keys.up2.isDown) vy -= 1;
+        if (this.keys.down.isDown || this.keys.down2.isDown) vy += 1;
+
+        if (this.touch.active) {
+          vx += this.touch.dx;
+          vy += this.touch.dy;
+        }
+
+        const len = Math.hypot(vx, vy);
+        if (len > 1) { vx /= len; vy /= len; }
+        return { vx, vy };
+      }
+
+      getChunkAt(x, y){
+        return this.manifest.chunks.find(c =>
+          x >= c.grid.worldX &&
+          x < c.grid.worldX + c.canvas.width &&
+          y >= c.grid.worldY &&
+          y < c.grid.worldY + c.canvas.height
+        );
+      }
+
+      updateVisibleChunks(force = false){
+        const actor = this.inVan ? this.van : this.donny;
+        const current = this.getChunkAt(actor.x, actor.y);
+        if (!current) return;
+
+        if (!force && current.id === this.activeChunkId) return;
+        this.activeChunkId = current.id;
+
+        const active = new Set([current.id, ...Object.values(current.adjacent_existing_chunks || {})]);
+
+        for (const [id, layer] of this.chunkLayers.entries()) {
+          const show = active.has(id);
+          layer.base.setVisible(show);
+          layer.fg.setVisible(show);
+          layer.label.setVisible(show && this.showLabels);
+        }
+      }
+
+      update(){
+        const { vx, vy } = this.getMoveVector();
+
+        if (this.inVan) {
+          const speed = 530;
+          this.van.body.setVelocity(vx * speed, vy * speed);
+          if (vx !== 0 || vy !== 0) {
+            this.van.rotation = Math.atan2(vy, vx) + Math.PI / 2;
+          }
+          if (this.donny.body.enable) this.donny.body.setVelocity(0, 0);
+        } else {
+          const speed = 315;
+          this.donny.body.setVelocity(vx * speed, vy * speed);
+          this.van.body.setVelocity(0, 0);
+        }
+
+        this.updateVisibleChunks();
+
+        const actor = this.inVan ? this.van : this.donny;
+        const chunk = this.getChunkAt(actor.x, actor.y);
+        const mode = this.inVan ? "Astro Van" : "Donny on foot";
+
+        this.hud.setText(
+          `COSMIC FEEDBACK — GLASSWELL v096\n` +
+          `${mode}\n` +
+          `Location: ${chunk ? chunk.id + " — " + chunk.title : "outside"}\n` +
+          `Dusk · Dust-9 · City view`
+        );
+      }
+    }
+
+    new Phaser.Game({
+      type: Phaser.AUTO,
+      backgroundColor: "#070707",
+      width: 960,
+      height: 540,
+      parent: document.body,
+      pixelArt: true,
+      roundPixels: true,
+      scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+      physics: { default: "arcade", arcade: { gravity: { y: 0 }, debug: false } },
+      scene: [BootScene, CityScene]
+    });
+  };
+})();
