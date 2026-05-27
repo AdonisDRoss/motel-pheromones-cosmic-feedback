@@ -89,7 +89,11 @@ const GAME_H = 540;
 // Ground items use y+260 so pickups never cover Donny.
 const ITEM_GROUND_DEPTH_OFFSET = 260;
 
-const VERSION = 'glasswell-arcade-vehicle-physics-2026-05-27-049';
+// Vehicle movement FX render under Donny/NPCs/cars but above the road.
+const VEHICLE_FX_DEPTH_OFFSET = 120;
+const VEHICLE_SKID_DEPTH_OFFSET = 90;
+
+const VERSION = 'glasswell-vehicle-movement-fx-2026-05-27-050';
 
 function version(path){ return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`; }
 
@@ -2672,7 +2676,7 @@ class MapScene extends Phaser.Scene{
 
       const track=this.add.rectangle(x,y,length,width,0x050505,.46)
         .setRotation(Math.atan2(v.y,v.x))
-        .setDepth(y+180)
+        .setDepth(y+VEHICLE_SKID_DEPTH_OFFSET)
         .setData('mapObj',true)
         .setData('skidTrack',true);
 
@@ -2694,6 +2698,161 @@ class MapScene extends Phaser.Scene{
     const i=dirs.indexOf(this.vanDir);
     const spin=Phaser.Math.Between(1,2) * (Math.random()<.5?-1:1);
     this.vanDir=dirs[(i+spin+dirs.length)%dirs.length] || this.vanDir;
+  }
+
+
+
+  vehicleRearPoint(vehicle,vel=null,back=30){
+    if(!vehicle)return {x:0,y:0,vx:0,vy:1,speed:0};
+    const v=vel || (vehicle===this.van ? this.vanVel : (vehicle.getData?.('aiVel')||{x:0,y:1}));
+    const speed=Math.max(1,Math.hypot(v.x||0,v.y||0));
+    const vx=(v.x||0)/speed;
+    const vy=(v.y||0)/speed;
+    return {
+      x:vehicle.x-vx*back,
+      y:vehicle.y-vy*back,
+      vx,
+      vy,
+      speed
+    };
+  }
+
+  spawnVehicleDustFx(vehicle,vel=null,intensity=1){
+    if(!vehicle || !vehicle.active)return;
+
+    const now=this.time.now;
+    const last=vehicle.getData ? (vehicle.getData('lastDustAt')||0) : 0;
+    const v=vel || (vehicle===this.van ? this.vanVel : (vehicle.getData?.('aiVel')||{x:0,y:0}));
+    const speed=Math.hypot(v.x||0,v.y||0);
+
+    if(speed<32)return;
+
+    const delay=speed>120 ? 55 : 90;
+    if(now-last<delay)return;
+    if(vehicle.setData)vehicle.setData('lastDustAt',now);
+
+    const h=(vehicle.getData && VEHICLE_HANDLING[vehicle.getData('handlingKey')]) || (this.activeVehicleHandling ? this.activeVehicleHandling() : ASTRO_VAN_HANDLING);
+    const p=this.vehicleRearPoint(vehicle,v,vehicle.getData?.('civicPatrolCar')?24:32);
+
+    const heavy=(h.mass||2000)>2400;
+    const count=heavy ? 2 : 1;
+
+    for(let i=0;i<count;i++){
+      const puff=this.add.circle(
+        p.x+Phaser.Math.Between(-8,8),
+        p.y+Phaser.Math.Between(-7,7),
+        Phaser.Math.Between(2,heavy?6:4),
+        heavy?0x746d62:0x6d675d,
+        heavy?.38:.30
+      )
+        .setDepth(p.y+VEHICLE_FX_DEPTH_OFFSET)
+        .setData('mapObj',true)
+        .setData('vehicleFx',true);
+
+      this.tweens.add({
+        targets:puff,
+        x:puff.x-p.vx*Phaser.Math.Between(6,16),
+        y:puff.y-p.vy*Phaser.Math.Between(6,16)-Phaser.Math.Between(3,12),
+        alpha:0,
+        scale:heavy?2.6:2.1,
+        duration:heavy?720:520,
+        onComplete:()=>puff.destroy()
+      });
+    }
+  }
+
+  spawnVehicleExhaustFx(vehicle,vel=null){
+    if(!vehicle || !vehicle.active)return;
+
+    const now=this.time.now;
+    const last=vehicle.getData ? (vehicle.getData('lastExhaustAt')||0) : 0;
+    const v=vel || (vehicle===this.van ? this.vanVel : (vehicle.getData?.('aiVel')||{x:0,y:0}));
+    const speed=Math.hypot(v.x||0,v.y||0);
+
+    const delay=speed>40 ? 360 : 620;
+    if(now-last<delay)return;
+    if(vehicle.setData)vehicle.setData('lastExhaustAt',now);
+
+    const p=this.vehicleRearPoint(vehicle,v,vehicle.getData?.('civicPatrolCar')?28:34);
+    const smoke=this.add.circle(
+      p.x+Phaser.Math.Between(-4,4),
+      p.y+Phaser.Math.Between(-4,4),
+      Phaser.Math.Between(2,4),
+      0x2b3032,
+      .28
+    )
+      .setDepth(p.y+VEHICLE_FX_DEPTH_OFFSET)
+      .setData('mapObj',true)
+      .setData('vehicleFx',true);
+
+    this.tweens.add({
+      targets:smoke,
+      x:smoke.x-p.vx*Phaser.Math.Between(8,18),
+      y:smoke.y-p.vy*Phaser.Math.Between(8,18)-Phaser.Math.Between(7,16),
+      alpha:0,
+      scale:2.5,
+      duration:900,
+      onComplete:()=>smoke.destroy()
+    });
+  }
+
+  spawnVehicleMotionSmear(vehicle,vel=null){
+    if(!vehicle || !vehicle.active)return;
+
+    const v=vel || (vehicle===this.van ? this.vanVel : (vehicle.getData?.('aiVel')||{x:0,y:0}));
+    const speed=Math.hypot(v.x||0,v.y||0);
+    if(speed<150)return;
+
+    const now=this.time.now;
+    const last=vehicle.getData ? (vehicle.getData('lastSmearAt')||0) : 0;
+    if(now-last<90)return;
+    if(vehicle.setData)vehicle.setData('lastSmearAt',now);
+
+    const p=this.vehicleRearPoint(vehicle,v,34);
+    const angle=Math.atan2(v.y||0,v.x||0);
+    const smear=this.add.rectangle(p.x,p.y,Phaser.Math.Clamp(speed*.13,18,42),3,0xbfc7c8,.16)
+      .setRotation(angle)
+      .setDepth(p.y+VEHICLE_FX_DEPTH_OFFSET)
+      .setData('mapObj',true)
+      .setData('vehicleFx',true);
+
+    this.tweens.add({
+      targets:smear,
+      alpha:0,
+      scaleX:1.8,
+      duration:220,
+      onComplete:()=>smear.destroy()
+    });
+  }
+
+  updateVehicleMovementFx(vehicle,vel=null,turnInfo=null){
+    if(!vehicle || !vehicle.active || !vehicle.visible)return;
+
+    const v=vel || (vehicle===this.van ? this.vanVel : (vehicle.getData?.('aiVel')||{x:0,y:0}));
+    const speed=Math.hypot(v.x||0,v.y||0);
+
+    if(speed>28){
+      this.spawnVehicleDustFx(vehicle,v,1);
+      this.spawnVehicleExhaustFx(vehicle,v);
+    }
+
+    if(speed>145){
+      this.spawnVehicleMotionSmear(vehicle,v);
+    }
+
+    if(turnInfo && (turnInfo.skidding || turnInfo.turningHard)){
+      vehicle.setData?.('skidding',true);
+    } else if(vehicle.setData) {
+      vehicle.setData('skidding',false);
+    }
+
+    // Tiny road vibration. This helps static wheel sprites feel alive.
+    if(speed>18){
+      const h=(vehicle.getData && VEHICLE_HANDLING[vehicle.getData('handlingKey')]) || (this.activeVehicleHandling ? this.activeVehicleHandling() : ASTRO_VAN_HANDLING);
+      const heavy=(h.mass||2000)>2400;
+      const shake=Math.sin(this.time.now*(heavy?.023:.038))*Math.min(1.6,speed/135);
+      vehicle.y+=shake*(heavy?.05:.09);
+    }
   }
 
 
@@ -2744,6 +2903,8 @@ class MapScene extends Phaser.Scene{
         this.spawnVehicleSkidTracks(this.van,handBraking?1.25:1);
       }
 
+      this.updateVehicleMovementFx(this.van,this.vanVel,turn);
+
       this.burnVanFuel(input.len*(.35+this.getVanSpeed()/Math.max(1,h.maxSpeed)),delta);
     } else {
       if(movingInput)this.canDriveVan(input.len);
@@ -2766,6 +2927,10 @@ class MapScene extends Phaser.Scene{
     if(this.getVanSpeed()<3 && !movingInput){
       this.vanVel.x=0;
       this.vanVel.y=0;
+    }
+
+    if(!movingInput && this.getVanSpeed()>28){
+      this.updateVehicleMovementFx(this.van,this.vanVel,null);
     }
 
     let nx=this.van.x+this.vanVel.x*dt;
@@ -2980,6 +3145,8 @@ class MapScene extends Phaser.Scene{
       if(aiSpeed>(h.skidMinSpeed||70)*.75 && d<260){
         this.spawnVehicleSkidTracks(car,.75);
       }
+
+      this.updateVehicleMovementFx(car,vel,{skidding:aiSpeed>(h.skidMinSpeed||70)*.75 && d<260,turningHard:d<260});
 
       let nx=car.x+vel.x*dt;
       let ny=car.y+vel.y*dt;
@@ -3909,7 +4076,7 @@ class MapScene extends Phaser.Scene{
       this.checkRoutes();
       this.hud.setText(`${this.activeVehicleName()} | Donny HP ${Math.ceil(this.playerHp||0)}/${this.playerMaxHp||100} | ${Math.round(this.van.x)},${Math.round(this.van.y)}`);
       const handling=this.activeVehicleHandling();
-      this.status.setText(`Fuel ${this.fuelText()} | Speed ${Math.round(this.getVanSpeed())}/${handling.maxSpeed} | ${handling.className||'vehicle'} | ${this.musicOn?'Music on':'Music off'} | B brake/exit | A handbrake | arcade skid | solid cars | impact 70 HP | hold Y lights | tap Y horn`);
+      this.status.setText(`Fuel ${this.fuelText()} | Speed ${Math.round(this.getVanSpeed())}/${handling.maxSpeed} | ${handling.className||'vehicle'} | ${this.musicOn?'Music on':'Music off'} | B brake/exit | A handbrake | arcade skid FX | dust/exhaust | solid cars | impact 70 HP | hold Y lights | tap Y horn`);
       return;
     }
 
