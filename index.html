@@ -82,7 +82,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-full-index-preserve-assets-donny-clean-add-2026-05-26-026';
+const VERSION = 'glasswell-use-clean-donny-sheets-2026-05-27-027';
 
 function version(path){ return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`; }
 function key(id,type){return `${id}_${type}`}
@@ -252,17 +252,19 @@ const DONNY = {
   frameWidth:128,
   frameHeight:128,
 
-  // Slightly bigger than the hardfix. Still small enough for the map.
+  // Existing 128px sheets.
   scale:0.76,
   walkScale:0.76,
   runScale:0.76,
   crawlScale:0.76,
   actionScale:0.76,
 
-  // Small direction compensation. Left-facing frames were reading smaller.
-  dirScale:{down:0.76,right:0.76,left:0.80,up:0.76},
+  // Clean 160px sheets added today.
+  cleanScale:0.76,
 
-  // Feet anchor.
+  // Keep all directions visually close to walk-left size.
+  dirScale:{down:0.76,right:0.76,left:0.76,up:0.76},
+
   originY:0.90,
 
   speed:210,
@@ -271,6 +273,11 @@ const DONNY = {
 
   directionFrame:{down:0,right:8,left:16,up:24},
   idleFrame:{down:0,right:8,left:16,up:24},
+
+  // Clean 4dir idle sheet row order:
+  // row 0 up/back, row 1 right, row 2 left, row 3 down/front.
+  cleanIdleFrame:{up:0,right:8,left:16,down:24},
+
   anims:{
     down:[0,1,2,3,4,5,6,7],
     right:[8,9,10,11,12,13,14,15],
@@ -292,17 +299,17 @@ const GUN_PROP = {
   frameWidth:128,
   frameHeight:128,
 
-  // Preserve separate gun overlay. Do not bake weapon into Donny's shooting sheet.
-  scale:0.34,
+  // Separate overlay stays preserved. Weapon is not baked into Donny.
+  scale:0.40,
 
   directionFrame:{down:0,right:1,left:2,up:3},
 
-  // Tuned toward Donny's brown hand in the shooting pose.
+  // Tuned for the new empty-hand shooting sheet.
   hand:{
-    down:{x:9,y:-34},
-    right:{x:31,y:-43},
-    left:{x:-31,y:-43},
-    up:{x:-6,y:-53}
+    down:{x:14,y:-48},
+    right:{x:54,y:-70},
+    left:{x:-54,y:-70},
+    up:{x:-8,y:-64}
   }
 };
 
@@ -576,7 +583,7 @@ class BootScene extends Phaser.Scene{
   create(){
     createFallbackTextures(this);
     createDonnyAnimations(this);
-    createDonnyCleanOptionalAnimations(this);
+    createDonnyCleanGameplayAnimations(this);
     createVanAnimations(this);
     if(this.badAssets.length)console.warn('Missing assets loaded with fallback where possible:',this.badAssets);
     this.scene.start('TitleScene');
@@ -797,6 +804,40 @@ function createDonnyCleanOptionalAnimations(scene){
       frames:scene.anims.generateFrameNumbers('donny_walk_right_clean',{start:0,end:7}),
       frameRate:10,
       repeat:-1
+    });
+  }
+}
+
+
+function createDonnyCleanGameplayAnimations(scene){
+  // These are now wired into gameplay. Older Donny sheets remain fallback.
+  if(scene.textures.exists('donny_shoot_right_empty_clean') && !scene.anims.exists('donny_shoot_right_empty_clean_anim')){
+    scene.anims.create({
+      key:'donny_shoot_right_empty_clean_anim',
+      frames:scene.anims.generateFrameNumbers('donny_shoot_right_empty_clean',{start:0,end:7}),
+      frameRate:12,
+      repeat:0
+    });
+  }
+  if(scene.textures.exists('donny_walk_right_clean') && !scene.anims.exists('donny_walk_right_clean_anim')){
+    scene.anims.create({
+      key:'donny_walk_right_clean_anim',
+      frames:scene.anims.generateFrameNumbers('donny_walk_right_clean',{start:0,end:7}),
+      frameRate:10,
+      repeat:-1
+    });
+  }
+  if(scene.textures.exists('donny_idle_4dir_clean')){
+    const rows={up:0,right:8,left:16,down:24};
+    Object.entries(rows).forEach(([dir,start])=>{
+      const k=`donny_idle_clean_${dir}`;
+      if(scene.anims.exists(k))return;
+      scene.anims.create({
+        key:k,
+        frames:scene.anims.generateFrameNumbers('donny_idle_4dir_clean',{start,end:start+7}),
+        frameRate:6,
+        repeat:-1
+      });
     });
   }
 }
@@ -1696,19 +1737,54 @@ class MapScene extends Phaser.Scene{
   setDonnyVisual(mode='idle'){
     if(!this.player)return;
 
+    const tex=this.player.texture ? this.player.texture.key : '';
+    const usingClean = tex==='donny_idle_4dir_clean' || tex==='donny_walk_right_clean' || tex==='donny_shoot_right_empty_clean';
     const dirScale=(DONNY.dirScale && DONNY.dirScale[this.playerDir]) ? DONNY.dirScale[this.playerDir] : DONNY.scale;
-    this.player.setScale(dirScale);
+    this.player.setScale(usingClean ? DONNY.cleanScale : dirScale);
     this.player.setOrigin(.5,DONNY.originY || .90);
   }
 
   playDonnyAction(action){
     this.setDonnyVisual('action');
+
+    // Use the new empty-hand shooting sheet for side shooting.
+    // The gun stays a separate overlay and attaches to the hand.
+    if(action==='shoot' && this.textures.exists('donny_shoot_right_empty_clean') && (this.playerDir==='right' || this.playerDir==='left')){
+      this.player.stop();
+      this.player.setTexture('donny_shoot_right_empty_clean');
+      this.player.setFlipX(this.playerDir==='left');
+      this.setDonnyVisual('action');
+      if(this.anims.exists('donny_shoot_right_empty_clean_anim')){
+        this.player.play('donny_shoot_right_empty_clean_anim',true);
+      } else {
+        this.player.setFrame(0);
+      }
+      return;
+    }
+
+    this.player.setFlipX(false);
     const keyName= action==='shoot' ? 'donny_shoot' : `donny_${action}`;
     const anim=`${keyName}_${this.playerDir}`;
     if(this.anims.exists(anim))this.player.play(anim,true);
   }
 
   forceDirectionalSheet(textureKey,mode='walk'){
+    // Use the new clean right-walk sheet for right and left movement.
+    // Left is a clean horizontal flip, so size stays matched.
+    if(mode==='walk' && this.textures.exists('donny_walk_right_clean') && (this.playerDir==='right' || this.playerDir==='left')){
+      this.player.stop();
+      this.player.setTexture('donny_walk_right_clean');
+      this.player.setFlipX(this.playerDir==='left');
+      this.setDonnyVisual('walk');
+      if(this.anims.exists('donny_walk_right_clean_anim')){
+        this.player.play('donny_walk_right_clean_anim',true);
+      } else {
+        this.player.setFrame(Math.floor(this.time.now/105)%8);
+      }
+      return true;
+    }
+
+    this.player.setFlipX(false);
     if(!this.textures.exists(textureKey))return false;
     const base=DONNY.directionFrame[this.playerDir] ?? 0;
     const frame=base + (Math.floor(this.time.now/105)%8);
@@ -1720,6 +1796,25 @@ class MapScene extends Phaser.Scene{
   }
 
   setDonnyIdle(){
+    // Use the clean 4-direction idle sheet first.
+    if(this.textures.exists('donny_idle_4dir_clean')){
+      this.player.stop();
+      this.player.setTexture('donny_idle_4dir_clean');
+      this.player.setFlipX(false);
+
+      const anim=`donny_idle_clean_${this.playerDir}`;
+      if(this.anims.exists(anim)){
+        this.player.play(anim,true);
+      } else {
+        const frame=(DONNY.cleanIdleFrame && DONNY.cleanIdleFrame[this.playerDir]) || 24;
+        this.player.setFrame(frame);
+      }
+
+      this.setDonnyVisual('idle');
+      return;
+    }
+
+    this.player.setFlipX(false);
     const texture=this.textures.exists('donny_idle')?'donny_idle':(this.textures.exists('donny_overhead')?'donny_overhead':'donny_fallback');
     this.player.stop();
     this.player.setTexture(texture);
@@ -2126,10 +2221,10 @@ class MapScene extends Phaser.Scene{
 
     if(now>this.actionUntil && this.actionType){this.actionType='';}
     if(!this.actionType){
-      if(this.isCrawling && moving && this.anims.exists(`donny_crawl_${this.playerDir}`)){this.setDonnyVisual('crawl');this.player.play(`donny_crawl_${this.playerDir}`,true);}
-      else if(mode==='RUN' && moving && this.anims.exists(`donny_run_${this.playerDir}`)){this.setDonnyVisual('run');this.player.play(`donny_run_${this.playerDir}`,true);}
-      else if(moving && this.anims.exists(`donny_walk_${this.playerDir}`)){this.setDonnyVisual('walk');this.player.play(`donny_walk_${this.playerDir}`,true);}
+      if(this.isCrawling && moving && this.anims.exists(`donny_crawl_${this.playerDir}`)){this.player.setFlipX(false);this.setDonnyVisual('crawl');this.player.play(`donny_crawl_${this.playerDir}`,true);}
+      else if(mode==='RUN' && moving && this.anims.exists(`donny_run_${this.playerDir}`)){this.player.setFlipX(false);this.setDonnyVisual('run');this.player.play(`donny_run_${this.playerDir}`,true);}
       else if(moving && this.forceDirectionalSheet('donny_overhead','walk')){}
+      else if(moving && this.anims.exists(`donny_walk_${this.playerDir}`)){this.player.setFlipX(false);this.setDonnyVisual('walk');this.player.play(`donny_walk_${this.playerDir}`,true);}
       else this.setDonnyIdle();
     }
 
