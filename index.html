@@ -82,7 +82,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-van-crop-gun-hand-donny-size-fix-2026-05-26-024';
+const VERSION = 'glasswell-van-left-clean-crop-gun-hand-fix-2026-05-26-025';
 
 function version(path){ return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`; }
 function key(id,type){return `${id}_${type}`}
@@ -292,18 +292,18 @@ const GUN_PROP = {
   frameWidth:128,
   frameHeight:128,
 
-  // Smaller overlay so it reads as a hand prop, not a floating second sprite.
-  scale:0.22,
+  // Bigger than last build, but still hand-sized.
+  scale:0.31,
 
   directionFrame:{down:0,right:1,left:2,up:3},
 
-  // These are tuned for Donny's shooting pose.
-  // The prop's center should sit on the weapon hand.
+  // Tuned so the grip sits on Donny's firing hand.
+  // Right/left need more X reach because his shooting arm extends outward.
   hand:{
-    down:{x:5,y:-35},
-    right:{x:13,y:-39},
-    left:{x:-13,y:-39},
-    up:{x:-4,y:-49}
+    down:{x:7,y:-34},
+    right:{x:24,y:-40},
+    left:{x:-24,y:-40},
+    up:{x:-5,y:-52}
   }
 };
 
@@ -1229,6 +1229,84 @@ class MapScene extends Phaser.Scene{
     return !!(this.textures.exists(VAN.fullImageKey) && this.textures.get(VAN.fullImageKey)?.getSourceImage());
   }
 
+  cleanVanRuntimeCrop(ctx,fw,fh){
+    // Removes disconnected frame fragments caused by bad sheet slicing.
+    // Keeps components that overlap the center of the van frame, plus large components.
+    let img;
+    try{ img=ctx.getImageData(0,0,fw,fh); }catch(e){ return; }
+
+    const data=img.data;
+    const total=fw*fh;
+    const seen=new Uint8Array(total);
+    const keep=new Uint8Array(total);
+    const qx=[];
+    const qy=[];
+
+    const alphaAt=(i)=>data[i*4+3];
+
+    for(let y=0;y<fh;y++){
+      for(let x=0;x<fw;x++){
+        const start=y*fw+x;
+        if(seen[start] || alphaAt(start)<18)continue;
+
+        let head=0;
+        qx.length=0;
+        qy.length=0;
+        qx.push(x);
+        qy.push(y);
+        seen[start]=1;
+
+        const pts=[];
+        let minX=x,maxX=x,minY=y,maxY=y;
+
+        while(head<qx.length){
+          const cx=qx[head];
+          const cy=qy[head++];
+          const idx=cy*fw+cx;
+          pts.push(idx);
+
+          if(cx<minX)minX=cx;
+          if(cx>maxX)maxX=cx;
+          if(cy<minY)minY=cy;
+          if(cy>maxY)maxY=cy;
+
+          const neighbors=[
+            [cx+1,cy],
+            [cx-1,cy],
+            [cx,cy+1],
+            [cx,cy-1]
+          ];
+
+          for(const [nx,ny] of neighbors){
+            if(nx<0||ny<0||nx>=fw||ny>=fh)continue;
+            const ni=ny*fw+nx;
+            if(seen[ni]||alphaAt(ni)<18)continue;
+            seen[ni]=1;
+            qx.push(nx);
+            qy.push(ny);
+          }
+        }
+
+        const area=pts.length;
+        const overlapsCenter = maxX>=fw*.18 && minX<=fw*.82 && maxY>=fh*.30;
+        const largeEnough = area>=65;
+        const huge = area>=380;
+
+        if((largeEnough && overlapsCenter) || huge){
+          for(const p of pts)keep[p]=1;
+        }
+      }
+    }
+
+    for(let i=0;i<total;i++){
+      if(alphaAt(i)>=18 && !keep[i]){
+        data[i*4+3]=0;
+      }
+    }
+
+    ctx.putImageData(img,0,0);
+  }
+
   renderVanRuntimeCrop(animated=false){
     if(!this.van || !this.vanRuntimeCropAvailable())return false;
 
@@ -1238,12 +1316,22 @@ class MapScene extends Phaser.Scene{
     const cols=11;
     const rows=8;
 
-    // Use true image dimensions. This fixes the "multiple vans / chopped van"
-    // problem when the uploaded sheet is not actually slicing cleanly at 128x96.
+    // Use true image dimensions. This still supports imperfect exported sheets.
     const fw=Math.floor(img.width/cols);
     const fh=Math.floor(img.height/rows);
 
     if(fw<16 || fh<16)return false;
+
+    // Force left-facing directions by mirroring the right-facing rows.
+    // This fixes "driving left but van still points right."
+    const sourceDirMap={
+      left:'right',
+      downLeft:'downRight',
+      upLeft:'upRight'
+    };
+
+    const sourceDir=sourceDirMap[this.vanDir] || this.vanDir;
+    const flipX=sourceDir!==this.vanDir;
 
     const rowMap={
       down:0,
@@ -1256,8 +1344,11 @@ class MapScene extends Phaser.Scene{
       downLeft:7
     };
 
-    const row=rowMap[this.vanDir] ?? 2;
-    const col=animated ? Math.floor(this.time.now/120)%cols : 0;
+    const row=rowMap[sourceDir] ?? 2;
+
+    // Freeze to frame 0 for now. This stops cycling through any bad/cropped
+    // drive frames until the van sheet is re-exported perfectly.
+    const col=0;
 
     const key=VAN.cropKey || 'astro_van_drive_cropped_runtime';
 
@@ -1269,7 +1360,6 @@ class MapScene extends Phaser.Scene{
     const tex=this.textures.get(key);
     const canvas=tex.getSourceImage();
 
-    // If the sheet dimensions changed, recreate the canvas texture.
     if(canvas.width!==fw || canvas.height!==fh){
       this.textures.remove(key);
       this.textures.createCanvas(key,fw,fh);
@@ -1279,7 +1369,21 @@ class MapScene extends Phaser.Scene{
     const ctx=tex2.getContext();
 
     ctx.clearRect(0,0,fw,fh);
-    ctx.drawImage(img,col*fw,row*fh,fw,fh,0,0,fw,fh);
+    ctx.save();
+
+    if(flipX){
+      ctx.translate(fw,0);
+      ctx.scale(-1,1);
+      ctx.drawImage(img,col*fw,row*fh,fw,fh,0,0,fw,fh);
+    } else {
+      ctx.drawImage(img,col*fw,row*fh,fw,fh,0,0,fw,fh);
+    }
+
+    ctx.restore();
+
+    // Remove any disconnected edge fragments from neighboring frames.
+    if(this.cleanVanRuntimeCrop)this.cleanVanRuntimeCrop(ctx,fw,fh);
+
     tex2.refresh();
 
     this.van.setTexture(key);
@@ -1556,7 +1660,7 @@ class MapScene extends Phaser.Scene{
   spawnLaserBolt(){
     const v={down:{x:0,y:1},right:{x:1,y:0},left:{x:-1,y:0},up:{x:0,y:-1}}[this.playerDir]||{x:1,y:0};
     const h=GUN_PROP.hand[this.playerDir]||GUN_PROP.hand.right;
-    const bolt=this.add.image(this.playerX+h.x+v.x*22,this.playerY+h.y+v.y*22,'laser_bolt').setDepth(this.playerY+1200);
+    const bolt=this.add.image(this.playerX+h.x+v.x*34,this.playerY+h.y+v.y*34,'laser_bolt').setDepth(this.playerY+1200);
     if(this.playerDir==='down')bolt.setAngle(90);
     if(this.playerDir==='up')bolt.setAngle(-90);
     if(this.playerDir==='left')bolt.setAngle(180);
@@ -1971,7 +2075,7 @@ class MapScene extends Phaser.Scene{
       this.updateVanHeadlights();
       this.checkRoutes();
       this.hud.setText(`${PAGES[this.pageId].label} | Astro Van | ${Math.round(this.van.x)},${Math.round(this.van.y)}`);
-      this.status.setText(`Fuel: ${this.fuelText()} | Van: ${this.vanRuntimeCropAvailable&&this.vanRuntimeCropAvailable()?'real-crop':'fallback'} | B exits | hold Y lights | tap Y horn`);
+      this.status.setText(`Fuel: ${this.fuelText()} | Van: ${this.vanRuntimeCropAvailable&&this.vanRuntimeCropAvailable()?'real-clean-crop':'fallback'} | B exits | hold Y lights | tap Y horn`);
       return;
     }
 
