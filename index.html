@@ -82,7 +82,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-civic-combat-car-scale-2026-05-27-035';
+const VERSION = 'glasswell-vehicle-collision-drive-any-car-2026-05-27-039';
 
 function version(path){ return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`; }
 function key(id,type){return `${id}_${type}`}
@@ -427,8 +427,9 @@ const CIVIC_PATROL = {
   weaponFolder:'assets/sprites/items/civic_patrol/pistol/',
   badgeFolder:'assets/sprites/items/civic_patrol/',
   frame:{w:192,h:192},
-  guardScale:0.50,
-  carScale:1.82
+  guardScale:0.54,
+  carScale:2.65,
+  koScale:0.34
 };
 
 const ITEM_DB = {
@@ -438,7 +439,12 @@ const ITEM_DB = {
   water_vial:{id:'water_vial',name:'Water Vial',type:'consumable',weight:1.2},
   scrap_armor:{id:'scrap_armor',name:'Scrap Armor',type:'armor',weight:18.0},
   pistol_ammo:{id:'pistol_ammo',name:'Pistol Ammo Pack',type:'ammo',weight:1.2},
-  van_parts:{id:'van_parts',name:'Van Parts',type:'parts',weight:8.0}
+  van_parts:{id:'van_parts',name:'Van Parts',type:'parts',weight:8.0},
+  civic_patrol_pistol:{id:'civic_patrol_pistol',name:'Civic Patrol Pistol',type:'weapon',weight:2.8},
+  civic_patrol_badge:{id:'civic_patrol_badge',name:'Civic Patrol Badge',type:'key_item',weight:0.2},
+  credchip:{id:'credchip',name:'Credchip',type:'currency',weight:0},
+  concord_credits:{id:'concord_credits',name:'Concord Credits',type:'currency',weight:0},
+  water_ration:{id:'water_ration',name:'Water Ration Paper',type:'ration',weight:0.1}
 };
 
 function makeInventoryItem(id,qty=1){
@@ -633,7 +639,12 @@ class BootScene extends Phaser.Scene{
     this.load.spritesheet('civic_patrol_car_8dir', version(CIVIC_PATROL.vehicleFolder+'civic_patrol_car_8dir_64x64_phaser.png'), { frameWidth:64, frameHeight:64, margin:0, spacing:0 });
     this.load.image('civic_patrol_badge_icon', version(CIVIC_PATROL.badgeFolder+'civic_patrol_badge_icon_64.png'));
     this.load.image('civic_patrol_badge_drop', version(CIVIC_PATROL.badgeFolder+'civic_patrol_badge_drop_128.png'));
+    this.load.image('credchip_icon', version('assets/sprites/items/credchip_icon_64.png'));
+    this.load.image('credchip_drop', version('assets/sprites/items/credchip_drop_128.png'));
+    this.load.image('water_ration_icon', version('assets/sprites/items/water_ration_icon_64.png'));
+    this.load.image('water_ration_drop', version('assets/sprites/items/water_ration_drop_128.png'));
     this.load.image('civic_patrol_pistol_held_right', version(CIVIC_PATROL.weaponFolder+'civic_patrol_pistol_held_right_128.png'));
+    this.load.image('civic_patrol_pistol_drop', version(CIVIC_PATROL.weaponFolder+'civic_patrol_pistol_drop_128.png'));
 
   }
   create(){
@@ -677,6 +688,38 @@ function createFallbackTextures(scene){
     g.generateTexture('laser_bolt',36,8);
     g.destroy();
   }
+
+  if(!scene.textures.exists('credits_pickup')){
+    const g=scene.add.graphics();
+    g.fillStyle(0x000000,.30).fillEllipse(32,50,44,12);
+    g.fillStyle(0xd4a338,1).fillRoundedRect(18,25,28,18,4);
+    g.fillStyle(0xf7d56f,1).fillRoundedRect(22,21,28,18,4);
+    g.lineStyle(2,0x2a1e08,1).strokeRoundedRect(22,21,28,18,4);
+    g.lineStyle(2,0x8b1f24,1).lineBetween(28,31,44,31);
+    g.generateTexture('credits_pickup',64,64);
+    g.destroy();
+  }
+  if(!scene.textures.exists('credchip_drop')){
+    const g=scene.add.graphics();
+    g.fillStyle(0x000000,.25).fillEllipse(64,104,70,14);
+    g.fillStyle(0x24282b,1).fillRoundedRect(34,28,60,70,10);
+    g.lineStyle(3,0x0b0d0f,1).strokeRoundedRect(34,28,60,70,10);
+    g.fillStyle(0x9f1b22,1).fillCircle(64,62,18);
+    g.fillStyle(0xffe7e7,1).fillCircle(64,62,6);
+    g.generateTexture('credchip_drop',128,128);
+    g.destroy();
+  }
+  if(!scene.textures.exists('water_ration_drop')){
+    const g=scene.add.graphics();
+    g.fillStyle(0x000000,.25).fillEllipse(64,100,82,14);
+    g.fillStyle(0xd6c49c,1).fillRoundedRect(28,36,74,52,5);
+    g.lineStyle(3,0x5b4b32,1).strokeRoundedRect(28,36,74,52,5);
+    g.fillStyle(0x4e8391,1).fillCircle(62,62,13);
+    g.fillStyle(0x9b2e2e,1).fillRect(84,42,4,40);
+    g.generateTexture('water_ration_drop',128,128);
+    g.destroy();
+  }
+
 }
 
 function createGeneratedVanTextures(scene){
@@ -959,9 +1002,14 @@ class MapScene extends Phaser.Scene{
     this.vanVel={x:0,y:0};
     this.vanHandBrakeUntil=0;
     this.musicOn=false;
+    // Any drivable vehicle can temporarily use the same driving physics.
+    this.astroVan=null;
+    this.activeVehicle=null;
+    this.activeVehicleType='astro';
     // Civic Patrol combat test state.
     this.civicGuards=[];
     this.civicCars=[];
+    this.worldDrops=[];
     this.lastPlayerHitAt=0;
 
     // Starting-map pickup state.
@@ -973,6 +1021,8 @@ class MapScene extends Phaser.Scene{
     this.fuelCanEquipped=false;
 
     // Inventory weight limits.
+    this.money=0;
+    this.waterRations=0;
     this.playerWeightLimit=100;
     this.carBaseWeightLimit=200;
     this.carPurchasedWeightLimit=400;
@@ -1161,7 +1211,9 @@ class MapScene extends Phaser.Scene{
         .setData('hp',p.armed?42:34)
         .setData('dir',p.dir)
         .setData('nextAttackAt',0)
-        .setData('hurtUntil',0);
+        .setData('hurtUntil',0)
+        .setData('money',Math.floor(1+Math.random()*90))
+        .setData('equippedWeapon',p.armed?'civic_patrol_pistol':null);
 
       if(this.anims.exists(key+'_anim'))guard.play(key+'_anim');
 
@@ -1195,7 +1247,16 @@ class MapScene extends Phaser.Scene{
         .setDepth(c.y+800)
         .setData('mapObj',true)
         .setData('civicPatrolCar',true)
-        .setData('civicPatrolCarFrame',c.frame);
+        .setData('civicPatrolCarFrame',c.frame)
+        .setData('maxHp',100)
+        .setData('hp',100)
+        .setData('cover',true)
+        .setData('wrecked',false);
+
+      // Small HP bar over the car so damage testing is visible.
+      const hpBar=this.add.graphics().setDepth(c.y+1400).setData('mapObj',true);
+      car.setData('hpBar',hpBar);
+      this.drawCivicCarHpBar(car);
 
       this.civicCars.push(car);
 
@@ -1203,8 +1264,8 @@ class MapScene extends Phaser.Scene{
       if(this.physics && this.physics.add){
         this.physics.add.existing(car,true);
         if(car.body){
-          car.body.setSize(58,34);
-          car.body.setOffset(3,22);
+          car.body.setSize(60,38);
+          car.body.setOffset(2,20);
         }
       }
     });
@@ -1298,6 +1359,9 @@ class MapScene extends Phaser.Scene{
     this.vanY=this.van.y;
     this.vanPage=this.pageId;
     this.vanDir='right';
+    this.astroVan=this.van;
+    this.activeVehicle=this.van;
+    this.activeVehicleType='astro';
 
     this.updateVanVisual(false);
     this.createVanLightObjects();
@@ -1371,26 +1435,228 @@ class MapScene extends Phaser.Scene{
     return !!r && x>=r.x && x<=r.x+r.w && y>=r.y && y<=r.y+r.h;
   }
 
+  rectsOverlap(a,b){
+    return !!(a&&b && a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y);
+  }
+
+  getDonnyFootBox(x=this.playerX,y=this.playerY){
+    // Small physical footprint at Donny's feet. This stops him walking through cars
+    // without making his whole hat/body collide.
+    return {x:x-14,y:y-13,w:28,h:20};
+  }
+
+  getCivicCarFootprint(car,atX=null,atY=null){
+    if(!car || !car.active || !car.visible)return null;
+
+    const cx=atX===null ? car.x : atX;
+    const cy=atY===null ? car.y : atY;
+
+    // Bigger cover / collision footprint. Uses displayed car size and blocks
+    // Donny's foot-box instead of only checking one point.
+    const w=Math.max(118,(car.displayWidth||170)*.92);
+    const h=Math.max(62,(car.displayHeight||105)*.62);
+    return {
+      x:cx-w/2,
+      y:cy-h/2+10,
+      w,
+      h,
+      car
+    };
+  }
+
+  getVehicleFootprint(vehicle,atX=null,atY=null){
+    if(!vehicle || !vehicle.active || !vehicle.visible)return null;
+    if(vehicle.getData && vehicle.getData('civicPatrolCar')){
+      return this.getCivicCarFootprint(vehicle,atX,atY);
+    }
+    const cx=atX===null ? vehicle.x : atX;
+    const cy=atY===null ? vehicle.y : atY;
+    const bw=VAN.body?.w || 112;
+    const bh=VAN.body?.h || 48;
+    const oy=VAN.body?.offsetY || -24;
+    return {x:cx-bw/2,y:cy+oy-bh/2,w:bw,h:bh,car:vehicle};
+  }
+
+  getBlockingCivicCarAt(x,y,ignore=null){
+    if(!this.civicCars || !this.civicCars.length)return null;
+    for(const car of this.civicCars){
+      if(ignore && car===ignore)continue;
+      const r=this.getCivicCarFootprint(car);
+      if(this.pointInRect(r,x,y))return r;
+    }
+    return null;
+  }
+
+  segmentBlockedByCivicCar(x1,y1,x2,y2){
+    if(!this.civicCars || !this.civicCars.length)return null;
+    const steps=Math.max(8,Math.ceil(Math.hypot(x2-x1,y2-y1)/18));
+    for(let i=1;i<=steps;i++){
+      const t=i/steps;
+      const x=Phaser.Math.Linear(x1,x2,t);
+      const y=Phaser.Math.Linear(y1,y2,t);
+      const r=this.getBlockingCivicCarAt(x,y);
+      if(r)return r.car;
+    }
+    return null;
+  }
+
+  drawCivicCarHpBar(car){
+    const g=car?.getData('hpBar');
+    if(!g || !car || !car.active)return;
+
+    const max=car.getData('maxHp')||100;
+    const hp=clamp(car.getData('hp')||0,0,max);
+    const pct=max>0 ? hp/max : 0;
+    const w=78;
+    const h=6;
+    const x=car.x-w/2;
+    const y=car.y-(car.displayHeight||90)*.34-18;
+
+    g.clear();
+    g.setDepth(car.y+1400);
+
+    // Show full bar only when damaged; show a faint cover marker at full HP.
+    const alpha=hp<max ? .95 : .40;
+    g.fillStyle(0x08090b,alpha).fillRect(x,y,w,h);
+    g.fillStyle(hp>45 ? 0x43ef68 : (hp>20 ? 0xffc43b : 0xff3344),alpha).fillRect(x,y,w*pct,h);
+    g.lineStyle(1,0xffffff,alpha*.75).strokeRect(x,y,w,h);
+  }
+
+  updateCivicCarHpBars(){
+    if(!this.civicCars)return;
+    this.civicCars.forEach(car=>this.drawCivicCarHpBar(car));
+  }
+
+  spawnCivicCarDamageFx(car,heavy=false){
+    if(!car || !car.active)return;
+
+    // Placeholder damage FX until you make real car damage / door sprites.
+    const smoke=this.add.circle(
+      car.x+Phaser.Math.Between(-12,12),
+      car.y-Phaser.Math.Between(16,34),
+      heavy?9:6,
+      0x6f7576,
+      .55
+    ).setDepth(car.y+1600).setData('mapObj',true);
+
+    this.tweens.add({
+      targets:smoke,
+      y:smoke.y-24,
+      alpha:0,
+      scale:heavy?2.4:1.8,
+      duration:520,
+      onComplete:()=>smoke.destroy()
+    });
+  }
+
+  damageCivicPatrolCar(car,damage,label='Hit'){
+    if(!car || !car.active)return false;
+
+    const max=car.getData('maxHp')||100;
+    const before=car.getData('hp')||max;
+    const hp=clamp(before-damage,0,max);
+    car.setData('hp',hp);
+
+    car.setTintFill(0xff3344);
+    this.time.delayedCall(90,()=>{
+      if(car && car.active){
+        if(hp<=0)car.setTint(0x555555);
+        else car.clearTint();
+      }
+    });
+
+    this.spawnCivicCarDamageFx(car,hp<=0 || damage>=18);
+    this.drawCivicCarHpBar(car);
+
+    if(hp<=0 && !car.getData('wrecked')){
+      car.setData('wrecked',true);
+      car.setAlpha(.88);
+      this.message(`${label}: Civic Patrol car disabled`);
+    } else {
+      this.message(`${label}: car HP ${hp}/${max}`);
+    }
+
+    return true;
+  }
+
+  hitCivicPatrolCar(range,damage,label='Hit'){
+    if(!this.civicCars || !this.civicCars.length)return false;
+
+    const v=this.civicFacingVector ? this.civicFacingVector(this.playerDir) : ({x:1,y:0});
+    let best=null;
+    let bestD=999999;
+
+    this.civicCars.forEach(car=>{
+      if(!car || !car.active)return;
+      const gx=car.x-this.playerX;
+      const gy=car.y-this.playerY;
+      const d=Math.hypot(gx,gy);
+      if(d>range || d>=bestD)return;
+
+      const dot=(gx*v.x+gy*v.y)/Math.max(1,d);
+      if(range<100 && dot<-0.15)return;
+      if(range>=100 && dot<0.10)return;
+
+      best=car;
+      bestD=d;
+    });
+
+    if(!best)return false;
+
+    // Vehicles take less from body hits, more from pistol.
+    const finalDamage=range>=180 ? damage : Math.ceil(damage*.55);
+    return this.damageCivicPatrolCar(best,finalDamage,label);
+  }
+
+  civicGuardCanStandAt(x,y,ignoreGuard=null){
+    const feet={x:x-14,y:y-13,w:28,h:20};
+    if(this.civicCars && this.civicCars.length){
+      for(const car of this.civicCars){
+        const r=this.getCivicCarFootprint(car);
+        if(this.rectsOverlap(r,feet))return false;
+      }
+    }
+    return true;
+  }
+
+
   canDonnyStandAt(x,y){
     // Keep Donny in the page.
     if(x<20 || y<20 || x>this.mapW-20 || y>this.mapH-20)return false;
 
+    const nextFeet=this.getDonnyFootBox(x,y);
+    const oldFeet=this.getDonnyFootBox(this.playerX,this.playerY);
+    const blocks=[];
+
     // Van uses a small body/footprint, not the full image rectangle.
     const vanBox=this.getVanFootprint();
-    if(!vanBox)return true;
+    if(vanBox)blocks.push(vanBox);
 
-    // If Donny is already inside the van body from a previous build, allow movement that escapes.
-    const currentlyInside=this.pointInRect(vanBox,this.playerX,this.playerY);
-    const nextInside=this.pointInRect(vanBox,x,y);
-    if(!nextInside)return true;
-    if(currentlyInside){
-      const cx=vanBox.x+vanBox.w/2;
-      const cy=vanBox.y+vanBox.h/2;
-      const oldD=Math.hypot(this.playerX-cx,this.playerY-cy);
-      const newD=Math.hypot(x-cx,y-cy);
-      return newD>oldD;
+    // Civic Patrol cars are physical cover. Donny cannot walk through them.
+    if(this.civicCars && this.civicCars.length){
+      this.civicCars.forEach(car=>{
+        const r=this.getCivicCarFootprint(car);
+        if(r)blocks.push(r);
+      });
     }
-    return false;
+
+    for(const box of blocks){
+      const currentlyInside=this.rectsOverlap(box,oldFeet);
+      const nextInside=this.rectsOverlap(box,nextFeet);
+      if(!nextInside)continue;
+
+      // If Donny somehow starts inside a body, allow only the direction that escapes.
+      if(currentlyInside){
+        const cx=box.x+box.w/2;
+        const cy=box.y+box.h/2;
+        const oldD=Math.hypot(this.playerX-cx,this.playerY-cy);
+        const newD=Math.hypot(x-cx,y-cy);
+        if(newD>oldD)continue;
+      }
+      return false;
+    }
+
+    return true;
   }
 
   moveDonnyWithCollision(dx,dy){
@@ -1415,9 +1681,10 @@ class MapScene extends Phaser.Scene{
       return;
     }
 
-    // Emergency vertical escape from previous large van-box builds.
-    // If user is pressing mostly up/down, let vertical movement happen so Donny can get unstuck.
-    if(Math.abs(dy)>Math.abs(dx)*.75){
+    // Emergency escape only if Donny is already inside the Astro Van footprint.
+    // Do not bypass Civic Patrol car cover collision.
+    const vanBox=this.getVanFootprint();
+    if(vanBox && this.pointInRect(vanBox,this.playerX,this.playerY) && Math.abs(dy)>Math.abs(dx)*.75){
       this.playerY=clamp(this.playerY+dy,20,this.mapH-20);
     }
   }
@@ -1731,6 +1998,17 @@ class MapScene extends Phaser.Scene{
   }
 
   updateVanVisual(animated=false){
+    // Civic Patrol cars use a simple 8-direction 64x64 Phaser sheet.
+    if(this.activeVehicleType==='civic' && this.van && this.van.getData && this.van.getData('civicPatrolCar')){
+      const frameMap={down:0,downRight:1,right:2,upRight:3,up:4,upLeft:5,left:6,downLeft:7};
+      const frame=frameMap[this.vanDir] ?? 2;
+      this.van.setTexture('civic_patrol_car_8dir',frame);
+      this.van.setOrigin(.5,.62);
+      this.van.setScale(CIVIC_PATROL.carScale);
+      this.van.setAngle(0);
+      return;
+    }
+
     if(!this.van)return;
 
     // First choice: runtime crop from the exact full Astro Van sheet.
@@ -2034,6 +2312,28 @@ class MapScene extends Phaser.Scene{
       this.vanVel.y*=-h.collisionBounce;
       bounced=true;
     }
+
+    // Vehicle-to-vehicle cover collision. Astro Van and Civic Patrol cars cannot
+    // drive through parked Civic Patrol cars.
+    const movingBox=this.getVehicleFootprint(this.van,nx,ny);
+    if(this.civicCars && this.civicCars.length && movingBox){
+      for(const car of this.civicCars){
+        if(!car || car===this.van || !car.active || !car.visible)continue;
+        const box=this.getCivicCarFootprint(car);
+        if(this.rectsOverlap(movingBox,box)){
+          nx=this.van.x;
+          ny=this.van.y;
+          this.vanVel.x*=-0.28;
+          this.vanVel.y*=-0.28;
+          bounced=true;
+          if(this.getVanSpeed()>45){
+            this.damageCivicPatrolCar(car,4,'Vehicle impact');
+          }
+          break;
+        }
+      }
+    }
+
     if(bounced && this.getVanSpeed()>35)this.message('Impact');
 
     this.van.x=nx;
@@ -2048,7 +2348,7 @@ class MapScene extends Phaser.Scene{
   }
 
   canEnterVanNow(){
-    if(!this.nearVan())return false;
+    if(!this.nearestDrivableVehicle || !this.nearestDrivableVehicle(VAN.enterDistance))return false;
     const input=this.inputVector ? this.inputVector() : {len:0};
     if(input.len>.16){
       this.message('Stop moving, then press Y to enter');
@@ -2148,37 +2448,75 @@ class MapScene extends Phaser.Scene{
       const dir=dx<0?'left':'right';
       guard.setData('dir',dir);
 
-      // The guards ignore Donny while he is inside the van for now.
-      if(this.inVan){
-        this.setCivicGuardAnim(guard,'walk',dir);
-        this.updateCivicWeaponOverlay(guard,dir);
-        return;
-      }
+      const targetVehicle=this.inVan ? (this.activeVehicle||this.van) : null;
+      const targetX=targetVehicle ? targetVehicle.x : this.playerX;
+      const targetY=targetVehicle ? targetVehicle.y : this.playerY;
+      const tdx=targetX-guard.x;
+      const tdy=targetY-guard.y;
+      const td=Math.max(1,Math.hypot(tdx,tdy));
 
-      const chaseRange=armed?380:300;
-      const attackRange=armed?235:50;
-      const speed=armed?52:64;
+      const chaseRange=this.inVan ? (armed?560:470) : (armed?380:300);
+      const attackRange=this.inVan ? (armed?255:74) : (armed?235:50);
+      const speed=this.inVan ? (armed?72:82) : (armed?52:64);
 
       if(now < (guard.getData('hurtUntil')||0)){
         this.updateCivicWeaponOverlay(guard,dir);
         return;
       }
 
-      if(d < chaseRange && d > attackRange){
-        guard.x += (dx/d)*speed*dt;
-        guard.y += (dy/d)*speed*dt;
+      if(td < chaseRange && td > attackRange){
+        const nx=guard.x+(tdx/td)*speed*dt;
+        const ny=guard.y+(tdy/td)*speed*dt;
+
+        // Guards cannot walk through patrol cars either.
+        if(this.civicGuardCanStandAt(nx,ny,guard)){
+          guard.x=nx;
+          guard.y=ny;
+        } else if(this.civicGuardCanStandAt(nx,guard.y,guard)){
+          guard.x=nx;
+        } else if(this.civicGuardCanStandAt(guard.x,ny,guard)){
+          guard.y=ny;
+        }
+
         guard.setDepth(guard.y+1300);
         this.setCivicGuardAnim(guard,'walk',dir);
-      } else if(d <= attackRange){
+      } else if(td <= attackRange){
         if(now >= (guard.getData('nextAttackAt')||0)){
           if(armed){
             this.setCivicGuardAnim(guard,'shoot_emptyhand',dir);
-            this.spawnCivicShot(guard,this.playerX,this.playerY);
-            this.damageDonny(8,'Civic Patrol pistol');
+
+            if(this.inVan && targetVehicle){
+              this.spawnCivicShot(guard,targetVehicle.x,targetVehicle.y);
+              if(targetVehicle.getData && targetVehicle.getData('civicPatrolCar')){
+                this.damageCivicPatrolCar(targetVehicle,6,'Civic Patrol pistol');
+              } else {
+                this.message('Civic Patrol shooting the Astro Van');
+              }
+            } else {
+              // Cars are cover: pistol shots cannot pass through them.
+              const blocked=this.segmentBlockedByCivicCar(guard.x,guard.y-48,this.playerX,this.playerY-26);
+              if(blocked){
+                this.spawnCivicShot(guard,blocked.x,blocked.y);
+                this.damageCivicPatrolCar(blocked,2,'Stray patrol shot');
+                this.message('Civic Patrol shot blocked by car cover');
+              } else {
+                this.spawnCivicShot(guard,this.playerX,this.playerY);
+                this.damageDonny(8,'Civic Patrol pistol');
+              }
+            }
+
             guard.setData('nextAttackAt',now+1150);
           } else {
             this.setCivicGuardAnim(guard,'attack_emptyhand',dir);
-            this.damageDonny(5,'Civic Patrol');
+            if(this.inVan && targetVehicle){
+              if(targetVehicle.getData && targetVehicle.getData('civicPatrolCar')){
+                this.damageCivicPatrolCar(targetVehicle,3,'Civic Patrol strike');
+              } else {
+                this.message('Civic Patrol beating on the Astro Van');
+              }
+            } else {
+              this.damageDonny(5,'Civic Patrol');
+            }
             guard.setData('nextAttackAt',now+760);
           }
         }
@@ -2191,6 +2529,9 @@ class MapScene extends Phaser.Scene{
   }
 
   hitCivicPatrolGuard(range,damage,label='Hit'){
+    // Cars can be attacked and used as cover.
+    if(this.hitCivicPatrolCar && this.hitCivicPatrolCar(range,damage,label))return true;
+
     if(!this.civicGuards || !this.civicGuards.length)return false;
 
     const v=this.civicFacingVector(this.playerDir);
@@ -2223,9 +2564,20 @@ class MapScene extends Phaser.Scene{
     if(hp<=0){
       best.setData('alive',false);
       this.setCivicGuardAnim(best,'ko',dir);
+
+      // KO frames are wider/taller than walk frames. Downscale and anchor them
+      // like a body on the pavement, not a standing sprite.
+      best.setScale(CIVIC_PATROL.koScale || (CIVIC_PATROL.guardScale*.55));
+      best.setOrigin(.5,.55);
+      best.y+=22;
+      best.setDepth(best.y+420);
+
+      // KO inventory drops: equipped weapon + random money.
+      this.spawnCivicPatrolKOInventoryDrops(best);
+
       const gun=best.getData('weaponSprite');
       if(gun && gun.active)gun.destroy();
-      this.message(`${label}: Civic Patrol down`);
+      this.message(`${label}: Civic Patrol down — drops spawned`);
     } else {
       best.setData('hurtUntil',this.time.now+250);
       this.setCivicGuardAnim(best,'hurt',dir);
@@ -2244,6 +2596,110 @@ class MapScene extends Phaser.Scene{
   }
 
 
+
+  spawnWorldDrop(id,x,y,qty=1,source='drop'){
+    this.worldDrops=this.worldDrops||[];
+
+    let tex='pickup_dot';
+    let scale=.75;
+    let label='Item';
+
+    if(id==='credchip'||id==='concord_credits'){
+      tex=this.textures.exists('credchip_drop')?'credchip_drop':(this.textures.exists('credits_pickup')?'credits_pickup':'pickup_dot');
+      scale=.62;
+      label=`$${qty} credchip${qty===1?'':'s'}`;
+    } else if(id==='civic_patrol_pistol'){
+      tex=this.textures.exists('civic_patrol_pistol_drop')?'civic_patrol_pistol_drop':'pickup_dot';
+      scale=.30;
+      label='Civic Patrol Pistol';
+    } else if(id==='civic_patrol_badge'){
+      tex=this.textures.exists('civic_patrol_badge_drop')?'civic_patrol_badge_drop':'pickup_dot';
+      scale=.48;
+      label='Civic Patrol Badge';
+    } else if(id==='water_ration'){
+      tex=this.textures.exists('water_ration_drop')?'water_ration_drop':'pickup_dot';
+      scale=.42;
+      label='Water Ration Paper';
+    }
+
+    const drop=this.add.image(x,y,tex)
+      .setOrigin(.5,1)
+      .setScale(scale)
+      .setDepth(y+1250)
+      .setData('mapObj',true)
+      .setData('worldDrop',true)
+      .setData('itemId',id)
+      .setData('qty',qty)
+      .setData('source',source)
+      .setData('label',label);
+
+    this.worldDrops.push(drop);
+    return drop;
+  }
+
+  spawnCivicPatrolKOInventoryDrops(guard){
+    if(!guard || !guard.active)return;
+
+    const money=Math.max(1,Math.min(90,Math.floor(guard.getData('money')||1)));
+    this.spawnWorldDrop('credchip',guard.x-14,guard.y+12,money,'civic_patrol');
+
+    const equipped=guard.getData('equippedWeapon');
+    if(equipped){
+      this.spawnWorldDrop(equipped,guard.x+16,guard.y+10,1,'civic_patrol');
+    }
+
+    // Water ration paper can drop as survival loot.
+    if(Math.random()<.35){
+      this.spawnWorldDrop('water_ration',guard.x+34,guard.y+13,1,'civic_patrol');
+    }
+
+    // Small badge drop chance for testing inventory/key-item pickups.
+    if(Math.random()<.45){
+      this.spawnWorldDrop('civic_patrol_badge',guard.x+36,guard.y+14,1,'civic_patrol');
+    }
+  }
+
+  nearWorldDrop(){
+    if(!this.worldDrops || !this.worldDrops.length || this.inVan)return null;
+    let best=null;
+    let bestD=999999;
+    this.worldDrops.forEach(drop=>{
+      if(!drop || !drop.active || !drop.visible)return;
+      const d=dist(this.playerX,this.playerY,drop.x,drop.y);
+      if(d<46 && d<bestD){
+        best=drop;
+        bestD=d;
+      }
+    });
+    return best;
+  }
+
+  pickupWorldDrop(){
+    const drop=this.nearWorldDrop();
+    if(!drop)return false;
+
+    const id=drop.getData('itemId');
+    const qty=drop.getData('qty')||1;
+    const label=drop.getData('label')||id;
+
+    if(id==='credchip'||id==='concord_credits'){
+      this.money=(this.money||0)+qty;
+      this.message(`Picked up ${label}`);
+    } else if(id==='water_ration'){
+      this.waterRations=(this.waterRations||0)+qty;
+      if(!this.addToPlayer(id,qty))return true;
+      this.message(`Picked up ${label}`);
+    } else {
+      if(!this.addToPlayer(id,qty))return true;
+      this.message(`Picked up ${label}`);
+    }
+
+    drop.destroy();
+    this.worldDrops=this.worldDrops.filter(d=>d && d.active);
+    return true;
+  }
+
+
   handleY(){
     if(this.rearMenuOpen){this.closeRearMenu();return}
     if(this.isInventoryOpen){this.toggleInventory();return}
@@ -2252,30 +2708,76 @@ class MapScene extends Phaser.Scene{
       return;
     }
     if(this.pickupStartingFuelCan && this.pickupStartingFuelCan())return;
+    if(this.pickupWorldDrop && this.pickupWorldDrop())return;
     if(this.canEnterVanNow()){this.enterVan();return}
     this.message('No interaction here');
   }
 
-  nearVan(){return this.van && this.van.visible && dist(this.playerX,this.playerY,this.van.x,this.van.y)<VAN.enterDistance}
+  drivableVehicles(){
+    const list=[];
+    if(this.astroVan && this.astroVan.active && this.astroVan.visible){
+      list.push({sprite:this.astroVan,type:'astro',name:'Astro Van'});
+    }
+    if(this.civicCars && this.civicCars.length){
+      this.civicCars.forEach(car=>{
+        if(car && car.active && car.visible && !car.getData('wrecked')){
+          list.push({sprite:car,type:'civic',name:'Civic Patrol Car'});
+        }
+      });
+    }
+    return list;
+  }
 
-  enterVan(){
+  nearestDrivableVehicle(maxDist=VAN.enterDistance){
+    let best=null;
+    let bestD=999999;
+    this.drivableVehicles().forEach(v=>{
+      const d=dist(this.playerX,this.playerY,v.sprite.x,v.sprite.y);
+      if(d<maxDist && d<bestD){
+        best={...v,d};
+        bestD=d;
+      }
+    });
+    return best;
+  }
+
+  nearVan(){return !!this.nearestDrivableVehicle(VAN.enterDistance)}
+
+  enterVan(vehicleInfo=null){
+    const info=vehicleInfo || this.nearestDrivableVehicle(VAN.enterDistance);
+    if(!info || !info.sprite)return;
+
+    this.activeVehicle=info.sprite;
+    this.activeVehicleType=info.type;
+    this.van=info.sprite;
     this.inVan=true;
+
     this.player.setVisible(false);
     this.gun.setVisible(false);
     this.holster.setVisible(false);
+    if(this.fuelCan)this.fuelCan.setVisible(false);
+
+    this.vanVel=this.vanVel||{x:0,y:0};
+    this.vanDir=this.vanDir || 'right';
+
     this.cameras.main.startFollow(this.van,true,.12,.12);
-    this.message('Entered Astro Van — B exits');
+    this.message(`Entered ${info.name} — B exits`);
   }
 
   exitVan(){
+    const vehicle=this.activeVehicle || this.van;
     const off=VAN.exitOffset[this.playerDir]||VAN.exitOffset.down;
     this.inVan=false;
-    this.playerX=clamp(this.van.x+off.x,20,this.mapW-20);
-    this.playerY=clamp(this.van.y+off.y,20,this.mapH-20);
+    this.playerX=clamp(vehicle.x+off.x,20,this.mapW-20);
+    this.playerY=clamp(vehicle.y+off.y,20,this.mapH-20);
     this.player.setPosition(this.playerX,this.playerY).setVisible(true);
     this.cameras.main.startFollow(this.player,true,.12,.12);
     this.setDonnyIdle();
-    this.message('Exited Astro Van');
+    const name=this.activeVehicleType==='civic'?'Civic Patrol Car':'Astro Van';
+    this.activeVehicle=null;
+    this.activeVehicleType='astro';
+    this.van=this.astroVan || vehicle;
+    this.message(`Exited ${name}`);
   }
 
   punch(){this.actionType='punch';this.actionUntil=this.time.now+280;this.playDonnyAction('punch');this.hitCivicPatrolGuard(62,10,'Punch');this.message('Punch')}
@@ -2339,7 +2841,29 @@ class MapScene extends Phaser.Scene{
     this.player.setFlipX(false);
     const keyName= action==='shoot' ? 'donny_shoot' : `donny_${action}`;
     const anim=`${keyName}_${this.playerDir}`;
-    if(this.anims.exists(anim))this.player.play(anim,true);
+    if(this.anims.exists(anim)){
+      this.player.play(anim,true);
+      return;
+    }
+
+    // Hard fallback for action sheets: keep every action wired even when
+    // one animation key is missing.
+    const textureMap={
+      punch:'donny_punch',
+      kick:'donny_kick',
+      jump:'donny_jump',
+      slide:'donny_slide',
+      crawl:'donny_crawl',
+      shoot:'donny_pistol'
+    };
+    const tex=textureMap[action];
+    if(tex && this.textures.exists(tex)){
+      const base=DONNY.directionFrame[this.playerDir] || 0;
+      this.player.stop();
+      this.player.setTexture(tex);
+      this.player.setFrame(base);
+      this.setDonnyVisual('action');
+    }
   }
 
   forceDirectionalSheet(textureKey,mode='walk'){
@@ -2760,6 +3284,7 @@ class MapScene extends Phaser.Scene{
     this.updateJump(delta);
     this.updateVanHeadlights();
     this.updateCivicPatrolCombat(delta);
+    this.updateCivicCarHpBars();
 
     const input=this.inputVector();
 
@@ -2790,7 +3315,7 @@ class MapScene extends Phaser.Scene{
       this.updateVanHeadlights();
       this.updateCarHudGauges();
       this.checkRoutes();
-      this.hud.setText(`${PAGES[this.pageId].label} | Astro Van | ${Math.round(this.van.x)},${Math.round(this.van.y)}`);
+      this.hud.setText(`${PAGES[this.pageId].label} | ${this.activeVehicleType==='civic'?'Civic Patrol Car':'Astro Van'} | ${Math.round(this.van.x)},${Math.round(this.van.y)}`);
       this.status.setText(`Fuel ${this.fuelText()} | Speed ${Math.round(this.getVanSpeed())} | ${this.musicOn?'Music on':'Music off'} | B brake/exit stopped | A handbrake | heavy van | hold Y lights | tap Y horn`);
       return;
     }
@@ -2831,11 +3356,13 @@ class MapScene extends Phaser.Scene{
 
     this.updateCarHudGauges();
 
+    const nearDrop=this.nearWorldDrop ? this.nearWorldDrop() : null;
     if(this.nearFuelPickup && this.nearFuelPickup())this.prompt.setText('Y: pick up fuel can');
+    else if(nearDrop)this.prompt.setText(`Y: pick up ${nearDrop.getData('label')||'item'}`);
     else if(this.nearRearOfVan && this.nearRearOfVan())this.prompt.setText('B: rear menu');
-    else if(this.nearVan())this.prompt.setText('Y: enter Astro Van (action)');
+    else if(this.nearVan())this.prompt.setText('Y: enter nearby vehicle');
     this.hud.setText(`${PAGES[this.pageId].label} | Donny | HP ${Math.ceil(this.playerHp||0)}/${this.playerMaxHp||100} | ${Math.round(this.playerX)},${Math.round(this.playerY)} | 2.5D GTA-style open-city sci-fi RPG / brawler | X punch/shoot | B kick`);
-    this.status.setText(`${this.fuelCanEquipped?'Fuel can equipped':(this.weaponEquipped?'Pistol equipped':'Hands empty')} | Load ${formatWeight(this.getPlayerWeight())}/${formatWeight(this.playerWeightLimit)} | Car ${formatWeight(this.getCarWeight())}/${formatWeight(this.getCarWeightLimit())} | Fuel ${this.fuelText()}`);
+    this.status.setText(`${this.fuelCanEquipped?'Fuel can equipped':(this.weaponEquipped?'Pistol equipped':'Hands empty')} | Credchips $${this.money||0} | Water ${this.waterRations||0} | Load ${formatWeight(this.getPlayerWeight())}/${formatWeight(this.playerWeightLimit)} | Car ${formatWeight(this.getCarWeight())}/${formatWeight(this.getCarWeightLimit())} | Fuel ${this.fuelText()}`);
   }
 }
 
