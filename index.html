@@ -82,7 +82,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-world-time-fix-vehicle-handling-2026-05-27-044';
+const VERSION = 'glasswell-weighted-solid-vehicle-impact-2026-05-27-047';
 
 function version(path){ return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`; }
 
@@ -438,7 +438,10 @@ const ASTRO_VAN_HANDLING = {
   collisionBounce:0.18,
   durability:180,
   fuelBurnIdle:0.002,
-  fuelBurnDrive:0.022
+  fuelBurnDrive:0.022,
+  mass:3200,
+  impactDamage:70,
+  impactKnockback:132
 };
 
 const VEHICLE_HANDLING = {
@@ -460,7 +463,10 @@ const VEHICLE_HANDLING = {
     collisionBounce:0.30,
     durability:105,
     fuelBurnIdle:0.003,
-    fuelBurnDrive:0.034
+    fuelBurnDrive:0.034,
+    mass:1800,
+    impactDamage:70,
+    impactKnockback:118
   },
 
   // Heavier roadblock car. Slower than cruiser, stronger, less slide.
@@ -479,7 +485,10 @@ const VEHICLE_HANDLING = {
     collisionBounce:0.24,
     durability:135,
     fuelBurnIdle:0.003,
-    fuelBurnDrive:0.030
+    fuelBurnDrive:0.030,
+    mass:2600,
+    impactDamage:70,
+    impactKnockback:142
   }
 };
 
@@ -700,6 +709,7 @@ class BootScene extends Phaser.Scene{
     // Phaser-ready Civic Patrol car sheet.
     // Frame order: 0 down, 1 downRight, 2 right, 3 upRight, 4 up, 5 upLeft, 6 left, 7 downLeft.
     this.load.spritesheet('civic_patrol_car_8dir', version(CIVIC_PATROL.vehicleFolder+'civic_patrol_car_8dir_64x64_phaser.png'), { frameWidth:64, frameHeight:64, margin:0, spacing:0 });
+    this.load.spritesheet('civic_patrol_blockade_car_8dir', version(CIVIC_PATROL.vehicleFolder+'civic_patrol_blockade_car_8dir_128x128_phaser.png'), { frameWidth:128, frameHeight:128, margin:0, spacing:0 });
     this.load.image('civic_patrol_badge_icon', version(CIVIC_PATROL.badgeFolder+'civic_patrol_badge_icon_64.png'));
     this.load.image('civic_patrol_badge_drop', version(CIVIC_PATROL.badgeFolder+'civic_patrol_badge_drop_128.png'));
     this.load.image('credchip_icon', version('assets/sprites/items/credchip_icon_64.png'));
@@ -1398,23 +1408,29 @@ class MapScene extends Phaser.Scene{
 
     // Two Civic Patrol cars placed near the white-line marks from the screenshot.
     const cars=[
-      {x:this.mapW*.395,y:this.mapH*.432,frame:1,angle:-13,handlingKey:'civicPatrolCruiser',vehicleName:'Civic Patrol Cruiser'},
-      {x:this.mapW*.612,y:this.mapH*.432,frame:7,angle:13,handlingKey:'civicPatrolBlockade',vehicleName:'Civic Patrol Blockade Car'}
+      {x:this.mapW*.395,y:this.mapH*.432,frame:1,angle:-13,handlingKey:'civicPatrolCruiser',vehicleName:'Civic Patrol Cruiser',spriteKey:'civic_patrol_car_8dir',vehicleScale:2.65},
+      {x:this.mapW*.612,y:this.mapH*.432,frame:7,angle:13,handlingKey:'civicPatrolBlockade',vehicleName:'Civic Patrol Blockade Car',spriteKey:'civic_patrol_blockade_car_8dir',vehicleScale:1.42}
     ];
 
     cars.forEach(c=>{
-      if(!this.textures.exists('civic_patrol_car_8dir'))return;
-      const car=this.add.sprite(c.x,c.y,'civic_patrol_car_8dir',c.frame)
+      if(!this.textures.exists(c.spriteKey||'civic_patrol_car_8dir'))return;
+      const car=this.add.sprite(c.x,c.y,c.spriteKey||'civic_patrol_car_8dir',c.frame)
         .setOrigin(.5,.62)
-        .setScale(CIVIC_PATROL.carScale)
+        .setScale(c.vehicleScale || CIVIC_PATROL.carScale)
         .setAngle(c.angle)
         .setDepth(c.y+800)
         .setData('mapObj',true)
         .setData('civicPatrolCar',true)
         .setData('civicPatrolCarFrame',c.frame)
-        .setData('maxHp',100)
-        .setData('hp',100)
+        .setData('maxHp',c.handlingKey==='civicPatrolBlockade'?150:110)
+        .setData('hp',c.handlingKey==='civicPatrolBlockade'?150:110)
         .setData('cover',true)
+        .setData('solidVehicle',true)
+        .setData('vehicleWeight',c.handlingKey==='civicPatrolBlockade'?2600:1800)
+        .setData('impactDamage',70)
+        .setData('impactKnockback',c.handlingKey==='civicPatrolBlockade'?142:118)
+        .setData('aiVel',{x:0,y:0})
+        .setData('impactCooldown',0)
         .setData('wrecked',false);
 
       // Small HP bar over the car so damage testing is visible.
@@ -1584,14 +1600,17 @@ class MapScene extends Phaser.Scene{
 
   getVanFootprint(){
     if(!this.van || !this.van.visible || this.inVan)return null;
-    const bw=VAN.body?.w || 112;
-    const bh=VAN.body?.h || 48;
+    const bw=Math.max(124,VAN.body?.w || 112);
+    const bh=Math.max(48,VAN.body?.h || 48);
     const oy=VAN.body?.offsetY || -24;
     return {
       x:this.van.x-bw/2,
       y:this.van.y+oy-bh/2,
       w:bw,
-      h:bh
+      h:bh,
+      car:this.van,
+      solid:true,
+      weight:3200
     };
   }
 
@@ -1614,17 +1633,21 @@ class MapScene extends Phaser.Scene{
 
     const cx=atX===null ? car.x : atX;
     const cy=atY===null ? car.y : atY;
+    const isBlockade=car.getData && car.getData('handlingKey')==='civicPatrolBlockade';
 
-    // Bigger cover / collision footprint. Uses displayed car size and blocks
-    // Donny's foot-box instead of only checking one point.
-    const w=Math.max(118,(car.displayWidth||170)*.92);
-    const h=Math.max(62,(car.displayHeight||105)*.62);
+    // Weighted solid vehicle footprint.
+    // This is intentionally wider than the visual wheels/body so Donny cannot
+    // squeeze through parked cars or barricades by touching only a pixel gap.
+    const w=Math.max(isBlockade?150:132,(car.displayWidth||170)*(isBlockade?.98:.94));
+    const h=Math.max(isBlockade?76:66,(car.displayHeight||105)*(isBlockade?.66:.62));
     return {
       x:cx-w/2,
       y:cy-h/2+10,
       w,
       h,
-      car
+      car,
+      solid:true,
+      weight:car.getData ? (car.getData('vehicleWeight')||1800) : 1800
     };
   }
 
@@ -2168,9 +2191,10 @@ class MapScene extends Phaser.Scene{
     if(this.activeVehicleType==='civic' && this.van && this.van.getData && this.van.getData('civicPatrolCar')){
       const frameMap={down:0,downRight:1,right:2,upRight:3,up:4,upLeft:5,left:6,downLeft:7};
       const frame=frameMap[this.vanDir] ?? 2;
-      this.van.setTexture('civic_patrol_car_8dir',frame);
+      const spriteKey=this.van.getData('vehicleSpriteKey') || 'civic_patrol_car_8dir';
+      this.van.setTexture(spriteKey,frame);
       this.van.setOrigin(.5,.62);
-      this.van.setScale(CIVIC_PATROL.carScale);
+      this.van.setScale(this.van.getData('vehicleScale') || CIVIC_PATROL.carScale);
       this.van.setAngle(0);
       return;
     }
@@ -2420,6 +2444,142 @@ class MapScene extends Phaser.Scene{
     this.message(this.musicOn?'Music on':'Music off');
   }
 
+
+  actorFootBox(actor,x=null,y=null){
+    const ax=x===null ? actor.x : x;
+    const ay=y===null ? actor.y : y;
+    return {x:ax-14,y:ay-14,w:28,h:24};
+  }
+
+  vehicleImpactVector(vehicle,vel=null){
+    const v=vel || (vehicle===this.van ? this.vanVel : (vehicle.getData ? vehicle.getData('aiVel') : null)) || {x:0,y:1};
+    const mag=Math.max(1,Math.hypot(v.x||0,v.y||0));
+    return {x:(v.x||0)/mag,y:(v.y||0)/mag,mag};
+  }
+
+  applyVehicleKnockbackToDonny(vehicle,vel){
+    const h=this.activeVehicleHandling ? this.activeVehicleHandling() : ASTRO_VAN_HANDLING;
+    const impact=this.vehicleImpactVector(vehicle,vel);
+    const dmg=(vehicle.getData && vehicle.getData('impactDamage')) || h.impactDamage || 70;
+    const kb=(vehicle.getData && vehicle.getData('impactKnockback')) || h.impactKnockback || 126;
+
+    if(this.time.now-(this.lastVehicleHitAt||0)<700)return;
+    this.lastVehicleHitAt=this.time.now;
+
+    this.damageDonny(dmg,'Vehicle impact');
+
+    const nx=clamp(this.playerX+impact.x*kb,20,this.mapW-20);
+    const ny=clamp(this.playerY+impact.y*kb,20,this.mapH-20);
+    this.playerX=nx;
+    this.playerY=ny;
+    this.player.setPosition(this.playerX,this.playerY-this.jumpZ).setDepth(this.playerY+1000);
+
+    this.actionType='hurt';
+    this.actionUntil=this.time.now+360;
+    this.playDonnyAction('hurt');
+
+    this.message(`Hit by car -${dmg} HP`);
+  }
+
+  applyVehicleKnockbackToGuard(vehicle,guard,vel){
+    if(!guard || !guard.active || guard.getData('alive')===false)return;
+    if(this.time.now-(guard.getData('lastVehicleHitAt')||0)<650)return;
+
+    const impact=this.vehicleImpactVector(vehicle,vel);
+    const h=(vehicle && vehicle.getData && VEHICLE_HANDLING[vehicle.getData('handlingKey')]) || this.activeVehicleHandling?.() || ASTRO_VAN_HANDLING;
+    const dmg=(vehicle.getData && vehicle.getData('impactDamage')) || h.impactDamage || 70;
+    const kb=(vehicle.getData && vehicle.getData('impactKnockback')) || h.impactKnockback || 126;
+
+    guard.setData('lastVehicleHitAt',this.time.now);
+    const hp=(guard.getData('hp')||34)-dmg;
+    guard.setData('hp',hp);
+
+    const dir=(guard.x<this.playerX)?'left':'right';
+    guard.x=clamp(guard.x+impact.x*kb,20,this.mapW-20);
+    guard.y=clamp(guard.y+impact.y*kb,20,this.mapH-20);
+    guard.setDepth(guard.y+1300);
+
+    if(hp<=0){
+      guard.setData('alive',false);
+      this.setCivicGuardAnim(guard,'ko',dir);
+      guard.setScale(CIVIC_PATROL.koScale || (CIVIC_PATROL.guardScale*.55));
+      guard.setOrigin(.5,.55);
+      guard.y+=22;
+      guard.setDepth(guard.y+420);
+
+      if(this.spawnCivicPatrolKOInventoryDrops)this.spawnCivicPatrolKOInventoryDrops(guard);
+
+      const gun=guard.getData('weaponSprite');
+      if(gun && gun.active)gun.destroy();
+
+      this.message('Vehicle impact: Civic Patrol down');
+    } else {
+      this.setCivicGuardAnim(guard,'hurt',dir);
+      guard.setData('hurtUntil',this.time.now+350);
+      this.message(`Vehicle impact: Civic Patrol HP ${Math.max(0,hp)}`);
+    }
+  }
+
+  checkVehicleImpactAgainstActors(vehicle,nextX,nextY,vel=null){
+    if(!vehicle || !vehicle.active || !vehicle.visible)return;
+
+    const box=this.getVehicleFootprint(vehicle,nextX,nextY);
+    if(!box)return;
+
+    const impact=this.vehicleImpactVector(vehicle,vel);
+    const minSpeed=52;
+    if(impact.mag<minSpeed)return;
+
+    // Player/Donny hit test. Do not hit Donny while he is the driver/passenger.
+    if(!this.inVan){
+      const feet=this.getDonnyFootBox(this.playerX,this.playerY);
+      if(this.rectsOverlap(box,feet)){
+        this.applyVehicleKnockbackToDonny(vehicle,vel);
+      }
+    }
+
+    // Vehicle hits Civic Patrol guards too. This makes cars feel heavy and lets
+    // driving into enemies behave like a real impact.
+    if(this.civicGuards && this.civicGuards.length){
+      this.civicGuards.forEach(guard=>{
+        if(!guard || !guard.active || guard.getData('alive')===false)return;
+        const gbox=this.actorFootBox(guard);
+        if(this.rectsOverlap(box,gbox)){
+          this.applyVehicleKnockbackToGuard(vehicle,guard,vel);
+        }
+      });
+    }
+  }
+
+  solidVehicleBlockedAt(vehicle,nextX,nextY){
+    const movingBox=this.getVehicleFootprint(vehicle,nextX,nextY);
+    if(!movingBox)return null;
+
+    // Civic patrol cars block every other car.
+    if(this.civicCars && this.civicCars.length){
+      for(const car of this.civicCars){
+        if(!car || car===vehicle || !car.active || !car.visible)continue;
+        const box=this.getCivicCarFootprint(car);
+        if(this.rectsOverlap(movingBox,box))return car;
+      }
+    }
+
+    // Astro Van blocks other drivable cars when Donny is not currently using it.
+    if(this.astroVan && this.astroVan!==vehicle && this.astroVan.visible){
+      const oldVan=this.van;
+      const oldInVan=this.inVan;
+      this.van=this.astroVan;
+      this.inVan=false;
+      const vbox=this.getVanFootprint();
+      this.van=oldVan;
+      this.inVan=oldInVan;
+      if(this.rectsOverlap(movingBox,vbox))return this.astroVan;
+    }
+
+    return null;
+  }
+
+
   updateVanDrivingPhysics(input,delta){
     if(!this.van)return;
 
@@ -2493,28 +2653,28 @@ class MapScene extends Phaser.Scene{
       bounced=true;
     }
 
-    // Vehicle-to-vehicle cover collision. Astro Van and Civic Patrol cars cannot
-    // drive through parked Civic Patrol cars.
-    const movingBox=this.getVehicleFootprint(this.van,nx,ny);
-    if(this.civicCars && this.civicCars.length && movingBox){
-      for(const car of this.civicCars){
-        if(!car || car===this.van || !car.active || !car.visible)continue;
-        const box=this.getCivicCarFootprint(car);
-        if(this.rectsOverlap(movingBox,box)){
-          nx=this.van.x;
-          ny=this.van.y;
-          this.vanVel.x*=-0.28;
-          this.vanVel.y*=-0.28;
-          bounced=true;
-          if(this.getVanSpeed()>45){
-            this.damageCivicPatrolCar(car,4,'Vehicle impact');
-          }
-          break;
-        }
+    // Weighted vehicle-to-vehicle collision. Cars are solid objects and cannot
+    // drive through each other.
+    const blockedVehicle=this.solidVehicleBlockedAt ? this.solidVehicleBlockedAt(this.van,nx,ny) : null;
+    if(blockedVehicle){
+      nx=this.van.x;
+      ny=this.van.y;
+      const mass=(blockedVehicle.getData && blockedVehicle.getData('vehicleWeight')) || 2200;
+      const bounce=mass>=2600 ? .18 : .28;
+      this.vanVel.x*=-bounce;
+      this.vanVel.y*=-bounce;
+      bounced=true;
+      if(this.getVanSpeed()>45 && blockedVehicle.getData && blockedVehicle.getData('civicPatrolCar')){
+        this.damageCivicPatrolCar(blockedVehicle,6,'Vehicle impact');
       }
     }
 
-    if(bounced && this.getVanSpeed()>35)this.message('Impact');
+    // Vehicle impacts against people: 70% HP damage and hard knockback.
+    if(this.checkVehicleImpactAgainstActors){
+      this.checkVehicleImpactAgainstActors(this.van,nx,ny,this.vanVel);
+    }
+
+    if(bounced && this.getVanSpeed()>35)this.message('Heavy impact');
 
     this.van.x=nx;
     this.van.y=ny;
@@ -2610,6 +2770,95 @@ class MapScene extends Phaser.Scene{
       onComplete:()=>bolt.destroy()
     });
   }
+
+
+  updateCivicPatrolVehicleAI(delta){
+    if(!this.civicCars || !this.civicCars.length)return;
+    if(this.pageId!=='GLASSWELL_C3')return;
+
+    const dt=Math.min(.05,Math.max(0,delta/1000));
+
+    this.civicCars.forEach(car=>{
+      if(!car || !car.active || !car.visible || car.getData('wrecked'))return;
+      if(car===this.activeVehicle)return;
+
+      const target=this.inVan ? (this.activeVehicle||this.van) : null;
+
+      // For now, patrol cars only ram/chase when Donny is driving. They stay
+      // solid cover while Donny is on foot.
+      const vel=car.getData('aiVel') || {x:0,y:0};
+      if(!target){
+        vel.x*=Math.pow(.92,delta/16.67);
+        vel.y*=Math.pow(.92,delta/16.67);
+        car.setData('aiVel',vel);
+        return;
+      }
+
+      const h=VEHICLE_HANDLING[car.getData('handlingKey')] || VEHICLE_HANDLING.civicPatrolCruiser || ASTRO_VAN_HANDLING;
+      const dx=target.x-car.x;
+      const dy=target.y-car.y;
+      const d=Math.max(1,Math.hypot(dx,dy));
+      const chaseRange=720;
+      if(d>chaseRange){
+        vel.x*=Math.pow(.94,delta/16.67);
+        vel.y*=Math.pow(.94,delta/16.67);
+        car.setData('aiVel',vel);
+        return;
+      }
+
+      const ix=dx/d;
+      const iy=dy/d;
+      const aiAccel=h.accel*.42;
+      const aiMax=h.maxSpeed*.42;
+
+      vel.x+=ix*aiAccel*dt;
+      vel.y+=iy*aiAccel*dt;
+
+      const speed=Math.hypot(vel.x,vel.y);
+      if(speed>aiMax){
+        vel.x*=aiMax/speed;
+        vel.y*=aiMax/speed;
+      }
+
+      vel.x*=Math.pow(h.driveFriction||.99,delta/16.67);
+      vel.y*=Math.pow(h.driveFriction||.99,delta/16.67);
+
+      let nx=car.x+vel.x*dt;
+      let ny=car.y+vel.y*dt;
+      let blocked=this.solidVehicleBlockedAt ? this.solidVehicleBlockedAt(car,nx,ny) : null;
+
+      if(blocked){
+        nx=car.x;
+        ny=car.y;
+        vel.x*=-((h.collisionBounce||.25)*.8);
+        vel.y*=-((h.collisionBounce||.25)*.8);
+
+        if(blocked===this.activeVehicle && blocked.getData && blocked.getData('civicPatrolCar')){
+          this.damageCivicPatrolCar(blocked,8,'Patrol ram');
+        }
+      }
+
+      this.checkVehicleImpactAgainstActors(car,nx,ny,vel);
+
+      car.x=clamp(nx,20,this.mapW-20);
+      car.y=clamp(ny,20,this.mapH-20);
+      car.setDepth(car.y+800);
+      car.setData('aiVel',vel);
+
+      // Update 8-direction visual frame while AI moves.
+      if(Math.hypot(vel.x,vel.y)>8){
+        const dir=this.vanDirectionFromVector(vel.x,vel.y,'right');
+        const frameMap={down:0,downRight:1,right:2,upRight:3,up:4,upLeft:5,left:6,downLeft:7};
+        const frame=frameMap[dir] ?? car.getData('civicPatrolCarFrame') ?? 2;
+        const spriteKey=car.getData('vehicleSpriteKey') || 'civic_patrol_car_8dir';
+        car.setTexture(spriteKey,frame);
+        car.setData('civicPatrolCarFrame',frame);
+      }
+
+      if(this.drawCivicCarHpBar)this.drawCivicCarHpBar(car);
+    });
+  }
+
 
   updateCivicPatrolCombat(delta){
     if(!this.civicGuards || !this.civicGuards.length)return;
@@ -3466,6 +3715,7 @@ class MapScene extends Phaser.Scene{
     this.updateDayNightCycle();
     this.updateVanHeadlights();
     this.updateCivicPatrolCombat(delta);
+    this.updateCivicPatrolVehicleAI(delta);
     this.updateCivicCarHpBars();
 
     const input=this.inputVector();
@@ -3499,7 +3749,7 @@ class MapScene extends Phaser.Scene{
       this.checkRoutes();
       this.hud.setText(`${this.activeVehicleName()} | Donny HP ${Math.ceil(this.playerHp||0)}/${this.playerMaxHp||100} | ${Math.round(this.van.x)},${Math.round(this.van.y)}`);
       const handling=this.activeVehicleHandling();
-      this.status.setText(`Fuel ${this.fuelText()} | Speed ${Math.round(this.getVanSpeed())}/${handling.maxSpeed} | ${handling.className||'vehicle'} | ${this.musicOn?'Music on':'Music off'} | B brake/exit | A handbrake | hold Y lights | tap Y horn`);
+      this.status.setText(`Fuel ${this.fuelText()} | Speed ${Math.round(this.getVanSpeed())}/${handling.maxSpeed} | ${handling.className||'vehicle'} | ${this.musicOn?'Music on':'Music off'} | B brake/exit | A handbrake | cars solid | impact 70 HP | hold Y lights | tap Y horn`);
       return;
     }
 
