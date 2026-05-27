@@ -82,7 +82,7 @@ document.addEventListener('touchmove', e => e.preventDefault(), { passive:false 
 
 const GAME_W = 960;
 const GAME_H = 540;
-const VERSION = 'glasswell-fuelcan-hp-gauge-driving-rules-2026-05-27-033';
+const VERSION = 'glasswell-civic-patrol-car-phaser-ready-2026-05-26-001';
 
 function version(path){ return `${path}${path.includes('?')?'&':'?'}v=${VERSION}`; }
 function key(id,type){return `${id}_${type}`}
@@ -395,24 +395,40 @@ const FUEL = {
 
 
 const ASTRO_VAN_HANDLING = {
-  // 2D GTA-style fake physics, not true 3D simulation.
-  accel:460,
-  maxSpeed:320,
-  reverseSpeed:120,
+  // Heavy 2D GTA-style fake physics for the Astro Van.
+  // Top speed below average, sluggish acceleration, wide turning radius,
+  // acceptable braking, high durability.
+  accel:260,
+  maxSpeed:218,
+  reverseSpeed:72,
 
-  // Friction values are applied per frame using delta-normalized decay.
-  coastFriction:0.982,
-  driveFriction:0.990,
-  brakeFriction:0.78,
-  handBrakeFriction:0.93,
+  // Higher friction persistence = heavier, overworked van feel.
+  coastFriction:0.992,
+  driveFriction:0.996,
 
-  // Lateral grip controls powerslide. Lower = more sideways drift.
-  lateralGrip:0.72,
-  handBrakeGrip:0.30,
+  // Braking remains reliable compared to acceleration.
+  brakeFriction:0.58,
+  handBrakeFriction:0.955,
 
-  collisionBounce:0.34,
+  // Higher lateral grip decay keeps old momentum longer and makes turns wide.
+  lateralGrip:0.88,
+  handBrakeGrip:0.46,
+
+  collisionBounce:0.22,
+  durability:180,
   fuelBurnIdle:0.002,
-  fuelBurnDrive:0.018
+  fuelBurnDrive:0.022
+};
+
+
+const CIVIC_PATROL = {
+  enemyFolder:'assets/sprites/enemies/civic_patrol/',
+  vehicleFolder:'assets/sprites/vehicles/civic_patrol/',
+  weaponFolder:'assets/sprites/items/civic_patrol/pistol/',
+  badgeFolder:'assets/sprites/items/civic_patrol/',
+  frame:{w:192,h:192},
+  guardScale:0.42,
+  carScale:0.78
 };
 
 const ITEM_DB = {
@@ -603,12 +619,29 @@ class BootScene extends Phaser.Scene{
       this.load.spritesheet(v.key,version(v.path),{frameWidth:v.frameWidth,frameHeight:v.frameHeight,margin:0,spacing:0});
     });
     this.load.spritesheet(VAN.openKey,version(VAN_ASSETS.open),{frameWidth:VAN.openFrame.w,frameHeight:VAN.openFrame.h,margin:0,spacing:0});
+    // Civic Patrol test enemy / vehicle / item assets.
+    this.load.spritesheet('civic_patrol_walk_right_8f', version(CIVIC_PATROL.enemyFolder+'civic_patrol_walk_right_8f.png'), { frameWidth:192, frameHeight:192 });
+    this.load.spritesheet('civic_patrol_walk_left_8f', version(CIVIC_PATROL.enemyFolder+'civic_patrol_walk_left_8f.png'), { frameWidth:192, frameHeight:192 });
+    this.load.spritesheet('civic_patrol_idle_right_8f', version(CIVIC_PATROL.enemyFolder+'civic_patrol_idle_right_8f.png'), { frameWidth:192, frameHeight:192 });
+    this.load.spritesheet('civic_patrol_attack_emptyhand_right_8f', version(CIVIC_PATROL.enemyFolder+'civic_patrol_attack_emptyhand_right_8f.png'), { frameWidth:192, frameHeight:192 });
+    this.load.spritesheet('civic_patrol_shoot_emptyhand_right_8f', version(CIVIC_PATROL.enemyFolder+'civic_patrol_shoot_emptyhand_right_8f.png'), { frameWidth:192, frameHeight:192 });
+    this.load.spritesheet('civic_patrol_hurt_right_8f', version(CIVIC_PATROL.enemyFolder+'civic_patrol_hurt_right_8f.png'), { frameWidth:192, frameHeight:192 });
+    this.load.spritesheet('civic_patrol_ko_right_8f', version(CIVIC_PATROL.enemyFolder+'civic_patrol_ko_right_8f.png'), { frameWidth:192, frameHeight:192 });
+
+    // Phaser-ready Civic Patrol car sheet.
+    // Frame order: 0 down, 1 downRight, 2 right, 3 upRight, 4 up, 5 upLeft, 6 left, 7 downLeft.
+    this.load.spritesheet('civic_patrol_car_8dir', version(CIVIC_PATROL.vehicleFolder+'civic_patrol_car_8dir_64x64_phaser.png'), { frameWidth:64, frameHeight:64, margin:0, spacing:0 });
+    this.load.image('civic_patrol_badge_icon', version(CIVIC_PATROL.badgeFolder+'civic_patrol_badge_icon_64.png'));
+    this.load.image('civic_patrol_badge_drop', version(CIVIC_PATROL.badgeFolder+'civic_patrol_badge_drop_128.png'));
+    this.load.image('civic_patrol_pistol_held_right', version(CIVIC_PATROL.weaponFolder+'civic_patrol_pistol_held_right_128.png'));
+
   }
   create(){
     createFallbackTextures(this);
     createDonnyAnimations(this);
     createDonnyCleanGameplayAnimations(this);
     createVanAnimations(this);
+    createCivicPatrolAnimations(this);
     if(this.badAssets.length)console.warn('Missing assets loaded with fallback where possible:',this.badAssets);
     this.scene.start('TitleScene');
   }
@@ -874,6 +907,27 @@ function createDonnyCleanGameplayAnimations(scene){
 }
 
 
+
+function createCivicPatrolAnimations(scene){
+  const make=(key,rate=8,repeat=-1)=>{
+    if(scene.textures.exists(key) && !scene.anims.exists(key+'_anim')){
+      scene.anims.create({
+        key:key+'_anim',
+        frames:scene.anims.generateFrameNumbers(key,{start:0,end:7}),
+        frameRate:rate,
+        repeat
+      });
+    }
+  };
+  make('civic_patrol_walk_right_8f',8,-1);
+  make('civic_patrol_walk_left_8f',8,-1);
+  make('civic_patrol_idle_right_8f',5,-1);
+  make('civic_patrol_attack_emptyhand_right_8f',10,0);
+  make('civic_patrol_shoot_emptyhand_right_8f',10,0);
+  make('civic_patrol_hurt_right_8f',10,0);
+  make('civic_patrol_ko_right_8f',9,0);
+}
+
 class TitleScene extends Phaser.Scene{
   constructor(){super('TitleScene')}
   create(){
@@ -1065,6 +1119,7 @@ class MapScene extends Phaser.Scene{
     }
 
     this.spawnStartingFuelCan();
+    this.spawnCivicPatrolSceneProps();
 
     if(!p.synthetic && this.textures.exists(key(id,'fg'))){
       this.add.image(0,0,key(id,'fg')).setOrigin(0).setDepth(9000).setData('mapObj',true);
@@ -1072,6 +1127,68 @@ class MapScene extends Phaser.Scene{
     this.cameras.main.setBounds(0,0,w,h);
     this.cameras.main.startFollow(this.inVan?this.van:this.player,true,.12,.12);
     this.message(p.label);
+  }
+
+
+  spawnCivicPatrolSceneProps(){
+    if(this.pageId!=='GLASSWELL_C3')return;
+
+    // Three guards placed near the white-dot marks from the screenshot.
+    const guardPositions=[
+      {x:this.mapW*.435,y:this.mapH*.315,dir:'right',armed:false},
+      {x:this.mapW*.500,y:this.mapH*.285,dir:'right',armed:true},
+      {x:this.mapW*.570,y:this.mapH*.315,dir:'left',armed:false}
+    ];
+
+    guardPositions.forEach((p,i)=>{
+      const key=p.dir==='left' && this.textures.exists('civic_patrol_walk_left_8f') ? 'civic_patrol_walk_left_8f' : 'civic_patrol_walk_right_8f';
+      const guard=this.add.sprite(p.x,p.y,key,0)
+        .setOrigin(.5,.88)
+        .setScale(CIVIC_PATROL.guardScale)
+        .setDepth(p.y+1300)
+        .setData('mapObj',true)
+        .setData('civicPatrolGuard',true)
+        .setData('armed',p.armed);
+
+      if(this.anims.exists(key+'_anim'))guard.play(key+'_anim');
+
+      // One guard only gets the pistol overlay. Other two stay empty-hand.
+      if(p.armed && this.textures.exists('civic_patrol_pistol_held_right')){
+        const gun=this.add.image(p.x+24,p.y-54,'civic_patrol_pistol_held_right')
+          .setOrigin(.5,.5)
+          .setScale(.19)
+          .setDepth(p.y+1302)
+          .setData('mapObj',true)
+          .setData('civicPatrolWeapon',true);
+      }
+    });
+
+    // Two Civic Patrol cars placed near the white-line marks from the screenshot.
+    const cars=[
+      {x:this.mapW*.395,y:this.mapH*.432,frame:1,angle:-13},
+      {x:this.mapW*.612,y:this.mapH*.432,frame:7,angle:13}
+    ];
+
+    cars.forEach(c=>{
+      if(!this.textures.exists('civic_patrol_car_8dir'))return;
+      const car=this.add.sprite(c.x,c.y,'civic_patrol_car_8dir',c.frame)
+        .setOrigin(.5,.62)
+        .setScale(CIVIC_PATROL.carScale)
+        .setAngle(c.angle)
+        .setDepth(c.y+800)
+        .setData('mapObj',true)
+        .setData('civicPatrolCar',true)
+        .setData('civicPatrolCarFrame',c.frame);
+
+      // Simple parked-car collision bodies for later combat/vehicle testing.
+      if(this.physics && this.physics.add){
+        this.physics.add.existing(car,true);
+        if(car.body){
+          car.body.setSize(130,44);
+          car.body.setOffset(31,48);
+        }
+      }
+    });
   }
 
   spawnStartingFuelCan(){
@@ -2466,7 +2583,7 @@ class MapScene extends Phaser.Scene{
       this.updateCarHudGauges();
       this.checkRoutes();
       this.hud.setText(`${PAGES[this.pageId].label} | Astro Van | ${Math.round(this.van.x)},${Math.round(this.van.y)}`);
-      this.status.setText(`Fuel ${this.fuelText()} | Speed ${Math.round(this.getVanSpeed())} | ${this.musicOn?'Music on':'Music off'} | B brake/exit stopped | A handbrake | hold Y lights | tap Y horn`);
+      this.status.setText(`Fuel ${this.fuelText()} | Speed ${Math.round(this.getVanSpeed())} | ${this.musicOn?'Music on':'Music off'} | B brake/exit stopped | A handbrake | heavy van | hold Y lights | tap Y horn`);
       return;
     }
 
