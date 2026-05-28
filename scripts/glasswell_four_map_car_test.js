@@ -1,4 +1,4 @@
-const VERSION = "001";
+const VERSION = "003";
 
 const CHUNKS = [
   { id:"C2", title:"Civic Admin Street",       gridX:0, gridY:-1 },
@@ -31,6 +31,7 @@ const VAN_PATHS = [
 function v(path){ return `${path}${path.includes("?") ? "&" : "?"}v=${VERSION}`; }
 
 const VJOY = { x:0, y:0 };
+const TOUCH = { boost:false, brake:false };
 const LOAD_ERRORS = [];
 
 function showError(msg){
@@ -346,9 +347,11 @@ class DriveScene extends Phaser.Scene {
     throttle += -VJOY.y;
 
     const dt = delta / 1000;
-    const maxSpeed = this.keys.SHIFT.isDown ? 360 : 250;
+    const boostHeld = this.keys.SHIFT.isDown || TOUCH.boost;
+    const brakeHeld = this.keys.SPACE.isDown || TOUCH.brake;
+    const maxSpeed = boostHeld ? 360 : 250;
     const accel = 520;
-    const friction = this.keys.SPACE.isDown ? 0.82 : 0.985;
+    const friction = brakeHeld ? 0.82 : 0.985;
 
     this.speed += throttle * accel * dt;
     this.speed *= friction;
@@ -375,7 +378,7 @@ class DriveScene extends Phaser.Scene {
       `Cell: ${hit ? hit.c.id + " — " + hit.c.title : "outside map"}`,
       `Gate: ${this.gateOpen ? "OPEN" : "CLOSED"}   G toggles`,
       `Speed: ${Math.round(this.speed)}`,
-      "M masks · L labels · R reset"
+      "Touch: X boost · B brake · Y gate · A masks · START reset"
     ]);
   }
 
@@ -407,10 +410,21 @@ class DriveScene extends Phaser.Scene {
     stick.addEventListener("pointerup", reset);
     stick.addEventListener("pointercancel", reset);
 
-    document.getElementById("btnG").addEventListener("pointerdown", e => { e.preventDefault(); this.setGateOpen(!this.gateOpen); });
-    document.getElementById("btnM").addEventListener("pointerdown", e => { e.preventDefault(); this.toggleMasks(); });
-    document.getElementById("btnL").addEventListener("pointerdown", e => { e.preventDefault(); this.toggleLabels(); });
-    document.getElementById("btnR").addEventListener("pointerdown", e => { e.preventDefault(); this.resetVan(); });
+    const holdButton = (id, key) => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.addEventListener("pointerdown", e => { e.preventDefault(); TOUCH[key] = true; el.classList.add("pressed"); });
+      el.addEventListener("pointerup", e => { e.preventDefault(); TOUCH[key] = false; el.classList.remove("pressed"); });
+      el.addEventListener("pointercancel", e => { e.preventDefault(); TOUCH[key] = false; el.classList.remove("pressed"); });
+      el.addEventListener("pointerleave", e => { TOUCH[key] = false; el.classList.remove("pressed"); });
+    };
+
+    holdButton("btnX", "boost");
+    holdButton("btnB", "brake");
+
+    document.getElementById("btnY").addEventListener("pointerdown", e => { e.preventDefault(); this.setGateOpen(!this.gateOpen); });
+    document.getElementById("btnA").addEventListener("pointerdown", e => { e.preventDefault(); this.toggleMasks(); });
+    document.getElementById("btnStart").addEventListener("pointerdown", e => { e.preventDefault(); this.resetVan(); });
   }
 }
 
@@ -422,5 +436,9 @@ new Phaser.Game({
   backgroundColor: "#050607",
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   render: { pixelArt:false, antialias:true },
+  physics: {
+    default: "arcade",
+    arcade: { gravity: { y: 0 }, debug: false }
+  },
   scene: [BootScene, DriveScene]
 });
