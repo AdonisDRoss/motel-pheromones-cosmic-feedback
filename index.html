@@ -1,804 +1,89 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<<<<<<< main
 <meta charset="utf-8" />
-<title>Glasswell Four-Map Car Test</title>
+<title>Cosmic Feedback — Glasswell</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
 <style>
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#eee;font-family:monospace;touch-action:none;user-select:none}
-#game{position:fixed;inset:0;background:#000}
-canvas{display:block}
-#ui{position:fixed;inset:0;pointer-events:none;z-index:20}
-#help{position:absolute;left:max(10px,env(safe-area-inset-left));top:max(10px,env(safe-area-inset-top));padding:8px 10px;background:rgba(0,0,0,.62);border:1px solid rgba(255,255,255,.25);font-size:12px;line-height:1.25;max-width:760px}
-#stick{position:absolute;left:max(22px,env(safe-area-inset-left));bottom:max(22px,env(safe-area-inset-bottom));width:142px;height:142px;border:2px solid rgba(255,255,255,.35);border-radius:50%;background:rgba(0,0,0,.22);pointer-events:auto}
-#knob{position:absolute;left:43px;top:43px;width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.28);border:2px solid rgba(255,255,255,.45)}
-#buttons{position:absolute;right:max(18px,env(safe-area-inset-right));bottom:max(24px,env(safe-area-inset-bottom));display:flex;gap:10px;pointer-events:auto}
-.btn{width:58px;height:58px;border-radius:14px;border:2px solid rgba(255,255,255,.35);background:rgba(10,12,14,.72);color:#fff;font:bold 17px monospace}
-#error{position:absolute;left:10px;right:10px;bottom:10px;display:none;background:rgba(110,0,0,.85);border:2px solid #f44;padding:10px;white-space:pre-wrap;font-size:12px}
-=======
-<meta charset="UTF-8" />
-<title>Cosmic Feedback — Glasswell C3</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-<meta name="screen-orientation" content="landscape" />
-<meta name="x5-orientation" content="landscape" />
-<script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js" crossorigin="anonymous"></script>
-<script>
-if (!window.Phaser) {
-  document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.70.0/phaser.min.js"><\/script>');
+html,body{
+  margin:0;width:100%;height:100%;overflow:hidden;background:#050607;color:#eee;
+  font-family:monospace;touch-action:none;user-select:none;
 }
-</script>
-<style>
-* {
-  box-sizing: border-box;
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
-  -webkit-tap-highlight-color: transparent;
+body{
+  background:
+    radial-gradient(circle at 50% 20%, rgba(90,160,180,.18), transparent 38%),
+    linear-gradient(180deg, #050607 0%, #0b0f12 55%, #030405 100%);
 }
-
-html,
-body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: #000;
-  touch-action: none;
-  overscroll-behavior: none;
+.wrap{
+  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  padding:22px;text-align:center;
 }
-
-body {
-  position: fixed;
-  inset: 0;
-  font-family: Arial, sans-serif;
+.panel{
+  width:min(760px,92vw);
+  border:2px solid rgba(190,240,255,.34);
+  background:rgba(0,0,0,.62);
+  box-shadow:0 0 38px rgba(60,210,230,.12), inset 0 0 28px rgba(255,255,255,.04);
+  border-radius:16px;
+  padding:26px 22px;
 }
-
-#game {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  background: #000;
-  z-index: 1;
+h1{
+  margin:0 0 8px 0;
+  letter-spacing:5px;
+  font-size:clamp(28px,6vw,58px);
+  color:#e9f7f5;
+  text-shadow:0 0 16px rgba(110,230,255,.25);
 }
-
-canvas {
-  display: block;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
+.sub{
+  color:#a7c7c8;
+  font-size:clamp(13px,2.2vw,18px);
+  margin-bottom:20px;
 }
-
-#touchControls {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-  pointer-events: none;
-  touch-action: none;
+.btn{
+  display:inline-block;
+  margin:12px 8px 0;
+  padding:15px 22px;
+  border:2px solid rgba(255,255,255,.72);
+  border-radius:14px;
+  color:#fff;
+  background:rgba(30,40,44,.74);
+  text-decoration:none;
+  font-weight:bold;
+  letter-spacing:2px;
+  font-size:18px;
 }
-
-#stickBase {
-  position: absolute;
-  left: max(42px, env(safe-area-inset-left));
-  bottom: max(54px, env(safe-area-inset-bottom));
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  border: 4px solid rgba(255,255,255,.28);
-  background: radial-gradient(circle, rgba(255,255,255,.08), rgba(0,0,0,.28));
-  box-shadow: 0 0 22px rgba(0,0,0,.45);
-  pointer-events: auto;
-  touch-action: none;
+.btn.primary{
+  border-color:rgba(130,245,255,.95);
+  background:rgba(30,105,120,.76);
 }
-
-#stickKnob {
-  position: absolute;
-  left: 51px;
-  top: 51px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: rgba(255,255,255,.25);
-  border: 3px solid rgba(255,255,255,.45);
+.note{
+  margin-top:18px;
+  color:#c9c9c9;
+  font-size:13px;
+  line-height:1.45;
 }
-
-.touchBtn {
-  position: absolute;
-  width: 82px;
-  height: 82px;
-  border-radius: 50%;
-  border: 4px solid rgba(255,255,255,.26);
-  background: rgba(6,8,14,.72);
-  color: #fff;
-  font: 800 24px Arial, sans-serif;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: auto;
-  touch-action: none;
-  box-shadow: 0 0 18px rgba(0,0,0,.35);
+.small{
+  margin-top:10px;
+  color:#87989a;
+  font-size:12px;
 }
-
-.touchBtn:active {
-  transform: scale(.96);
-  background: rgba(255,255,255,.18);
-}
-
-#btnX {
-  right: 116px;
-  bottom: max(205px, calc(env(safe-area-inset-bottom) + 205px));
-}
-
-#btnY {
-  right: 220px;
-  bottom: max(125px, calc(env(safe-area-inset-bottom) + 125px));
-}
-
-#btnA {
-  right: 28px;
-  bottom: max(125px, calc(env(safe-area-inset-bottom) + 125px));
-}
-
-#btnB {
-  right: 116px;
-  bottom: max(42px, calc(env(safe-area-inset-bottom) + 42px));
-}
-
-#btnMenu,
-#btnMask {
-  position: absolute;
-  bottom: max(178px, calc(env(safe-area-inset-bottom) + 178px));
-  width: 130px;
-  height: 48px;
-  border-radius: 25px;
-  border: 3px solid rgba(255,255,255,.25);
-  background: rgba(7,8,12,.72);
-  color: #fff;
-  font: 800 17px Arial, sans-serif;
-  letter-spacing: 1px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: auto;
-  touch-action: none;
-}
-
-#btnMenu {
-  left: calc(50vw - 158px);
-}
-
-#btnMask {
-  left: calc(50vw + 22px);
-}
-
-#bootError {
-  position: fixed;
-  left: 12px;
-  top: 12px;
-  z-index: 9999;
-  max-width: 88vw;
-  display: none;
-  white-space: pre-wrap;
-  background: rgba(0,0,0,.88);
-  border: 2px solid #ff3636;
-  color: #fff;
-  padding: 10px 12px;
-  border-radius: 8px;
-  font: 700 13px/1.35 monospace;
-  pointer-events: none;
-}
-
-@media (orientation: portrait) {
-  #touchControls {
-    display: none;
-  }
-
-  #game:after {
-    content: "Rotate phone sideways";
-    position: fixed;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #050509;
-    color: white;
-    font: 700 24px Arial, sans-serif;
-    z-index: 9998;
-  }
-}
->>>>>>> origin/main
 </style>
 </head>
 <body>
-<div id="game"></div>
-<<<<<<< main
-<div id="ui">
-  <div id="help">
-    GLASSWELL FOUR-MAP CAR TEST<br>
-    WASD / arrows = drive · SHIFT = boost · SPACE = brake<br>
-    G = open/close C3 gate · M = masks · L = labels · R = reset
+  <div class="wrap">
+    <div class="panel">
+      <h1>GLASSWELL</h1>
+      <div class="sub">Cosmic Feedback · Dust-9 · Four-map Astro Van test</div>
+
+      <a class="btn primary" href="glasswell-drive.html?v=005">START DRIVE TEST</a>
+      <a class="btn" href="glasswell-car-test.html?v=005">OLD CAR TEST</a>
+
+      <div class="note">
+        Current build: C2 Civic Admin Street · C3 Main Civic Gate · D3 Red Concord Checkpoint · C4 Transit Vendor Square.
+        <br>
+        Landscape controls: left stick drive, X boost, B brake, Y gate, A masks, START reset.
+      </div>
+      <div class="small">Version v005 · zoomed camera</div>
+    </div>
   </div>
-  <div id="stick"><div id="knob"></div></div>
-  <div id="buttons">
-    <button class="btn" id="btnG">G</button>
-    <button class="btn" id="btnM">M</button>
-    <button class="btn" id="btnL">L</button>
-    <button class="btn" id="btnR">R</button>
-  </div>
-  <div id="error"></div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
-<script src="scripts/glasswell_four_map_car_test.js?v=001"></script>
-=======
-
-<div id="touchControls">
-  <div id="stickBase">
-    <div id="stickKnob"></div>
-  </div>
-
-  <div id="btnMenu">MENU</div>
-  <div id="btnMask">MASK</div>
-
-  <div id="btnX" class="touchBtn">X</div>
-  <div id="btnY" class="touchBtn">Y</div>
-  <div id="btnA" class="touchBtn">A</div>
-  <div id="btnB" class="touchBtn">B</div>
-</div>
-
-<div id="bootError"></div>
-
-<script>
-'use strict';
-
-const W = 960;
-const H = 540;
-const VERSION = 'glasswell-c3-real-map-002';
-
-function showBootError(message) {
-  const box = document.getElementById('bootError');
-  if (!box) return;
-  box.style.display = 'block';
-  box.textContent = String(message || 'Unknown error');
-}
-
-window.addEventListener('error', event => {
-  showBootError('GAME ERROR: ' + (event.message || 'unknown error'));
-});
-
-window.addEventListener('unhandledrejection', event => {
-  showBootError('GAME ERROR: ' + ((event.reason && event.reason.message) || event.reason || 'unhandled promise rejection'));
-});
-
-window.addEventListener('contextmenu', event => event.preventDefault());
-window.addEventListener('gesturestart', event => event.preventDefault());
-document.addEventListener('touchmove', event => event.preventDefault(), { passive: false });
-
-function withVersion(path) {
-  return `${path}${path.includes('?') ? '&' : '?'}v=${VERSION}`;
-}
-
-/*
-  REAL GLASSWELL C3 MAP PATHS.
-  The first path is the intended production path.
-  Extra paths are included only to find the uploaded file if it was placed somewhere else.
-  This build does NOT draw a fake test map. If no real map is found, it shows a red error.
-*/
-const MAP_BASE_CANDIDATES = [
-  { key: 'glasswell_c3_base_real', path: 'assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_base.png' },
-  { key: 'glasswell_c3_base_lower', path: 'assets/maps/dust9/glasswell/c3/layers/glasswell_c3_base.png' },
-  { key: 'glasswell_c3_base_flat', path: 'assets/maps/dust9/glasswell/c3/GLASSWELL_C3_base.png' },
-  { key: 'glasswell_c3_base_simple', path: 'assets/maps/glasswell/GLASSWELL_C3_base.png' },
-  { key: 'glasswell_c3_base_level', path: 'assets/levels/glasswell/GLASSWELL_C3_base.png' },
-  { key: 'glasswell_c3_base_level_flat', path: 'assets/levels/GLASSWELL_C3_base.png' },
-  { key: 'glasswell_c3_base_bg', path: 'assets/backgrounds/glasswell/GLASSWELL_C3_base.png' },
-  { key: 'glasswell_c3_base_root', path: 'GLASSWELL_C3_base.png' }
-];
-
-const MAP_OVERLAY_CANDIDATES = [
-  { key: 'glasswell_c3_overlay_real', path: 'assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_foreground_overlay.png' },
-  { key: 'glasswell_c3_overlay_lower', path: 'assets/maps/dust9/glasswell/c3/layers/glasswell_c3_foreground_overlay.png' },
-  { key: 'glasswell_c3_overlay_simple', path: 'assets/maps/glasswell/GLASSWELL_C3_foreground_overlay.png' },
-  { key: 'glasswell_c3_overlay_level', path: 'assets/levels/glasswell/GLASSWELL_C3_foreground_overlay.png' }
-];
-
-const MASK_CANDIDATES = [
-  { key: 'glasswell_c3_mask_real', path: 'assets/maps/dust9/glasswell/c3/masks/GLASSWELL_C3_collision_mask.png' },
-  { key: 'glasswell_c3_mask_simple', path: 'assets/maps/glasswell/GLASSWELL_C3_collision_mask.png' },
-  { key: 'glasswell_c3_mask_alt', path: 'assets/maps/glasswell/GLASSWELL_C3_collision.png' }
-];
-
-const DONNY_CANDIDATES = [
-  {
-    key: 'donny_overhead',
-    path: 'assets/sprites/player/donny/donny_overhead_noguitar_phaser_ready_1779508629.png',
-    frameWidth: 192,
-    frameHeight: 288,
-    scale: 0.32,
-    layout: '4f'
-  },
-  {
-    key: 'donny_walk',
-    path: 'assets/sprites/player/donny/donny_walk_4dir.png',
-    frameWidth: 128,
-    frameHeight: 128,
-    scale: 0.72,
-    layout: '4f'
-  }
-];
-
-const VAN_CANDIDATES = [
-  {
-    key: 'astro_van',
-    path: 'assets/sprites/vehicles/astro_van/astro_van_v1_sheet.png',
-    frameWidth: 320,
-    frameHeight: 320,
-    scale: 0.55
-  },
-  {
-    key: 'astro_van_alt',
-    path: 'assets/sprites/vehicles/astro_van/astro_van.png',
-    frameWidth: 320,
-    frameHeight: 320,
-    scale: 0.55
-  }
-];
-
-function firstLoaded(scene, list) {
-  for (const item of list) {
-    if (scene.textures.exists(item.key)) return item;
-  }
-  return null;
-}
-
-const PAD = {
-  x: 0,
-  y: 0,
-  a: false,
-  b: false,
-  xBtn: false,
-  yBtn: false,
-  menu: false,
-  mask: false
-};
-
-function bindTouchControls() {
-  const base = document.getElementById('stickBase');
-  const knob = document.getElementById('stickKnob');
-
-  let active = false;
-  let pointerId = null;
-
-  function resetStick() {
-    active = false;
-    pointerId = null;
-    PAD.x = 0;
-    PAD.y = 0;
-
-    if (knob) {
-      knob.style.left = '51px';
-      knob.style.top = '51px';
-    }
-  }
-
-  function moveStick(clientX, clientY) {
-    const rect = base.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-
-    let dx = clientX - centerX;
-    let dy = clientY - centerY;
-
-    const max = 52;
-    const length = Math.hypot(dx, dy) || 1;
-
-    if (length > max) {
-      dx = dx / length * max;
-      dy = dy / length * max;
-    }
-
-    PAD.x = dx / max;
-    PAD.y = dy / max;
-
-    if (knob) {
-      knob.style.left = `${51 + dx}px`;
-      knob.style.top = `${51 + dy}px`;
-    }
-  }
-
-  if (base) {
-    base.addEventListener('pointerdown', event => {
-      active = true;
-      pointerId = event.pointerId;
-      base.setPointerCapture(pointerId);
-      moveStick(event.clientX, event.clientY);
-    });
-
-    base.addEventListener('pointermove', event => {
-      if (active && event.pointerId === pointerId) {
-        moveStick(event.clientX, event.clientY);
-      }
-    });
-
-    base.addEventListener('pointerup', resetStick);
-    base.addEventListener('pointercancel', resetStick);
-    base.addEventListener('lostpointercapture', resetStick);
-  }
-
-  function bindButton(id, prop) {
-    const el = document.getElementById(id);
-    if (!el) return;
-
-    el.addEventListener('pointerdown', event => {
-      event.preventDefault();
-      PAD[prop] = true;
-    });
-
-    const release = event => {
-      if (event) event.preventDefault();
-      PAD[prop] = false;
-    };
-
-    el.addEventListener('pointerup', release);
-    el.addEventListener('pointercancel', release);
-    el.addEventListener('pointerout', release);
-  }
-
-  bindButton('btnA', 'a');
-  bindButton('btnB', 'b');
-  bindButton('btnX', 'xBtn');
-  bindButton('btnY', 'yBtn');
-  bindButton('btnMenu', 'menu');
-  bindButton('btnMask', 'mask');
-}
-
-bindTouchControls();
-
-class BootScene extends Phaser.Scene {
-  constructor() {
-    super('BootScene');
-  }
-
-  preload() {
-    MAP_BASE_CANDIDATES.forEach(asset => {
-      this.load.image(asset.key, withVersion(asset.path));
-    });
-
-    MAP_OVERLAY_CANDIDATES.forEach(asset => {
-      this.load.image(asset.key, withVersion(asset.path));
-    });
-
-    MASK_CANDIDATES.forEach(asset => {
-      this.load.image(asset.key, withVersion(asset.path));
-    });
-
-    DONNY_CANDIDATES.forEach(asset => {
-      this.load.spritesheet(asset.key, withVersion(asset.path), {
-        frameWidth: asset.frameWidth,
-        frameHeight: asset.frameHeight,
-        margin: 0,
-        spacing: 0
-      });
-    });
-
-    VAN_CANDIDATES.forEach(asset => {
-      this.load.spritesheet(asset.key, withVersion(asset.path), {
-        frameWidth: asset.frameWidth,
-        frameHeight: asset.frameHeight,
-        margin: 0,
-        spacing: 0
-      });
-    });
-  }
-
-  create() {
-    this.scene.start('GameScene');
-  }
-}
-
-class GameScene extends Phaser.Scene {
-  constructor() {
-    super('GameScene');
-
-    this.mapAsset = null;
-    this.overlayAsset = null;
-    this.maskAsset = null;
-
-    this.mapWidth = 1600;
-    this.mapHeight = 1100;
-    this.playerDir = 'down';
-    this.messageTimer = 0;
-    this.lastA = false;
-    this.lastMenu = false;
-    this.lastMask = false;
-  }
-
-  create() {
-    this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,ENTER,E,J,K');
-
-    this.createWorld();
-    this.createPlayer();
-    this.createHud();
-  }
-
-  createWorld() {
-    this.mapAsset = firstLoaded(this, MAP_BASE_CANDIDATES);
-    this.overlayAsset = firstLoaded(this, MAP_OVERLAY_CANDIDATES);
-    this.maskAsset = firstLoaded(this, MASK_CANDIDATES);
-
-    if (!this.mapAsset) {
-      this.createMissingMapErrorWorld();
-      return;
-    }
-
-    this.map = this.add.image(0, 0, this.mapAsset.key)
-      .setOrigin(0, 0)
-      .setDepth(0);
-
-    this.mapWidth = this.map.width;
-    this.mapHeight = this.map.height;
-
-    this.physics.world.setBounds(0, 0, this.mapWidth, this.mapHeight);
-    this.cameras.main.setBounds(0, 0, this.mapWidth, this.mapHeight);
-
-    if (this.overlayAsset) {
-      this.overlay = this.add.image(0, 0, this.overlayAsset.key)
-        .setOrigin(0, 0)
-        .setDepth(850);
-    }
-  }
-
-  createMissingMapErrorWorld() {
-    this.mapWidth = 1600;
-    this.mapHeight = 1100;
-
-    this.physics.world.setBounds(0, 0, this.mapWidth, this.mapHeight);
-    this.cameras.main.setBounds(0, 0, this.mapWidth, this.mapHeight);
-
-    this.add.rectangle(0, 0, this.mapWidth, this.mapHeight, 0x000000, 1)
-      .setOrigin(0, 0)
-      .setDepth(0);
-
-    const errorText = [
-      'REAL GLASSWELL C3 MAP NOT FOUND.',
-      '',
-      'No generated testing map was drawn.',
-      '',
-      'Upload the real map PNG to:',
-      'assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_base.png',
-      '',
-      'Checked paths:',
-      ...MAP_BASE_CANDIDATES.map(asset => asset.path)
-    ].join('\n');
-
-    showBootError(errorText);
-
-    this.add.text(40, 70, errorText, {
-      fontFamily: 'monospace',
-      fontSize: '19px',
-      color: '#ffffff',
-      backgroundColor: 'rgba(120,0,0,.82)',
-      padding: { x: 14, y: 12 },
-      wordWrap: { width: 860 }
-    })
-      .setScrollFactor(0)
-      .setDepth(9999);
-  }
-
-  createPlayer() {
-    const donnyAsset = firstLoaded(this, DONNY_CANDIDATES);
-
-    const spawnX = Phaser.Math.Clamp(520, 120, this.mapWidth - 120);
-    const spawnY = Phaser.Math.Clamp(Math.floor(this.mapHeight * 0.62), 260, this.mapHeight - 90);
-
-    if (donnyAsset) {
-      this.player = this.physics.add.sprite(spawnX, spawnY, donnyAsset.key, 0)
-        .setOrigin(0.5, 1)
-        .setScale(donnyAsset.scale)
-        .setDepth(500);
-
-      this.player.body.setSize(42, 30);
-      this.player.body.setOffset(donnyAsset.frameWidth / 2 - 21, donnyAsset.frameHeight - 34);
-
-      this.createDonnyAnimations(donnyAsset);
-    } else {
-      this.player = this.physics.add.sprite(spawnX, spawnY, null)
-        .setDisplaySize(34, 52)
-        .setOrigin(0.5, 1)
-        .setDepth(500);
-
-      this.player.body.setSize(34, 30);
-    }
-
-    this.player.body.setCollideWorldBounds(true);
-
-    this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
-    this.cameras.main.setZoom(1);
-
-    this.createVan(spawnX, spawnY);
-  }
-
-  createVan(spawnX, spawnY) {
-    const vanAsset = firstLoaded(this, VAN_CANDIDATES);
-    const vanX = Phaser.Math.Clamp(spawnX - 210, 180, this.mapWidth - 180);
-    const vanY = Phaser.Math.Clamp(spawnY + 55, 180, this.mapHeight - 80);
-
-    if (vanAsset) {
-      this.van = this.add.sprite(vanX, vanY, vanAsset.key, 0)
-        .setOrigin(0.5, 1)
-        .setScale(vanAsset.scale)
-        .setDepth(460);
-    } else {
-      this.van = this.add.rectangle(vanX, vanY - 28, 132, 64, 0x34251c, 1)
-        .setStrokeStyle(3, 0xff4aa0, 0.55)
-        .setDepth(460);
-    }
-  }
-
-  createDonnyAnimations(asset) {
-    if (!asset || this.anims.exists('donny_walk_down')) return;
-
-    const directionStart = {
-      down: 0,
-      right: 4,
-      left: 8,
-      up: 12
-    };
-
-    Object.keys(directionStart).forEach(dir => {
-      const start = directionStart[dir];
-      this.anims.create({
-        key: `donny_walk_${dir}`,
-        frames: this.anims.generateFrameNumbers(asset.key, { start, end: start + 3 }),
-        frameRate: 8,
-        repeat: -1
-      });
-    });
-  }
-
-  createHud() {
-    this.hud = this.add.text(18, 18, 'Glasswell\nDonny\nC3 — Main Civic Gate\nA: enter van', {
-      fontFamily: 'monospace',
-      fontSize: '23px',
-      color: '#e8e8e8',
-      backgroundColor: 'rgba(0,0,0,.65)',
-      padding: { x: 16, y: 12 }
-    })
-      .setScrollFactor(0)
-      .setDepth(9999);
-
-    const pathLine = this.mapAsset
-      ? `MAP: ${this.mapAsset.path}`
-      : 'MAP MISSING';
-
-    this.pathHud = this.add.text(18, H - 34, pathLine, {
-      fontFamily: 'monospace',
-      fontSize: '12px',
-      color: this.mapAsset ? '#9cffc6' : '#ff6b6b',
-      backgroundColor: 'rgba(0,0,0,.65)',
-      padding: { x: 8, y: 5 }
-    })
-      .setScrollFactor(0)
-      .setDepth(9999);
-
-    this.message = this.add.text(W / 2, H - 78, '', {
-      fontFamily: 'monospace',
-      fontSize: '18px',
-      color: '#fff',
-      backgroundColor: 'rgba(0,0,0,.72)',
-      padding: { x: 12, y: 8 }
-    })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(9999)
-      .setVisible(false);
-  }
-
-  say(text) {
-    this.message.setText(text).setVisible(true);
-    this.messageTimer = 1700;
-  }
-
-  getMovementVector() {
-    let vx = 0;
-    let vy = 0;
-
-    if (this.keys.A.isDown || this.keys.LEFT.isDown) vx -= 1;
-    if (this.keys.D.isDown || this.keys.RIGHT.isDown) vx += 1;
-    if (this.keys.W.isDown || this.keys.UP.isDown) vy -= 1;
-    if (this.keys.S.isDown || this.keys.DOWN.isDown) vy += 1;
-
-    if (Math.abs(PAD.x) > 0.12) vx = PAD.x;
-    if (Math.abs(PAD.y) > 0.12) vy = PAD.y;
-
-    const length = Math.hypot(vx, vy);
-    if (length > 1) {
-      vx /= length;
-      vy /= length;
-    }
-
-    return { vx, vy };
-  }
-
-  update(time, delta) {
-    if (!this.player || !this.player.body) return;
-
-    const { vx, vy } = this.getMovementVector();
-    const speed = PAD.x || PAD.y ? 168 : 176;
-
-    this.player.body.setVelocity(vx * speed, vy * speed);
-
-    if (Math.abs(vx) > 0.1 || Math.abs(vy) > 0.1) {
-      if (Math.abs(vx) > Math.abs(vy)) {
-        this.playerDir = vx > 0 ? 'right' : 'left';
-      } else {
-        this.playerDir = vy > 0 ? 'down' : 'up';
-      }
-
-      const animKey = `donny_walk_${this.playerDir}`;
-      if (this.player.play && this.anims.exists(animKey)) {
-        this.player.play(animKey, true);
-      }
-    } else if (this.player.anims) {
-      this.player.anims.stop();
-    }
-
-    if (this.player.setDepth) {
-      this.player.setDepth(Math.floor(this.player.y) + 500);
-    }
-
-    const pressedA = PAD.a || this.keys.SPACE.isDown || this.keys.ENTER.isDown || this.keys.E.isDown;
-    if (pressedA && !this.lastA) {
-      this.say('Van entry hook ready. Next step: connect Astro Van interior scene.');
-    }
-    this.lastA = pressedA;
-
-    const pressedMenu = PAD.menu;
-    if (pressedMenu && !this.lastMenu) {
-      this.say(this.mapAsset ? `Using real map path: ${this.mapAsset.path}` : 'Missing map asset. Upload GLASSWELL_C3_base.png.');
-    }
-    this.lastMenu = pressedMenu;
-
-    const pressedMask = PAD.mask;
-    if (pressedMask && !this.lastMask) {
-      this.say('MASK button reserved for El Mirage / disguise toggle.');
-    }
-    this.lastMask = pressedMask;
-
-    if (this.messageTimer > 0) {
-      this.messageTimer -= delta;
-      if (this.messageTimer <= 0) {
-        this.message.setVisible(false);
-      }
-    }
-  }
-}
-
-const config = {
-  type: Phaser.AUTO,
-  parent: 'game',
-  width: W,
-  height: H,
-  backgroundColor: '#000',
-  pixelArt: true,
-  roundPixels: true,
-  physics: {
-    default: 'arcade',
-    arcade: {
-      gravity: { y: 0 },
-      debug: false
-    }
-  },
-  scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH
-  },
-  scene: [BootScene, GameScene]
-};
-
-new Phaser.Game(config);
-</script>
->>>>>>> origin/main
 </body>
 </html>
