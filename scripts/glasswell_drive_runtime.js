@@ -1,4 +1,4 @@
-const VERSION = "004";
+const VERSION = "005";
 
 const CHUNKS = [
   { id:"C2", title:"Civic Admin Street",       gridX:0, gridY:-1 },
@@ -99,7 +99,7 @@ class DriveScene extends Phaser.Scene {
     this.bindTouch();
 
     this.cameras.main.startFollow(this.van, true, 0.12, 0.12);
-    this.cameras.main.setZoom(0.72);
+    this.cameras.main.setZoom(1.28);
 
     if(LOAD_ERRORS.length){
       showError(
@@ -332,6 +332,15 @@ class DriveScene extends Phaser.Scene {
   }
 
   update(time, delta){
+    // Quick camera tuning:
+    // Q = zoom in, E = zoom out
+    if(!this.keys.Q){
+      this.keys.Q = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q);
+      this.keys.E = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+    }
+    if(Phaser.Input.Keyboard.JustDown(this.keys.Q)) this.cameras.main.setZoom(Phaser.Math.Clamp(this.cameras.main.zoom + 0.12, 0.7, 2.2));
+    if(Phaser.Input.Keyboard.JustDown(this.keys.E)) this.cameras.main.setZoom(Phaser.Math.Clamp(this.cameras.main.zoom - 0.12, 0.7, 2.2));
+
     if(Phaser.Input.Keyboard.JustDown(this.keys.G)) this.setGateOpen(!this.gateOpen);
     if(Phaser.Input.Keyboard.JustDown(this.keys.M)) this.toggleMasks();
     if(Phaser.Input.Keyboard.JustDown(this.keys.L)) this.toggleLabels();
@@ -374,7 +383,7 @@ class DriveScene extends Phaser.Scene {
 
     const hit = this.chunkAt(this.van.x, this.van.y);
     this.hud.setText([
-      "Glasswell Drive Test v004",
+      "Glasswell Drive Test v005",
       `Cell: ${hit ? hit.c.id + " — " + hit.c.title : "outside map"}`,
       `Gate: ${this.gateOpen ? "OPEN" : "CLOSED"}   G toggles`,
       `Speed: ${Math.round(this.speed)}`,
