@@ -1,0 +1,28 @@
+{
+  "chunk": "GLASSWELL_E4",
+  "title": "Logistics Route",
+  "version": "v120",
+  "type": "clean_runtime_art_extracted",
+  "canvas": {
+    "width": 1536,
+    "height": 1152
+  },
+  "runtime_paths": {
+    "base": "assets/maps/dust9/glasswell/e4/layers/GLASSWELL_E4_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/e4/layers/GLASSWELL_E4_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/e4/masks/GLASSWELL_E4_collision_mask.png"
+  },
+  "routes": {
+    "north": "GLASSWELL_E3",
+    "south": "GLASSWELL_E5",
+    "west": "GLASSWELL_D4",
+    "east": "future logistics/control edge"
+  },
+  "art_rules": [
+    "Runtime layer package for existing Git city grid.",
+    "Foreground overlay renders above bodies.",
+    "Ground items render below bodies.",
+    "Collision mask pure black/white: white walkable/driveable, black blocked."
+  ],
+  "note": "E4 source generation included sheet panels; this package extracts usable runtime panels."
+}

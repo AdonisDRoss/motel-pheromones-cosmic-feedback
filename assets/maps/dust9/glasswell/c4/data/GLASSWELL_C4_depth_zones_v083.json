@@ -1,0 +1,47 @@
+{
+  "chunk": "GLASSWELL_C4",
+  "version": "v083",
+  "depth_rules": [
+    {
+      "name": "foreground_overlay",
+      "path": "assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_foreground_overlay.png",
+      "depth": "above_player"
+    },
+    {
+      "name": "transit_vendor_gantry",
+      "x": 35,
+      "y": 205,
+      "w": 1390,
+      "h": 230,
+      "depth": "above_player_when_player_y_less_than_445"
+    },
+    {
+      "name": "vendor_awning_overhangs",
+      "x": 185,
+      "y": 380,
+      "w": 1165,
+      "h": 530,
+      "depth": "above_player"
+    },
+    {
+      "name": "top_pipe_occlusion",
+      "x": 0,
+      "y": 95,
+      "w": 1536,
+      "h": 145,
+      "depth": "above_player"
+    },
+    {
+      "name": "bottom_pipe_occlusion",
+      "x": 0,
+      "y": 985,
+      "w": 1536,
+      "h": 145,
+      "depth": "above_player"
+    },
+    {
+      "name": "ground_items",
+      "rule": "Credchips, ration papers, water cans, tools, scrap pickups render below bodies."
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "chunk": "GLASSWELL_C3",
+  "version": "v086",
+  "routes": [
+    {
+      "from": "C3",
+      "to": "B3",
+      "direction": "west",
+      "kind": "Dryline Outer Road"
+    },
+    {
+      "from": "C3",
+      "to": "D3",
+      "direction": "east",
+      "kind": "Red Concord Checkpoint"
+    },
+    {
+      "from": "C3",
+      "to": "C2",
+      "direction": "north",
+      "kind": "Civic Admin Street"
+    },
+    {
+      "from": "C3",
+      "to": "C4",
+      "direction": "south",
+      "kind": "Transit Vendor Square"
+    }
+  ]
+}
