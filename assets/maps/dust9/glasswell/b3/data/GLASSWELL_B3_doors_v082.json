@@ -1,0 +1,56 @@
+{
+  "chunk": "GLASSWELL_B3",
+  "version": "v082",
+  "doors": [
+    {
+      "id": "b3_sable_route_watch",
+      "label": "Sable Route Watch",
+      "x": 255,
+      "y": 300,
+      "w": 110,
+      "h": 85,
+      "state": "locked",
+      "futureInterior": "B3_INT_SABLE_ROUTE_WATCH"
+    },
+    {
+      "id": "b3_civic_gate_pressure_shed",
+      "label": "Civic Gate Pressure Shed",
+      "x": 1170,
+      "y": 285,
+      "w": 110,
+      "h": 85,
+      "state": "locked",
+      "futureInterior": "B3_INT_CIVIC_GATE_PRESSURE_SHED"
+    },
+    {
+      "id": "b3_safe_cache",
+      "label": "Black Road / Sable Cache",
+      "x": 180,
+      "y": 970,
+      "w": 70,
+      "h": 70,
+      "state": "locked",
+      "futureInterior": "B3_INT_SAFE_CACHE"
+    },
+    {
+      "id": "b3_dryline_route_booth",
+      "label": "Dryline Route Booth",
+      "x": 625,
+      "y": 445,
+      "w": 130,
+      "h": 105,
+      "state": "locked",
+      "futureInterior": "B3_INT_DRYLINE_ROUTE_BOOTH"
+    },
+    {
+      "id": "b3_east_civic_gate_route",
+      "label": "Main Civic Gate Route",
+      "x": 1380,
+      "y": 510,
+      "w": 140,
+      "h": 160,
+      "state": "route",
+      "target": "GLASSWELL_C3"
+    }
+  ]
+}

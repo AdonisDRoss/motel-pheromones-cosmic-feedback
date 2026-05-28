@@ -1,0 +1,46 @@
+{
+  "chunk": "GLASSWELL_C2",
+  "version": "v085",
+  "mission_hooks": [
+    {
+      "id": "c2_ration_counter_event",
+      "x": 535,
+      "y": 315,
+      "w": 495,
+      "h": 270,
+      "trigger": "ration_counter_event"
+    },
+    {
+      "id": "c2_registry_bypass",
+      "x": 45,
+      "y": 65,
+      "w": 465,
+      "h": 350,
+      "trigger": "registry_bypass"
+    },
+    {
+      "id": "c2_varric_water_credit_event",
+      "x": 1085,
+      "y": 65,
+      "w": 440,
+      "h": 330,
+      "trigger": "varric_water_credit_event"
+    },
+    {
+      "id": "c2_records_impound_event",
+      "x": 1005,
+      "y": 775,
+      "w": 500,
+      "h": 330,
+      "trigger": "records_impound_event"
+    },
+    {
+      "id": "c2_hidden_admin_mark",
+      "x": 330,
+      "y": 665,
+      "w": 450,
+      "h": 190,
+      "trigger": "spot_hidden_admin_mark"
+    }
+  ]
+}

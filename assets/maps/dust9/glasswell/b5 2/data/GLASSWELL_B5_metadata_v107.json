@@ -1,0 +1,28 @@
+{
+  "chunk": "GLASSWELL_B5",
+  "title": "Black Road Drains",
+  "version": "v107",
+  "type": "clean_runtime_art_extracted",
+  "canvas": {
+    "width": 1536,
+    "height": 1152
+  },
+  "runtime_paths": {
+    "base": "assets/maps/dust9/glasswell/b5/layers/GLASSWELL_B5_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/b5/layers/GLASSWELL_B5_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/b5/masks/GLASSWELL_B5_collision_mask.png"
+  },
+  "routes": {
+    "west": "GLASSWELL_A5",
+    "east": "GLASSWELL_C5",
+    "north": "GLASSWELL_B4",
+    "south": "future drain/service opening"
+  },
+  "art_rules": [
+    "Runtime layer package for existing Git city grid.",
+    "Foreground overlay renders above bodies.",
+    "Ground items render below bodies.",
+    "Collision mask pure black/white: white walkable/driveable, black blocked."
+  ],
+  "note": "B5 source generation included right-side panels; this package extracts usable runtime panels."
+}

@@ -1,0 +1,384 @@
+{
+  "ok": true,
+  "missing_files": [],
+  "checked": [
+    {
+      "cell": "A3",
+      "kind": "base",
+      "path": "assets/maps/dust9/glasswell/a3/layers/GLASSWELL_A3_base.png",
+      "exists": true
+    },
+    {
+      "cell": "A3",
+      "kind": "foreground",
+      "path": "assets/maps/dust9/glasswell/a3/layers/GLASSWELL_A3_foreground_overlay.png",
+      "exists": true
+    },
+    {
+      "cell": "A3",
+      "kind": "mask",
+      "path": "assets/maps/dust9/glasswell/a3/masks/GLASSWELL_A3_collision_mask.png",
+      "exists": true
+    },
+    {
+      "cell": "A4",
+      "kind": "base",
+      "path": "assets/maps/dust9/glasswell/a4/layers/GLASSWELL_A4_base.png",
+      "exists": true
+    },
+    {
+      "cell": "A4",
+      "kind": "foreground",
+      "path": "assets/maps/dust9/glasswell/a4/layers/GLASSWELL_A4_foreground_overlay.png",
+      "exists": true
+    },
+    {
+      "cell": "A4",
+      "kind": "mask",
+      "path": "assets/maps/dust9/glasswell/a4/masks/GLASSWELL_A4_collision_mask.png",
+      "exists": true
+    },
+    {
+      "cell": "A5",
+      "kind": "base",
+      "path": "assets/maps/dust9/glasswell/a5/layers/GLASSWELL_A5_base.png",
+      "exists": true
+    },
+    {
+      "cell": "A5",
+      "kind": "foreground",
+      "path": "assets/maps/dust9/glasswell/a5/layers/GLASSWELL_A5_foreground_overlay.png",
+      "exists": true
+    },
+    {
+      "cell": "A5",
+      "kind": "mask",
+      "path": "assets/maps/dust9/glasswell/a5/masks/GLASSWELL_A5_collision_mask.png",
+      "exists": true
+    },
+    {
+      "cell": "B3",
+      "kind": "base",
+      "path": "assets/maps/dust9/glasswell/b3/layers/GLASSWELL_B3_base.png",
+      "exists": true
+    },
+    {
+      "cell": "B3",
+      "kind": "foreground",
+      "path": "assets/maps/dust9/glasswell/b3/layers/GLASSWELL_B3_foreground_overlay.png",
+      "exists": true
+    },
+    {
+      "cell": "B3",
+      "kind": "mask",
+      "path": "assets/maps/dust9/glasswell/b3/masks/GLASSWELL_B3_collision_mask.png",
+      "exists": true
+    },
+    {
+      "cell": "B4",
+      "kind": "base",
+      "path": "assets/maps/dust9/glasswell/b4/layers/GLASSWELL_B4_base.png",
+      "exists": true
+    },
+    {
+      "cell": "B4",
+      "kind": "foreground",
+      "path": "assets/maps/dust9/glasswell/b4/layers/GLASSWELL_B4_foreground_overlay.png",
+      "exists": true
+    },
+    {
+      "cell": "B4",
+      "kind": "mask",
+      "path": "assets/maps/dust9/glasswell/b4/masks/GLASSWELL_B4_collision_mask.png",
+      "exists": true
+    },
+    {
+      "cell": "B5",
+      "kind": "base",
+      "path": "assets/maps/dust9/glasswell/b5/layers/GLASSWELL_B5_base.png",
+      "exists": true
+    },
+    {
+      "cell": "B5",
+      "kind": "foreground",
+      "path": "assets/maps/dust9/glasswell/b5/layers/GLASSWELL_B5_foreground_overlay.png",
+      "exists": true
+    },
+    {
+      "cell": "B5",
+      "kind": "mask",
+      "path": "assets/maps/dust9/glasswell/b5/masks/GLASSWELL_B5_collision_mask.png",
+      "exists": true
+    },
+    {
+      "cell": "C1",
+      "kind": "base",
+      "path": "assets/maps/dust9/glasswell/c1/layers/GLASSWELL_C1_base.png",
+      "exists": true
+    },
+    {
+      "cell": "C1",
+      "kind": "foreground",
+      "path": "assets/maps/dust9/glasswell/c1/layers/GLASSWELL_C1_foreground_overlay.png",
+      "exists": true
+    },
+    {
+      "cell": "C1",
+      "kind": "mask",
+      "path": "assets/maps/dust9/glasswell/c1/masks/GLASSWELL_C1_collision_mask.png",
+      "exists": true
+    },
+    {
+      "cell": "C2",
+      "kind": "base",
+      "path": "assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_base.png",
+      "exists": true
+    },
+    {
+      "cell": "C2",
+      "kind": "foreground",
+      "path": "assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_foreground_overlay.png",
+      "exists": true
+    },
+    {
+      "cell": "C2",
+      "kind": "mask",
+      "path": "assets/maps/dust9/glasswell/c2/masks/GLASSWELL_C2_collision_mask.png",
+      "exists": true
+    },
+    {
+      "cell": "C3",
+      "kind": "base",
+      "path": "assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_base.png",
+      "exists": true
+    },
+    {
+      "cell": "C3",
+      "kind": "foreground",
+      "path": "assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_foreground_overlay.png",
+      "exists": true
+    },
+    {
+      "cell": "C3",
+      "kind": "mask",
+      "path": "assets/maps/dust9/glasswell/c3/masks/GLASSWELL_C3_collision_mask.png",
+      "exists": true
+    },
+    {
+      "cell": "C4",
+      "kind": "base",
+      "path": "assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_base.png",
+      "exists": true
+    },
+    {
+      "cell": "C4",
+      "kind": "foreground",
+      "path": "assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_foreground_overlay.png",
+      "exists": true
+    },
+    {
+      "cell": "C4",
+      "kind": "mask",
+      "path": "assets/maps/dust9/glasswell/c4/masks/GLASSWELL_C4_collision_mask.png",
+      "exists": true
+    },
+    {
+      "cell": "C5",
+      "kind": "base",
+      "path": "assets/maps/dust9/glasswell/c5/layers/GLASSWELL_C5_base.png",
+      "exists": true
+    },
+    {
+      "cell": "C5",
+      "kind": "foreground",
+      "path": "assets/maps/dust9/glasswell/c5/layers/GLASSWELL_C5_foreground_overlay.png",
+      "exists": true
+    },
+    {
+      "cell": "C5",
+      "kind": "mask",
+      "path": "assets/maps/dust9/glasswell/c5/masks/GLASSWELL_C5_collision_mask.png",
+      "exists": true
+    },
+    {
+      "cell": "D1",
+      "kind": "base",
+      "path": "assets/maps/dust9/glasswell/d1/layers/GLASSWELL_D1_base.png",
+      "exists": true
+    },
+    {
+      "cell": "D1",
+      "kind": "foreground",
+      "path": "assets/maps/dust9/glasswell/d1/layers/GLASSWELL_D1_foreground_overlay.png",
+      "exists": true
+    },
+    {
+      "cell": "D1",
+      "kind": "mask",
+      "path": "assets/maps/dust9/glasswell/d1/masks/GLASSWELL_D1_collision_mask.png",
+      "exists": true
+    },
+    {
+      "cell": "D2",
+      "kind": "base",
+      "path": "assets/maps/dust9/glasswell/d2/layers/GLASSWELL_D2_base.png",
+      "exists": true
+    },
+    {
+      "cell": "D2",
+      "kind": "foreground",
+      "path": "assets/maps/dust9/glasswell/d2/layers/GLASSWELL_D2_foreground_overlay.png",
+      "exists": true
+    },
+    {
+      "cell": "D2",
+      "kind": "mask",
+      "path": "assets/maps/dust9/glasswell/d2/masks/GLASSWELL_D2_collision_mask.png",
+      "exists": true
+    },
+    {
+      "cell": "D3",
+      "kind": "base",
+      "path": "assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_base.png",
+      "exists": true
+    },
+    {
+      "cell": "D3",
+      "kind": "foreground",
+      "path": "assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_foreground_overlay.png",
+      "exists": true
+    },
+    {
+      "cell": "D3",
+      "kind": "mask",
+      "path": "assets/maps/dust9/glasswell/d3/masks/GLASSWELL_D3_collision_mask.png",
+      "exists": true
+    },
+    {
+      "cell": "D4",
+      "kind": "base",
+      "path": "assets/maps/dust9/glasswell/d4/layers/GLASSWELL_D4_base.png",
+      "exists": true
+    },
+    {
+      "cell": "D4",
+      "kind": "foreground",
+      "path": "assets/maps/dust9/glasswell/d4/layers/GLASSWELL_D4_foreground_overlay.png",
+      "exists": true
+    },
+    {
+      "cell": "D4",
+      "kind": "mask",
+      "path": "assets/maps/dust9/glasswell/d4/masks/GLASSWELL_D4_collision_mask.png",
+      "exists": true
+    },
+    {
+      "cell": "D5",
+      "kind": "base",
+      "path": "assets/maps/dust9/glasswell/d5/layers/GLASSWELL_D5_base.png",
+      "exists": true
+    },
+    {
+      "cell": "D5",
+      "kind": "foreground",
+      "path": "assets/maps/dust9/glasswell/d5/layers/GLASSWELL_D5_foreground_overlay.png",
+      "exists": true
+    },
+    {
+      "cell": "D5",
+      "kind": "mask",
+      "path": "assets/maps/dust9/glasswell/d5/masks/GLASSWELL_D5_collision_mask.png",
+      "exists": true
+    },
+    {
+      "cell": "E1",
+      "kind": "base",
+      "path": "assets/maps/dust9/glasswell/e1/layers/GLASSWELL_E1_base.png",
+      "exists": true
+    },
+    {
+      "cell": "E1",
+      "kind": "foreground",
+      "path": "assets/maps/dust9/glasswell/e1/layers/GLASSWELL_E1_foreground_overlay.png",
+      "exists": true
+    },
+    {
+      "cell": "E1",
+      "kind": "mask",
+      "path": "assets/maps/dust9/glasswell/e1/masks/GLASSWELL_E1_collision_mask.png",
+      "exists": true
+    },
+    {
+      "cell": "E2",
+      "kind": "base",
+      "path": "assets/maps/dust9/glasswell/e2/layers/GLASSWELL_E2_base.png",
+      "exists": true
+    },
+    {
+      "cell": "E2",
+      "kind": "foreground",
+      "path": "assets/maps/dust9/glasswell/e2/layers/GLASSWELL_E2_foreground_overlay.png",
+      "exists": true
+    },
+    {
+      "cell": "E2",
+      "kind": "mask",
+      "path": "assets/maps/dust9/glasswell/e2/masks/GLASSWELL_E2_collision_mask.png",
+      "exists": true
+    },
+    {
+      "cell": "E3",
+      "kind": "base",
+      "path": "assets/maps/dust9/glasswell/e3/layers/GLASSWELL_E3_base.png",
+      "exists": true
+    },
+    {
+      "cell": "E3",
+      "kind": "foreground",
+      "path": "assets/maps/dust9/glasswell/e3/layers/GLASSWELL_E3_foreground_overlay.png",
+      "exists": true
+    },
+    {
+      "cell": "E3",
+      "kind": "mask",
+      "path": "assets/maps/dust9/glasswell/e3/masks/GLASSWELL_E3_collision_mask.png",
+      "exists": true
+    },
+    {
+      "cell": "E4",
+      "kind": "base",
+      "path": "assets/maps/dust9/glasswell/e4/layers/GLASSWELL_E4_base.png",
+      "exists": true
+    },
+    {
+      "cell": "E4",
+      "kind": "foreground",
+      "path": "assets/maps/dust9/glasswell/e4/layers/GLASSWELL_E4_foreground_overlay.png",
+      "exists": true
+    },
+    {
+      "cell": "E4",
+      "kind": "mask",
+      "path": "assets/maps/dust9/glasswell/e4/masks/GLASSWELL_E4_collision_mask.png",
+      "exists": true
+    },
+    {
+      "cell": "E5",
+      "kind": "base",
+      "path": "assets/maps/dust9/glasswell/e5/layers/GLASSWELL_E5_base.png",
+      "exists": true
+    },
+    {
+      "cell": "E5",
+      "kind": "foreground",
+      "path": "assets/maps/dust9/glasswell/e5/layers/GLASSWELL_E5_foreground_overlay.png",
+      "exists": true
+    },
+    {
+      "cell": "E5",
+      "kind": "mask",
+      "path": "assets/maps/dust9/glasswell/e5/masks/GLASSWELL_E5_collision_mask.png",
+      "exists": true
+    }
+  ]
+}

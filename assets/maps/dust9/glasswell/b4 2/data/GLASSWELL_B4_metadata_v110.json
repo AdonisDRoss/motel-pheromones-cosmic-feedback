@@ -1,0 +1,27 @@
+{
+  "chunk": "GLASSWELL_B4",
+  "title": "Black Road Cut",
+  "version": "v110",
+  "type": "clean_runtime_art_extracted",
+  "canvas": {
+    "width": 1536,
+    "height": 1152
+  },
+  "runtime_paths": {
+    "base": "assets/maps/dust9/glasswell/b4/layers/GLASSWELL_B4_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/b4/layers/GLASSWELL_B4_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/b4/masks/GLASSWELL_B4_collision_mask.png"
+  },
+  "routes": {
+    "west": "GLASSWELL_A4",
+    "east": "GLASSWELL_C4",
+    "north": "GLASSWELL_B3",
+    "south": "GLASSWELL_B5"
+  },
+  "art_rules": [
+    "Runtime layer package for existing Git city grid.",
+    "Foreground overlay renders above bodies.",
+    "Ground items render below bodies.",
+    "Collision mask pure black/white: white walkable/driveable, black blocked."
+  ]
+}

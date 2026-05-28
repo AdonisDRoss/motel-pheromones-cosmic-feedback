@@ -1,0 +1,12 @@
+{
+  "ok": true,
+  "build": "v124",
+  "includes": [
+    "21 Glasswell cells",
+    "collision masks",
+    "Donny sprite auto-detect",
+    "Donny Astro Van v062",
+    "enter/exit van test"
+  ],
+  "van_assets_path": "assets/vehicles/donny_astro_van/"
+}

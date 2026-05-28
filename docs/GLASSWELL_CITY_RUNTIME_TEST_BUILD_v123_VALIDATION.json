@@ -1,0 +1,5 @@
+{
+  "ok": true,
+  "note": "Map asset validation passed. Donny sprite is resolved at runtime from common repo paths.",
+  "donny_candidates": 11
+}

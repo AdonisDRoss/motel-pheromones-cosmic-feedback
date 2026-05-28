@@ -1,0 +1,251 @@
+{
+  "build": "GLASSWELL_CITY_RUNTIME_TEST_BUILD_v122",
+  "canvas": {
+    "chunk_width": 1536,
+    "chunk_height": 1152,
+    "world_width": 7680,
+    "world_height": 5760
+  },
+  "start": {
+    "cell": "C3",
+    "x": 3840,
+    "y": 2880
+  },
+  "controls": {
+    "keyboard": "WASD/arrows move, SHIFT dash, V toggle Donny/Astro Van, M toggle collision mask overlay, L toggle labels, R reset to C3",
+    "touch": "Drag the left circle joystick. Use V/M/L/R buttons on screen."
+  },
+  "cells": {
+    "A3": {
+      "title": "Dryline Outer Route",
+      "version": "v113",
+      "col": 0,
+      "row": 2,
+      "x": 0,
+      "y": 2304,
+      "base": "assets/maps/dust9/glasswell/a3/layers/GLASSWELL_A3_base.png",
+      "foreground": "assets/maps/dust9/glasswell/a3/layers/GLASSWELL_A3_foreground_overlay.png",
+      "mask": "assets/maps/dust9/glasswell/a3/masks/GLASSWELL_A3_collision_mask.png"
+    },
+    "A4": {
+      "title": "Badlands Cut",
+      "version": "v112",
+      "col": 0,
+      "row": 3,
+      "x": 0,
+      "y": 3456,
+      "base": "assets/maps/dust9/glasswell/a4/layers/GLASSWELL_A4_base.png",
+      "foreground": "assets/maps/dust9/glasswell/a4/layers/GLASSWELL_A4_foreground_overlay.png",
+      "mask": "assets/maps/dust9/glasswell/a4/masks/GLASSWELL_A4_collision_mask.png"
+    },
+    "A5": {
+      "title": "Badlands Drain Route",
+      "version": "v108",
+      "col": 0,
+      "row": 4,
+      "x": 0,
+      "y": 4608,
+      "base": "assets/maps/dust9/glasswell/a5/layers/GLASSWELL_A5_base.png",
+      "foreground": "assets/maps/dust9/glasswell/a5/layers/GLASSWELL_A5_foreground_overlay.png",
+      "mask": "assets/maps/dust9/glasswell/a5/masks/GLASSWELL_A5_collision_mask.png"
+    },
+    "B3": {
+      "title": "Dryline Outer Road",
+      "version": "v111",
+      "col": 1,
+      "row": 2,
+      "x": 1536,
+      "y": 2304,
+      "base": "assets/maps/dust9/glasswell/b3/layers/GLASSWELL_B3_base.png",
+      "foreground": "assets/maps/dust9/glasswell/b3/layers/GLASSWELL_B3_foreground_overlay.png",
+      "mask": "assets/maps/dust9/glasswell/b3/masks/GLASSWELL_B3_collision_mask.png"
+    },
+    "B4": {
+      "title": "Black Road Cut",
+      "version": "v110",
+      "col": 1,
+      "row": 3,
+      "x": 1536,
+      "y": 3456,
+      "base": "assets/maps/dust9/glasswell/b4/layers/GLASSWELL_B4_base.png",
+      "foreground": "assets/maps/dust9/glasswell/b4/layers/GLASSWELL_B4_foreground_overlay.png",
+      "mask": "assets/maps/dust9/glasswell/b4/masks/GLASSWELL_B4_collision_mask.png"
+    },
+    "B5": {
+      "title": "Black Road Drains",
+      "version": "v107",
+      "col": 1,
+      "row": 4,
+      "x": 1536,
+      "y": 4608,
+      "base": "assets/maps/dust9/glasswell/b5/layers/GLASSWELL_B5_base.png",
+      "foreground": "assets/maps/dust9/glasswell/b5/layers/GLASSWELL_B5_foreground_overlay.png",
+      "mask": "assets/maps/dust9/glasswell/b5/masks/GLASSWELL_B5_collision_mask.png"
+    },
+    "C1": {
+      "title": "Civic Admin Core",
+      "version": "v114",
+      "col": 2,
+      "row": 0,
+      "x": 3072,
+      "y": 0,
+      "base": "assets/maps/dust9/glasswell/c1/layers/GLASSWELL_C1_base.png",
+      "foreground": "assets/maps/dust9/glasswell/c1/layers/GLASSWELL_C1_foreground_overlay.png",
+      "mask": "assets/maps/dust9/glasswell/c1/masks/GLASSWELL_C1_collision_mask.png"
+    },
+    "C2": {
+      "title": "Civic Admin Street",
+      "version": "v104",
+      "col": 2,
+      "row": 1,
+      "x": 3072,
+      "y": 1152,
+      "base": "assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_base.png",
+      "foreground": "assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_foreground_overlay.png",
+      "mask": "assets/maps/dust9/glasswell/c2/masks/GLASSWELL_C2_collision_mask.png"
+    },
+    "C3": {
+      "title": "Main Civic Gate",
+      "version": "v102",
+      "col": 2,
+      "row": 2,
+      "x": 3072,
+      "y": 2304,
+      "base": "assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_base.png",
+      "foreground": "assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_foreground_overlay.png",
+      "mask": "assets/maps/dust9/glasswell/c3/masks/GLASSWELL_C3_collision_mask.png"
+    },
+    "C4": {
+      "title": "Transit Vendor Square",
+      "version": "v101",
+      "col": 2,
+      "row": 3,
+      "x": 3072,
+      "y": 3456,
+      "base": "assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_base.png",
+      "foreground": "assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_foreground_overlay.png",
+      "mask": "assets/maps/dust9/glasswell/c4/masks/GLASSWELL_C4_collision_mask.png"
+    },
+    "C5": {
+      "title": "Transit Drain Market",
+      "version": "v105",
+      "col": 2,
+      "row": 4,
+      "x": 3072,
+      "y": 4608,
+      "base": "assets/maps/dust9/glasswell/c5/layers/GLASSWELL_C5_base.png",
+      "foreground": "assets/maps/dust9/glasswell/c5/layers/GLASSWELL_C5_foreground_overlay.png",
+      "mask": "assets/maps/dust9/glasswell/c5/masks/GLASSWELL_C5_collision_mask.png"
+    },
+    "D1": {
+      "title": "Admin Rooftop Service",
+      "version": "v115",
+      "col": 3,
+      "row": 0,
+      "x": 4608,
+      "y": 0,
+      "base": "assets/maps/dust9/glasswell/d1/layers/GLASSWELL_D1_base.png",
+      "foreground": "assets/maps/dust9/glasswell/d1/layers/GLASSWELL_D1_foreground_overlay.png",
+      "mask": "assets/maps/dust9/glasswell/d1/masks/GLASSWELL_D1_collision_mask.png"
+    },
+    "D2": {
+      "title": "Varric Service Alley",
+      "version": "v116",
+      "col": 3,
+      "row": 1,
+      "x": 4608,
+      "y": 1152,
+      "base": "assets/maps/dust9/glasswell/d2/layers/GLASSWELL_D2_base.png",
+      "foreground": "assets/maps/dust9/glasswell/d2/layers/GLASSWELL_D2_foreground_overlay.png",
+      "mask": "assets/maps/dust9/glasswell/d2/masks/GLASSWELL_D2_collision_mask.png"
+    },
+    "D3": {
+      "title": "Red Concord Checkpoint",
+      "version": "v103",
+      "col": 3,
+      "row": 2,
+      "x": 4608,
+      "y": 2304,
+      "base": "assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_base.png",
+      "foreground": "assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_foreground_overlay.png",
+      "mask": "assets/maps/dust9/glasswell/d3/masks/GLASSWELL_D3_collision_mask.png"
+    },
+    "D4": {
+      "title": "Vendor Backroute / Checkpoint Backlot",
+      "version": "v106",
+      "col": 3,
+      "row": 3,
+      "x": 4608,
+      "y": 3456,
+      "base": "assets/maps/dust9/glasswell/d4/layers/GLASSWELL_D4_base.png",
+      "foreground": "assets/maps/dust9/glasswell/d4/layers/GLASSWELL_D4_foreground_overlay.png",
+      "mask": "assets/maps/dust9/glasswell/d4/masks/GLASSWELL_D4_collision_mask.png"
+    },
+    "D5": {
+      "title": "Pressure Service Route",
+      "version": "v109",
+      "col": 3,
+      "row": 4,
+      "x": 4608,
+      "y": 4608,
+      "base": "assets/maps/dust9/glasswell/d5/layers/GLASSWELL_D5_base.png",
+      "foreground": "assets/maps/dust9/glasswell/d5/layers/GLASSWELL_D5_foreground_overlay.png",
+      "mask": "assets/maps/dust9/glasswell/d5/masks/GLASSWELL_D5_collision_mask.png"
+    },
+    "E1": {
+      "title": "Surveillance Roofs",
+      "version": "v117",
+      "col": 4,
+      "row": 0,
+      "x": 6144,
+      "y": 0,
+      "base": "assets/maps/dust9/glasswell/e1/layers/GLASSWELL_E1_base.png",
+      "foreground": "assets/maps/dust9/glasswell/e1/layers/GLASSWELL_E1_foreground_overlay.png",
+      "mask": "assets/maps/dust9/glasswell/e1/masks/GLASSWELL_E1_collision_mask.png"
+    },
+    "E2": {
+      "title": "Debt Corridor",
+      "version": "v118",
+      "col": 4,
+      "row": 1,
+      "x": 6144,
+      "y": 1152,
+      "base": "assets/maps/dust9/glasswell/e2/layers/GLASSWELL_E2_base.png",
+      "foreground": "assets/maps/dust9/glasswell/e2/layers/GLASSWELL_E2_foreground_overlay.png",
+      "mask": "assets/maps/dust9/glasswell/e2/masks/GLASSWELL_E2_collision_mask.png"
+    },
+    "E3": {
+      "title": "Red Route Control",
+      "version": "v119",
+      "col": 4,
+      "row": 2,
+      "x": 6144,
+      "y": 2304,
+      "base": "assets/maps/dust9/glasswell/e3/layers/GLASSWELL_E3_base.png",
+      "foreground": "assets/maps/dust9/glasswell/e3/layers/GLASSWELL_E3_foreground_overlay.png",
+      "mask": "assets/maps/dust9/glasswell/e3/masks/GLASSWELL_E3_collision_mask.png"
+    },
+    "E4": {
+      "title": "Logistics Route",
+      "version": "v120",
+      "col": 4,
+      "row": 3,
+      "x": 6144,
+      "y": 3456,
+      "base": "assets/maps/dust9/glasswell/e4/layers/GLASSWELL_E4_base.png",
+      "foreground": "assets/maps/dust9/glasswell/e4/layers/GLASSWELL_E4_foreground_overlay.png",
+      "mask": "assets/maps/dust9/glasswell/e4/masks/GLASSWELL_E4_collision_mask.png"
+    },
+    "E5": {
+      "title": "Custody Convoy Yard",
+      "version": "v121",
+      "col": 4,
+      "row": 4,
+      "x": 6144,
+      "y": 4608,
+      "base": "assets/maps/dust9/glasswell/e5/layers/GLASSWELL_E5_base.png",
+      "foreground": "assets/maps/dust9/glasswell/e5/layers/GLASSWELL_E5_foreground_overlay.png",
+      "mask": "assets/maps/dust9/glasswell/e5/masks/GLASSWELL_E5_collision_mask.png"
+    }
+  }
+}

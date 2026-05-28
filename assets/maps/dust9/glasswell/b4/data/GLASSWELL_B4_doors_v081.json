@@ -1,0 +1,56 @@
+{
+  "chunk": "GLASSWELL_B4",
+  "version": "v081",
+  "doors": [
+    {
+      "id": "b4_black_road_route_office",
+      "label": "Black Road Route Office",
+      "x": 255,
+      "y": 300,
+      "w": 110,
+      "h": 85,
+      "state": "locked",
+      "futureInterior": "B4_INT_ROUTE_OFFICE"
+    },
+    {
+      "id": "b4_sensor_spillover_gate",
+      "label": "Sensor Spillover Gate",
+      "x": 1170,
+      "y": 285,
+      "w": 110,
+      "h": 85,
+      "state": "locked",
+      "futureInterior": "B4_INT_SENSOR_GATE"
+    },
+    {
+      "id": "b4_cache_room",
+      "label": "Sable / Deep Lantern Cache",
+      "x": 180,
+      "y": 970,
+      "w": 70,
+      "h": 70,
+      "state": "locked",
+      "futureInterior": "B4_INT_CACHE_ROOM"
+    },
+    {
+      "id": "b4_route_booth",
+      "label": "Route Booth",
+      "x": 625,
+      "y": 445,
+      "w": 130,
+      "h": 105,
+      "state": "locked",
+      "futureInterior": "B4_INT_ROUTE_BOOTH"
+    },
+    {
+      "id": "b4_east_vendor_route",
+      "label": "Vendor Route Cut",
+      "x": 1380,
+      "y": 510,
+      "w": 140,
+      "h": 150,
+      "state": "route",
+      "target": "GLASSWELL_C4"
+    }
+  ]
+}

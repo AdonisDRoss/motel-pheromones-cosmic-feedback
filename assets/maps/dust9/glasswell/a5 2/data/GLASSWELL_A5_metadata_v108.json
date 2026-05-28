@@ -1,0 +1,28 @@
+{
+  "chunk": "GLASSWELL_A5",
+  "title": "Badlands Drain Route",
+  "version": "v108",
+  "type": "clean_runtime_art_extracted",
+  "canvas": {
+    "width": 1536,
+    "height": 1152
+  },
+  "runtime_paths": {
+    "base": "assets/maps/dust9/glasswell/a5/layers/GLASSWELL_A5_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/a5/layers/GLASSWELL_A5_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/a5/masks/GLASSWELL_A5_collision_mask.png"
+  },
+  "routes": {
+    "east": "GLASSWELL_B5",
+    "north": "GLASSWELL_A4",
+    "west": "future outer badlands",
+    "south": "future badlands drain route"
+  },
+  "art_rules": [
+    "Runtime layer package for existing Git city grid.",
+    "Foreground overlay renders above bodies.",
+    "Ground items render below bodies.",
+    "Collision mask pure black/white: white walkable/driveable, black blocked."
+  ],
+  "note": "A5 source generation included right-side panels; this package extracts usable runtime panels."
+}

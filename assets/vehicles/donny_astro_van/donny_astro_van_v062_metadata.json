@@ -1,0 +1,95 @@
+{
+  "asset": "Donny Astro Van",
+  "game": "Cosmic Feedback",
+  "version": "v062",
+  "source": "User-provided four-frame Astro Van image cleaned into transparent Phaser-ready sprites.",
+  "runtime_sheet": "assets/vehicles/donny_astro_van/donny_astro_van_4frame_sheet_1024x512.png",
+  "quick_test_sheet": "assets/vehicles/donny_astro_van/donny_astro_van_4frame_sheet_512x256.png",
+  "frame_size": {
+    "width": 256,
+    "height": 512
+  },
+  "frames": [
+    {
+      "index": 0,
+      "name": "main_body",
+      "file": "donny_astro_van_1_main_body_256x512.png"
+    },
+    {
+      "index": 1,
+      "name": "shadow_delta",
+      "file": "donny_astro_van_2_shadow_delta_256x512.png"
+    },
+    {
+      "index": 2,
+      "name": "interior_doors_open_delta",
+      "file": "donny_astro_van_3_interior_doors_open_delta_256x512.png"
+    },
+    {
+      "index": 3,
+      "name": "damage_delta",
+      "file": "donny_astro_van_4_damage_delta_256x512.png"
+    }
+  ],
+  "orientation": {
+    "default_facing": "north/up",
+    "rotation_use": "single top-down vehicle can be rotated in Phaser for driving",
+    "origin": {
+      "x": 0.5,
+      "y": 0.5
+    }
+  },
+  "recommended_phaser": {
+    "load_spritesheet": {
+      "key": "donnyAstroVan",
+      "path": "assets/vehicles/donny_astro_van/donny_astro_van_4frame_sheet_1024x512.png",
+      "frameWidth": 256,
+      "frameHeight": 512
+    },
+    "default_frame": 0,
+    "shadow_frame": 1,
+    "doors_open_frame": 2,
+    "damage_frame": 3,
+    "physics_body": {
+      "width": 104,
+      "height": 220,
+      "note": "Tune after in-game scale. Keep body narrower/smaller than visible van so it does not snag on map art."
+    },
+    "depth_rule": "van.setDepth(van.y + 280)"
+  },
+  "processing": {
+    "original_size": {
+      "width": 1024,
+      "height": 559
+    },
+    "source_frame_width": 256,
+    "source_frame_height": 559,
+    "detected_bboxes": [
+      [
+        30,
+        29,
+        237,
+        515
+      ],
+      [
+        31,
+        28,
+        238,
+        517
+      ],
+      [
+        0,
+        29,
+        256,
+        515
+      ],
+      [
+        17,
+        21,
+        235,
+        531
+      ]
+    ],
+    "background_removed": "baked checkerboard converted to alpha"
+  }
+}

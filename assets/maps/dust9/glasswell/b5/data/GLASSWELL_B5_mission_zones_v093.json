@@ -1,0 +1,46 @@
+{
+  "chunk": "GLASSWELL_B5",
+  "version": "v093",
+  "mission_hooks": [
+    {
+      "id": "b5_dead_drop_event",
+      "x": 535,
+      "y": 315,
+      "w": 495,
+      "h": 270,
+      "trigger": "black_road_dead_drop_event"
+    },
+    {
+      "id": "b5_lower_cell_event",
+      "x": 60,
+      "y": 820,
+      "w": 455,
+      "h": 300,
+      "trigger": "lower_black_road_cell_event"
+    },
+    {
+      "id": "b5_crawl_deck_event",
+      "x": 885,
+      "y": 420,
+      "w": 425,
+      "h": 212,
+      "trigger": "crawl_deck_event"
+    },
+    {
+      "id": "b5_flooded_black_road_channel",
+      "x": 150,
+      "y": 445,
+      "w": 1110,
+      "h": 290,
+      "trigger": "flooded_black_road_warning"
+    },
+    {
+      "id": "b5_hidden_rescue_mark",
+      "x": 330,
+      "y": 665,
+      "w": 450,
+      "h": 190,
+      "trigger": "spot_black_road_rescue_mark"
+    }
+  ]
+}

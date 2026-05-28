@@ -1,0 +1,83 @@
+{
+  "chunk": "GLASSWELL_C1",
+  "version": "v067",
+  "solid_rects": [
+    {
+      "name": "permit_vault",
+      "x": 510,
+      "y": 40,
+      "w": 555,
+      "h": 200
+    },
+    {
+      "name": "records_west",
+      "x": 0,
+      "y": 30,
+      "w": 445,
+      "h": 440
+    },
+    {
+      "name": "red_admin_east",
+      "x": 1185,
+      "y": 25,
+      "w": 351,
+      "h": 305
+    },
+    {
+      "name": "varric_annex",
+      "x": 1095,
+      "y": 700,
+      "w": 441,
+      "h": 452
+    },
+    {
+      "name": "central_sealed_registry_vault",
+      "x": 500,
+      "y": 360,
+      "w": 530,
+      "h": 330
+    },
+    {
+      "name": "kiosks",
+      "count": 4
+    },
+    {
+      "name": "scanner_pylons",
+      "count": 6
+    }
+  ],
+  "open_edges": [
+    {
+      "to": "GLASSWELL_C2_Civic_Admin_Street",
+      "edge": "south",
+      "x": 520,
+      "y": 985,
+      "w": 525,
+      "h": 167
+    },
+    {
+      "to": "future_GLASSWELL_B1_records_roof_service",
+      "edge": "west",
+      "x": 0,
+      "y": 455,
+      "w": 185,
+      "h": 235
+    },
+    {
+      "to": "future_GLASSWELL_D1_admin_rooftop_service",
+      "edge": "east",
+      "x": 1345,
+      "y": 345,
+      "w": 191,
+      "h": 270
+    },
+    {
+      "to": "future_GLASSWELL_C0_registry_upper",
+      "edge": "north",
+      "x": 575,
+      "y": 0,
+      "w": 410,
+      "h": 150
+    }
+  ]
+}

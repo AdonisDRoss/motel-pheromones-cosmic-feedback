@@ -1,0 +1,21 @@
+{
+  "chunk": "GLASSWELL_B5",
+  "title": "Black Road Drains",
+  "version": "v093",
+  "canvas": {
+    "width": 1536,
+    "height": 1152
+  },
+  "runtime_paths": {
+    "base": "assets/maps/dust9/glasswell/b5/layers/GLASSWELL_B5_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/b5/layers/GLASSWELL_B5_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/b5/masks/GLASSWELL_B5_collision_mask.png"
+  },
+  "preview": "docs/GLASSWELL_B5_preview_v093.png",
+  "notes": [
+    "Connects B4 Black Road Cut, C5 Transit Drain Market, future A5 Badlands Drain Route, and future B6 Lower Black Road.",
+    "Hidden drain-route layer with flooded channels, Black Road dead-drop station, crawl deck, Sable water cache, lower cell, and Deep Lantern rescue marks.",
+    "Flooded center is mostly blocked; raised platforms and outer service lanes remain walkable/driveable.",
+    "Ground items render below Donny/NPC bodies."
+  ]
+}
