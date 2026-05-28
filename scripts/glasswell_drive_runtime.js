@@ -1,4 +1,4 @@
-const VERSION = "008";
+const VERSION = "011";
 
 const CHUNKS = [
   { id:"C2", title:"Civic Admin Street",       gridX:0, gridY:-1 },
@@ -22,6 +22,20 @@ const PROP_PATHS = {
 
 const VAN_PATH = "assets/vehicles/donny_astro_van/donny_astro_van_4frame_sheet_512x256.png";
 
+const DONNY_PATHS = [
+  "assets/sprites/player/donny/donny_idle.png",
+  "assets/sprites/player/donny/donny_walk.png",
+  "assets/sprites/player/donny/donny-master.png",
+  "assets/sprites/player/donny/movement/donny_idle.png",
+  "assets/sprites/player/donny/movement/donny_walk.png",
+  "assets/sprites/player/donny/combat/movement/donny_idle.png",
+  "assets/sprites/player/donny/combat/movement/donny_walk.png",
+  "assets/sprites/donny/donny_idle.png",
+  "assets/sprites/donny/donny_walk.png",
+  "assets/player/donny/donny_idle.png",
+  "assets/player/donny/donny_walk.png"
+];
+
 function v(path){ return `${path}${path.includes("?") ? "&" : "?"}v=${VERSION}`; }
 
 const VJOY = { x:0, y:0 };
@@ -43,14 +57,18 @@ class BootScene extends Phaser.Scene {
       this.load.image(`overlay_${c.id}`, v(OVERLAY_PATH(c.id)));
       this.load.image(`mask_${c.id}`, v(MASK_PATH(c.id)));
     }
+
     this.load.image("c3_gate_main_left", v(C3_GATE_PATHS.mainLeft));
     this.load.image("c3_gate_main_right", v(C3_GATE_PATHS.mainRight));
     this.load.image("c4_vendor_cluster_04", v(PROP_PATHS.c4Vendor));
     this.load.image("van_sheet_raw", v(VAN_PATH));
 
+    DONNY_PATHS.forEach((path, i) => this.load.image(`donny_candidate_${i}`, v(path)));
+
     this.load.on("loaderror", file => {
       const src = String(file?.src || file?.key || "unknown missing file");
       if(src.includes("astro_van") || src.includes("donny_astro_van")) return;
+      if(src.includes("donny") || src.includes("Donny")) return;
       LOAD_ERRORS.push(src);
     });
   }
@@ -65,9 +83,16 @@ class DriveScene extends Phaser.Scene {
     this.worldOffsetX = 0;
     this.worldOffsetY = 0;
     this.maskVisible = false;
-    this.labelsVisible = false;
+    this.maskData = {};
     this.gateOpen = true;
     this.inVan = true;
+
+    // GTA-style car state.
+    this.car = {
+      vx:0, vy:0,
+      heading:-Math.PI / 2,
+      speed:0
+    };
   }
 
   create(){
@@ -83,9 +108,10 @@ class DriveScene extends Phaser.Scene {
     this.createProps();
     this.createActors();
     this.createHud();
+    this.createMaskReaders();
     this.bindTouch();
 
-    this.cameras.main.startFollow(this.followTarget(), true, 0.15, 0.15);
+    this.cameras.main.startFollow(this.van, true, 0.15, 0.15);
     this.cameras.main.setZoom(1.18);
 
     if(LOAD_ERRORS.length){
@@ -117,19 +143,17 @@ class DriveScene extends Phaser.Scene {
   createWorld(){
     const maxX = this.worldOffsetX + (Math.max(...CHUNKS.map(c=>c.gridX)) + 1) * this.chunkW + 120;
     const maxY = this.worldOffsetY + (Math.max(...CHUNKS.map(c=>c.gridY)) + 1) * this.chunkH + 120;
+    this.worldBounds = new Phaser.Geom.Rectangle(0, 0, maxX, maxY);
     this.cameras.main.setBounds(0, 0, maxX, maxY);
     this.add.rectangle(maxX/2, maxY/2, maxX, maxY, 0x050607).setDepth(-10);
 
     this.maskOverlays = [];
-    this.labels = [];
-
     for(const c of CHUNKS){
       const p = this.chunkWorld(c);
       if(this.textures.exists(`base_${c.id}`)){
         this.add.image(p.x, p.y, `base_${c.id}`).setOrigin(0).setDisplaySize(this.chunkW, this.chunkH).setDepth(0);
       } else {
         this.add.rectangle(p.x, p.y, this.chunkW, this.chunkH, 0x330000).setOrigin(0).setDepth(0);
-        this.add.text(p.x+25, p.y+30, `MISSING ${c.id} BASE`, {fontFamily:"monospace",fontSize:"28px",color:"#fff",backgroundColor:"rgba(120,0,0,.8)",padding:{x:8,y:5}}).setDepth(300);
       }
 
       if(this.textures.exists(`mask_${c.id}`)){
@@ -137,12 +161,6 @@ class DriveScene extends Phaser.Scene {
           .setOrigin(0).setDisplaySize(this.chunkW, this.chunkH).setTint(0x00ff66).setAlpha(0.22).setDepth(80).setVisible(false);
         this.maskOverlays.push(maskOverlay);
       }
-
-      const label = this.add.text(p.x+12, p.y+12, `${c.id} — ${c.title}`, {
-        fontFamily:"monospace", fontSize:"20px", color:"#f4f4e6",
-        backgroundColor:"rgba(0,0,0,.55)", padding:{x:7,y:4}
-      }).setDepth(220).setVisible(false);
-      this.labels.push(label);
     }
 
     for(const c of CHUNKS){
@@ -158,7 +176,8 @@ class DriveScene extends Phaser.Scene {
     const src = this.textures.get("van_sheet_raw").getSourceImage();
     if(!src?.width || !src?.height) return "van_sheet_raw";
 
-    // If this is a 4-frame horizontal sheet, crop only frame 1 so only ONE van appears.
+    // Four vans happened because the whole horizontal sheet was displayed.
+    // This crops ONE frame only.
     const frameW = src.width >= src.height * 1.4 ? Math.floor(src.width / 4) : src.width;
     const tex = this.textures.createCanvas("van_single", frameW, src.height);
     const ctx = tex.getContext();
@@ -168,36 +187,71 @@ class DriveScene extends Phaser.Scene {
     return "van_single";
   }
 
+  makeDonnyTexture(){
+    for(let i=0;i<DONNY_PATHS.length;i++){
+      const key = `donny_candidate_${i}`;
+      if(!this.textures.exists(key)) continue;
+
+      const src = this.textures.get(key).getSourceImage();
+      if(!src?.width || !src?.height) return key;
+
+      // If it looks like a strip/sheet, crop first frame for a normal standing Donny.
+      if(src.width > src.height * 1.35){
+        const frameW = Math.min(src.height, Math.floor(src.width / Math.max(2, Math.round(src.width / src.height))));
+        const tex = this.textures.createCanvas("donny_single", frameW, src.height);
+        const ctx = tex.getContext();
+        ctx.clearRect(0,0,frameW,src.height);
+        ctx.drawImage(src, 0, 0, frameW, src.height, 0, 0, frameW, src.height);
+        tex.refresh();
+        return "donny_single";
+      }
+      return key;
+    }
+    return null;
+  }
+
   createActors(){
     const c3 = CHUNKS.find(c => c.id === "C3");
     const p = this.chunkWorld(c3);
-
     const startX = p.x + this.chunkW * 0.50;
     const startY = p.y + this.chunkH * 0.62;
 
     this.van = this.add.container(startX, startY).setDepth(100);
-    this.vanShadow = this.add.ellipse(0, 16, 78, 34, 0x000000, 0.35);
+    this.vanShadow = this.add.ellipse(0, 13, 62, 26, 0x000000, 0.35);
     this.van.add(this.vanShadow);
 
     const vanKey = this.makeSingleVanTexture();
     if(vanKey){
       const img = this.add.image(0, 0, vanKey).setOrigin(0.5);
       const source = this.textures.get(vanKey).getSourceImage();
-      img.setScale(92 / source.width);
+      img.setScale(74 / source.width);
       this.vanBody = img;
       this.van.add(img);
     } else {
-      this.vanBody = this.add.rectangle(0, 0, 86, 46, 0x423528, 1).setStrokeStyle(3, 0xff4aa0, 0.9);
+      this.vanBody = this.add.rectangle(0, 0, 68, 36, 0x423528, 1).setStrokeStyle(3, 0xff4aa0, 0.9);
       this.van.add(this.vanBody);
     }
 
     this.player = this.add.container(startX + 68, startY + 6).setDepth(105).setVisible(false);
-    this.player.add(this.add.ellipse(0, 9, 22, 10, 0x000000, 0.38));
-    this.player.add(this.add.rectangle(0, -4, 18, 34, 0x2c2c2c, 1).setStrokeStyle(2, 0xd8d0c0, 0.9));
-    this.player.add(this.add.circle(0, -24, 8, 0x5b3927, 1).setStrokeStyle(1, 0xd8d0c0, 0.9));
+    this.player.add(this.add.ellipse(0, 12, 24, 10, 0x000000, 0.38));
 
-    this.heading = -Math.PI / 2;
-    this.van.rotation = this.heading + Math.PI / 2;
+    const donnyKey = this.makeDonnyTexture();
+    if(donnyKey){
+      const sprite = this.add.image(0, 0, donnyKey).setOrigin(0.5, 0.88);
+      const source = this.textures.get(donnyKey).getSourceImage();
+      sprite.setScale(58 / source.height);
+      this.donnySprite = sprite;
+      this.player.add(sprite);
+    } else {
+      // Placeholder only if no Donny sprite path exists.
+      this.player.add(this.add.rectangle(0, -8, 18, 34, 0x2c2c2c, 1).setStrokeStyle(2, 0xd8d0c0, 0.9));
+      this.player.add(this.add.circle(0, -28, 8, 0x5b3927, 1).setStrokeStyle(1, 0xd8d0c0, 0.9));
+    }
+
+    this.car.heading = -Math.PI / 2;
+    this.car.vx = 0;
+    this.car.vy = 0;
+    this.van.rotation = this.car.heading + Math.PI / 2;
   }
 
   createProps(){
@@ -222,6 +276,13 @@ class DriveScene extends Phaser.Scene {
       this.gateMainRight = this.add.image(this.gateMainRightClosedX, gateY, "c3_gate_main_right")
         .setOrigin(0,0.5).setScale(0.30).setDepth(130);
     }
+    this.gateBlockerRect = new Phaser.Geom.Rectangle(
+      p.x + this.chunkW * 0.40,
+      p.y + this.chunkH * 0.135,
+      this.chunkW * 0.20,
+      this.chunkH * 0.11
+    );
+
     this.setGateOpen(true, true);
   }
 
@@ -232,7 +293,71 @@ class DriveScene extends Phaser.Scene {
     }).setScrollFactor(0).setDepth(500);
   }
 
-  followTarget(){ return this.inVan ? this.van : this.player; }
+  createMaskReaders(){
+    this.maskData = {};
+    for(const c of CHUNKS){
+      if(!this.textures.exists(`mask_${c.id}`)) continue;
+
+      const src = this.textures.get(`mask_${c.id}`).getSourceImage();
+      const canvas = document.createElement("canvas");
+      canvas.width = src.width;
+      canvas.height = src.height;
+
+      const ctx = canvas.getContext("2d", { willReadFrequently:true });
+      ctx.drawImage(src, 0, 0);
+
+      this.maskData[c.id] = { ctx, w:src.width, h:src.height };
+    }
+  }
+
+  isWalkable(x, y){
+    const hit = this.chunkAt(x, y);
+    if(!hit) return false;
+
+    // Gate collision comes back when the gate is closed.
+    if(!this.gateOpen && this.gateBlockerRect && this.gateBlockerRect.contains(x, y)){
+      return false;
+    }
+
+    const md = this.maskData[hit.c.id];
+
+    // If a mask failed to load, do not trap the player. Allow movement on that chunk.
+    if(!md) return true;
+
+    const lx = Math.floor((x - hit.p.x) / this.chunkW * md.w);
+    const ly = Math.floor((y - hit.p.y) / this.chunkH * md.h);
+
+    if(lx < 0 || ly < 0 || lx >= md.w || ly >= md.h) return false;
+
+    const data = md.ctx.getImageData(lx, ly, 1, 1).data;
+    return data[0] > 140; // white = walkable
+  }
+
+  canVanStand(x, y){
+    // Multiple sample points stop the van from clipping through walls.
+    const rX = 34;
+    const rY = 22;
+    const pts = [
+      [x, y],
+      [x-rX, y], [x+rX, y],
+      [x, y-rY], [x, y+rY],
+      [x-rX*0.75, y-rY*0.75], [x+rX*0.75, y-rY*0.75],
+      [x-rX*0.75, y+rY*0.75], [x+rX*0.75, y+rY*0.75]
+    ];
+    return pts.every(([px, py]) => this.isWalkable(px, py));
+  }
+
+  canPlayerStand(x, y){
+    const r = 13;
+    const pts = [
+      [x, y],
+      [x-r, y], [x+r, y],
+      [x, y-r], [x, y+r],
+      [x-r*0.7, y-r*0.7], [x+r*0.7, y-r*0.7],
+      [x-r*0.7, y+r*0.7], [x+r*0.7, y+r*0.7]
+    ];
+    return pts.every(([px, py]) => this.isWalkable(px, py));
+  }
 
   setGateOpen(open, instant=false){
     this.gateOpen = open;
@@ -258,7 +383,7 @@ class DriveScene extends Phaser.Scene {
     }
 
     const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.van.x, this.van.y);
-    if(d < 130){
+    if(d < 135){
       this.inVan = true;
       this.player.setVisible(false);
       this.cameras.main.startFollow(this.van, true, 0.15, 0.15);
@@ -274,25 +399,126 @@ class DriveScene extends Phaser.Scene {
     this.player.setPosition(x + 70, y + 4);
     this.inVan = true;
     this.player.setVisible(false);
-    this.heading = -Math.PI / 2;
-    this.van.rotation = this.heading + Math.PI / 2;
+    this.car.heading = -Math.PI / 2;
+    this.car.vx = 0;
+    this.car.vy = 0;
+    this.van.rotation = this.car.heading + Math.PI / 2;
     this.cameras.main.startFollow(this.van, true, 0.15, 0.15);
   }
 
-  moveObject(obj, dx, dy, speed, dt){
-    if(Math.abs(dx) < 0.05 && Math.abs(dy) < 0.05) return;
-    const len = Math.hypot(dx, dy) || 1;
-    dx /= len; dy /= len;
-    obj.x += dx * speed * dt;
-    obj.y += dy * speed * dt;
-    if(obj === this.van){
-      this.heading = Math.atan2(dy, dx);
-      this.van.rotation = this.heading + Math.PI / 2;
+  getInput(){
+    let x = 0, y = 0;
+    if(this.keys.LEFT.isDown || this.keys.A.isDown) x -= 1;
+    if(this.keys.RIGHT.isDown || this.keys.D.isDown) x += 1;
+    if(this.keys.UP.isDown || this.keys.W.isDown) y -= 1;
+    if(this.keys.DOWN.isDown || this.keys.S.isDown) y += 1;
+
+    x += VJOY.x;
+    y += VJOY.y;
+
+    x = Phaser.Math.Clamp(x, -1, 1);
+    y = Phaser.Math.Clamp(y, -1, 1);
+    return {x, y};
+  }
+
+  updateCar(dt){
+    const input = this.getInput();
+    const steer = input.x;
+    const throttle = -input.y;
+
+    const forward = { x: Math.cos(this.car.heading), y: Math.sin(this.car.heading) };
+    const right = { x: -Math.sin(this.car.heading), y: Math.cos(this.car.heading) };
+
+    let localForward = this.car.vx * forward.x + this.car.vy * forward.y;
+    let localSide = this.car.vx * right.x + this.car.vy * right.y;
+
+    const boosting = this.keys.SHIFT.isDown || TOUCH.boost;
+    const braking = this.keys.SPACE.isDown || TOUCH.brake;
+
+    const maxFwd = boosting ? 520 : 360;
+    const maxRev = -180;
+
+    if(throttle > 0.05){
+      localForward += throttle * (boosting ? 760 : 560) * dt;
+    } else if(throttle < -0.05){
+      localForward += throttle * 410 * dt;
+    }
+
+    // B/Space behaves like brake first, then reverse if nearly stopped.
+    if(braking){
+      if(Math.abs(localForward) > 35){
+        localForward *= Math.pow(0.84, dt * 60);
+      } else {
+        localForward -= 260 * dt;
+      }
+    }
+
+    localForward = Phaser.Math.Clamp(localForward, maxRev, maxFwd);
+
+    // GTA-like sliding: keep some drift, but kill sideways movement enough to steer.
+    const sideGrip = boosting ? 0.91 : 0.82;
+    localSide *= Math.pow(sideGrip, dt * 60);
+
+    // Friction / rolling slowdown.
+    const rolling = Math.abs(throttle) > 0.05 || braking;
+    if(!rolling){
+      localForward *= Math.pow(0.965, dt * 60);
+    }
+
+    const speedAbs = Math.abs(localForward);
+    const steerPower = Phaser.Math.Clamp(speedAbs / 260, 0.18, 1.0);
+    const reverseSign = localForward >= 0 ? 1 : -1;
+    this.car.heading += steer * 2.65 * steerPower * reverseSign * dt;
+
+    const f2 = { x: Math.cos(this.car.heading), y: Math.sin(this.car.heading) };
+    const r2 = { x: -Math.sin(this.car.heading), y: Math.cos(this.car.heading) };
+
+    this.car.vx = f2.x * localForward + r2.x * localSide;
+    this.car.vy = f2.y * localForward + r2.y * localSide;
+
+    const nx = Phaser.Math.Clamp(this.van.x + this.car.vx * dt, this.worldBounds.left + 80, this.worldBounds.right - 80);
+    const ny = Phaser.Math.Clamp(this.van.y + this.car.vy * dt, this.worldBounds.top + 80, this.worldBounds.bottom - 80);
+
+    if(this.canVanStand(nx, ny)){
+      this.van.setPosition(nx, ny);
+    } else if(this.canVanStand(nx, this.van.y)){
+      this.van.x = nx;
+      this.car.vy *= -0.18;
+      this.car.vx *= 0.62;
+    } else if(this.canVanStand(this.van.x, ny)){
+      this.van.y = ny;
+      this.car.vx *= -0.18;
+      this.car.vy *= 0.62;
+    } else {
+      // Hit a wall/head-on. Bounce and kill speed.
+      this.car.vx *= -0.28;
+      this.car.vy *= -0.28;
+    }
+
+    this.van.rotation = this.car.heading + Math.PI / 2;
+    this.car.speed = Math.hypot(this.car.vx, this.car.vy);
+  }
+
+  updateFoot(dt){
+    const input = this.getInput();
+    if(Math.abs(input.x) < 0.05 && Math.abs(input.y) < 0.05) return;
+
+    const len = Math.hypot(input.x, input.y) || 1;
+    const speed = 195;
+    const nx = Phaser.Math.Clamp(this.player.x + (input.x / len) * speed * dt, this.worldBounds.left + 20, this.worldBounds.right - 20);
+    const ny = Phaser.Math.Clamp(this.player.y + (input.y / len) * speed * dt, this.worldBounds.top + 20, this.worldBounds.bottom - 20);
+
+    if(this.canPlayerStand(nx, ny)){
+      this.player.setPosition(nx, ny);
+    } else if(this.canPlayerStand(nx, this.player.y)){
+      this.player.x = nx;
+    } else if(this.canPlayerStand(this.player.x, ny)){
+      this.player.y = ny;
     }
   }
 
   update(_time, delta){
-    const dt = delta / 1000;
+    const dt = Math.min(delta / 1000, 0.05);
 
     if(Phaser.Input.Keyboard.JustDown(this.keys.E)) this.toggleEnterExit();
     if(Phaser.Input.Keyboard.JustDown(this.keys.Y) || Phaser.Input.Keyboard.JustDown(this.keys.G)) this.setGateOpen(!this.gateOpen);
@@ -302,29 +528,17 @@ class DriveScene extends Phaser.Scene {
       this.maskOverlays.forEach(m => m.setVisible(this.maskVisible));
     }
 
-    let dx = 0, dy = 0;
-    if(this.keys.LEFT.isDown || this.keys.A.isDown) dx -= 1;
-    if(this.keys.RIGHT.isDown || this.keys.D.isDown) dx += 1;
-    if(this.keys.UP.isDown || this.keys.W.isDown) dy -= 1;
-    if(this.keys.DOWN.isDown || this.keys.S.isDown) dy += 1;
-    dx += VJOY.x;
-    dy += VJOY.y;
+    if(this.inVan) this.updateCar(dt);
+    else this.updateFoot(dt);
 
-    const speed = this.inVan
-      ? ((this.keys.SHIFT.isDown || TOUCH.boost) ? 430 : 275)
-      : 190;
-
-    // Brake slows van movement from touch/keyboard, but still allows movement.
-    const finalSpeed = (this.inVan && (this.keys.SPACE.isDown || TOUCH.brake)) ? speed * 0.45 : speed;
-
-    this.moveObject(this.followTarget(), dx, dy, finalSpeed, dt);
-
-    const hit = this.chunkAt(this.followTarget().x, this.followTarget().y);
+    const target = this.inVan ? this.van : this.player;
+    const hit = this.chunkAt(target.x, target.y);
     this.hud.setText([
-      "Glasswell Drive v008",
+      "Glasswell Drive v011",
       `Mode: ${this.inVan ? "IN VAN" : "ON FOOT"}`,
       `Cell: ${hit ? hit.c.id + " — " + hit.c.title : "outside map"}`,
-      `A/E: enter-exit  Y/G: gate ${this.gateOpen ? "OPEN" : "CLOSED"}  START/R: reset`
+      `Speed: ${this.inVan ? Math.round(this.car.speed) : "walk"}`,
+      `A/E enter-exit · collisions ON · X boost · B brake/reverse · Y gate ${this.gateOpen ? "OPEN" : "CLOSED"}`
     ]);
   }
 
