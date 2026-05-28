@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Glasswell Drive v008</title>
+<title>Glasswell Drive v011</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
 <style>
 html,body{
@@ -15,7 +15,7 @@ canvas{display:block}
 #help{
   position:absolute;left:max(8px,env(safe-area-inset-left));top:max(8px,env(safe-area-inset-top));
   padding:5px 8px;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.18);
-  font-size:10px;line-height:1.15;max-width:780px;opacity:.78;
+  font-size:10px;line-height:1.15;max-width:830px;opacity:.78;
 }
 #stickWrap{
   position:absolute;left:max(22px,env(safe-area-inset-left));bottom:max(24px,env(safe-area-inset-bottom));
@@ -75,7 +75,7 @@ canvas{display:block}
 <body>
 <div id="game"></div>
 <div id="ui">
-  <div id="help">GLASSWELL DRIVE v008 · left stick move · A enter/exit · X boost · B brake · Y gate · START reset</div>
+  <div id="help">GLASSWELL DRIVE v011 · GTA car physics + collisions · A enter/exit · X boost · B brake/reverse · Y gate · START reset</div>
   <div id="stickWrap"><div id="stick"><div id="knob"></div></div><div id="moveLabel">MOVE</div></div>
   <div id="startBtn"><button id="btnStart">START</button></div>
   <div id="buttons">
@@ -88,6 +88,6 @@ canvas{display:block}
 </div>
 <div id="rotate">Turn your phone sideways to play Glasswell.</div>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
-<script src="scripts/glasswell_drive_runtime.js?v=008"></script>
+<script src="scripts/glasswell_drive_runtime.js?v=011"></script>
 </body>
 </html>
