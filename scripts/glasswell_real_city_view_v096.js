@@ -1,42 +1,3 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>Cosmic Feedback — Glasswell</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: #070707;
-      overflow: hidden;
-      width: 100%;
-      height: 100%;
-      touch-action: none;
-    }
-    canvas {
-      image-rendering: pixelated;
-      image-rendering: crisp-edges;
-    }
-    #loading {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #e8e2c8;
-      background: #070707;
-      font: 16px monospace;
-      letter-spacing: 1px;
-      z-index: 5;
-    }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
-</head>
-<body>
-  <div id="loading">Loading Glasswell...</div>
-
-<script>
 // GLASSWELL_REAL_CITY_VIEW_v096_FIX
 // Uses assets/maps/dust9/glasswell/glasswell_city_manifest_v095.json.
 // This file is optional backup because index.html also contains the runtime inline.
@@ -405,13 +366,3 @@
     });
   };
 })();
-
-
-window.addEventListener("load", () => {
-  const loading = document.getElementById("loading");
-  if (loading) loading.remove();
-  window.GLASSWELL_REAL_CITY_BOOT();
-});
-</script>
-</body>
-</html>

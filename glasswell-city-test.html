@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Glasswell City Test v095 Backup</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <style>
+    html, body { margin:0; padding:0; background:#090909; overflow:hidden; width:100%; height:100%; }
+    canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+    #help {
+      position: fixed; left: 10px; bottom: 10px; z-index: 10;
+      color: #ddd; background: rgba(0,0,0,.65); padding: 8px 10px;
+      font: 12px monospace; border: 1px solid #444; max-width: 520px;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+</head>
+<body>
+<div id="help">Glasswell City Test v095 backup — WASD/Arrows move. M toggles chunk labels. Camera follows test marker. Start: GLASSWELL_C3.</div>
+<script>
+const MANIFEST_URL = "assets/maps/dust9/glasswell/glasswell_city_manifest_v095.json?v=095";
+class BootScene extends Phaser.Scene {
+  constructor(){ super("BootScene"); }
+  preload(){ this.load.json("glasswellManifest", MANIFEST_URL); }
+  create(){ this.scene.start("CityScene", { manifest: this.cache.json.get("glasswellManifest") }); }
+}
+class CityScene extends Phaser.Scene {
+  constructor(){ super("CityScene"); }
+  init(data){ this.manifest = data.manifest; }
+  preload(){
+    for (const chunk of this.manifest.chunks) {
+      this.load.image(`${chunk.id}_base`, chunk.layers.base);
+      this.load.image(`${chunk.id}_fg`, chunk.layers.foreground_overlay);
+    }
+  }
+  create(){
+    this.labels = [];
+    this.labelVisible = true;
+    const chunks = this.manifest.chunks;
+    const maxX = Math.max(...chunks.map(c => c.grid.worldX + c.canvas.width));
+    const maxY = Math.max(...chunks.map(c => c.grid.worldY + c.canvas.height));
+    this.cameras.main.setBounds(0, 0, maxX, maxY);
+    this.physics.world.setBounds(0, 0, maxX, maxY);
+    for (const chunk of chunks) {
+      const x = chunk.grid.worldX, y = chunk.grid.worldY;
+      this.add.image(x, y, `${chunk.id}_base`).setOrigin(0, 0).setDepth(0);
+      this.add.image(x, y, `${chunk.id}_fg`).setOrigin(0, 0).setDepth(9000);
+      const label = this.add.text(x + 24, y + 24, `${chunk.id}\n${chunk.title}`, {
+        fontFamily: "monospace", fontSize: "22px", color: "#f4f0dd",
+        backgroundColor: "rgba(0,0,0,.45)", padding: {x:8,y:6}
+      }).setDepth(9500);
+      this.labels.push(label);
+    }
+    const start = this.manifest.start || { chunk:"GLASSWELL_C3", spawn:{x:768,y:640} };
+    const startChunk = chunks.find(c => c.id === start.chunk) || chunks[0];
+    this.player = this.add.rectangle(startChunk.grid.worldX + 768, startChunk.grid.worldY + 640, 34, 46, 0x66d9ef).setDepth(5000);
+    this.physics.add.existing(this.player);
+    this.player.body.setCollideWorldBounds(true);
+    this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+    this.cameras.main.setZoom(0.45);
+    this.keys = this.input.keyboard.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT,M");
+    this.input.keyboard.on("keydown-M", () => {
+      this.labelVisible = !this.labelVisible;
+      this.labels.forEach(l => l.setVisible(this.labelVisible));
+    });
+    this.hud = this.add.text(14, 14, "", {
+      fontFamily: "monospace", fontSize: "18px", color: "#ffffff",
+      backgroundColor: "rgba(0,0,0,.55)", padding: {x:8,y:6}
+    }).setScrollFactor(0).setDepth(10000);
+  }
+  update(){
+    const speed = 420;
+    let vx = 0, vy = 0;
+    if (this.keys.A.isDown || this.keys.LEFT.isDown) vx -= speed;
+    if (this.keys.D.isDown || this.keys.RIGHT.isDown) vx += speed;
+    if (this.keys.W.isDown || this.keys.UP.isDown) vy -= speed;
+    if (this.keys.S.isDown || this.keys.DOWN.isDown) vy += speed;
+    this.player.body.setVelocity(vx, vy);
+    if (vx && vy) this.player.body.velocity.scale(0.7071);
+    const chunk = this.manifest.chunks.find(c =>
+      this.player.x >= c.grid.worldX && this.player.x < c.grid.worldX + c.canvas.width &&
+      this.player.y >= c.grid.worldY && this.player.y < c.grid.worldY + c.canvas.height
+    );
+    this.hud.setText(`Glasswell v095 debug backup\nChunk: ${chunk ? chunk.id : "outside"}\nX:${Math.round(this.player.x)} Y:${Math.round(this.player.y)}\nM labels`);
+  }
+}
+new Phaser.Game({
+  type: Phaser.AUTO,
+  backgroundColor: "#090909",
+  width: 960,
+  height: 540,
+  parent: document.body,
+  pixelArt: true,
+  roundPixels: true,
+  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  physics: { default: "arcade", arcade: { gravity: { y: 0 }, debug: false } },
+  scene: [BootScene, CityScene]
+});
+</script>
+</body>
+</html>
