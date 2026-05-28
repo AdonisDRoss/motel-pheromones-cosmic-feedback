@@ -1,4 +1,4 @@
-const VERSION = "011";
+const VERSION = "012";
 
 const CHUNKS = [
   { id:"C2", title:"Civic Admin Street",       gridX:0, gridY:-1 },
@@ -63,7 +63,12 @@ class BootScene extends Phaser.Scene {
     this.load.image("c4_vendor_cluster_04", v(PROP_PATHS.c4Vendor));
     this.load.image("van_sheet_raw", v(VAN_PATH));
 
-    DONNY_PATHS.forEach((path, i) => this.load.image(`donny_candidate_${i}`, v(path)));
+    // Use the real Donny 4-direction registry already in the repo.
+    if(window.preloadDonnyAssets){
+      window.preloadDonnyAssets(this, VERSION);
+    } else {
+      DONNY_PATHS.forEach((path, i) => this.load.image(`donny_candidate_${i}`, v(path)));
+    }
 
     this.load.on("loaderror", file => {
       const src = String(file?.src || file?.key || "unknown missing file");
@@ -106,6 +111,11 @@ class DriveScene extends Phaser.Scene {
     this.computeWorldOffset();
     this.createWorld();
     this.createProps();
+
+    if(window.createDonnyAnimations){
+      window.createDonnyAnimations(this);
+    }
+
     this.createActors();
     this.createHud();
     this.createMaskReaders();
@@ -188,6 +198,10 @@ class DriveScene extends Phaser.Scene {
   }
 
   makeDonnyTexture(){
+    if(this.textures.exists("donny_idle_4dir")){
+      return "donny_idle_4dir";
+    }
+
     for(let i=0;i<DONNY_PATHS.length;i++){
       const key = `donny_candidate_${i}`;
       if(!this.textures.exists(key)) continue;
@@ -236,7 +250,15 @@ class DriveScene extends Phaser.Scene {
     this.player.add(this.add.ellipse(0, 12, 24, 10, 0x000000, 0.38));
 
     const donnyKey = this.makeDonnyTexture();
-    if(donnyKey){
+    if(donnyKey === "donny_idle_4dir"){
+      const sprite = this.add.sprite(0, 0, "donny_idle_4dir", 0).setOrigin(0.5, 0.88);
+      sprite.setScale(0.48);
+      this.donnySprite = sprite;
+      this.player.add(sprite);
+      if(this.anims.exists("donny_idle_down")){
+        sprite.play("donny_idle_down");
+      }
+    } else if(donnyKey){
       const sprite = this.add.image(0, 0, donnyKey).setOrigin(0.5, 0.88);
       const source = this.textures.get(donnyKey).getSourceImage();
       sprite.setScale(58 / source.height);
@@ -501,7 +523,22 @@ class DriveScene extends Phaser.Scene {
 
   updateFoot(dt){
     const input = this.getInput();
-    if(Math.abs(input.x) < 0.05 && Math.abs(input.y) < 0.05) return;
+    if(Math.abs(input.x) < 0.05 && Math.abs(input.y) < 0.05) {
+      if(this.donnySprite && this.donnySprite.play && this.anims.exists("donny_idle_down")){
+        this.donnySprite.play("donny_idle_down", true);
+      }
+      return;
+    }
+
+    if(this.donnySprite && this.donnySprite.play){
+      const dir = Math.abs(input.x) > Math.abs(input.y)
+        ? (input.x > 0 ? "right" : "left")
+        : (input.y > 0 ? "down" : "up");
+      const walkKey = `donny_walk_${dir}`;
+      const idleKey = `donny_idle_${dir}`;
+      if(this.anims.exists(walkKey)) this.donnySprite.play(walkKey, true);
+      else if(this.anims.exists(idleKey)) this.donnySprite.play(idleKey, true);
+    }
 
     const len = Math.hypot(input.x, input.y) || 1;
     const speed = 195;
@@ -534,7 +571,7 @@ class DriveScene extends Phaser.Scene {
     const target = this.inVan ? this.van : this.player;
     const hit = this.chunkAt(target.x, target.y);
     this.hud.setText([
-      "Glasswell Drive v011",
+      "Glasswell Drive v012",
       `Mode: ${this.inVan ? "IN VAN" : "ON FOOT"}`,
       `Cell: ${hit ? hit.c.id + " — " + hit.c.title : "outside map"}`,
       `Speed: ${this.inVan ? Math.round(this.car.speed) : "walk"}`,
