@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Cosmic Feedback — Glasswell</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <style>
+    :root {
+      --ui-bg: rgba(4, 6, 8, .58);
+      --ui-line: rgba(255,255,255,.26);
+      --ui-text: rgba(255,255,255,.92);
+      --ui-soft: rgba(255,255,255,.14);
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #030405;
+      color: white;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    #game-wrap {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #030405;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    #mobileControls {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      pointer-events: none;
+      touch-action: none;
+    }
+
+    #stickBase {
+      position: absolute;
+      left: max(20px, env(safe-area-inset-left));
+      bottom: max(22px, env(safe-area-inset-bottom));
+      width: 132px;
+      height: 132px;
+      border-radius: 50%;
+      border: 2px solid var(--ui-line);
+      background: rgba(0,0,0,.30);
+      pointer-events: auto;
+      box-shadow: inset 0 0 22px rgba(255,255,255,.05);
+    }
+
+    #stickKnob {
+      position: absolute;
+      left: 43px;
+      top: 43px;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.42);
+      background: rgba(255,255,255,.28);
+      box-shadow: 0 0 12px rgba(255,255,255,.10);
+    }
+
+    #snesPad {
+      position: absolute;
+      right: max(18px, env(safe-area-inset-right));
+      bottom: max(22px, env(safe-area-inset-bottom));
+      width: 186px;
+      height: 156px;
+      pointer-events: auto;
+    }
+
+    .snes-btn {
+      position: absolute;
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      border: 2px solid var(--ui-line);
+      background: rgba(5,7,10,.72);
+      color: var(--ui-text);
+      font: 700 20px ui-monospace, Menlo, Consolas, monospace;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 0 18px rgba(255,255,255,.04);
+    }
+
+    .snes-btn:active,
+    .snes-btn.down {
+      background: rgba(255,255,255,.26);
+      transform: scale(.96);
+    }
+
+    #btnY { left: 0; top: 49px; }
+    #btnX { left: 64px; top: 0; }
+    #btnB { left: 64px; top: 98px; }
+    #btnA { left: 128px; top: 49px; }
+
+    #centerButtons {
+      position: absolute;
+      left: 50%;
+      bottom: max(24px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      display: flex;
+      gap: 14px;
+      pointer-events: auto;
+    }
+
+    .pill-btn {
+      min-width: 72px;
+      height: 44px;
+      border-radius: 22px;
+      border: 2px solid var(--ui-line);
+      background: rgba(5,7,10,.65);
+      color: var(--ui-text);
+      font: 700 14px ui-monospace, Menlo, Consolas, monospace;
+    }
+
+    .pill-btn:active,
+    .pill-btn.down {
+      background: rgba(255,255,255,.22);
+      transform: scale(.98);
+    }
+
+    #hud {
+      position: fixed;
+      left: max(10px, env(safe-area-inset-left));
+      top: max(10px, env(safe-area-inset-top));
+      z-index: 30;
+      pointer-events: none;
+      font-size: 12px;
+      line-height: 1.3;
+      color: rgba(240,240,230,.92);
+      background: rgba(0,0,0,.36);
+      border: 1px solid rgba(255,255,255,.14);
+      padding: 6px 8px;
+      max-width: min(420px, calc(100vw - 20px));
+      white-space: pre-line;
+    }
+
+    #titleCard {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle at 50% 40%, rgba(120,20,20,.24), transparent 34%),
+        linear-gradient(#030405, #090909);
+      color: white;
+    }
+
+    #titlePanel {
+      width: min(760px, calc(100vw - 34px));
+      border: 2px solid rgba(255,255,255,.20);
+      background: rgba(0,0,0,.72);
+      padding: 22px;
+      box-shadow: 0 0 44px rgba(0,0,0,.55);
+    }
+
+    #titlePanel h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 5vw, 54px);
+      letter-spacing: .08em;
+      font-weight: 900;
+    }
+
+    #titlePanel p {
+      margin: 8px 0;
+      color: rgba(255,255,255,.78);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    #startBtn {
+      margin-top: 18px;
+      border: 2px solid rgba(255,255,255,.28);
+      background: rgba(140,18,18,.65);
+      color: white;
+      padding: 12px 18px;
+      font: 800 16px ui-monospace, Menlo, Consolas, monospace;
+      letter-spacing: .08em;
+    }
+
+    @media (orientation: portrait) {
+      #stickBase {
+        width: 118px;
+        height: 118px;
+      }
+      #stickKnob {
+        left: 38px;
+        top: 38px;
+        width: 42px;
+        height: 42px;
+      }
+      #snesPad {
+        width: 170px;
+        height: 144px;
+      }
+      .snes-btn {
+        width: 52px;
+        height: 52px;
+        font-size: 18px;
+      }
+      #btnY { left: 0; top: 46px; }
+      #btnX { left: 59px; top: 0; }
+      #btnB { left: 59px; top: 92px; }
+      #btnA { left: 118px; top: 46px; }
+      #centerButtons {
+        bottom: max(178px, env(safe-area-inset-bottom));
+        gap: 10px;
+      }
+      .pill-btn {
+        min-width: 60px;
+        height: 38px;
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="game-wrap"></div>
+
+  <div id="hud">Loading Glasswell...</div>
+
+  <div id="mobileControls">
+    <div id="stickBase"><div id="stickKnob"></div></div>
+
+    <div id="centerButtons">
+      <button id="btnMenu" class="pill-btn">MENU</button>
+      <button id="btnMask" class="pill-btn">MASK</button>
+    </div>
+
+    <div id="snesPad">
+      <button id="btnY" class="snes-btn">Y</button>
+      <button id="btnX" class="snes-btn">X</button>
+      <button id="btnB" class="snes-btn">B</button>
+      <button id="btnA" class="snes-btn">A</button>
+    </div>
+  </div>
+
+  <div id="titleCard">
+    <div id="titlePanel">
+      <h1>COSMIC FEEDBACK</h1>
+      <p>GLASSWELL — DUST-9 CITY VIEW</p>
+      <p>Donny starts at the Main Civic Gate. Find the Sable Kin contact. The Astro Van is nearby.</p>
+      <p>Controls: left stick move · B dash/run · A enter/exit van · X interact · Y action · MASK toggles collision view.</p>
+      <button id="startBtn">START STORY</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+  <script src="scripts/donny_asset_registry.js?v=126"></script>
+  <script>
+    const VERSION = '126';
+    const CHUNK_W = 1536;
+    const CHUNK_H = 1152;
+    const MANIFEST_URL = 'assets/maps/dust9/glasswell/glasswell_city_manifest_v095.json?v=' + VERSION;
+    const VAN_SHEET = 'assets/vehicles/donny_astro_van/donny_astro_van_4frame_sheet_512x256.png?v=' + VERSION;
+
+    const InputState = {
+      moveX: 0,
+      moveY: 0,
+      run: false,
+      action: false,
+      enterExit: false,
+      interact: false,
+      mask: false,
+      menu: false
+    };
+
+    const TouchState = {
+      active: false,
+      pointerId: null,
+      dx: 0,
+      dy: 0
+    };
+
+    class BootScene extends Phaser.Scene {
+      constructor() {
+        super('BootScene');
+      }
+
+      preload() {
+        this.load.json('glasswellManifest', MANIFEST_URL);
+      }
+
+      create() {
+        const manifest = this.cache.json.get('glasswellManifest');
+        this.scene.start('GameScene', { manifest });
+      }
+    }
+
+    class GameScene extends Phaser.Scene {
+      constructor() {
+        super('GameScene');
+        this.cells = [];
+        this.cellByGrid = {};
+        this.maskContexts = {};
+        this.maskOverlays = [];
+        this.labels = [];
+        this.showMask = false;
+        this.showLabels = false;
+        this.inVan = false;
+        this.lastDir = 'down';
+        this.pos = { x: 0, y: 0 };
+        this.vanPos = { x: 0, y: 0 };
+        this.worldW = CHUNK_W * 5;
+        this.worldH = CHUNK_H * 5;
+        this.started = false;
+      }
+
+      init(data) {
+        this.manifest = data.manifest;
+        this.cells = (this.manifest && this.manifest.chunks) ? this.manifest.chunks : [];
+        this.cellByGrid = {};
+        for (const c of this.cells) {
+          this.cellByGrid[`${c.grid.col},${c.grid.row}`] = c;
+        }
+
+        const startChunk = this.manifest?.start?.chunk || 'GLASSWELL_C3';
+        const startCell = this.cells.find(c => c.id === startChunk) || this.cells.find(c => c.cell === 'C3');
+        const startLocal = this.manifest?.start?.local || { x: 768, y: 640 };
+        if (startCell) {
+          this.pos.x = startCell.grid.worldX + startLocal.x;
+          this.pos.y = startCell.grid.worldY + startLocal.y;
+        } else {
+          this.pos.x = CHUNK_W * 2 + 768;
+          this.pos.y = CHUNK_H * 2 + 640;
+        }
+
+        const vehicle = this.manifest?.vehicles?.find(v => v.id === 'ASTRO_VAN');
+        if (vehicle && startCell) {
+          this.vanPos.x = startCell.grid.worldX + vehicle.local.x;
+          this.vanPos.y = startCell.grid.worldY + vehicle.local.y;
+        } else {
+          this.vanPos.x = this.pos.x + 130;
+          this.vanPos.y = this.pos.y + 80;
+        }
+      }
+
+      preload() {
+        for (const c of this.cells) {
+          this.load.image('base_' + c.id, c.layers.base + '?v=' + VERSION);
+          this.load.image('fg_' + c.id, c.layers.foreground_overlay + '?v=' + VERSION);
+          this.load.image('mask_' + c.id, c.layers.collision_mask + '?v=' + VERSION);
+        }
+
+        if (window.preloadDonnyAssets) {
+          window.preloadDonnyAssets(this, VERSION);
+        }
+
+        this.load.spritesheet('astroVan', VAN_SHEET, { frameWidth: 128, frameHeight: 256 });
+      }
+
+      create() {
+        if (window.createDonnyAnimations) {
+          window.createDonnyAnimations(this);
+        }
+
+        const maxCol = Math.max(...this.cells.map(c => c.grid.col));
+        const maxRow = Math.max(...this.cells.map(c => c.grid.row));
+        this.worldW = (maxCol + 1) * CHUNK_W;
+        this.worldH = (maxRow + 1) * CHUNK_H;
+
+        this.cameras.main.setBounds(0, 0, this.worldW, this.worldH);
+        this.add.rectangle(this.worldW / 2, this.worldH / 2, this.worldW, this.worldH, 0x030405).setDepth(-10);
+
+        for (const c of this.cells) {
+          const x = c.grid.worldX;
+          const y = c.grid.worldY;
+
+          this.add.image(x, y, 'base_' + c.id).setOrigin(0).setDepth(0);
+
+          const maskOverlay = this.add.image(x, y, 'mask_' + c.id)
+            .setOrigin(0)
+            .setAlpha(0.28)
+            .setTint(0x00ff66)
+            .setDepth(85)
+            .setVisible(false);
+          this.maskOverlays.push(maskOverlay);
+
+          const label = this.add.text(x + 16, y + 16, `${c.cell} — ${c.title}`, {
+            fontFamily: 'monospace',
+            fontSize: '26px',
+            color: '#f4f0e2',
+            backgroundColor: 'rgba(0,0,0,.52)',
+            padding: { x: 8, y: 4 }
+          }).setDepth(120).setVisible(false);
+          this.labels.push(label);
+        }
+
+        this.vanShadow = this.add.ellipse(this.vanPos.x, this.vanPos.y + 42, 70, 24, 0x000000, 0.35).setDepth(54);
+        this.van = this.add.sprite(this.vanPos.x, this.vanPos.y, 'astroVan', 0).setOrigin(0.5, 0.62).setScale(0.48).setDepth(55);
+
+        this.donnyShadow = this.add.ellipse(this.pos.x, this.pos.y + 18, 22, 10, 0x000000, 0.35).setDepth(59);
+        this.donny = this.add.sprite(this.pos.x, this.pos.y, 'donny_idle_4dir', 0).setOrigin(0.5, 0.78).setScale(0.62).setDepth(60);
+        this.playDonnyAnim('idle', 'down');
+
+        for (const c of this.cells) {
+          this.add.image(c.grid.worldX, c.grid.worldY, 'fg_' + c.id).setOrigin(0).setDepth(100);
+        }
+
+        this.createMaskCanvases();
+
+        this.cursors = this.input.keyboard.createCursorKeys();
+        this.keys = this.input.keyboard.addKeys({
+          W: Phaser.Input.Keyboard.KeyCodes.W,
+          A: Phaser.Input.Keyboard.KeyCodes.A,
+          S: Phaser.Input.Keyboard.KeyCodes.S,
+          D: Phaser.Input.Keyboard.KeyCodes.D,
+          E: Phaser.Input.Keyboard.KeyCodes.E,
+          M: Phaser.Input.Keyboard.KeyCodes.M,
+          L: Phaser.Input.Keyboard.KeyCodes.L,
+          R: Phaser.Input.Keyboard.KeyCodes.R,
+          SHIFT: Phaser.Input.Keyboard.KeyCodes.SHIFT,
+          SPACE: Phaser.Input.Keyboard.KeyCodes.SPACE
+        });
+
+        this.cameras.main.startFollow(this.donny, true, 0.12, 0.12);
+        this.cameras.main.setZoom(window.innerWidth < window.innerHeight ? 0.55 : 0.62);
+
+        this.input.on('wheel', (_pointer, _objects, _dx, dy) => {
+          this.cameras.main.setZoom(Phaser.Math.Clamp(this.cameras.main.zoom + (dy > 0 ? -0.05 : 0.05), 0.35, 1.25));
+        });
+
+        setupMobileControls(this);
+
+        document.getElementById('startBtn').addEventListener('click', () => {
+          document.getElementById('titleCard').style.display = 'none';
+          this.started = true;
+        }, { once: true });
+
+        document.getElementById('hud').textContent = 'Glasswell loaded';
+      }
+
+      createMaskCanvases() {
+        for (const c of this.cells) {
+          const image = this.textures.get('mask_' + c.id).getSourceImage();
+          const canvas = document.createElement('canvas');
+          canvas.width = CHUNK_W;
+          canvas.height = CHUNK_H;
+          const ctx = canvas.getContext('2d', { willReadFrequently: true });
+          ctx.drawImage(image, 0, 0, CHUNK_W, CHUNK_H);
+          this.maskContexts[c.id] = ctx;
+        }
+      }
+
+      playDonnyAnim(mode, dir) {
+        if (!this.donny || this.inVan) return;
+        this.lastDir = dir || this.lastDir || 'down';
+        const key = `donny_${mode}_${this.lastDir}`;
+        if (this.anims.exists(key) && this.donny.anims.currentAnim?.key !== key) {
+          this.donny.play(key);
+        }
+      }
+
+      vectorToDir(dx, dy) {
+        if (Math.abs(dx) > Math.abs(dy)) return dx < 0 ? 'left' : 'right';
+        return dy < 0 ? 'up' : 'down';
+      }
+
+      currentCellAt(x, y) {
+        if (x < 0 || y < 0 || x >= this.worldW || y >= this.worldH) return null;
+        const col = Math.floor(x / CHUNK_W);
+        const row = Math.floor(y / CHUNK_H);
+        return this.cellByGrid[`${col},${row}`] || null;
+      }
+
+      isWhiteAt(x, y) {
+        const c = this.currentCellAt(x, y);
+        if (!c) return false;
+        const lx = Math.floor(x - c.grid.worldX);
+        const ly = Math.floor(y - c.grid.worldY);
+        if (lx < 0 || ly < 0 || lx >= CHUNK_W || ly >= CHUNK_H) return false;
+        const ctx = this.maskContexts[c.id];
+        if (!ctx) return true;
+        const data = ctx.getImageData(lx, ly, 1, 1).data;
+        return data[0] > 145;
+      }
+
+      canStandAt(x, y) {
+        const r = this.inVan ? 34 : 13;
+        const yFoot = y + (this.inVan ? 22 : 14);
+        const points = [
+          [x, yFoot],
+          [x - r, yFoot],
+          [x + r, yFoot],
+          [x, yFoot - r],
+          [x, yFoot + r],
+          [x - r * .7, yFoot - r * .7],
+          [x + r * .7, yFoot - r * .7],
+          [x - r * .7, yFoot + r * .7],
+          [x + r * .7, yFoot + r * .7]
+        ];
+        return points.every(([px, py]) => this.isWhiteAt(px, py));
+      }
+
+      moveWithCollision(dx, dy) {
+        const nx = this.pos.x + dx;
+        const ny = this.pos.y + dy;
+
+        if (this.canStandAt(nx, this.pos.y)) this.pos.x = nx;
+        if (this.canStandAt(this.pos.x, ny)) this.pos.y = ny;
+
+        if (this.inVan) {
+          this.vanPos.x = this.pos.x;
+          this.vanPos.y = this.pos.y;
+          this.van.setPosition(this.vanPos.x, this.vanPos.y);
+          this.vanShadow.setPosition(this.vanPos.x, this.vanPos.y + 42);
+        } else {
+          this.donny.setPosition(this.pos.x, this.pos.y);
+          this.donnyShadow.setPosition(this.pos.x, this.pos.y + 18);
+        }
+      }
+
+      toggleEnterExitVan() {
+        const dist = Phaser.Math.Distance.Between(this.pos.x, this.pos.y, this.vanPos.x, this.vanPos.y);
+
+        if (!this.inVan) {
+          if (dist <= 115) {
+            this.inVan = true;
+            this.pos.x = this.vanPos.x;
+            this.pos.y = this.vanPos.y;
+            this.donny.setVisible(false);
+            this.donnyShadow.setVisible(false);
+            this.van.setDepth(60);
+            this.vanShadow.setDepth(59);
+            this.cameras.main.startFollow(this.van, true, 0.12, 0.12);
+          }
+          return;
+        }
+
+        const exitX = this.vanPos.x + 72;
+        const exitY = this.vanPos.y + 10;
+
+        if (this.canStandAt(exitX, exitY)) {
+          this.inVan = false;
+          this.pos.x = exitX;
+          this.pos.y = exitY;
+          this.donny.setPosition(this.pos.x, this.pos.y).setVisible(true);
+          this.donnyShadow.setPosition(this.pos.x, this.pos.y + 18).setVisible(true);
+          this.van.setDepth(55);
+          this.vanShadow.setDepth(54);
+          this.playDonnyAnim('idle', this.lastDir);
+          this.cameras.main.startFollow(this.donny, true, 0.12, 0.12);
+        }
+      }
+
+      update(_time, deltaMs) {
+        if (!this.started) return;
+
+        if (Phaser.Input.Keyboard.JustDown(this.keys.E) || consumeButton('enterExit')) this.toggleEnterExitVan();
+        if (Phaser.Input.Keyboard.JustDown(this.keys.M) || consumeButton('mask')) this.toggleMask();
+        if (Phaser.Input.Keyboard.JustDown(this.keys.L)) this.toggleLabels();
+        if (Phaser.Input.Keyboard.JustDown(this.keys.R) || consumeButton('menu')) this.resetPlayer();
+
+        let dx = 0;
+        let dy = 0;
+
+        if (this.keys.A.isDown || this.cursors.left.isDown) dx -= 1;
+        if (this.keys.D.isDown || this.cursors.right.isDown) dx += 1;
+        if (this.keys.W.isDown || this.cursors.up.isDown) dy -= 1;
+        if (this.keys.S.isDown || this.cursors.down.isDown) dy += 1;
+
+        dx += TouchState.dx;
+        dy += TouchState.dy;
+
+        const moving = Math.hypot(dx, dy) > 0.01;
+
+        if (moving) {
+          const len = Math.hypot(dx, dy);
+          dx /= len;
+          dy /= len;
+
+          const dir = this.vectorToDir(dx, dy);
+          const running = this.keys.SHIFT.isDown || this.keys.SPACE.isDown || InputState.run;
+          const speed = this.inVan ? 330 : (running ? 320 : 210);
+
+          this.moveWithCollision(dx * speed * deltaMs / 1000, dy * speed * deltaMs / 1000);
+
+          if (this.inVan) {
+            const angle = Math.atan2(dy, dx) + Math.PI / 2;
+            this.van.rotation = angle;
+            this.vanShadow.rotation = angle;
+          } else {
+            this.playDonnyAnim(running ? 'run' : 'walk', dir);
+          }
+        } else if (!this.inVan) {
+          this.playDonnyAnim('idle', this.lastDir);
+        }
+
+        const currentX = this.inVan ? this.vanPos.x : this.pos.x;
+        const currentY = this.inVan ? this.vanPos.y : this.pos.y;
+        const c = this.currentCellAt(currentX, currentY);
+        const dist = Math.round(Phaser.Math.Distance.Between(this.pos.x, this.pos.y, this.vanPos.x, this.vanPos.y));
+
+        document.getElementById('hud').textContent =
+          `Glasswell\n${this.inVan ? 'Driving Astro Van' : 'Donny'}\n${c ? c.cell + ' — ' + c.title : 'Outside route'}\nA: ${this.inVan ? 'exit van' : (dist <= 115 ? 'enter van' : 'near van to enter')}`;
+      }
+
+      toggleMask() {
+        this.showMask = !this.showMask;
+        this.maskOverlays.forEach(o => o.setVisible(this.showMask));
+      }
+
+      toggleLabels() {
+        this.showLabels = !this.showLabels;
+        this.labels.forEach(l => l.setVisible(this.showLabels));
+      }
+
+      resetPlayer() {
+        this.inVan = false;
+        const startChunk = this.manifest?.start?.chunk || 'GLASSWELL_C3';
+        const startCell = this.cells.find(c => c.id === startChunk) || this.cells.find(c => c.cell === 'C3');
+        const local = this.manifest?.start?.local || { x: 768, y: 640 };
+        this.pos.x = startCell.grid.worldX + local.x;
+        this.pos.y = startCell.grid.worldY + local.y;
+
+        const vehicle = this.manifest?.vehicles?.find(v => v.id === 'ASTRO_VAN');
+        this.vanPos.x = startCell.grid.worldX + (vehicle?.local?.x || 705);
+        this.vanPos.y = startCell.grid.worldY + (vehicle?.local?.y || 720);
+
+        this.donny.setPosition(this.pos.x, this.pos.y).setVisible(true);
+        this.donnyShadow.setPosition(this.pos.x, this.pos.y + 18).setVisible(true);
+        this.van.setPosition(this.vanPos.x, this.vanPos.y).setRotation(0).setDepth(55);
+        this.vanShadow.setPosition(this.vanPos.x, this.vanPos.y + 42).setRotation(0).setDepth(54);
+        this.lastDir = 'down';
+        this.playDonnyAnim('idle', 'down');
+        this.cameras.main.startFollow(this.donny, true, 0.12, 0.12);
+      }
+    }
+
+    function consumeButton(name) {
+      if (!InputState[name]) return false;
+      InputState[name] = false;
+      return true;
+    }
+
+    function setupMobileControls(scene) {
+      const base = document.getElementById('stickBase');
+      const knob = document.getElementById('stickKnob');
+
+      const center = () => {
+        const r = base.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2, radius: r.width / 2 };
+      };
+
+      const setStick = (clientX, clientY) => {
+        const c = center();
+        const rawX = clientX - c.x;
+        const rawY = clientY - c.y;
+        const dist = Math.hypot(rawX, rawY);
+        const max = c.radius - 26;
+        const clamped = Math.min(dist, max);
+        const nx = dist > 0 ? rawX / dist : 0;
+        const ny = dist > 0 ? rawY / dist : 0;
+
+        knob.style.left = `${(base.clientWidth - knob.clientWidth) / 2 + nx * clamped}px`;
+        knob.style.top = `${(base.clientHeight - knob.clientHeight) / 2 + ny * clamped}px`;
+
+        TouchState.dx = nx * (clamped / max);
+        TouchState.dy = ny * (clamped / max);
+      };
+
+      const resetStick = () => {
+        knob.style.left = `${(base.clientWidth - knob.clientWidth) / 2}px`;
+        knob.style.top = `${(base.clientHeight - knob.clientHeight) / 2}px`;
+        TouchState.active = false;
+        TouchState.pointerId = null;
+        TouchState.dx = 0;
+        TouchState.dy = 0;
+      };
+
+      resetStick();
+
+      base.addEventListener('pointerdown', e => {
+        TouchState.active = true;
+        TouchState.pointerId = e.pointerId;
+        base.setPointerCapture(e.pointerId);
+        setStick(e.clientX, e.clientY);
+      });
+
+      base.addEventListener('pointermove', e => {
+        if (TouchState.active && e.pointerId === TouchState.pointerId) setStick(e.clientX, e.clientY);
+      });
+
+      base.addEventListener('pointerup', resetStick);
+      base.addEventListener('pointercancel', resetStick);
+
+      const bindHold = (id, key) => {
+        const el = document.getElementById(id);
+        el.addEventListener('pointerdown', e => {
+          e.preventDefault();
+          InputState[key] = true;
+          el.classList.add('down');
+        });
+        el.addEventListener('pointerup', e => {
+          e.preventDefault();
+          if (key === 'run') InputState[key] = false;
+          el.classList.remove('down');
+        });
+        el.addEventListener('pointercancel', () => {
+          if (key === 'run') InputState[key] = false;
+          el.classList.remove('down');
+        });
+      };
+
+      bindHold('btnB', 'run');
+
+      document.getElementById('btnA').addEventListener('pointerdown', e => {
+        e.preventDefault();
+        InputState.enterExit = true;
+      });
+
+      document.getElementById('btnX').addEventListener('pointerdown', e => {
+        e.preventDefault();
+        InputState.interact = true;
+      });
+
+      document.getElementById('btnY').addEventListener('pointerdown', e => {
+        e.preventDefault();
+        InputState.action = true;
+      });
+
+      document.getElementById('btnMask').addEventListener('pointerdown', e => {
+        e.preventDefault();
+        InputState.mask = true;
+      });
+
+      document.getElementById('btnMenu').addEventListener('pointerdown', e => {
+        e.preventDefault();
+        InputState.menu = true;
+      });
+    }
+
+    new Phaser.Game({
+      type: Phaser.AUTO,
+      parent: 'game-wrap',
+      width: 960,
+      height: 540,
+      backgroundColor: '#030405',
+      scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH
+      },
+      render: {
+        pixelArt: false,
+        antialias: true,
+        roundPixels: false
+      },
+      physics: {
+        default: 'arcade',
+        arcade: { debug: false }
+      },
+      scene: [BootScene, GameScene]
+    });
+  </script>
+</body>
+</html>
