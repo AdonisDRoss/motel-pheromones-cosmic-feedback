@@ -1,771 +1,767 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Cosmic Feedback — Glasswell</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
-  <style>
-    :root {
-      --ui-bg: rgba(4, 6, 8, .58);
-      --ui-line: rgba(255,255,255,.26);
-      --ui-text: rgba(255,255,255,.92);
-      --ui-soft: rgba(255,255,255,.14);
-    }
+<meta charset="UTF-8" />
+<title>Cosmic Feedback — Glasswell C3</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="screen-orientation" content="landscape" />
+<meta name="x5-orientation" content="landscape" />
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js" crossorigin="anonymous"></script>
+<script>
+if (!window.Phaser) {
+  document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.70.0/phaser.min.js"><\/script>');
+}
+</script>
+<style>
+* {
+  box-sizing: border-box;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
 
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #030405;
-      color: white;
-      font-family: ui-monospace, Menlo, Consolas, monospace;
-      touch-action: none;
-      -webkit-user-select: none;
-      user-select: none;
-    }
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  touch-action: none;
+  overscroll-behavior: none;
+}
 
-    #game-wrap {
-      position: fixed;
-      inset: 0;
-      width: 100vw;
-      height: 100vh;
-      background: #030405;
-      overflow: hidden;
-    }
+body {
+  position: fixed;
+  inset: 0;
+  font-family: Arial, sans-serif;
+}
 
-    canvas {
-      display: block;
-    }
+#game {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #000;
+  z-index: 1;
+}
 
-    #mobileControls {
-      position: fixed;
-      inset: 0;
-      z-index: 20;
-      pointer-events: none;
-      touch-action: none;
-    }
+canvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
 
-    #stickBase {
-      position: absolute;
-      left: max(20px, env(safe-area-inset-left));
-      bottom: max(22px, env(safe-area-inset-bottom));
-      width: 132px;
-      height: 132px;
-      border-radius: 50%;
-      border: 2px solid var(--ui-line);
-      background: rgba(0,0,0,.30);
-      pointer-events: auto;
-      box-shadow: inset 0 0 22px rgba(255,255,255,.05);
-    }
+#touchControls {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  touch-action: none;
+}
 
-    #stickKnob {
-      position: absolute;
-      left: 43px;
-      top: 43px;
-      width: 46px;
-      height: 46px;
-      border-radius: 50%;
-      border: 2px solid rgba(255,255,255,.42);
-      background: rgba(255,255,255,.28);
-      box-shadow: 0 0 12px rgba(255,255,255,.10);
-    }
+#stickBase {
+  position: absolute;
+  left: max(42px, env(safe-area-inset-left));
+  bottom: max(54px, env(safe-area-inset-bottom));
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 4px solid rgba(255,255,255,.28);
+  background: radial-gradient(circle, rgba(255,255,255,.08), rgba(0,0,0,.28));
+  box-shadow: 0 0 22px rgba(0,0,0,.45);
+  pointer-events: auto;
+  touch-action: none;
+}
 
-    #snesPad {
-      position: absolute;
-      right: max(18px, env(safe-area-inset-right));
-      bottom: max(22px, env(safe-area-inset-bottom));
-      width: 186px;
-      height: 156px;
-      pointer-events: auto;
-    }
+#stickKnob {
+  position: absolute;
+  left: 51px;
+  top: 51px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.25);
+  border: 3px solid rgba(255,255,255,.45);
+}
 
-    .snes-btn {
-      position: absolute;
-      width: 58px;
-      height: 58px;
-      border-radius: 50%;
-      border: 2px solid var(--ui-line);
-      background: rgba(5,7,10,.72);
-      color: var(--ui-text);
-      font: 700 20px ui-monospace, Menlo, Consolas, monospace;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: inset 0 0 18px rgba(255,255,255,.04);
-    }
+.touchBtn {
+  position: absolute;
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  border: 4px solid rgba(255,255,255,.26);
+  background: rgba(6,8,14,.72);
+  color: #fff;
+  font: 800 24px Arial, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  touch-action: none;
+  box-shadow: 0 0 18px rgba(0,0,0,.35);
+}
 
-    .snes-btn:active,
-    .snes-btn.down {
-      background: rgba(255,255,255,.26);
-      transform: scale(.96);
-    }
+.touchBtn:active {
+  transform: scale(.96);
+  background: rgba(255,255,255,.18);
+}
 
-    #btnY { left: 0; top: 49px; }
-    #btnX { left: 64px; top: 0; }
-    #btnB { left: 64px; top: 98px; }
-    #btnA { left: 128px; top: 49px; }
+#btnX {
+  right: 116px;
+  bottom: max(205px, calc(env(safe-area-inset-bottom) + 205px));
+}
 
-    #centerButtons {
-      position: absolute;
-      left: 50%;
-      bottom: max(24px, env(safe-area-inset-bottom));
-      transform: translateX(-50%);
-      display: flex;
-      gap: 14px;
-      pointer-events: auto;
-    }
+#btnY {
+  right: 220px;
+  bottom: max(125px, calc(env(safe-area-inset-bottom) + 125px));
+}
 
-    .pill-btn {
-      min-width: 72px;
-      height: 44px;
-      border-radius: 22px;
-      border: 2px solid var(--ui-line);
-      background: rgba(5,7,10,.65);
-      color: var(--ui-text);
-      font: 700 14px ui-monospace, Menlo, Consolas, monospace;
-    }
+#btnA {
+  right: 28px;
+  bottom: max(125px, calc(env(safe-area-inset-bottom) + 125px));
+}
 
-    .pill-btn:active,
-    .pill-btn.down {
-      background: rgba(255,255,255,.22);
-      transform: scale(.98);
-    }
+#btnB {
+  right: 116px;
+  bottom: max(42px, calc(env(safe-area-inset-bottom) + 42px));
+}
 
-    #hud {
-      position: fixed;
-      left: max(10px, env(safe-area-inset-left));
-      top: max(10px, env(safe-area-inset-top));
-      z-index: 30;
-      pointer-events: none;
-      font-size: 12px;
-      line-height: 1.3;
-      color: rgba(240,240,230,.92);
-      background: rgba(0,0,0,.36);
-      border: 1px solid rgba(255,255,255,.14);
-      padding: 6px 8px;
-      max-width: min(420px, calc(100vw - 20px));
-      white-space: pre-line;
-    }
+#btnMenu,
+#btnMask {
+  position: absolute;
+  bottom: max(178px, calc(env(safe-area-inset-bottom) + 178px));
+  width: 130px;
+  height: 48px;
+  border-radius: 25px;
+  border: 3px solid rgba(255,255,255,.25);
+  background: rgba(7,8,12,.72);
+  color: #fff;
+  font: 800 17px Arial, sans-serif;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  touch-action: none;
+}
 
-    #titleCard {
-      position: fixed;
-      inset: 0;
-      z-index: 40;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background:
-        radial-gradient(circle at 50% 40%, rgba(120,20,20,.24), transparent 34%),
-        linear-gradient(#030405, #090909);
-      color: white;
-    }
+#btnMenu {
+  left: calc(50vw - 158px);
+}
 
-    #titlePanel {
-      width: min(760px, calc(100vw - 34px));
-      border: 2px solid rgba(255,255,255,.20);
-      background: rgba(0,0,0,.72);
-      padding: 22px;
-      box-shadow: 0 0 44px rgba(0,0,0,.55);
-    }
+#btnMask {
+  left: calc(50vw + 22px);
+}
 
-    #titlePanel h1 {
-      margin: 0 0 8px;
-      font-size: clamp(28px, 5vw, 54px);
-      letter-spacing: .08em;
-      font-weight: 900;
-    }
+#bootError {
+  position: fixed;
+  left: 12px;
+  top: 12px;
+  z-index: 9999;
+  max-width: 88vw;
+  display: none;
+  white-space: pre-wrap;
+  background: rgba(0,0,0,.88);
+  border: 2px solid #ff3636;
+  color: #fff;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font: 700 13px/1.35 monospace;
+  pointer-events: none;
+}
 
-    #titlePanel p {
-      margin: 8px 0;
-      color: rgba(255,255,255,.78);
-      font-size: 14px;
-      line-height: 1.45;
-    }
+@media (orientation: portrait) {
+  #touchControls {
+    display: none;
+  }
 
-    #startBtn {
-      margin-top: 18px;
-      border: 2px solid rgba(255,255,255,.28);
-      background: rgba(140,18,18,.65);
-      color: white;
-      padding: 12px 18px;
-      font: 800 16px ui-monospace, Menlo, Consolas, monospace;
-      letter-spacing: .08em;
-    }
-
-    @media (orientation: portrait) {
-      #stickBase {
-        width: 118px;
-        height: 118px;
-      }
-      #stickKnob {
-        left: 38px;
-        top: 38px;
-        width: 42px;
-        height: 42px;
-      }
-      #snesPad {
-        width: 170px;
-        height: 144px;
-      }
-      .snes-btn {
-        width: 52px;
-        height: 52px;
-        font-size: 18px;
-      }
-      #btnY { left: 0; top: 46px; }
-      #btnX { left: 59px; top: 0; }
-      #btnB { left: 59px; top: 92px; }
-      #btnA { left: 118px; top: 46px; }
-      #centerButtons {
-        bottom: max(178px, env(safe-area-inset-bottom));
-        gap: 10px;
-      }
-      .pill-btn {
-        min-width: 60px;
-        height: 38px;
-        font-size: 12px;
-      }
-    }
-  </style>
+  #game:after {
+    content: "Rotate phone sideways";
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #050509;
+    color: white;
+    font: 700 24px Arial, sans-serif;
+    z-index: 9998;
+  }
+}
+</style>
 </head>
 <body>
-  <div id="game-wrap"></div>
+<div id="game"></div>
 
-  <div id="hud">Loading Glasswell...</div>
-
-  <div id="mobileControls">
-    <div id="stickBase"><div id="stickKnob"></div></div>
-
-    <div id="centerButtons">
-      <button id="btnMenu" class="pill-btn">MENU</button>
-      <button id="btnMask" class="pill-btn">MASK</button>
-    </div>
-
-    <div id="snesPad">
-      <button id="btnY" class="snes-btn">Y</button>
-      <button id="btnX" class="snes-btn">X</button>
-      <button id="btnB" class="snes-btn">B</button>
-      <button id="btnA" class="snes-btn">A</button>
-    </div>
+<div id="touchControls">
+  <div id="stickBase">
+    <div id="stickKnob"></div>
   </div>
 
-  <div id="titleCard">
-    <div id="titlePanel">
-      <h1>COSMIC FEEDBACK</h1>
-      <p>GLASSWELL — DUST-9 CITY VIEW</p>
-      <p>Donny starts at the Main Civic Gate. Find the Sable Kin contact. The Astro Van is nearby.</p>
-      <p>Controls: left stick move · B dash/run · A enter/exit van · X interact · Y action · MASK toggles collision view.</p>
-      <button id="startBtn">START STORY</button>
-    </div>
-  </div>
+  <div id="btnMenu">MENU</div>
+  <div id="btnMask">MASK</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
-  <script src="scripts/donny_asset_registry.js?v=126"></script>
-  <script>
-    const VERSION = '126';
-    const CHUNK_W = 1536;
-    const CHUNK_H = 1152;
-    const MANIFEST_URL = 'assets/maps/dust9/glasswell/glasswell_city_manifest_v095.json?v=' + VERSION;
-    const VAN_SHEET = 'assets/vehicles/donny_astro_van/donny_astro_van_4frame_sheet_512x256.png?v=' + VERSION;
+  <div id="btnX" class="touchBtn">X</div>
+  <div id="btnY" class="touchBtn">Y</div>
+  <div id="btnA" class="touchBtn">A</div>
+  <div id="btnB" class="touchBtn">B</div>
+</div>
 
-    const InputState = {
-      moveX: 0,
-      moveY: 0,
-      run: false,
-      action: false,
-      enterExit: false,
-      interact: false,
-      mask: false,
-      menu: false
-    };
+<div id="bootError"></div>
 
-    const TouchState = {
-      active: false,
-      pointerId: null,
-      dx: 0,
-      dy: 0
-    };
+<script>
+'use strict';
 
-    class BootScene extends Phaser.Scene {
-      constructor() {
-        super('BootScene');
-      }
+const W = 960;
+const H = 540;
+const VERSION = 'glasswell-c3-real-map-002';
 
-      preload() {
-        this.load.json('glasswellManifest', MANIFEST_URL);
-      }
+function showBootError(message) {
+  const box = document.getElementById('bootError');
+  if (!box) return;
+  box.style.display = 'block';
+  box.textContent = String(message || 'Unknown error');
+}
 
-      create() {
-        const manifest = this.cache.json.get('glasswellManifest');
-        this.scene.start('GameScene', { manifest });
-      }
+window.addEventListener('error', event => {
+  showBootError('GAME ERROR: ' + (event.message || 'unknown error'));
+});
+
+window.addEventListener('unhandledrejection', event => {
+  showBootError('GAME ERROR: ' + ((event.reason && event.reason.message) || event.reason || 'unhandled promise rejection'));
+});
+
+window.addEventListener('contextmenu', event => event.preventDefault());
+window.addEventListener('gesturestart', event => event.preventDefault());
+document.addEventListener('touchmove', event => event.preventDefault(), { passive: false });
+
+function withVersion(path) {
+  return `${path}${path.includes('?') ? '&' : '?'}v=${VERSION}`;
+}
+
+/*
+  REAL GLASSWELL C3 MAP PATHS.
+  The first path is the intended production path.
+  Extra paths are included only to find the uploaded file if it was placed somewhere else.
+  This build does NOT draw a fake test map. If no real map is found, it shows a red error.
+*/
+const MAP_BASE_CANDIDATES = [
+  { key: 'glasswell_c3_base_real', path: 'assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_base.png' },
+  { key: 'glasswell_c3_base_lower', path: 'assets/maps/dust9/glasswell/c3/layers/glasswell_c3_base.png' },
+  { key: 'glasswell_c3_base_flat', path: 'assets/maps/dust9/glasswell/c3/GLASSWELL_C3_base.png' },
+  { key: 'glasswell_c3_base_simple', path: 'assets/maps/glasswell/GLASSWELL_C3_base.png' },
+  { key: 'glasswell_c3_base_level', path: 'assets/levels/glasswell/GLASSWELL_C3_base.png' },
+  { key: 'glasswell_c3_base_level_flat', path: 'assets/levels/GLASSWELL_C3_base.png' },
+  { key: 'glasswell_c3_base_bg', path: 'assets/backgrounds/glasswell/GLASSWELL_C3_base.png' },
+  { key: 'glasswell_c3_base_root', path: 'GLASSWELL_C3_base.png' }
+];
+
+const MAP_OVERLAY_CANDIDATES = [
+  { key: 'glasswell_c3_overlay_real', path: 'assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_foreground_overlay.png' },
+  { key: 'glasswell_c3_overlay_lower', path: 'assets/maps/dust9/glasswell/c3/layers/glasswell_c3_foreground_overlay.png' },
+  { key: 'glasswell_c3_overlay_simple', path: 'assets/maps/glasswell/GLASSWELL_C3_foreground_overlay.png' },
+  { key: 'glasswell_c3_overlay_level', path: 'assets/levels/glasswell/GLASSWELL_C3_foreground_overlay.png' }
+];
+
+const MASK_CANDIDATES = [
+  { key: 'glasswell_c3_mask_real', path: 'assets/maps/dust9/glasswell/c3/masks/GLASSWELL_C3_collision_mask.png' },
+  { key: 'glasswell_c3_mask_simple', path: 'assets/maps/glasswell/GLASSWELL_C3_collision_mask.png' },
+  { key: 'glasswell_c3_mask_alt', path: 'assets/maps/glasswell/GLASSWELL_C3_collision.png' }
+];
+
+const DONNY_CANDIDATES = [
+  {
+    key: 'donny_overhead',
+    path: 'assets/sprites/player/donny/donny_overhead_noguitar_phaser_ready_1779508629.png',
+    frameWidth: 192,
+    frameHeight: 288,
+    scale: 0.32,
+    layout: '4f'
+  },
+  {
+    key: 'donny_walk',
+    path: 'assets/sprites/player/donny/donny_walk_4dir.png',
+    frameWidth: 128,
+    frameHeight: 128,
+    scale: 0.72,
+    layout: '4f'
+  }
+];
+
+const VAN_CANDIDATES = [
+  {
+    key: 'astro_van',
+    path: 'assets/sprites/vehicles/astro_van/astro_van_v1_sheet.png',
+    frameWidth: 320,
+    frameHeight: 320,
+    scale: 0.55
+  },
+  {
+    key: 'astro_van_alt',
+    path: 'assets/sprites/vehicles/astro_van/astro_van.png',
+    frameWidth: 320,
+    frameHeight: 320,
+    scale: 0.55
+  }
+];
+
+function firstLoaded(scene, list) {
+  for (const item of list) {
+    if (scene.textures.exists(item.key)) return item;
+  }
+  return null;
+}
+
+const PAD = {
+  x: 0,
+  y: 0,
+  a: false,
+  b: false,
+  xBtn: false,
+  yBtn: false,
+  menu: false,
+  mask: false
+};
+
+function bindTouchControls() {
+  const base = document.getElementById('stickBase');
+  const knob = document.getElementById('stickKnob');
+
+  let active = false;
+  let pointerId = null;
+
+  function resetStick() {
+    active = false;
+    pointerId = null;
+    PAD.x = 0;
+    PAD.y = 0;
+
+    if (knob) {
+      knob.style.left = '51px';
+      knob.style.top = '51px';
+    }
+  }
+
+  function moveStick(clientX, clientY) {
+    const rect = base.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    let dx = clientX - centerX;
+    let dy = clientY - centerY;
+
+    const max = 52;
+    const length = Math.hypot(dx, dy) || 1;
+
+    if (length > max) {
+      dx = dx / length * max;
+      dy = dy / length * max;
     }
 
-    class GameScene extends Phaser.Scene {
-      constructor() {
-        super('GameScene');
-        this.cells = [];
-        this.cellByGrid = {};
-        this.maskContexts = {};
-        this.maskOverlays = [];
-        this.labels = [];
-        this.showMask = false;
-        this.showLabels = false;
-        this.inVan = false;
-        this.lastDir = 'down';
-        this.pos = { x: 0, y: 0 };
-        this.vanPos = { x: 0, y: 0 };
-        this.worldW = CHUNK_W * 5;
-        this.worldH = CHUNK_H * 5;
-        this.started = false;
-      }
+    PAD.x = dx / max;
+    PAD.y = dy / max;
 
-      init(data) {
-        this.manifest = data.manifest;
-        this.cells = (this.manifest && this.manifest.chunks) ? this.manifest.chunks : [];
-        this.cellByGrid = {};
-        for (const c of this.cells) {
-          this.cellByGrid[`${c.grid.col},${c.grid.row}`] = c;
-        }
-
-        const startChunk = this.manifest?.start?.chunk || 'GLASSWELL_C3';
-        const startCell = this.cells.find(c => c.id === startChunk) || this.cells.find(c => c.cell === 'C3');
-        const startLocal = this.manifest?.start?.local || { x: 768, y: 640 };
-        if (startCell) {
-          this.pos.x = startCell.grid.worldX + startLocal.x;
-          this.pos.y = startCell.grid.worldY + startLocal.y;
-        } else {
-          this.pos.x = CHUNK_W * 2 + 768;
-          this.pos.y = CHUNK_H * 2 + 640;
-        }
-
-        const vehicle = this.manifest?.vehicles?.find(v => v.id === 'ASTRO_VAN');
-        if (vehicle && startCell) {
-          this.vanPos.x = startCell.grid.worldX + vehicle.local.x;
-          this.vanPos.y = startCell.grid.worldY + vehicle.local.y;
-        } else {
-          this.vanPos.x = this.pos.x + 130;
-          this.vanPos.y = this.pos.y + 80;
-        }
-      }
-
-      preload() {
-        for (const c of this.cells) {
-          this.load.image('base_' + c.id, c.layers.base + '?v=' + VERSION);
-          this.load.image('fg_' + c.id, c.layers.foreground_overlay + '?v=' + VERSION);
-          this.load.image('mask_' + c.id, c.layers.collision_mask + '?v=' + VERSION);
-        }
-
-        if (window.preloadDonnyAssets) {
-          window.preloadDonnyAssets(this, VERSION);
-        }
-
-        this.load.spritesheet('astroVan', VAN_SHEET, { frameWidth: 128, frameHeight: 256 });
-      }
-
-      create() {
-        if (window.createDonnyAnimations) {
-          window.createDonnyAnimations(this);
-        }
-
-        const maxCol = Math.max(...this.cells.map(c => c.grid.col));
-        const maxRow = Math.max(...this.cells.map(c => c.grid.row));
-        this.worldW = (maxCol + 1) * CHUNK_W;
-        this.worldH = (maxRow + 1) * CHUNK_H;
-
-        this.cameras.main.setBounds(0, 0, this.worldW, this.worldH);
-        this.add.rectangle(this.worldW / 2, this.worldH / 2, this.worldW, this.worldH, 0x030405).setDepth(-10);
-
-        for (const c of this.cells) {
-          const x = c.grid.worldX;
-          const y = c.grid.worldY;
-
-          this.add.image(x, y, 'base_' + c.id).setOrigin(0).setDepth(0);
-
-          const maskOverlay = this.add.image(x, y, 'mask_' + c.id)
-            .setOrigin(0)
-            .setAlpha(0.28)
-            .setTint(0x00ff66)
-            .setDepth(85)
-            .setVisible(false);
-          this.maskOverlays.push(maskOverlay);
-
-          const label = this.add.text(x + 16, y + 16, `${c.cell} — ${c.title}`, {
-            fontFamily: 'monospace',
-            fontSize: '26px',
-            color: '#f4f0e2',
-            backgroundColor: 'rgba(0,0,0,.52)',
-            padding: { x: 8, y: 4 }
-          }).setDepth(120).setVisible(false);
-          this.labels.push(label);
-        }
-
-        this.vanShadow = this.add.ellipse(this.vanPos.x, this.vanPos.y + 42, 70, 24, 0x000000, 0.35).setDepth(54);
-        this.van = this.add.sprite(this.vanPos.x, this.vanPos.y, 'astroVan', 0).setOrigin(0.5, 0.62).setScale(0.48).setDepth(55);
-
-        this.donnyShadow = this.add.ellipse(this.pos.x, this.pos.y + 18, 22, 10, 0x000000, 0.35).setDepth(59);
-        this.donny = this.add.sprite(this.pos.x, this.pos.y, 'donny_idle_4dir', 0).setOrigin(0.5, 0.78).setScale(0.62).setDepth(60);
-        this.playDonnyAnim('idle', 'down');
-
-        for (const c of this.cells) {
-          this.add.image(c.grid.worldX, c.grid.worldY, 'fg_' + c.id).setOrigin(0).setDepth(100);
-        }
-
-        this.createMaskCanvases();
-
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.keys = this.input.keyboard.addKeys({
-          W: Phaser.Input.Keyboard.KeyCodes.W,
-          A: Phaser.Input.Keyboard.KeyCodes.A,
-          S: Phaser.Input.Keyboard.KeyCodes.S,
-          D: Phaser.Input.Keyboard.KeyCodes.D,
-          E: Phaser.Input.Keyboard.KeyCodes.E,
-          M: Phaser.Input.Keyboard.KeyCodes.M,
-          L: Phaser.Input.Keyboard.KeyCodes.L,
-          R: Phaser.Input.Keyboard.KeyCodes.R,
-          SHIFT: Phaser.Input.Keyboard.KeyCodes.SHIFT,
-          SPACE: Phaser.Input.Keyboard.KeyCodes.SPACE
-        });
-
-        this.cameras.main.startFollow(this.donny, true, 0.12, 0.12);
-        this.cameras.main.setZoom(window.innerWidth < window.innerHeight ? 0.55 : 0.62);
-
-        this.input.on('wheel', (_pointer, _objects, _dx, dy) => {
-          this.cameras.main.setZoom(Phaser.Math.Clamp(this.cameras.main.zoom + (dy > 0 ? -0.05 : 0.05), 0.35, 1.25));
-        });
-
-        setupMobileControls(this);
-
-        document.getElementById('startBtn').addEventListener('click', () => {
-          document.getElementById('titleCard').style.display = 'none';
-          this.started = true;
-        }, { once: true });
-
-        document.getElementById('hud').textContent = 'Glasswell loaded';
-      }
-
-      createMaskCanvases() {
-        for (const c of this.cells) {
-          const image = this.textures.get('mask_' + c.id).getSourceImage();
-          const canvas = document.createElement('canvas');
-          canvas.width = CHUNK_W;
-          canvas.height = CHUNK_H;
-          const ctx = canvas.getContext('2d', { willReadFrequently: true });
-          ctx.drawImage(image, 0, 0, CHUNK_W, CHUNK_H);
-          this.maskContexts[c.id] = ctx;
-        }
-      }
-
-      playDonnyAnim(mode, dir) {
-        if (!this.donny || this.inVan) return;
-        this.lastDir = dir || this.lastDir || 'down';
-        const key = `donny_${mode}_${this.lastDir}`;
-        if (this.anims.exists(key) && this.donny.anims.currentAnim?.key !== key) {
-          this.donny.play(key);
-        }
-      }
-
-      vectorToDir(dx, dy) {
-        if (Math.abs(dx) > Math.abs(dy)) return dx < 0 ? 'left' : 'right';
-        return dy < 0 ? 'up' : 'down';
-      }
-
-      currentCellAt(x, y) {
-        if (x < 0 || y < 0 || x >= this.worldW || y >= this.worldH) return null;
-        const col = Math.floor(x / CHUNK_W);
-        const row = Math.floor(y / CHUNK_H);
-        return this.cellByGrid[`${col},${row}`] || null;
-      }
-
-      isWhiteAt(x, y) {
-        const c = this.currentCellAt(x, y);
-        if (!c) return false;
-        const lx = Math.floor(x - c.grid.worldX);
-        const ly = Math.floor(y - c.grid.worldY);
-        if (lx < 0 || ly < 0 || lx >= CHUNK_W || ly >= CHUNK_H) return false;
-        const ctx = this.maskContexts[c.id];
-        if (!ctx) return true;
-        const data = ctx.getImageData(lx, ly, 1, 1).data;
-        return data[0] > 145;
-      }
-
-      canStandAt(x, y) {
-        const r = this.inVan ? 34 : 13;
-        const yFoot = y + (this.inVan ? 22 : 14);
-        const points = [
-          [x, yFoot],
-          [x - r, yFoot],
-          [x + r, yFoot],
-          [x, yFoot - r],
-          [x, yFoot + r],
-          [x - r * .7, yFoot - r * .7],
-          [x + r * .7, yFoot - r * .7],
-          [x - r * .7, yFoot + r * .7],
-          [x + r * .7, yFoot + r * .7]
-        ];
-        return points.every(([px, py]) => this.isWhiteAt(px, py));
-      }
-
-      moveWithCollision(dx, dy) {
-        const nx = this.pos.x + dx;
-        const ny = this.pos.y + dy;
-
-        if (this.canStandAt(nx, this.pos.y)) this.pos.x = nx;
-        if (this.canStandAt(this.pos.x, ny)) this.pos.y = ny;
-
-        if (this.inVan) {
-          this.vanPos.x = this.pos.x;
-          this.vanPos.y = this.pos.y;
-          this.van.setPosition(this.vanPos.x, this.vanPos.y);
-          this.vanShadow.setPosition(this.vanPos.x, this.vanPos.y + 42);
-        } else {
-          this.donny.setPosition(this.pos.x, this.pos.y);
-          this.donnyShadow.setPosition(this.pos.x, this.pos.y + 18);
-        }
-      }
-
-      toggleEnterExitVan() {
-        const dist = Phaser.Math.Distance.Between(this.pos.x, this.pos.y, this.vanPos.x, this.vanPos.y);
-
-        if (!this.inVan) {
-          if (dist <= 115) {
-            this.inVan = true;
-            this.pos.x = this.vanPos.x;
-            this.pos.y = this.vanPos.y;
-            this.donny.setVisible(false);
-            this.donnyShadow.setVisible(false);
-            this.van.setDepth(60);
-            this.vanShadow.setDepth(59);
-            this.cameras.main.startFollow(this.van, true, 0.12, 0.12);
-          }
-          return;
-        }
-
-        const exitX = this.vanPos.x + 72;
-        const exitY = this.vanPos.y + 10;
-
-        if (this.canStandAt(exitX, exitY)) {
-          this.inVan = false;
-          this.pos.x = exitX;
-          this.pos.y = exitY;
-          this.donny.setPosition(this.pos.x, this.pos.y).setVisible(true);
-          this.donnyShadow.setPosition(this.pos.x, this.pos.y + 18).setVisible(true);
-          this.van.setDepth(55);
-          this.vanShadow.setDepth(54);
-          this.playDonnyAnim('idle', this.lastDir);
-          this.cameras.main.startFollow(this.donny, true, 0.12, 0.12);
-        }
-      }
-
-      update(_time, deltaMs) {
-        if (!this.started) return;
-
-        if (Phaser.Input.Keyboard.JustDown(this.keys.E) || consumeButton('enterExit')) this.toggleEnterExitVan();
-        if (Phaser.Input.Keyboard.JustDown(this.keys.M) || consumeButton('mask')) this.toggleMask();
-        if (Phaser.Input.Keyboard.JustDown(this.keys.L)) this.toggleLabels();
-        if (Phaser.Input.Keyboard.JustDown(this.keys.R) || consumeButton('menu')) this.resetPlayer();
-
-        let dx = 0;
-        let dy = 0;
-
-        if (this.keys.A.isDown || this.cursors.left.isDown) dx -= 1;
-        if (this.keys.D.isDown || this.cursors.right.isDown) dx += 1;
-        if (this.keys.W.isDown || this.cursors.up.isDown) dy -= 1;
-        if (this.keys.S.isDown || this.cursors.down.isDown) dy += 1;
-
-        dx += TouchState.dx;
-        dy += TouchState.dy;
-
-        const moving = Math.hypot(dx, dy) > 0.01;
-
-        if (moving) {
-          const len = Math.hypot(dx, dy);
-          dx /= len;
-          dy /= len;
-
-          const dir = this.vectorToDir(dx, dy);
-          const running = this.keys.SHIFT.isDown || this.keys.SPACE.isDown || InputState.run;
-          const speed = this.inVan ? 330 : (running ? 320 : 210);
-
-          this.moveWithCollision(dx * speed * deltaMs / 1000, dy * speed * deltaMs / 1000);
-
-          if (this.inVan) {
-            const angle = Math.atan2(dy, dx) + Math.PI / 2;
-            this.van.rotation = angle;
-            this.vanShadow.rotation = angle;
-          } else {
-            this.playDonnyAnim(running ? 'run' : 'walk', dir);
-          }
-        } else if (!this.inVan) {
-          this.playDonnyAnim('idle', this.lastDir);
-        }
-
-        const currentX = this.inVan ? this.vanPos.x : this.pos.x;
-        const currentY = this.inVan ? this.vanPos.y : this.pos.y;
-        const c = this.currentCellAt(currentX, currentY);
-        const dist = Math.round(Phaser.Math.Distance.Between(this.pos.x, this.pos.y, this.vanPos.x, this.vanPos.y));
-
-        document.getElementById('hud').textContent =
-          `Glasswell\n${this.inVan ? 'Driving Astro Van' : 'Donny'}\n${c ? c.cell + ' — ' + c.title : 'Outside route'}\nA: ${this.inVan ? 'exit van' : (dist <= 115 ? 'enter van' : 'near van to enter')}`;
-      }
-
-      toggleMask() {
-        this.showMask = !this.showMask;
-        this.maskOverlays.forEach(o => o.setVisible(this.showMask));
-      }
-
-      toggleLabels() {
-        this.showLabels = !this.showLabels;
-        this.labels.forEach(l => l.setVisible(this.showLabels));
-      }
-
-      resetPlayer() {
-        this.inVan = false;
-        const startChunk = this.manifest?.start?.chunk || 'GLASSWELL_C3';
-        const startCell = this.cells.find(c => c.id === startChunk) || this.cells.find(c => c.cell === 'C3');
-        const local = this.manifest?.start?.local || { x: 768, y: 640 };
-        this.pos.x = startCell.grid.worldX + local.x;
-        this.pos.y = startCell.grid.worldY + local.y;
-
-        const vehicle = this.manifest?.vehicles?.find(v => v.id === 'ASTRO_VAN');
-        this.vanPos.x = startCell.grid.worldX + (vehicle?.local?.x || 705);
-        this.vanPos.y = startCell.grid.worldY + (vehicle?.local?.y || 720);
-
-        this.donny.setPosition(this.pos.x, this.pos.y).setVisible(true);
-        this.donnyShadow.setPosition(this.pos.x, this.pos.y + 18).setVisible(true);
-        this.van.setPosition(this.vanPos.x, this.vanPos.y).setRotation(0).setDepth(55);
-        this.vanShadow.setPosition(this.vanPos.x, this.vanPos.y + 42).setRotation(0).setDepth(54);
-        this.lastDir = 'down';
-        this.playDonnyAnim('idle', 'down');
-        this.cameras.main.startFollow(this.donny, true, 0.12, 0.12);
-      }
+    if (knob) {
+      knob.style.left = `${51 + dx}px`;
+      knob.style.top = `${51 + dy}px`;
     }
+  }
 
-    function consumeButton(name) {
-      if (!InputState[name]) return false;
-      InputState[name] = false;
-      return true;
-    }
-
-    function setupMobileControls(scene) {
-      const base = document.getElementById('stickBase');
-      const knob = document.getElementById('stickKnob');
-
-      const center = () => {
-        const r = base.getBoundingClientRect();
-        return { x: r.left + r.width / 2, y: r.top + r.height / 2, radius: r.width / 2 };
-      };
-
-      const setStick = (clientX, clientY) => {
-        const c = center();
-        const rawX = clientX - c.x;
-        const rawY = clientY - c.y;
-        const dist = Math.hypot(rawX, rawY);
-        const max = c.radius - 26;
-        const clamped = Math.min(dist, max);
-        const nx = dist > 0 ? rawX / dist : 0;
-        const ny = dist > 0 ? rawY / dist : 0;
-
-        knob.style.left = `${(base.clientWidth - knob.clientWidth) / 2 + nx * clamped}px`;
-        knob.style.top = `${(base.clientHeight - knob.clientHeight) / 2 + ny * clamped}px`;
-
-        TouchState.dx = nx * (clamped / max);
-        TouchState.dy = ny * (clamped / max);
-      };
-
-      const resetStick = () => {
-        knob.style.left = `${(base.clientWidth - knob.clientWidth) / 2}px`;
-        knob.style.top = `${(base.clientHeight - knob.clientHeight) / 2}px`;
-        TouchState.active = false;
-        TouchState.pointerId = null;
-        TouchState.dx = 0;
-        TouchState.dy = 0;
-      };
-
-      resetStick();
-
-      base.addEventListener('pointerdown', e => {
-        TouchState.active = true;
-        TouchState.pointerId = e.pointerId;
-        base.setPointerCapture(e.pointerId);
-        setStick(e.clientX, e.clientY);
-      });
-
-      base.addEventListener('pointermove', e => {
-        if (TouchState.active && e.pointerId === TouchState.pointerId) setStick(e.clientX, e.clientY);
-      });
-
-      base.addEventListener('pointerup', resetStick);
-      base.addEventListener('pointercancel', resetStick);
-
-      const bindHold = (id, key) => {
-        const el = document.getElementById(id);
-        el.addEventListener('pointerdown', e => {
-          e.preventDefault();
-          InputState[key] = true;
-          el.classList.add('down');
-        });
-        el.addEventListener('pointerup', e => {
-          e.preventDefault();
-          if (key === 'run') InputState[key] = false;
-          el.classList.remove('down');
-        });
-        el.addEventListener('pointercancel', () => {
-          if (key === 'run') InputState[key] = false;
-          el.classList.remove('down');
-        });
-      };
-
-      bindHold('btnB', 'run');
-
-      document.getElementById('btnA').addEventListener('pointerdown', e => {
-        e.preventDefault();
-        InputState.enterExit = true;
-      });
-
-      document.getElementById('btnX').addEventListener('pointerdown', e => {
-        e.preventDefault();
-        InputState.interact = true;
-      });
-
-      document.getElementById('btnY').addEventListener('pointerdown', e => {
-        e.preventDefault();
-        InputState.action = true;
-      });
-
-      document.getElementById('btnMask').addEventListener('pointerdown', e => {
-        e.preventDefault();
-        InputState.mask = true;
-      });
-
-      document.getElementById('btnMenu').addEventListener('pointerdown', e => {
-        e.preventDefault();
-        InputState.menu = true;
-      });
-    }
-
-    new Phaser.Game({
-      type: Phaser.AUTO,
-      parent: 'game-wrap',
-      width: 960,
-      height: 540,
-      backgroundColor: '#030405',
-      scale: {
-        mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH
-      },
-      render: {
-        pixelArt: false,
-        antialias: true,
-        roundPixels: false
-      },
-      physics: {
-        default: 'arcade',
-        arcade: { debug: false }
-      },
-      scene: [BootScene, GameScene]
+  if (base) {
+    base.addEventListener('pointerdown', event => {
+      active = true;
+      pointerId = event.pointerId;
+      base.setPointerCapture(pointerId);
+      moveStick(event.clientX, event.clientY);
     });
-  </script>
+
+    base.addEventListener('pointermove', event => {
+      if (active && event.pointerId === pointerId) {
+        moveStick(event.clientX, event.clientY);
+      }
+    });
+
+    base.addEventListener('pointerup', resetStick);
+    base.addEventListener('pointercancel', resetStick);
+    base.addEventListener('lostpointercapture', resetStick);
+  }
+
+  function bindButton(id, prop) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    el.addEventListener('pointerdown', event => {
+      event.preventDefault();
+      PAD[prop] = true;
+    });
+
+    const release = event => {
+      if (event) event.preventDefault();
+      PAD[prop] = false;
+    };
+
+    el.addEventListener('pointerup', release);
+    el.addEventListener('pointercancel', release);
+    el.addEventListener('pointerout', release);
+  }
+
+  bindButton('btnA', 'a');
+  bindButton('btnB', 'b');
+  bindButton('btnX', 'xBtn');
+  bindButton('btnY', 'yBtn');
+  bindButton('btnMenu', 'menu');
+  bindButton('btnMask', 'mask');
+}
+
+bindTouchControls();
+
+class BootScene extends Phaser.Scene {
+  constructor() {
+    super('BootScene');
+  }
+
+  preload() {
+    MAP_BASE_CANDIDATES.forEach(asset => {
+      this.load.image(asset.key, withVersion(asset.path));
+    });
+
+    MAP_OVERLAY_CANDIDATES.forEach(asset => {
+      this.load.image(asset.key, withVersion(asset.path));
+    });
+
+    MASK_CANDIDATES.forEach(asset => {
+      this.load.image(asset.key, withVersion(asset.path));
+    });
+
+    DONNY_CANDIDATES.forEach(asset => {
+      this.load.spritesheet(asset.key, withVersion(asset.path), {
+        frameWidth: asset.frameWidth,
+        frameHeight: asset.frameHeight,
+        margin: 0,
+        spacing: 0
+      });
+    });
+
+    VAN_CANDIDATES.forEach(asset => {
+      this.load.spritesheet(asset.key, withVersion(asset.path), {
+        frameWidth: asset.frameWidth,
+        frameHeight: asset.frameHeight,
+        margin: 0,
+        spacing: 0
+      });
+    });
+  }
+
+  create() {
+    this.scene.start('GameScene');
+  }
+}
+
+class GameScene extends Phaser.Scene {
+  constructor() {
+    super('GameScene');
+
+    this.mapAsset = null;
+    this.overlayAsset = null;
+    this.maskAsset = null;
+
+    this.mapWidth = 1600;
+    this.mapHeight = 1100;
+    this.playerDir = 'down';
+    this.messageTimer = 0;
+    this.lastA = false;
+    this.lastMenu = false;
+    this.lastMask = false;
+  }
+
+  create() {
+    this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,ENTER,E,J,K');
+
+    this.createWorld();
+    this.createPlayer();
+    this.createHud();
+  }
+
+  createWorld() {
+    this.mapAsset = firstLoaded(this, MAP_BASE_CANDIDATES);
+    this.overlayAsset = firstLoaded(this, MAP_OVERLAY_CANDIDATES);
+    this.maskAsset = firstLoaded(this, MASK_CANDIDATES);
+
+    if (!this.mapAsset) {
+      this.createMissingMapErrorWorld();
+      return;
+    }
+
+    this.map = this.add.image(0, 0, this.mapAsset.key)
+      .setOrigin(0, 0)
+      .setDepth(0);
+
+    this.mapWidth = this.map.width;
+    this.mapHeight = this.map.height;
+
+    this.physics.world.setBounds(0, 0, this.mapWidth, this.mapHeight);
+    this.cameras.main.setBounds(0, 0, this.mapWidth, this.mapHeight);
+
+    if (this.overlayAsset) {
+      this.overlay = this.add.image(0, 0, this.overlayAsset.key)
+        .setOrigin(0, 0)
+        .setDepth(850);
+    }
+  }
+
+  createMissingMapErrorWorld() {
+    this.mapWidth = 1600;
+    this.mapHeight = 1100;
+
+    this.physics.world.setBounds(0, 0, this.mapWidth, this.mapHeight);
+    this.cameras.main.setBounds(0, 0, this.mapWidth, this.mapHeight);
+
+    this.add.rectangle(0, 0, this.mapWidth, this.mapHeight, 0x000000, 1)
+      .setOrigin(0, 0)
+      .setDepth(0);
+
+    const errorText = [
+      'REAL GLASSWELL C3 MAP NOT FOUND.',
+      '',
+      'No generated testing map was drawn.',
+      '',
+      'Upload the real map PNG to:',
+      'assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_base.png',
+      '',
+      'Checked paths:',
+      ...MAP_BASE_CANDIDATES.map(asset => asset.path)
+    ].join('\n');
+
+    showBootError(errorText);
+
+    this.add.text(40, 70, errorText, {
+      fontFamily: 'monospace',
+      fontSize: '19px',
+      color: '#ffffff',
+      backgroundColor: 'rgba(120,0,0,.82)',
+      padding: { x: 14, y: 12 },
+      wordWrap: { width: 860 }
+    })
+      .setScrollFactor(0)
+      .setDepth(9999);
+  }
+
+  createPlayer() {
+    const donnyAsset = firstLoaded(this, DONNY_CANDIDATES);
+
+    const spawnX = Phaser.Math.Clamp(520, 120, this.mapWidth - 120);
+    const spawnY = Phaser.Math.Clamp(Math.floor(this.mapHeight * 0.62), 260, this.mapHeight - 90);
+
+    if (donnyAsset) {
+      this.player = this.physics.add.sprite(spawnX, spawnY, donnyAsset.key, 0)
+        .setOrigin(0.5, 1)
+        .setScale(donnyAsset.scale)
+        .setDepth(500);
+
+      this.player.body.setSize(42, 30);
+      this.player.body.setOffset(donnyAsset.frameWidth / 2 - 21, donnyAsset.frameHeight - 34);
+
+      this.createDonnyAnimations(donnyAsset);
+    } else {
+      this.player = this.physics.add.sprite(spawnX, spawnY, null)
+        .setDisplaySize(34, 52)
+        .setOrigin(0.5, 1)
+        .setDepth(500);
+
+      this.player.body.setSize(34, 30);
+    }
+
+    this.player.body.setCollideWorldBounds(true);
+
+    this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+    this.cameras.main.setZoom(1);
+
+    this.createVan(spawnX, spawnY);
+  }
+
+  createVan(spawnX, spawnY) {
+    const vanAsset = firstLoaded(this, VAN_CANDIDATES);
+    const vanX = Phaser.Math.Clamp(spawnX - 210, 180, this.mapWidth - 180);
+    const vanY = Phaser.Math.Clamp(spawnY + 55, 180, this.mapHeight - 80);
+
+    if (vanAsset) {
+      this.van = this.add.sprite(vanX, vanY, vanAsset.key, 0)
+        .setOrigin(0.5, 1)
+        .setScale(vanAsset.scale)
+        .setDepth(460);
+    } else {
+      this.van = this.add.rectangle(vanX, vanY - 28, 132, 64, 0x34251c, 1)
+        .setStrokeStyle(3, 0xff4aa0, 0.55)
+        .setDepth(460);
+    }
+  }
+
+  createDonnyAnimations(asset) {
+    if (!asset || this.anims.exists('donny_walk_down')) return;
+
+    const directionStart = {
+      down: 0,
+      right: 4,
+      left: 8,
+      up: 12
+    };
+
+    Object.keys(directionStart).forEach(dir => {
+      const start = directionStart[dir];
+      this.anims.create({
+        key: `donny_walk_${dir}`,
+        frames: this.anims.generateFrameNumbers(asset.key, { start, end: start + 3 }),
+        frameRate: 8,
+        repeat: -1
+      });
+    });
+  }
+
+  createHud() {
+    this.hud = this.add.text(18, 18, 'Glasswell\nDonny\nC3 — Main Civic Gate\nA: enter van', {
+      fontFamily: 'monospace',
+      fontSize: '23px',
+      color: '#e8e8e8',
+      backgroundColor: 'rgba(0,0,0,.65)',
+      padding: { x: 16, y: 12 }
+    })
+      .setScrollFactor(0)
+      .setDepth(9999);
+
+    const pathLine = this.mapAsset
+      ? `MAP: ${this.mapAsset.path}`
+      : 'MAP MISSING';
+
+    this.pathHud = this.add.text(18, H - 34, pathLine, {
+      fontFamily: 'monospace',
+      fontSize: '12px',
+      color: this.mapAsset ? '#9cffc6' : '#ff6b6b',
+      backgroundColor: 'rgba(0,0,0,.65)',
+      padding: { x: 8, y: 5 }
+    })
+      .setScrollFactor(0)
+      .setDepth(9999);
+
+    this.message = this.add.text(W / 2, H - 78, '', {
+      fontFamily: 'monospace',
+      fontSize: '18px',
+      color: '#fff',
+      backgroundColor: 'rgba(0,0,0,.72)',
+      padding: { x: 12, y: 8 }
+    })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(9999)
+      .setVisible(false);
+  }
+
+  say(text) {
+    this.message.setText(text).setVisible(true);
+    this.messageTimer = 1700;
+  }
+
+  getMovementVector() {
+    let vx = 0;
+    let vy = 0;
+
+    if (this.keys.A.isDown || this.keys.LEFT.isDown) vx -= 1;
+    if (this.keys.D.isDown || this.keys.RIGHT.isDown) vx += 1;
+    if (this.keys.W.isDown || this.keys.UP.isDown) vy -= 1;
+    if (this.keys.S.isDown || this.keys.DOWN.isDown) vy += 1;
+
+    if (Math.abs(PAD.x) > 0.12) vx = PAD.x;
+    if (Math.abs(PAD.y) > 0.12) vy = PAD.y;
+
+    const length = Math.hypot(vx, vy);
+    if (length > 1) {
+      vx /= length;
+      vy /= length;
+    }
+
+    return { vx, vy };
+  }
+
+  update(time, delta) {
+    if (!this.player || !this.player.body) return;
+
+    const { vx, vy } = this.getMovementVector();
+    const speed = PAD.x || PAD.y ? 168 : 176;
+
+    this.player.body.setVelocity(vx * speed, vy * speed);
+
+    if (Math.abs(vx) > 0.1 || Math.abs(vy) > 0.1) {
+      if (Math.abs(vx) > Math.abs(vy)) {
+        this.playerDir = vx > 0 ? 'right' : 'left';
+      } else {
+        this.playerDir = vy > 0 ? 'down' : 'up';
+      }
+
+      const animKey = `donny_walk_${this.playerDir}`;
+      if (this.player.play && this.anims.exists(animKey)) {
+        this.player.play(animKey, true);
+      }
+    } else if (this.player.anims) {
+      this.player.anims.stop();
+    }
+
+    if (this.player.setDepth) {
+      this.player.setDepth(Math.floor(this.player.y) + 500);
+    }
+
+    const pressedA = PAD.a || this.keys.SPACE.isDown || this.keys.ENTER.isDown || this.keys.E.isDown;
+    if (pressedA && !this.lastA) {
+      this.say('Van entry hook ready. Next step: connect Astro Van interior scene.');
+    }
+    this.lastA = pressedA;
+
+    const pressedMenu = PAD.menu;
+    if (pressedMenu && !this.lastMenu) {
+      this.say(this.mapAsset ? `Using real map path: ${this.mapAsset.path}` : 'Missing map asset. Upload GLASSWELL_C3_base.png.');
+    }
+    this.lastMenu = pressedMenu;
+
+    const pressedMask = PAD.mask;
+    if (pressedMask && !this.lastMask) {
+      this.say('MASK button reserved for El Mirage / disguise toggle.');
+    }
+    this.lastMask = pressedMask;
+
+    if (this.messageTimer > 0) {
+      this.messageTimer -= delta;
+      if (this.messageTimer <= 0) {
+        this.message.setVisible(false);
+      }
+    }
+  }
+}
+
+const config = {
+  type: Phaser.AUTO,
+  parent: 'game',
+  width: W,
+  height: H,
+  backgroundColor: '#000',
+  pixelArt: true,
+  roundPixels: true,
+  physics: {
+    default: 'arcade',
+    arcade: {
+      gravity: { y: 0 },
+      debug: false
+    }
+  },
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
+  scene: [BootScene, GameScene]
+};
+
+new Phaser.Game(config);
+</script>
 </body>
 </html>
