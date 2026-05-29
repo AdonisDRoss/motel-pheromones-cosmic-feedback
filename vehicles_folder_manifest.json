@@ -1,0 +1,10 @@
+{
+  "package_id": "AURELIX_DISTORTION_VEHICLES_FOLDER_OVERWRITE",
+  "purpose": "Vehicles-folder overwrite package for GTA single-sprite Distortion car.",
+  "target_folder": "assets/vehicles/special/aurelix_distortion/",
+  "runtime_sprite": "assets/vehicles/special/aurelix_distortion/distortion_topdown.png",
+  "files": [
+    "assets/vehicles/special/aurelix_distortion/distortion_topdown.png",
+    "assets/vehicles/special/aurelix_distortion/AURELIX_DISTORTION_SOURCE_SHEET.jpeg"
+  ]
+}
