@@ -1,0 +1,24 @@
+{
+  "package_id": "GLASSWELL_WESTGATE_COMPLETE_SET",
+  "created_at": "2026-05-29T03:54:09.793430+00:00",
+  "chain_order": [
+    "GLASSWELL_WESTGATE_NIGHT_MARKET_OFFRAMP",
+    "GLASSWELL_WESTGATE_BLACKLIGHT_KIDS_CONNECTOR"
+  ],
+  "flow": "Outer Ring Road -> Westgate Night Market Offramp/Parking -> Walk-only Blacklight Kids Connector -> Blacklight Kids nightclub district",
+  "included_component_packs": {
+    "westgate_night_market_offramp": "GLASSWELL_WESTGATE_NIGHT_MARKET_OFFRAMP_pack.zip",
+    "westgate_blacklight_kids_connector": "GLASSWELL_WESTGATE_BLACKLIGHT_KIDS_CONNECTOR_pack.zip"
+  },
+  "gameplay_rules": [
+    "Westgate off-ramp/parking supports vehicle use.",
+    "Dry parking spaces must stay open so Donny's van can park.",
+    "Connector is walk-only; no van driving past the parking district.",
+    "Use invisible Red Concord detection cones later in Phaser.",
+    "Use parking override rectangles in Phaser if thin parking-line mask artifacts snag the van.",
+    "Westgate Night Market sign asset is included inside the off-ramp pack."
+  ],
+  "future_build_reminder": {
+    "IMPERIAL_GALACTIC_NEWS_STATION": "Empire propaganda news station / Red Concord media broadcast hub to build later."
+  }
+}

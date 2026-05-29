@@ -1,0 +1,68 @@
+{
+  "package_id": "GLASSWELL_WESTGATE_NIGHT_MARKET_OFFRAMP_pack",
+  "created_at": "2026-05-29T03:44:08.859446+00:00",
+  "chunk_id": "GLASSWELL_WESTGATE_NIGHT_MARKET_OFFRAMP",
+  "type": "road_to_night_market_gate_cell",
+  "role": "Westgate outer-road/offramp entrance into Blacklight Kids nightlife district.",
+  "district_connection": "Blacklight Kids / night market / club district",
+  "alignment": {
+    "final_base_size": [
+      1254,
+      1254
+    ],
+    "base_original_size": [
+      1254,
+      1254
+    ],
+    "foreground_overlay_original_size": [
+      1254,
+      1254
+    ],
+    "road_collision_original_size": [
+      1254,
+      1254
+    ],
+    "overlay_collision_original_size": [
+      1254,
+      1254
+    ],
+    "sign_asset_original_size": [
+      1254,
+      1254
+    ],
+    "base_overlay_collision_match": true
+  },
+  "files": {
+    "base": "assets/maps/dust9/glasswell/westgate_night_market_offramp/layers/GLASSWELL_WESTGATE_NIGHT_MARKET_OFFRAMP_base.png",
+    "foreground_overlay_assets": "assets/maps/dust9/glasswell/westgate_night_market_offramp/layers/GLASSWELL_WESTGATE_NIGHT_MARKET_OFFRAMP_foreground_overlay_assets.png",
+    "road_collision_mask": "assets/maps/dust9/glasswell/westgate_night_market_offramp/masks/GLASSWELL_WESTGATE_NIGHT_MARKET_OFFRAMP_road_collision_mask.png",
+    "overlay_asset_collision_mask": "assets/maps/dust9/glasswell/westgate_night_market_offramp/masks/GLASSWELL_WESTGATE_NIGHT_MARKET_OFFRAMP_overlay_asset_collision_mask.png",
+    "westgate_sign_asset": "assets/maps/dust9/glasswell/westgate_night_market_offramp/assets/GLASSWELL_WESTGATE_NIGHT_MARKET_sign_asset.png"
+  },
+  "collision_rules": {
+    "road_collision_mask": {
+      "white": "drivable / walkable road, dry parking, sidewalks, entry pavement",
+      "black": "blocked walls, buildings, curbs, water/rock edge, outside-road zones"
+    },
+    "overlay_asset_collision_mask": {
+      "white": "overlay prop blocks, if using prop-level blockers",
+      "black": "transparent / no prop blocker"
+    }
+  },
+  "phaser_notes": [
+    "Dry parking spots must remain open so Donny's van can park there.",
+    "Use parking override rectangles over dry parking spaces and drive aisles if thin mask lines snag the van.",
+    "Painted parking stall lines do not block the van.",
+    "The Westgate Night Market sign is preserved as a separate asset and should be placed on the map during scene setup.",
+    "Overlay assets are decorative unless paired with the overlay asset collision mask or custom blockers.",
+    "Use invisible Red Concord detection cones later for cameras, gate posts, and patrol scan zones.",
+    "After parking, the next Westgate/Blacklight Kids district chunks become walk-only."
+  ],
+  "suggested_layer_order": [
+    "base",
+    "road decals already baked into base",
+    "vehicles / Donny / NPCs",
+    "foreground_overlay_assets",
+    "separate sign asset if placed independently"
+  ]
+}

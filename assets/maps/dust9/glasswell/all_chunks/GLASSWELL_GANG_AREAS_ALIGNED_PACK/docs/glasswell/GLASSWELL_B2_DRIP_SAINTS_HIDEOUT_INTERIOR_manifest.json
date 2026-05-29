@@ -1,0 +1,43 @@
+{
+  "chunk_id": "GLASSWELL_B2_DRIP_SAINTS_HIDEOUT_INTERIOR",
+  "district": "B2 / Drip Saints interior",
+  "gang": "Drip Saints",
+  "style": "old stone blue-candle safehouse / ration-route hideout",
+  "alignment_check": {
+    "base_original_size": [
+      1024,
+      559
+    ],
+    "overlay_original_size": [
+      1024,
+      559
+    ],
+    "new_collision_original_size": [
+      1695,
+      928
+    ],
+    "final_output_size": [
+      1024,
+      559
+    ],
+    "all_final_layers_same_size": true,
+    "note": "Overlay and collision were normalized to the approved base canvas size."
+  },
+  "files": {
+    "base": "assets/maps/dust9/glasswell/b2_drip_saints_hideout_interior/layers/GLASSWELL_B2_DRIP_SAINTS_HIDEOUT_INTERIOR_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/b2_drip_saints_hideout_interior/layers/GLASSWELL_B2_DRIP_SAINTS_HIDEOUT_INTERIOR_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/b2_drip_saints_hideout_interior/masks/GLASSWELL_B2_DRIP_SAINTS_HIDEOUT_INTERIOR_collision_mask.png"
+  },
+  "fixes_applied": [
+    "base bottom-right star area covered",
+    "overlay checkerboard/gray preview background cleaned toward transparency",
+    "new collision mask forced to pure black/white",
+    "new collision mask resized to base size if needed",
+    "bottom-right star removed from collision mask"
+  ],
+  "collision_rules": {
+    "white": "walkable floor",
+    "black": "walls, wall thickness, blocked architecture, and outside-room space",
+    "furniture_collision": "not baked; add separately later if needed"
+  }
+}

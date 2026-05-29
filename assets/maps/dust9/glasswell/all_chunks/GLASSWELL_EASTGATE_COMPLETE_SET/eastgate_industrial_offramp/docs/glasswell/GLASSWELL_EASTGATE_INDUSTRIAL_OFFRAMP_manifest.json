@@ -1,0 +1,42 @@
+{
+  "package_id": "GLASSWELL_EASTGATE_INDUSTRIAL_OFFRAMP_pack",
+  "created_at": "2026-05-29T04:17:57.189996+00:00",
+  "chunk_id": "GLASSWELL_EASTGATE_INDUSTRIAL_OFFRAMP",
+  "type": "industrial_gate_road_cell",
+  "role": "Eastgate industrial entrance with Industrial Oversight door and Red Concord control.",
+  "alignment": {
+    "base_original_size": [
+      1254,
+      1254
+    ],
+    "overlay_original_size": [
+      1254,
+      1254
+    ],
+    "collision_original_size": [
+      1254,
+      1254
+    ],
+    "final_output_size": [
+      1254,
+      1254
+    ],
+    "all_final_layers_match": true
+  },
+  "files": {
+    "base": "assets/maps/dust9/glasswell/eastgate_industrial_offramp/layers/GLASSWELL_EASTGATE_INDUSTRIAL_OFFRAMP_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/eastgate_industrial_offramp/layers/GLASSWELL_EASTGATE_INDUSTRIAL_OFFRAMP_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/eastgate_industrial_offramp/masks/GLASSWELL_EASTGATE_INDUSTRIAL_OFFRAMP_collision_mask.png"
+  },
+  "collision_rules": {
+    "white": "drivable/walkable depending on chunk",
+    "black": "blocked"
+  },
+  "gameplay_notes": [
+    "Vehicle-access outer-road/industrial gate chunk.",
+    "Industrial Oversight door is the major transition point.",
+    "Use invisible Red Concord detection cones later for cameras, gate posts, and scan zones.",
+    "Use road override rectangles in Phaser if thin painted/collision artifacts snag Donny's van.",
+    "Doors/gates that open/close should become separate interactive assets later."
+  ]
+}

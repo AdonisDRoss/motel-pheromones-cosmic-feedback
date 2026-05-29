@@ -1,0 +1,44 @@
+{
+  "package_id": "GLASSWELL_ALLEY_GANGS_CURRENT_COMPLETE_PACK",
+  "created_at": "2026-05-28T19:48:25.067759+00:00",
+  "included_complete_chunks": [
+    {
+      "id": "GLASSWELL_B2_DRIP_SAINTS_ALLEY",
+      "gang": "Drip Saints",
+      "type": "exterior",
+      "status": "complete",
+      "source_pack": "GLASSWELL_B2_DRIP_SAINTS_ALLEY_pack.zip"
+    },
+    {
+      "id": "GLASSWELL_B2_DRIP_SAINTS_HIDEOUT_INTERIOR",
+      "gang": "Drip Saints",
+      "type": "interior",
+      "status": "complete",
+      "source_pack": "GLASSWELL_B2_DRIP_SAINTS_HIDEOUT_INTERIOR_REPACK.zip"
+    },
+    {
+      "id": "GLASSWELL_B3_BLACKLIGHT_KIDS_ALLEY",
+      "gang": "Blacklight Kids",
+      "type": "exterior",
+      "status": "complete",
+      "source_pack": "GLASSWELL_B3_BLACKLIGHT_KIDS_ALLEY_final_pack.zip"
+    },
+    {
+      "id": "GLASSWELL_D4_RUST_JACKALS_ALLEY",
+      "gang": "Rust Jackals",
+      "type": "exterior",
+      "status": "complete",
+      "source_pack": "GLASSWELL_D4_RUST_JACKALS_ALLEY_pack.zip"
+    }
+  ],
+  "not_included_because_not_complete_yet": [
+    "GLASSWELL_B3_BLACKLIGHT_KIDS_HIDEOUT_INTERIOR",
+    "GLASSWELL_D4_RUST_JACKALS_HIDEOUT_INTERIOR"
+  ],
+  "install_note": "Copy assets/ into the repo root. This pack is asset-only: no game code, no test page, no registry, no index changes.",
+  "layer_rules": {
+    "base": "ground / room shell / fixed architecture",
+    "foreground_overlay": "above-player details or approved props layer",
+    "collision_mask": "pure black/white; white = walkable; black = blocked"
+  }
+}

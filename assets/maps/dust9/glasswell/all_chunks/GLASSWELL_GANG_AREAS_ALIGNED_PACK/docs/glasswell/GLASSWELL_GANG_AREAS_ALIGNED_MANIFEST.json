@@ -1,0 +1,70 @@
+{
+  "package_id": "GLASSWELL_GANG_AREAS_ALIGNED_PACK",
+  "created_at": "2026-05-28T23:58:49.784139+00:00",
+  "purpose": "Asset-only aligned pack. Every base, foreground overlay, and collision mask in each chunk now uses the same canvas size as its own base image.",
+  "included_chunks": [
+    {
+      "chunk": "GLASSWELL_B2_DRIP_SAINTS_ALLEY",
+      "base": "assets/maps/dust9/glasswell/b2_drip_saints_alley/layers/GLASSWELL_B2_DRIP_SAINTS_ALLEY_base.png",
+      "overlay": "assets/maps/dust9/glasswell/b2_drip_saints_alley/layers/GLASSWELL_B2_DRIP_SAINTS_ALLEY_foreground_overlay.png",
+      "collision_mask": "assets/maps/dust9/glasswell/b2_drip_saints_alley/masks/GLASSWELL_B2_DRIP_SAINTS_ALLEY_collision_mask.png",
+      "final_canvas_size": [
+        1448,
+        1086
+      ],
+      "changes": [
+        "already aligned"
+      ]
+    },
+    {
+      "chunk": "GLASSWELL_B2_DRIP_SAINTS_HIDEOUT_INTERIOR",
+      "base": "assets/maps/dust9/glasswell/b2_drip_saints_hideout_interior/layers/GLASSWELL_B2_DRIP_SAINTS_HIDEOUT_INTERIOR_base.png",
+      "overlay": "assets/maps/dust9/glasswell/b2_drip_saints_hideout_interior/layers/GLASSWELL_B2_DRIP_SAINTS_HIDEOUT_INTERIOR_foreground_overlay.png",
+      "collision_mask": "assets/maps/dust9/glasswell/b2_drip_saints_hideout_interior/masks/GLASSWELL_B2_DRIP_SAINTS_HIDEOUT_INTERIOR_collision_mask.png",
+      "final_canvas_size": [
+        1024,
+        559
+      ],
+      "changes": [
+        "already aligned"
+      ]
+    },
+    {
+      "chunk": "GLASSWELL_B3_BLACKLIGHT_KIDS_ALLEY",
+      "base": "assets/maps/dust9/glasswell/b3_blacklight_kids_alley/layers/GLASSWELL_B3_BLACKLIGHT_KIDS_ALLEY_base.png",
+      "overlay": "assets/maps/dust9/glasswell/b3_blacklight_kids_alley/layers/GLASSWELL_B3_BLACKLIGHT_KIDS_ALLEY_foreground_overlay.png",
+      "collision_mask": "assets/maps/dust9/glasswell/b3_blacklight_kids_alley/masks/GLASSWELL_B3_BLACKLIGHT_KIDS_ALLEY_collision_mask.png",
+      "final_canvas_size": [
+        1024,
+        559
+      ],
+      "changes": [
+        "already aligned"
+      ]
+    },
+    {
+      "chunk": "GLASSWELL_D4_RUST_JACKALS_ALLEY",
+      "base": "assets/maps/dust9/glasswell/d4_rust_jackals_alley/layers/GLASSWELL_D4_RUST_JACKALS_ALLEY_base.png",
+      "overlay": "assets/maps/dust9/glasswell/d4_rust_jackals_alley/layers/GLASSWELL_D4_RUST_JACKALS_ALLEY_foreground_overlay.png",
+      "collision_mask": "assets/maps/dust9/glasswell/d4_rust_jackals_alley/masks/GLASSWELL_D4_RUST_JACKALS_ALLEY_collision_mask.png",
+      "final_canvas_size": [
+        1448,
+        1086
+      ],
+      "changes": [
+        "already aligned"
+      ]
+    }
+  ],
+  "collision_rule": {
+    "white": "walkable",
+    "black": "blocked"
+  },
+  "notes": [
+    "No code included.",
+    "No test pages included.",
+    "No registry included.",
+    "Each chunk keeps its own approved canvas size; chunks do not all need to be the same size.",
+    "Within each chunk, the base, overlay, and collision mask line up."
+  ]
+}

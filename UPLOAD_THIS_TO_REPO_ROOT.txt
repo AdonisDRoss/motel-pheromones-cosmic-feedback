@@ -1,0 +1,23 @@
+COSMIC FEEDBACK FULL BUILD V3 — REPO ROOT UPLOAD
+
+Upload/copy the CONTENTS of this folder to the root of:
+
+AdonisDRoss/motel-pheromones-cosmic-feedback
+
+Do not upload the zip itself as the game.
+
+The root index.html must replace the old Glasswell Drive v012 index.html.
+
+Required root files/folders:
+- index.html
+- index-linked.html
+- src/
+- assets/
+- manifest.json
+- README.md
+
+Important check:
+Open index.html and confirm it says:
+Cosmic Feedback — Glasswell Full Index
+
+If it says Glasswell Drive v012, the old file is still active.

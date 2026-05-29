@@ -1,0 +1,18 @@
+{
+  "map_id": "GLASSWELL_D4_RUST_JACKALS_ALLEY",
+  "district": "Glasswell",
+  "faction": "Rust Jackals",
+  "files": {
+    "base": "assets/maps/dust9/glasswell/d4_rust_jackals_alley/layers/GLASSWELL_D4_RUST_JACKALS_ALLEY_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/d4_rust_jackals_alley/layers/GLASSWELL_D4_RUST_JACKALS_ALLEY_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/d4_rust_jackals_alley/masks/GLASSWELL_D4_RUST_JACKALS_ALLEY_collision_mask.png"
+  },
+  "collision_convention": {
+    "white": "walkable",
+    "black": "blocked"
+  },
+  "notes": [
+    "Current repack includes the latest rust-jackals base and overlay.",
+    "Stair-bottom collision line cleaned so stair entrances remain walkable."
+  ]
+}

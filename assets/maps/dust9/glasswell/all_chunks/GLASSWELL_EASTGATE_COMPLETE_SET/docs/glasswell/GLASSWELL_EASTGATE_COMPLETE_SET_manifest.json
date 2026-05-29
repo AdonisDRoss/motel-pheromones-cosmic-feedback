@@ -1,0 +1,23 @@
+{
+  "package_id": "GLASSWELL_EASTGATE_COMPLETE_SET",
+  "created_at": "2026-05-29T04:18:04.357593+00:00",
+  "chain_order": [
+    "GLASSWELL_EASTGATE_INDUSTRIAL_OFFRAMP",
+    "GLASSWELL_EASTGATE_RUST_JACKALS_CONNECTOR"
+  ],
+  "flow": "Outer Ring Road -> Eastgate Industrial Offramp -> Industrial Oversight door -> Freight/Scrap Connector -> Rust Jackals territory",
+  "included_component_packs": {
+    "eastgate_industrial_offramp": "GLASSWELL_EASTGATE_INDUSTRIAL_OFFRAMP_pack.zip",
+    "eastgate_rust_jackals_connector": "GLASSWELL_EASTGATE_RUST_JACKALS_CONNECTOR_pack.zip"
+  },
+  "gameplay_rules": [
+    "Eastgate Industrial Offramp supports vehicle approach and Industrial Oversight access.",
+    "Eastgate Rust Jackals Connector moves toward freight/scrap territory.",
+    "Use invisible Red Concord detection cones later in Phaser.",
+    "Use road/path override rectangles if thin mask artifacts snag vehicle or player.",
+    "Gate, door, and barrier panels that open/close should be separate interactive assets."
+  ],
+  "future_build_reminder": {
+    "IMPERIAL_GALACTIC_NEWS_STATION": "Empire propaganda news station / Red Concord media broadcast hub to build later."
+  }
+}

@@ -1,0 +1,34 @@
+COSMIC FEEDBACK — FULL INDEX DOWNLOAD V2
+
+This is the smaller playable full-index package.
+
+UPLOAD TO REPOSITORY ROOT:
+- index.html
+- index-linked.html
+- src/
+- assets/
+- README.md
+- manifest.json
+
+ENTRY POINT:
+index.html
+
+WHAT IS INCLUDED:
+- Full inline Phaser index
+- Mobile controller
+- Donny starts outside Westgate
+- Aurelix Distortion test car
+- Freeway map
+- Fuel stations
+- Civilian traffic
+- Civic Patrol / police traffic
+- EMS traffic
+- Pedestrians
+- Vehicle HUD
+- Headlights
+- Smoke / tire tracks
+- Engine / boost / siren / refuel audio
+
+WHAT IS NOT INCLUDED:
+The giant raw all_chunks/source_pack folders were removed so the download will work.
+Use the separate source packs later when installing every raw base/overlay/collision layer.

@@ -1,0 +1,42 @@
+{
+  "package_id": "GLASSWELL_SOUTHGATE_DRIP_SAINTS_CONNECTOR_pack",
+  "created_at": "2026-05-29T02:41:16.318989+00:00",
+  "chunk_id": "GLASSWELL_SOUTHGATE_DRIP_SAINTS_CONNECTOR",
+  "type": "inner_city_connector",
+  "role": "Walk-only connector from Southgate parking/checkpoint into civic-ration alleys leading toward Drip Saints territory.",
+  "alignment": {
+    "base_original_size": [
+      1254,
+      1254
+    ],
+    "overlay_original_size": [
+      1254,
+      1254
+    ],
+    "collision_original_size": [
+      1254,
+      1254
+    ],
+    "final_output_size": [
+      1254,
+      1254
+    ],
+    "all_final_layers_match": true
+  },
+  "files": {
+    "base": "assets/maps/dust9/glasswell/southgate_drip_saints_connector/layers/GLASSWELL_SOUTHGATE_DRIP_SAINTS_CONNECTOR_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/southgate_drip_saints_connector/layers/GLASSWELL_SOUTHGATE_DRIP_SAINTS_CONNECTOR_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/southgate_drip_saints_connector/masks/GLASSWELL_SOUTHGATE_DRIP_SAINTS_CONNECTOR_collision_mask.png"
+  },
+  "collision_rules": {
+    "white": "walkable",
+    "black": "blocked"
+  },
+  "gameplay_notes": [
+    "This is a walk-only inner-city connector, not a van-driving chunk.",
+    "Use invisible Red Concord detection cones around gate/cameras/guards later in Phaser.",
+    "Use this as the transition from Southgate parking/checkpoint to Drip Saints civic-ration alleys.",
+    "Overlay contains wires, lamps, cameras, pipes, gate/prop details; do not use overlay as collision.",
+    "Doors/gates that open later should be separate interactive assets."
+  ]
+}

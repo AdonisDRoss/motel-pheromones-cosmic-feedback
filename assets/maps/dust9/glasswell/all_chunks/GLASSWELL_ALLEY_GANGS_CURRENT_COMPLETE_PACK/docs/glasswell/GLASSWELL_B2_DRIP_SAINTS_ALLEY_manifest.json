@@ -1,0 +1,31 @@
+{
+  "chunk_id": "GLASSWELL_B2_DRIP_SAINTS_ALLEY",
+  "district": "B2 / Ration District",
+  "gang": "Drip Saints",
+  "style": "top-down 2.5D Glasswell alley, blue candle / cloth signal identity",
+  "canvas": {
+    "width": 1448,
+    "height": 1086
+  },
+  "files": {
+    "base": "assets/maps/dust9/glasswell/b2_drip_saints_alley/layers/GLASSWELL_B2_DRIP_SAINTS_ALLEY_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/b2_drip_saints_alley/layers/GLASSWELL_B2_DRIP_SAINTS_ALLEY_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/b2_drip_saints_alley/masks/GLASSWELL_B2_DRIP_SAINTS_ALLEY_collision_mask.png"
+  },
+  "collision_rules": {
+    "white": "walkable",
+    "black": "blocked",
+    "stairs": "walkable / white",
+    "main_paths": "walkable / white",
+    "hideout_door_front": "walkable / white",
+    "walls_buildings": "blocked / black"
+  },
+  "game_notes": [
+    "Use base at depth 0.",
+    "Use foreground overlay above Donny and props.",
+    "Collision mask is pure black/white.",
+    "Clothes lines, hanging banners, wires, and lanterns belong in overlay, not base.",
+    "Base layer should keep playable paths visually clear."
+  ],
+  "next_chunk": "GLASSWELL_B3_BLACKLIGHT_KIDS_ALLEY"
+}

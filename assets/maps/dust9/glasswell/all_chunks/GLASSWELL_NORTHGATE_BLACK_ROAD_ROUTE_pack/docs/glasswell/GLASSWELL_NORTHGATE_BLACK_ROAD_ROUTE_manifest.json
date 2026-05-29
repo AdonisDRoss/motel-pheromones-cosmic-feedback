@@ -1,0 +1,47 @@
+{
+  "package_id": "GLASSWELL_NORTHGATE_BLACK_ROAD_ROUTE_pack",
+  "created_at": "2026-05-29T04:27:42.174629+00:00",
+  "chunk_id": "GLASSWELL_NORTHGATE_BLACK_ROAD_ROUTE",
+  "type": "broken_gate_hidden_route_cell",
+  "role": "Northgate collapsed/out-of-order checkpoint with closed road, rubble vehicle block, and hidden Black Road foot access.",
+  "alignment": {
+    "base_original_size": [
+      1536,
+      1024
+    ],
+    "collision_original_size": [
+      1535,
+      1024
+    ],
+    "final_output_size": [
+      1536,
+      1024
+    ],
+    "all_final_layers_match": true
+  },
+  "files": {
+    "base": "assets/maps/dust9/glasswell/northgate_black_road_route/layers/GLASSWELL_NORTHGATE_BLACK_ROAD_ROUTE_base.png",
+    "collision_mask": "assets/maps/dust9/glasswell/northgate_black_road_route/masks/GLASSWELL_NORTHGATE_BLACK_ROAD_ROUTE_collision_mask.png"
+  },
+  "collision_rules": {
+    "white": "walkable / limited vehicle approach",
+    "black": "blocked rubble, walls, barricade, debris, trees, rocks, closed checkpoint structures"
+  },
+  "gameplay_rules": [
+    "Northgate is officially closed and out of order.",
+    "Donny's van should not be able to drive deep into this chunk.",
+    "Rubble and collapse zones must stop vehicle entry.",
+    "Player can walk up to the barricade/checkpoint line.",
+    "Player cannot pass the closed barricade yet.",
+    "Hidden Black Road foot route can be unlocked later as an alternate path.",
+    "Use invisible Red Concord warning/detection zones near remaining cameras and warning lights."
+  ],
+  "phaser_notes": {
+    "vehicle_limit": "Add a vehicle-stop zone near the lower/outer approach so the van can enter only a short distance. Do not rely only on the general collision mask for vehicle behavior.",
+    "player_limit": "Allow Donny on foot to approach the barricade, but block passage beyond the closed checkpoint line.",
+    "future_unlock": "Later, an interactable Black Road trigger can open the hidden foot route without opening the vehicle road."
+  },
+  "future_build_reminder": {
+    "IMPERIAL_GALACTIC_NEWS_STATION": "Empire propaganda news station / Red Concord media broadcast hub to build later."
+  }
+}

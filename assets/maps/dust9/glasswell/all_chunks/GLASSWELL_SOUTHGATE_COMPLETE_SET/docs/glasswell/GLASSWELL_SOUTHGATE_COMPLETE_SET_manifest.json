@@ -1,0 +1,29 @@
+{
+  "package_id": "GLASSWELL_SOUTHGATE_COMPLETE_SET",
+  "created_at": "2026-05-29T02:57:53.947137+00:00",
+  "chain_order": [
+    "GLASSWELL_SOUTHGATE_OFFRAMP",
+    "GLASSWELL_SOUTHGATE_MAIN_PARKING_CHECKPOINT",
+    "GLASSWELL_SOUTHGATE_DRIP_SAINTS_CONNECTOR"
+  ],
+  "flow": "Outer Ring Road -> Southgate Offramp -> Main Parking/Checkpoint -> Walk-only Drip Saints Connector -> Drip Saints territory",
+  "included_component_packs": {
+    "southgate_offramp": "GLASSWELL_SOUTHGATE_OFFRAMP_pack.zip",
+    "southgate_main_parking_checkpoint": "GLASSWELL_SOUTHGATE_MAIN_PARKING_CHECKPOINT_pack.zip",
+    "southgate_drip_saints_connector": "GLASSWELL_SOUTHGATE_DRIP_SAINTS_CONNECTOR_pack.zip"
+  },
+  "gameplay_rules": [
+    "Outer road and Southgate offramp are vehicle/van areas.",
+    "Southgate main parking/checkpoint allows vehicle access into both parking lots.",
+    "Southgate to Drip Saints connector is walk-only.",
+    "Use invisible Red Concord detection cones later in Phaser.",
+    "Use road override rectangles in Phaser if van catches on thin collision artifacts.",
+    "Door, gate, and barrier panels that open/close should be separate interactive assets."
+  ],
+  "layer_conventions": {
+    "base": "ground, road, parking pavement, floors",
+    "road_decals_underlay": "painted road decals under sprites when present",
+    "foreground_overlay": "decorative structures, walls, poles, wires, signs, banners, props",
+    "collision_mask": "white = walkable/drivable, black = blocked"
+  }
+}

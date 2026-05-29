@@ -1,0 +1,38 @@
+{
+  "package_id": "GLASSWELL_WESTGATE_BLACKLIGHT_KIDS_CONNECTOR_pack",
+  "created_at": "2026-05-29T03:54:08.408923+00:00",
+  "chunk_id": "GLASSWELL_WESTGATE_BLACKLIGHT_KIDS_CONNECTOR",
+  "type": "walk_only_inner_city_connector",
+  "role": "Walk-only neon night-market connector from Westgate parking/offramp into Blacklight Kids club district.",
+  "district_connection": "Blacklight Kids nightclub / night market territory",
+  "alignment": {
+    "base_original_size": [
+      1254,
+      1254
+    ],
+    "collision_original_size": [
+      1254,
+      1254
+    ],
+    "final_output_size": [
+      1254,
+      1254
+    ],
+    "all_final_layers_match": true
+  },
+  "files": {
+    "base": "assets/maps/dust9/glasswell/westgate_blacklight_kids_connector/layers/GLASSWELL_WESTGATE_BLACKLIGHT_KIDS_CONNECTOR_base.png",
+    "collision_mask": "assets/maps/dust9/glasswell/westgate_blacklight_kids_connector/masks/GLASSWELL_WESTGATE_BLACKLIGHT_KIDS_CONNECTOR_collision_mask.png"
+  },
+  "collision_rules": {
+    "white": "walkable",
+    "black": "blocked"
+  },
+  "gameplay_notes": [
+    "Walk-only chunk after the Westgate parking/offramp area.",
+    "No van driving beyond the Westgate parking area.",
+    "Market stalls, signs, walls, tents, and buildings are baked into the base art for this connector.",
+    "Use invisible Red Concord detection cones later for cameras and patrols.",
+    "Connects toward the Blacklight Kids nightclub interior."
+  ]
+}

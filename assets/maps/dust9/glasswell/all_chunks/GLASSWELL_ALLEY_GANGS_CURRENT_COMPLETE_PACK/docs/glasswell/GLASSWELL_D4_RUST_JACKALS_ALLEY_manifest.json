@@ -1,0 +1,47 @@
+{
+  "chunk_id": "GLASSWELL_D4_RUST_JACKALS_ALLEY",
+  "also_referred_to_by_user_as": "rust devils",
+  "district": "D4 / industrial salvage alley",
+  "gang": "Rust Jackals",
+  "style": "top-down 2.5D hostile scrap-yard alley, rusted metal, chain-link, oil stains, orange work lights",
+  "alignment_check": {
+    "base_original_size": [
+      1024,
+      559
+    ],
+    "overlay_original_size": [
+      1024,
+      559
+    ],
+    "collision_original_size": [
+      1024,
+      559
+    ],
+    "final_output_size": [
+      1024,
+      559
+    ],
+    "all_final_layers_same_size": true
+  },
+  "files": {
+    "base": "assets/maps/dust9/glasswell/d4_rust_jackals_alley/layers/GLASSWELL_D4_RUST_JACKALS_ALLEY_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/d4_rust_jackals_alley/layers/GLASSWELL_D4_RUST_JACKALS_ALLEY_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/d4_rust_jackals_alley/masks/GLASSWELL_D4_RUST_JACKALS_ALLEY_collision_mask.png"
+  },
+  "fixes_applied": [
+    "base filename text band painted out",
+    "overlay checkerboard cleaned toward transparency",
+    "collision mask forced to pure black/white",
+    "thin black stair lines filled so stairs are solid white/walkable",
+    "bottom-right sparkle mark removed from collision mask"
+  ],
+  "collision_rules": {
+    "white": "walkable",
+    "black": "blocked",
+    "stairs": "solid white walkable shapes; no black stair-step lines",
+    "ramps": "white walkable",
+    "door_approaches": "white",
+    "walls_buildings_fences_solid_scrap": "black"
+  },
+  "next_chunk": "gang hideout interiors or central city center after alley set"
+}

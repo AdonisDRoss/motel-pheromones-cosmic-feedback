@@ -1,0 +1,56 @@
+{
+  "package_id": "GLASSWELL_SOUTHGATE_MAIN_PARKING_CHECKPOINT_pack",
+  "created_at": "2026-05-29T02:12:56.112503+00:00",
+  "chunk_id": "GLASSWELL_SOUTHGATE_MAIN_PARKING_CHECKPOINT",
+  "type": "road_transition_cell",
+  "role": "Southgate parking/checkpoint entrance after the offramp; vehicle parking then walk-in city entry.",
+  "alignment": {
+    "final_output_size": [
+      1254,
+      1254
+    ],
+    "all_final_layers_match_base": true,
+    "source_sizes": {
+      "base": [
+        1254,
+        1254
+      ],
+      "structure_overlay_raw": [
+        1254,
+        1254
+      ],
+      "road_decals_raw": [
+        1254,
+        1254
+      ],
+      "collision_raw": [
+        1254,
+        1254
+      ]
+    }
+  },
+  "files": {
+    "base": "assets/maps/dust9/glasswell/southgate_main_parking_checkpoint/layers/GLASSWELL_SOUTHGATE_MAIN_PARKING_CHECKPOINT_base.png",
+    "road_decals_underlay": "assets/maps/dust9/glasswell/southgate_main_parking_checkpoint/layers/GLASSWELL_SOUTHGATE_MAIN_PARKING_CHECKPOINT_road_decals_underlay.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/southgate_main_parking_checkpoint/layers/GLASSWELL_SOUTHGATE_MAIN_PARKING_CHECKPOINT_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/southgate_main_parking_checkpoint/masks/GLASSWELL_SOUTHGATE_MAIN_PARKING_CHECKPOINT_collision_mask.png"
+  },
+  "layer_order": [
+    "base",
+    "road_decals_underlay",
+    "sprites/vehicles/player",
+    "foreground_overlay"
+  ],
+  "collision_rules": {
+    "white": "drivable / walkable",
+    "black": "blocked"
+  },
+  "phaser_notes": [
+    "Road decals are underlay decals, not foreground blockers.",
+    "Foreground overlay is decorative and should not be used as collision.",
+    "Use road override rectangles if the van catches on thin painted-line artifacts.",
+    "Both parking lots and their driveway entrances must remain vehicle-drivable.",
+    "Inspection lanes and center approach lanes must remain vehicle-drivable.",
+    "Gate panels/barriers that open or close should be added later as separate interactive assets."
+  ]
+}

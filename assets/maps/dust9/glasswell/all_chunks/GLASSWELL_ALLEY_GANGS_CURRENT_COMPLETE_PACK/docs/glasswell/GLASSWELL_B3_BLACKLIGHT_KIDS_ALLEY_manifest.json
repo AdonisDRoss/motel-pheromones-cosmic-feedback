@@ -1,0 +1,43 @@
+{
+  "chunk_id": "GLASSWELL_B3_BLACKLIGHT_KIDS_ALLEY",
+  "district": "B3 / Blacklight Kids alley territory",
+  "gang": "Blacklight Kids",
+  "style": "top-down 2.5D neon runner alley, purple/cyan coded graffiti",
+  "alignment_check": {
+    "base_original_size": [
+      1024,
+      559
+    ],
+    "overlay_original_size": [
+      1024,
+      559
+    ],
+    "mask_original_size": [
+      1024,
+      559
+    ],
+    "final_output_size": [
+      1024,
+      559
+    ],
+    "all_final_layers_same_size": true
+  },
+  "files": {
+    "base": "assets/maps/dust9/glasswell/b3_blacklight_kids_alley/layers/GLASSWELL_B3_BLACKLIGHT_KIDS_ALLEY_base.png",
+    "foreground_overlay": "assets/maps/dust9/glasswell/b3_blacklight_kids_alley/layers/GLASSWELL_B3_BLACKLIGHT_KIDS_ALLEY_foreground_overlay.png",
+    "collision_mask": "assets/maps/dust9/glasswell/b3_blacklight_kids_alley/masks/GLASSWELL_B3_BLACKLIGHT_KIDS_ALLEY_collision_mask.png"
+  },
+  "collision_rules": {
+    "white": "walkable",
+    "black": "blocked",
+    "stairs": "solid white walkable; no black stair lines",
+    "main_paths": "white",
+    "door_approaches": "white",
+    "walls_buildings_rooftops": "black"
+  },
+  "layer_rules": {
+    "base": "ground, walls, doors, stairs, fixed graffiti, playable path",
+    "foreground_overlay": "wires, hanging neon cable lines, dangling route tags, lamps, cloth markers",
+    "collision_mask": "pure black/white movement data"
+  }
+}
