@@ -1,0 +1,16 @@
+GTA SINGLE-SPRITE VEHICLE FIX
+
+Upload the CONTENTS of this zip to the repository root.
+
+This fixes the Distortion vehicle to follow the GTA-style rule:
+- one top-down car sprite
+- Phaser rotates the sprite for direction
+- no north/east/south/west car sheets
+- no powered/boost sprite dependency
+
+Runtime sprite:
+assets/vehicles/special/aurelix_distortion/distortion_topdown.png
+
+Root index.html and src/main.js were patched to load only this file.
+
+You can keep the old glow/boost sprites as reference art only, but the game does not need them.

@@ -35,6 +35,7 @@ const DISTORTION = {
   headlightsOn: true
 };
 
+// GTA rule: one top-down vehicle sprite is rotated in code. No directional vehicle sheet needed.
 // Simple closed-loop freeway lanes around the master map.
 const TRAFFIC_ROUTE_OUTER = [
   {x:720, y:720}, {x:2048, y:720}, {x:3376, y:720},
@@ -62,9 +63,7 @@ class GlasswellScene extends Phaser.Scene {
 
   preload() {
     this.load.image("map", "assets/maps/dust9/glasswell/GLASSWELL_FREEWAY_RING_WIRED_TEST_MAP.png");
-    this.load.image("distortion_idle", "assets/vehicles/special/aurelix_distortion/distortion_north_idle.png");
-    this.load.image("distortion_powered", "assets/vehicles/special/aurelix_distortion/distortion_north_powered.png");
-    this.load.image("distortion_boost", "assets/vehicles/special/aurelix_distortion/distortion_north_boost.png");
+    this.load.image("distortion_topdown", "assets/vehicles/special/aurelix_distortion/distortion_topdown.png");
 
     this.load.audio("engine_idle", "assets/audio/vehicles/vehicle_engine_idle_loop.wav");
     this.load.audio("engine_drive", "assets/audio/vehicles/vehicle_engine_drive_loop.wav");
@@ -88,7 +87,7 @@ class GlasswellScene extends Phaser.Scene {
     this.createRuntimeTextures();
     this.createMobileControls();
 
-    this.car = this.physics.add.sprite(START.x, START.y, "distortion_idle");
+    this.car = this.physics.add.sprite(START.x, START.y, "distortion_topdown");
     this.car.setDepth(50);
     this.car.setScale(0.45);
     this.car.rotation = -Math.PI / 2;
@@ -477,7 +476,7 @@ class GlasswellScene extends Phaser.Scene {
     }
 
     c.setVelocity(Math.cos(c.rotation) * DISTORTION.speed, Math.sin(c.rotation) * DISTORTION.speed);
-    c.setTexture(boosting ? "distortion_boost" : (DISTORTION.speed > 90 ? "distortion_powered" : "distortion_idle"));
+    c.setTexture("distortion_topdown");
 
     this.updateTraffic(delta);
     this.updatePedestrians(time);
