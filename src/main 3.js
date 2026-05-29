@@ -1,38 +1,3 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>Cosmic Feedback — Glasswell Full Index</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <style>
-    html, body {
-      margin:0; padding:0; width:100%; height:100%;
-      background:#050505; overflow:hidden;
-      touch-action:none;
-    }
-    canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
-    #help {
-      position: fixed; left: 10px; top: 8px; z-index: 20;
-      color: #e8dfc8; font: 13px monospace; background: rgba(0,0,0,.66);
-      padding: 8px 10px; border: 1px solid rgba(255,255,255,.25);
-      max-width: 760px;
-    }
-    #buildTag {
-      position: fixed; right: 10px; bottom: 8px; z-index: 20;
-      color:#9befff; font: 12px monospace; background:rgba(0,0,0,.55);
-      padding:6px 8px; border:1px solid rgba(155,239,255,.35);
-    }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
-</head>
-<body>
-<div id="help">
-  COSMIC FEEDBACK — GLASSWELL FULL INDEX<br>
-  Start: outside Westgate with Aurelix Distortion. Full map packs are included in assets/maps/dust9/glasswell/all_chunks/.<br>
-  WASD/Arrows or mobile controller = drive · E/X = refuel / gate info · H/Y = headlights · Space/B = brake · Shift/R = Distortion Boost · A = gas · P = police siren test
-</div>
-<div id="buildTag">Full index build</div>
-<script>
 
 const GAME_W = 960;
 const GAME_H = 540;
@@ -649,7 +614,3 @@ new Phaser.Game({
   physics: { default: "arcade", arcade: { debug: false } },
   scene: [GlasswellScene]
 });
-
-</script>
-</body>
-</html>

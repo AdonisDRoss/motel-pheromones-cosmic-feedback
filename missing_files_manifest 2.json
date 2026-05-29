@@ -1,0 +1,41 @@
+{
+  "package_id": "COSMIC_FEEDBACK_MISSING_FILES_FIX_PACK",
+  "purpose": "Only the files GitHub showed as missing/wrong for the new full-index build.",
+  "validation": {
+    "index_title_ok": true,
+    "freeway_map_present": true,
+    "fuel_map_present": true,
+    "main_js_present": true,
+    "copied_file_count": 26,
+    "missing_from_source": []
+  },
+  "files": [
+    "MISSING_FILES_INSTALL_INSTRUCTIONS.txt",
+    "README.md",
+    "START_HERE.txt",
+    "UPLOAD_THIS_TO_REPO_ROOT.txt",
+    "assets/audio/vehicles/ambulance_siren_loop.wav",
+    "assets/audio/vehicles/civic_patrol_siren_blip.wav",
+    "assets/audio/vehicles/fuel_pump_refuel_loop.wav",
+    "assets/audio/vehicles/police_siren_loop.wav",
+    "assets/audio/vehicles/tire_screech.wav",
+    "assets/audio/vehicles/ui_refuel_complete.wav",
+    "assets/audio/vehicles/vehicle_crash_thud.wav",
+    "assets/audio/vehicles/vehicle_engine_boost_loop.wav",
+    "assets/audio/vehicles/vehicle_engine_drive_loop.wav",
+    "assets/audio/vehicles/vehicle_engine_idle_loop.wav",
+    "assets/maps/dust9/glasswell/GLASSWELL_FREEWAY_RING_WIRED_TEST_MAP.png",
+    "assets/maps/dust9/glasswell/GLASSWELL_FREEWAY_RING_WITH_FUEL_STATIONS.png",
+    "assets/props/fuel_stations/fuel_station_asset_sheet_raw.jpeg",
+    "assets/vehicles/special/aurelix_distortion/AURELIX_DISTORTION_SOURCE_SHEET.jpeg",
+    "assets/vehicles/special/aurelix_distortion/distortion_north_boost.png",
+    "assets/vehicles/special/aurelix_distortion/distortion_north_idle.png",
+    "assets/vehicles/special/aurelix_distortion/distortion_north_powered.png",
+    "index-linked.html",
+    "index.html",
+    "manifest.json",
+    "src/glasswellMapData.json",
+    "src/main.js",
+    "src/mapChunkRegistry.json"
+  ]
+}

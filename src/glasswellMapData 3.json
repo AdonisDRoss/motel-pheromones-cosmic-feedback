@@ -1,0 +1,106 @@
+{
+  "start": {
+    "map": "GLASSWELL_FREEWAY_RING_WIRED_TEST_MAP",
+    "x": 720,
+    "y": 2048,
+    "vehicle": "aurelix_distortion",
+    "location": "outside Westgate"
+  },
+  "vehicle": {
+    "id": "aurelix_distortion",
+    "brand": "Aurelix Motorworks",
+    "model": "Distortion",
+    "className": "Prototype sports car",
+    "owner": "Donny",
+    "fuelMax": 180,
+    "fuel": 180,
+    "fuelDrainRate": 0.65,
+    "condition": "Prototype",
+    "topSpeed": 650,
+    "acceleration": 520,
+    "turnSpeed": 3.15,
+    "boostName": "Distortion Boost"
+  },
+  "fuelStations": [
+    {
+      "id": "fuel_poor_west_outer",
+      "name": "Muckrail Fuel & Salvage",
+      "tier": "poor",
+      "x": 760,
+      "y": 2860,
+      "radius": 150
+    },
+    {
+      "id": "fuel_poor_north_outer",
+      "name": "Muckrail Fuel & Salvage",
+      "tier": "poor",
+      "x": 2850,
+      "y": 760,
+      "radius": 150
+    },
+    {
+      "id": "fuel_mid_east_outer",
+      "name": "Dustline Waystop",
+      "tier": "middle",
+      "x": 3380,
+      "y": 2780,
+      "radius": 165
+    },
+    {
+      "id": "fuel_mid_west_outer",
+      "name": "Dustline Waystop",
+      "tier": "middle",
+      "x": 780,
+      "y": 1120,
+      "radius": 165
+    },
+    {
+      "id": "fuel_rich_city_close",
+      "name": "Nova Crown Fuel",
+      "tier": "rich",
+      "x": 2510,
+      "y": 1260,
+      "radius": 180
+    }
+  ],
+  "gateZones": [
+    {
+      "id": "westgate_exit",
+      "name": "Westgate Night Market / Blacklight Kids",
+      "x": 565,
+      "y": 2048,
+      "radius": 260,
+      "status": "wired"
+    },
+    {
+      "id": "southgate_exit",
+      "name": "Southgate Main Entry / Drip Saints",
+      "x": 2048,
+      "y": 3550,
+      "radius": 285,
+      "status": "wired"
+    },
+    {
+      "id": "eastgate_exit",
+      "name": "Eastgate Industrial / Rust Jackals",
+      "x": 3530,
+      "y": 2048,
+      "radius": 285,
+      "status": "wired"
+    },
+    {
+      "id": "northgate_exit",
+      "name": "Northgate Closed / Black Road",
+      "x": 2048,
+      "y": 545,
+      "radius": 260,
+      "status": "closed_until_unlock"
+    }
+  ],
+  "wiredMapFlow": {
+    "Westgate": "Night Market / Blacklight Kids connector",
+    "Southgate": "Main entrance / Drip Saints connector",
+    "Eastgate": "Industrial Oversight / Rust Jackals connector",
+    "Northgate": "closed route / future Black Road unlock"
+  }
+}

@@ -1,0 +1,33 @@
+COSMIC FEEDBACK — MISSING FILES FIX PACK
+
+Upload the CONTENTS of this zip to the root of:
+
+AdonisDRoss/motel-pheromones-cosmic-feedback
+
+This pack fixes the files that GitHub still showed as missing or wrong.
+
+CRITICAL:
+1. Replace the old root index.html.
+2. Add the missing freeway map PNGs.
+3. Keep the folder paths exactly the same.
+
+After upload, GitHub root should have:
+
+index.html
+index-linked.html
+src/main.js
+src/glasswellMapData.json
+src/mapChunkRegistry.json
+assets/maps/dust9/glasswell/GLASSWELL_FREEWAY_RING_WIRED_TEST_MAP.png
+assets/maps/dust9/glasswell/GLASSWELL_FREEWAY_RING_WITH_FUEL_STATIONS.png
+assets/vehicles/special/aurelix_distortion/
+assets/audio/vehicles/
+assets/props/fuel_stations/
+
+VERIFY:
+Open index.html in Working Copy.
+It must say:
+
+<title>Cosmic Feedback — Glasswell Full Index</title>
+
+If it says Glasswell Drive v012, you are still using the old file.

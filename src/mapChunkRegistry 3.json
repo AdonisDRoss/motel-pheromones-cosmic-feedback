@@ -1,0 +1,130 @@
+{
+  "chunks": [
+    {
+      "id": "GLASSWELL_B2_DRIP_SAINTS_ALLEY",
+      "base": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_ALLEY_GANGS_CURRENT_COMPLETE_PACK/assets/maps/dust9/glasswell/b2_drip_saints_alley/layers/GLASSWELL_B2_DRIP_SAINTS_ALLEY_base.png",
+      "overlay": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_ALLEY_GANGS_CURRENT_COMPLETE_PACK/assets/maps/dust9/glasswell/b2_drip_saints_alley/layers/GLASSWELL_B2_DRIP_SAINTS_ALLEY_foreground_overlay.png",
+      "collision_mask": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_ALLEY_GANGS_CURRENT_COMPLETE_PACK/assets/maps/dust9/glasswell/b2_drip_saints_alley/masks/GLASSWELL_B2_DRIP_SAINTS_ALLEY_collision_mask.png"
+    },
+    {
+      "id": "GLASSWELL_B2_DRIP_SAINTS_HIDEOUT_INTERIOR",
+      "base": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_ALLEY_GANGS_CURRENT_COMPLETE_PACK/assets/maps/dust9/glasswell/b2_drip_saints_hideout_interior/layers/GLASSWELL_B2_DRIP_SAINTS_HIDEOUT_INTERIOR_base.png",
+      "overlay": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_ALLEY_GANGS_CURRENT_COMPLETE_PACK/assets/maps/dust9/glasswell/b2_drip_saints_hideout_interior/layers/GLASSWELL_B2_DRIP_SAINTS_HIDEOUT_INTERIOR_foreground_overlay.png",
+      "collision_mask": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_ALLEY_GANGS_CURRENT_COMPLETE_PACK/assets/maps/dust9/glasswell/b2_drip_saints_hideout_interior/masks/GLASSWELL_B2_DRIP_SAINTS_HIDEOUT_INTERIOR_collision_mask.png"
+    },
+    {
+      "id": "GLASSWELL_B3_BLACKLIGHT_KIDS_ALLEY",
+      "base": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_ALLEY_GANGS_CURRENT_COMPLETE_PACK/assets/maps/dust9/glasswell/b3_blacklight_kids_alley/layers/GLASSWELL_B3_BLACKLIGHT_KIDS_ALLEY_base.png",
+      "overlay": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_ALLEY_GANGS_CURRENT_COMPLETE_PACK/assets/maps/dust9/glasswell/b3_blacklight_kids_alley/layers/GLASSWELL_B3_BLACKLIGHT_KIDS_ALLEY_foreground_overlay.png",
+      "collision_mask": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_ALLEY_GANGS_CURRENT_COMPLETE_PACK/assets/maps/dust9/glasswell/b3_blacklight_kids_alley/masks/GLASSWELL_B3_BLACKLIGHT_KIDS_ALLEY_collision_mask.png"
+    },
+    {
+      "id": "GLASSWELL_D4_RUST_JACKALS_ALLEY",
+      "base": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_ALLEY_GANGS_CURRENT_COMPLETE_PACK/assets/maps/dust9/glasswell/d4_rust_jackals_alley/layers/GLASSWELL_D4_RUST_JACKALS_ALLEY_base.png",
+      "overlay": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_ALLEY_GANGS_CURRENT_COMPLETE_PACK/assets/maps/dust9/glasswell/d4_rust_jackals_alley/layers/GLASSWELL_D4_RUST_JACKALS_ALLEY_foreground_overlay.png",
+      "collision_mask": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_ALLEY_GANGS_CURRENT_COMPLETE_PACK/assets/maps/dust9/glasswell/d4_rust_jackals_alley/masks/GLASSWELL_D4_RUST_JACKALS_ALLEY_collision_mask.png"
+    },
+    {
+      "id": "GLASSWELL_EASTGATE_INDUSTRIAL_OFFRAMP",
+      "base": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_EASTGATE_COMPLETE_SET/eastgate_industrial_offramp/assets/maps/dust9/glasswell/eastgate_industrial_offramp/layers/GLASSWELL_EASTGATE_INDUSTRIAL_OFFRAMP_base.png",
+      "overlay": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_EASTGATE_COMPLETE_SET/eastgate_industrial_offramp/assets/maps/dust9/glasswell/eastgate_industrial_offramp/layers/GLASSWELL_EASTGATE_INDUSTRIAL_OFFRAMP_foreground_overlay.png",
+      "collision_mask": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_EASTGATE_COMPLETE_SET/eastgate_industrial_offramp/assets/maps/dust9/glasswell/eastgate_industrial_offramp/masks/GLASSWELL_EASTGATE_INDUSTRIAL_OFFRAMP_collision_mask.png"
+    },
+    {
+      "id": "raw",
+      "base": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_EASTGATE_COMPLETE_SET/eastgate_industrial_offramp/raw_reference/raw_base.png",
+      "overlay": null,
+      "collision_mask": null
+    },
+    {
+      "id": "GLASSWELL_EASTGATE_RUST_JACKALS_CONNECTOR",
+      "base": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_EASTGATE_COMPLETE_SET/eastgate_rust_jackals_connector/assets/maps/dust9/glasswell/eastgate_rust_jackals_connector/layers/GLASSWELL_EASTGATE_RUST_JACKALS_CONNECTOR_base.png",
+      "overlay": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_EASTGATE_COMPLETE_SET/eastgate_rust_jackals_connector/assets/maps/dust9/glasswell/eastgate_rust_jackals_connector/layers/GLASSWELL_EASTGATE_RUST_JACKALS_CONNECTOR_foreground_overlay.png",
+      "collision_mask": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_EASTGATE_COMPLETE_SET/eastgate_rust_jackals_connector/assets/maps/dust9/glasswell/eastgate_rust_jackals_connector/masks/GLASSWELL_EASTGATE_RUST_JACKALS_CONNECTOR_collision_mask.png"
+    },
+    {
+      "id": "raw",
+      "base": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_EASTGATE_COMPLETE_SET/eastgate_rust_jackals_connector/raw_reference/raw_base.png",
+      "overlay": null,
+      "collision_mask": null
+    },
+    {
+      "id": "GLASSWELL_B2_DRIP_SAINTS_ALLEY",
+      "base": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_GANG_AREAS_ALIGNED_PACK/assets/maps/dust9/glasswell/b2_drip_saints_alley/layers/GLASSWELL_B2_DRIP_SAINTS_ALLEY_base.png",
+      "overlay": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_GANG_AREAS_ALIGNED_PACK/assets/maps/dust9/glasswell/b2_drip_saints_alley/layers/GLASSWELL_B2_DRIP_SAINTS_ALLEY_foreground_overlay.png",
+      "collision_mask": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_GANG_AREAS_ALIGNED_PACK/assets/maps/dust9/glasswell/b2_drip_saints_alley/masks/GLASSWELL_B2_DRIP_SAINTS_ALLEY_collision_mask.png"
+    },
+    {
+      "id": "GLASSWELL_B2_DRIP_SAINTS_HIDEOUT_INTERIOR",
+      "base": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_GANG_AREAS_ALIGNED_PACK/assets/maps/dust9/glasswell/b2_drip_saints_hideout_interior/layers/GLASSWELL_B2_DRIP_SAINTS_HIDEOUT_INTERIOR_base.png",
+      "overlay": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_GANG_AREAS_ALIGNED_PACK/assets/maps/dust9/glasswell/b2_drip_saints_hideout_interior/layers/GLASSWELL_B2_DRIP_SAINTS_HIDEOUT_INTERIOR_foreground_overlay.png",
+      "collision_mask": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_GANG_AREAS_ALIGNED_PACK/assets/maps/dust9/glasswell/b2_drip_saints_hideout_interior/masks/GLASSWELL_B2_DRIP_SAINTS_HIDEOUT_INTERIOR_collision_mask.png"
+    },
+    {
+      "id": "GLASSWELL_B3_BLACKLIGHT_KIDS_ALLEY",
+      "base": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_GANG_AREAS_ALIGNED_PACK/assets/maps/dust9/glasswell/b3_blacklight_kids_alley/layers/GLASSWELL_B3_BLACKLIGHT_KIDS_ALLEY_base.png",
+      "overlay": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_GANG_AREAS_ALIGNED_PACK/assets/maps/dust9/glasswell/b3_blacklight_kids_alley/layers/GLASSWELL_B3_BLACKLIGHT_KIDS_ALLEY_foreground_overlay.png",
+      "collision_mask": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_GANG_AREAS_ALIGNED_PACK/assets/maps/dust9/glasswell/b3_blacklight_kids_alley/masks/GLASSWELL_B3_BLACKLIGHT_KIDS_ALLEY_collision_mask.png"
+    },
+    {
+      "id": "GLASSWELL_D4_RUST_JACKALS_ALLEY",
+      "base": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_GANG_AREAS_ALIGNED_PACK/assets/maps/dust9/glasswell/d4_rust_jackals_alley/layers/GLASSWELL_D4_RUST_JACKALS_ALLEY_base.png",
+      "overlay": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_GANG_AREAS_ALIGNED_PACK/assets/maps/dust9/glasswell/d4_rust_jackals_alley/layers/GLASSWELL_D4_RUST_JACKALS_ALLEY_foreground_overlay.png",
+      "collision_mask": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_GANG_AREAS_ALIGNED_PACK/assets/maps/dust9/glasswell/d4_rust_jackals_alley/masks/GLASSWELL_D4_RUST_JACKALS_ALLEY_collision_mask.png"
+    },
+    {
+      "id": "GLASSWELL_NORTHGATE_BLACK_ROAD_ROUTE",
+      "base": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_NORTHGATE_BLACK_ROAD_ROUTE_pack/assets/maps/dust9/glasswell/northgate_black_road_route/layers/GLASSWELL_NORTHGATE_BLACK_ROAD_ROUTE_base.png",
+      "overlay": null,
+      "collision_mask": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_NORTHGATE_BLACK_ROAD_ROUTE_pack/assets/maps/dust9/glasswell/northgate_black_road_route/masks/GLASSWELL_NORTHGATE_BLACK_ROAD_ROUTE_collision_mask.png"
+    },
+    {
+      "id": "GLASSWELL_SOUTHGATE_DRIP_SAINTS_CONNECTOR",
+      "base": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_SOUTHGATE_COMPLETE_SET/southgate_drip_saints_connector/assets/maps/dust9/glasswell/southgate_drip_saints_connector/layers/GLASSWELL_SOUTHGATE_DRIP_SAINTS_CONNECTOR_base.png",
+      "overlay": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_SOUTHGATE_COMPLETE_SET/southgate_drip_saints_connector/assets/maps/dust9/glasswell/southgate_drip_saints_connector/layers/GLASSWELL_SOUTHGATE_DRIP_SAINTS_CONNECTOR_foreground_overlay.png",
+      "collision_mask": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_SOUTHGATE_COMPLETE_SET/southgate_drip_saints_connector/assets/maps/dust9/glasswell/southgate_drip_saints_connector/masks/GLASSWELL_SOUTHGATE_DRIP_SAINTS_CONNECTOR_collision_mask.png"
+    },
+    {
+      "id": "GLASSWELL_SOUTHGATE_MAIN_PARKING_CHECKPOINT",
+      "base": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_SOUTHGATE_COMPLETE_SET/southgate_main_parking_checkpoint/assets/maps/dust9/glasswell/southgate_main_parking_checkpoint/layers/GLASSWELL_SOUTHGATE_MAIN_PARKING_CHECKPOINT_base.png",
+      "overlay": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_SOUTHGATE_COMPLETE_SET/southgate_main_parking_checkpoint/assets/maps/dust9/glasswell/southgate_main_parking_checkpoint/layers/GLASSWELL_SOUTHGATE_MAIN_PARKING_CHECKPOINT_foreground_overlay.png",
+      "collision_mask": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_SOUTHGATE_COMPLETE_SET/southgate_main_parking_checkpoint/assets/maps/dust9/glasswell/southgate_main_parking_checkpoint/masks/GLASSWELL_SOUTHGATE_MAIN_PARKING_CHECKPOINT_collision_mask.png"
+    },
+    {
+      "id": "raw",
+      "base": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_SOUTHGATE_COMPLETE_SET/southgate_main_parking_checkpoint/raw_reference/raw_base.png",
+      "overlay": null,
+      "collision_mask": null
+    },
+    {
+      "id": "GLASSWELL_SOUTHGATE_OFFRAMP",
+      "base": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_SOUTHGATE_COMPLETE_SET/southgate_offramp/assets/maps/dust9/glasswell/southgate_offramp/layers/GLASSWELL_SOUTHGATE_OFFRAMP_base.png",
+      "overlay": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_SOUTHGATE_COMPLETE_SET/southgate_offramp/assets/maps/dust9/glasswell/southgate_offramp/layers/GLASSWELL_SOUTHGATE_OFFRAMP_foreground_overlay.png",
+      "collision_mask": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_SOUTHGATE_COMPLETE_SET/southgate_offramp/assets/maps/dust9/glasswell/southgate_offramp/masks/GLASSWELL_SOUTHGATE_OFFRAMP_collision_mask.png"
+    },
+    {
+      "id": "GLASSWELL_WESTGATE_BLACKLIGHT_KIDS_CONNECTOR",
+      "base": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_WESTGATE_COMPLETE_SET/westgate_blacklight_kids_connector/assets/maps/dust9/glasswell/westgate_blacklight_kids_connector/layers/GLASSWELL_WESTGATE_BLACKLIGHT_KIDS_CONNECTOR_base.png",
+      "overlay": null,
+      "collision_mask": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_WESTGATE_COMPLETE_SET/westgate_blacklight_kids_connector/assets/maps/dust9/glasswell/westgate_blacklight_kids_connector/masks/GLASSWELL_WESTGATE_BLACKLIGHT_KIDS_CONNECTOR_collision_mask.png"
+    },
+    {
+      "id": "raw_connector",
+      "base": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_WESTGATE_COMPLETE_SET/westgate_blacklight_kids_connector/raw_reference/raw_connector_base.png",
+      "overlay": null,
+      "collision_mask": null
+    },
+    {
+      "id": "GLASSWELL_WESTGATE_NIGHT_MARKET_OFFRAMP",
+      "base": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_WESTGATE_COMPLETE_SET/westgate_night_market_offramp/assets/maps/dust9/glasswell/westgate_night_market_offramp/layers/GLASSWELL_WESTGATE_NIGHT_MARKET_OFFRAMP_base.png",
+      "overlay": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_WESTGATE_COMPLETE_SET/westgate_night_market_offramp/assets/maps/dust9/glasswell/westgate_night_market_offramp/layers/GLASSWELL_WESTGATE_NIGHT_MARKET_OFFRAMP_foreground_overlay_assets.png",
+      "collision_mask": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_WESTGATE_COMPLETE_SET/westgate_night_market_offramp/assets/maps/dust9/glasswell/westgate_night_market_offramp/masks/GLASSWELL_WESTGATE_NIGHT_MARKET_OFFRAMP_overlay_asset_collision_mask.png"
+    },
+    {
+      "id": "raw",
+      "base": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_WESTGATE_COMPLETE_SET/westgate_night_market_offramp/raw_reference/raw_base.png",
+      "overlay": "assets/maps/dust9/glasswell/all_chunks/GLASSWELL_WESTGATE_COMPLETE_SET/westgate_night_market_offramp/raw_reference/raw_foreground_overlay_assets.png",
+      "collision_mask": null
+    }
+  ]
+}
