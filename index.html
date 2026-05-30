@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Cosmic Feedback — Glasswell Real Runtime v15</title>
+<title>Cosmic Feedback — Glasswell Highway Outer Ring</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#050505;overflow:hidden;touch-action:none;font-family:monospace}
@@ -15,67 +15,58 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 </head>
 <body>
-<div id="rotateGate"><div><strong>TURN PHONE SIDEWAYS</strong>Cosmic Feedback is landscape-only.<br><br>Rotate your phone for correct map, movement, and controls.</div></div>
-<div id="buildTag">Glasswell real runtime pathfix v15</div>
+<div id="rotateGate"><div><strong>TURN PHONE SIDEWAYS</strong>Glasswell highway driving is landscape-only.<br><br>Rotate your phone for correct road view and controls.</div></div>
+<div id="buildTag">Glasswell highway outer ring v01</div>
 <script>
 "use strict";
 
 /*
-REAL RUNTIME v15
-Uses only real existing repo folders:
-assets/maps/dust9/glasswell/c2
-assets/maps/dust9/glasswell/c3
-assets/maps/dust9/glasswell/c4
-assets/maps/dust9/glasswell/d3
+GLASSWELL HIGHWAY OUTER RING v01
+Uses actual repo road-kit assets:
+assets/maps/dust9/glasswell/road_kit/highway_roads/highway_curve_01.png
+assets/maps/dust9/glasswell/road_kit/highway_roads/highway_off_or_on_ramp.png
+assets/maps/dust9/glasswell/road_kit/highway_roads/highway_straight_01.png
+assets/maps/dust9/glasswell/road_kit/highway_roads/highway_straight_02.png
 
-No fake maps, no generated maps, no freeway-ring map.
+Purpose:
+Road/highway skeleton first. Three outer-ring highways:
+West Outer, South Outer, East Outer.
 */
 
-const GAME_W=960, GAME_H=540, MAP_W=2048, MAP_H=2048;
-const ZOOM={foot:1.05,carSlow:.9,carFast:.74}, CAR_VISUAL_OFFSET=Math.PI/2;
-const DONNY={hpMax:100,hp:100,walkSpeed:225,rep:0};
-const CAR={fuelMax:180,fuel:180,speed:0,maxSpeed:520,accel:470,drag:.984,turnSpeed:3,condition:"Parked",headlightsOn:true};
+const GAME_W=960, GAME_H=540, MAP_W=4096, MAP_H=4096;
+const ZOOM={foot:0.95,carSlow:.78,carFast:.62}, CAR_VISUAL_OFFSET=Math.PI/2;
 
-const CHUNKS={
- C3:{
-  title:"GLASSWELL_C3 — Main Civic Gate",
-  base:"assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_base.png",
-  fg:"assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_foreground_overlay.png",
-  spawn:{x:1024,y:1510}, car:{x:1130,y:1510}, obj:{x:1024,y:1110,label:"Civic Gate"}
- },
- D3:{
-  title:"GLASSWELL_D3 — Red Concord Checkpoint",
-  base:"assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_base.png",
-  fg:"assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_foreground_overlay.png",
-  spawn:{x:940,y:1580}, car:{x:1050,y:1580}, obj:{x:1215,y:1090,label:"Checkpoint"}
- },
- C2:{
-  title:"GLASSWELL_C2 — Civic Admin Street",
-  base:"assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_base.png",
-  fg:"assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_foreground_overlay.png",
-  spawn:{x:1024,y:1500}, car:{x:1130,y:1500}, obj:{x:1024,y:1040,label:"Admin Street"}
- },
- C4:{
-  title:"GLASSWELL_C4 — Transit Vendor Square",
-  base:"assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_base.png",
-  fg:"assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_foreground_overlay.png",
-  spawn:{x:1024,y:1520}, car:{x:1130,y:1520}, obj:{x:1024,y:1040,label:"Vendor Square"}
- }
+const ASSETS={
+ straight1:"assets/maps/dust9/glasswell/road_kit/highway_roads/highway_straight_01.png",
+ straight2:"assets/maps/dust9/glasswell/road_kit/highway_roads/highway_straight_02.png",
+ curve:"assets/maps/dust9/glasswell/road_kit/highway_roads/highway_curve_01.png",
+ ramp:"assets/maps/dust9/glasswell/road_kit/highway_roads/highway_off_or_on_ramp.png",
+ distortion:"assets/vehicles/special/aurelix_distortion/distortion_topdown.png",
+ donnySheet:"space_game_missing_assets_staging/assets/sprites/player/donny/donny_overhead_noguitar_phaser_ready_1779508629.png"
 };
 
-const DONNY_SHEET="assets/sprites/player/donny/donny_movement_walk_8x4_181x272.png";
+const DONNY={hpMax:100,hp:100,walkSpeed:225,rep:0};
+const CAR={fuelMax:180,fuel:180,speed:0,maxSpeed:650,accel:560,drag:.985,turnSpeed:3.0,condition:"Parked",headlightsOn:true};
+const SPAWN={donny:{x:768,y:1880},car:{x:900,y:1880}};
+
+const RAMP_POINTS=[
+ {id:"WESTGATE",x:768,y:2048,rot:Math.PI/2,label:"WESTGATE / BLACKLIGHT CONNECTOR"},
+ {id:"SOUTHGATE",x:2048,y:3328,rot:0,label:"SOUTHGATE / BLUE CANDLE ROUTE"},
+ {id:"EASTGATE",x:3328,y:2048,rot:-Math.PI/2,label:"EASTGATE / RUST JACKALS"},
+ {id:"CIVIC",x:2048,y:768,rot:Math.PI,label:"CIVIC CONNECTOR FUTURE"}
+];
 
 class MainScene extends Phaser.Scene{
- constructor(){super("MainScene");this.chunk="C3";this.loadErrors=[];}
+ constructor(){super("MainScene");this.loadErrors=[];}
  preload(){
-  Object.entries(CHUNKS).forEach(([k,c])=>{
-   this.load.image(k+"_base",c.base);
-   this.load.image(k+"_fg",c.fg);
-  });
-  this.load.spritesheet("donny_walk",DONNY_SHEET,{frameWidth:181,frameHeight:272});
-  this.load.image("distortion_asset","assets/vehicles/special/aurelix_distortion/distortion_topdown.png");
+  this.load.image("road_straight_1",ASSETS.straight1);
+  this.load.image("road_straight_2",ASSETS.straight2);
+  this.load.image("road_curve",ASSETS.curve);
+  this.load.image("road_ramp",ASSETS.ramp);
+  this.load.image("distortion_asset",ASSETS.distortion);
+  this.load.spritesheet("donny_real",ASSETS.donnySheet,{frameWidth:192,frameHeight:288});
   this.load.on("loaderror",file=>{
-   const src=(file.src||file.url||"");
+   const src=file.src||file.url||"";
    console.warn("LOAD ERROR",file.key,src);
    this.loadErrors.push(file.key+" -> "+src);
   });
@@ -86,42 +77,36 @@ class MainScene extends Phaser.Scene{
   this.makeFallbacks();
   this.makeDonnyAnims();
 
-  this.mapBase=this.add.image(0,0,"C3_base").setOrigin(0,0).setDepth(0);
-  this.mapFg=this.add.image(0,0,"C3_fg").setOrigin(0,0).setDepth(930);
-  if(!this.textures.exists("C3_base")) this.drawMissingMapScreen("C3");
+  this.drawDustGround();
+  this.buildHighwayOuterRing();
+  this.buildRoadRails();
 
   this.keys=this.input.keyboard.addKeys({
    up:"W,UP",down:"S,DOWN",left:"A,LEFT",right:"D,RIGHT",
-   interact:"E",brake:"SPACE",boost:"SHIFT",lights:"H",debug:"F3",
-   one:"ONE",two:"TWO",three:"THREE",four:"FOUR"
+   interact:"E",brake:"SPACE",boost:"SHIFT",lights:"H",debug:"F3"
   });
   this.makeMobile();
 
-  const c=CHUNKS[this.chunk], carTex=this.textures.exists("distortion_asset")?"distortion_asset":"car_fallback";
-  this.car=this.physics.add.sprite(c.car.x,c.car.y,carTex).setDepth(850).setScale(carTex==="distortion_asset"?.42:1);
-  this.carHeading=0; this.car.rotation=this.carHeading+CAR_VISUAL_OFFSET;
+  const carTex=this.textures.exists("distortion_asset")?"distortion_asset":"car_fallback";
+  this.car=this.physics.add.sprite(SPAWN.car.x,SPAWN.car.y,carTex).setDepth(850).setScale(carTex==="distortion_asset"?.42:1);
+  this.carHeading=-Math.PI/2;
+  this.car.rotation=this.carHeading+CAR_VISUAL_OFFSET;
 
-  this.hasDonnySheet=this.textures.exists("donny_walk");
-  this.player=this.physics.add.sprite(c.spawn.x,c.spawn.y,this.hasDonnySheet?"donny_walk":"donny_down").setDepth(900).setScale(this.hasDonnySheet?.235:1.25).setCollideWorldBounds(true);
-  if(this.hasDonnySheet){this.player.setFrame(0);this.player.body.setSize(70,60);this.player.body.setOffset(55,195);}
+  this.hasDonnySheet=this.textures.exists("donny_real");
+  this.player=this.physics.add.sprite(SPAWN.donny.x,SPAWN.donny.y,this.hasDonnySheet?"donny_real":"donny_down").setDepth(900).setScale(this.hasDonnySheet?.22:1.25).setCollideWorldBounds(true);
+  if(this.hasDonnySheet){this.player.setFrame(0);this.player.body.setSize(66,58);this.player.body.setOffset(63,210);}
 
-  this.playerLabel=this.label("DONNY",this.player.x,this.player.y-72,1000,"#9befff");
-  this.carLabel=this.label("DISTORTION",this.car.x,this.car.y-80,1000,"#e0c7ff");
+  this.playerLabel=this.label("DONNY",this.player.x,this.player.y-68,1000,"#9befff");
+  this.carLabel=this.label("DISTORTION",this.car.x,this.car.y-78,1000,"#e0c7ff");
+
   this.locator=this.add.graphics().setDepth(899);
   this.headlightLayer=this.add.graphics().setDepth(840).setBlendMode(Phaser.BlendModes.ADD);
-  this.marker=this.add.graphics().setDepth(60);
+  this.inCar=false;this.active=this.player;this.missionText="Drive the outer ring and check all three highway connectors.";
 
-  this.inCar=false; this.missionDone=false;
-  this.makeHud(); this.makePrompt(); this.makeMapButtons(); this.makeDebug();
-
+  this.makeHud();this.makePrompt();this.makeDebug();
   this.input.keyboard.on("keydown-F3",()=>this.debugText.setVisible(!this.debugText.visible));
-  this.input.keyboard.on("keydown-ONE",()=>this.switchChunk("C3"));
-  this.input.keyboard.on("keydown-TWO",()=>this.switchChunk("D3"));
-  this.input.keyboard.on("keydown-THREE",()=>this.switchChunk("C2"));
-  this.input.keyboard.on("keydown-FOUR",()=>this.switchChunk("C4"));
-
-  this.drawMarkers(); this.updateCamera();
-  if(this.loadErrors.length) this.flash("Some files did not load. Press F3 for paths.",3000);
+  if(this.loadErrors.length)this.flash("Road kit missing file. Press F3 for exact path.",3000);
+  this.updateCamera();
  }
  makeFallbacks(){
   const g=this.add.graphics();
@@ -135,30 +120,69 @@ class MainScene extends Phaser.Scene{
    g.fillStyle(0xcfcfcf,1).fillRect(23,21,5,26);
    g.generateTexture(key,52,68);
   };
-  mk("donny_down",false); mk("donny_up",true); mk("donny_side",false);
+  mk("donny_down",false);mk("donny_up",true);mk("donny_side",false);
   g.clear();g.fillStyle(0x222222,1).fillRoundedRect(0,0,90,46,10);
   g.fillStyle(0x8b2cff,1).fillRect(10,6,18,5).fillRect(10,35,18,5);
   g.fillStyle(0x89d8ff,1).fillRoundedRect(42,8,26,30,6);
-  g.lineStyle(3,0xcccccc,1).strokeRoundedRect(0,0,90,46,10);
-  g.generateTexture("car_fallback",90,46); g.destroy();
+  g.lineStyle(3,0xccc,1).strokeRoundedRect(0,0,90,46,10);
+  g.generateTexture("car_fallback",90,46);
+  g.clear();g.fillStyle(0x303030,1).fillRect(0,190,512,132);g.lineStyle(4,0xc8b46a,.85).lineBetween(0,256,512,256);g.generateTexture("road_fallback",512,512);
+  g.destroy();
  }
  makeDonnyAnims(){
-  if(!this.textures.exists("donny_walk"))return;
-  [["down",0,7],["right",8,15],["left",16,23],["up",24,31]].forEach(([d,s,e])=>{
-   if(!this.anims.exists("donny_walk_"+d)){
-    this.anims.create({key:"donny_walk_"+d,frames:this.anims.generateFrameNumbers("donny_walk",{start:s,end:e}),frameRate:8,repeat:-1});
-   }
+  if(!this.textures.exists("donny_real"))return;
+  [["down",0,3],["right",4,7],["left",8,11],["up",12,15]].forEach(([d,s,e])=>{
+   if(!this.anims.exists("donny_"+d))this.anims.create({key:"donny_"+d,frames:this.anims.generateFrameNumbers("donny_real",{start:s,end:e}),frameRate:8,repeat:-1});
   });
  }
- drawMissingMapScreen(k){
-  const g=this.add.graphics().setDepth(-1);
-  g.fillStyle(0x101010,1).fillRect(0,0,MAP_W,MAP_H);
-  g.fillStyle(0x303030,1).fillRect(760,0,520,MAP_H).fillRect(0,900,MAP_W,280);
-  this.add.text(120,120,"MAP FILE NOT LOADED:\n"+CHUNKS[k].base+"\nCheck exact GitHub path/capitalization.",{
-   fontFamily:"monospace",fontSize:"28px",color:"#ff7777",backgroundColor:"rgba(0,0,0,.75)",padding:{x:10,y:8}
-  }).setDepth(10);
+ drawDustGround(){
+  const g=this.add.graphics().setDepth(-10);
+  g.fillStyle(0x151311,1).fillRect(0,0,MAP_W,MAP_H);
+  g.fillStyle(0x211b15,.9);
+  for(let i=0;i<120;i++){
+   const x=(i*337)%MAP_W,y=(i*571)%MAP_H,w=60+((i*17)%160),h=18+((i*23)%70);
+   g.fillRect(x,y,w,h);
+  }
+  g.lineStyle(8,0x2b2b2b,1).strokeRect(16,16,MAP_W-32,MAP_H-32);
  }
- label(t,x,y,d,c){return this.add.text(x,y,t,{fontFamily:"monospace",fontSize:"13px",color:c,backgroundColor:"rgba(0,0,0,.75)",padding:{x:5,y:2}}).setOrigin(.5).setDepth(d);}
+ road(tex,x,y,rot=0,scale=1){
+  const key=this.textures.exists(tex)?tex:"road_fallback";
+  const img=this.add.image(x,y,key).setOrigin(.5).setDepth(0).setRotation(rot);
+  img.setDisplaySize(512*scale,512*scale);
+  return img;
+ }
+ buildHighwayOuterRing(){
+  // West vertical highway
+  [768,1280,1792,2304,2816].forEach((y,i)=>this.road(i%2?"road_straight_2":"road_straight_1",768,y,Math.PI/2));
+  // South horizontal highway
+  [768,1280,1792,2304,2816,3328].forEach((x,i)=>this.road(i%2?"road_straight_2":"road_straight_1",x,3328,0));
+  // East vertical highway
+  [768,1280,1792,2304,2816].forEach((y,i)=>this.road(i%2?"road_straight_2":"road_straight_1",3328,y,Math.PI/2));
+  // Curves tying west/south and south/east
+  this.road("road_curve",768,3328,0);
+  this.road("road_curve",3328,3328,Math.PI/2);
+  // North route stubs; used later for Civic/C3 connector
+  this.road("road_ramp",2048,768,Math.PI);
+  this.road("road_straight_1",1536,768,0,.92);
+  this.road("road_straight_2",2560,768,0,.92);
+  // On/off ramps
+  for(const r of RAMP_POINTS){
+   this.road("road_ramp",r.x,r.y,r.rot,.95);
+   this.add.text(r.x,r.y+300,r.label,{fontFamily:"monospace",fontSize:"18px",color:"#d8efff",backgroundColor:"rgba(0,0,0,.65)",padding:{x:8,y:4}}).setOrigin(.5).setDepth(40);
+  }
+  this.add.text(2048,260,"GLASSWELL OUTER HIGHWAY RING",{fontFamily:"monospace",fontSize:"28px",color:"#9befff",backgroundColor:"rgba(0,0,0,.60)",padding:{x:10,y:6}}).setOrigin(.5).setDepth(40);
+ }
+ buildRoadRails(){
+  // Broad invisible rail blocks, only to keep first drive pass from falling off the ring.
+  this.rails=this.physics.add.staticGroup();
+  const add=(x,y,w,h)=>{const r=this.rails.create(x,y,"rail_block");r.setVisible(false);r.setScale(w/16,h/16).refreshBody();};
+  const g=this.add.graphics();
+  g.fillStyle(0xffffff,1).fillRect(0,0,16,16).generateTexture("rail_block",16,16);g.destroy();
+  // outer map edge rails
+  add(2048,30,4096,60);add(2048,4066,4096,60);add(30,2048,60,4096);add(4066,2048,60,4096);
+  this.physics.add.collider(this.player,this.rails);
+  this.physics.add.collider(this.car,this.rails,()=>{CAR.speed*=-.15;CAR.condition="Guard rail";});
+ }
  makeMobile(){
   this.mobile={joyX:0,joyY:0,pointer:null,buttons:{gas:false,brake:false,use:false,boost:false,lights:false},press:{use:false,lights:false}};
   const depth=1200,jx=105,jy=GAME_H-105,jr=70,kr=26;
@@ -167,33 +191,62 @@ class MainScene extends Phaser.Scene{
   const zone=this.add.zone(jx,jy,jr*2.3,jr*2.3).setScrollFactor(0).setDepth(depth+2).setInteractive();
   const setJoy=p=>{const dx=p.x-jx,dy=p.y-jy,max=jr-kr*.35,dist=Math.min(Math.hypot(dx,dy),max),a=Math.atan2(dy,dx);knob.setPosition(jx+Math.cos(a)*dist,jy+Math.sin(a)*dist);this.mobile.joyX=Phaser.Math.Clamp(dx/max,-1,1);this.mobile.joyY=Phaser.Math.Clamp(dy/max,-1,1);};
   const reset=()=>{this.mobile.joyX=0;this.mobile.joyY=0;this.mobile.pointer=null;knob.setPosition(jx,jy);};
-  zone.on("pointerdown",p=>{this.mobile.pointer=p.id;setJoy(p);}); zone.on("pointermove",p=>{if(this.mobile.pointer===p.id)setJoy(p);});
-  this.input.on("pointerup",p=>{if(this.mobile.pointer===p.id)reset();});
+  zone.on("pointerdown",p=>{this.mobile.pointer=p.id;setJoy(p);});zone.on("pointermove",p=>{if(this.mobile.pointer===p.id)setJoy(p);});this.input.on("pointerup",p=>{if(this.mobile.pointer===p.id)reset();});
   const btn=(id,a,b,x,y,col)=>{const c=this.add.circle(x,y,38,col,.36).setScrollFactor(0).setDepth(depth).setStrokeStyle(3,0xffffff,.3).setInteractive();this.add.text(x,y-10,a+"\n"+b,{fontFamily:"monospace",fontSize:"12px",color:"#fff",align:"center"}).setOrigin(.5).setScrollFactor(0).setDepth(depth+1);c.on("pointerdown",()=>{this.mobile.buttons[id]=true;if(id==="use")this.mobile.press.use=true;if(id==="lights")this.mobile.press.lights=true;c.setAlpha(.65);});const up=()=>{this.mobile.buttons[id]=false;c.setAlpha(1);};c.on("pointerup",up);c.on("pointerout",up);this.input.on("pointerup",up);};
   btn("gas","A","GAS",GAME_W-82,GAME_H-92,0x2e7d32);btn("brake","B","BRK",GAME_W-148,GAME_H-54,0x8a2020);btn("use","X","USE",GAME_W-148,GAME_H-130,0x245b9a);btn("lights","Y","LTS",GAME_W-214,GAME_H-92,0x8d7a21);btn("boost","R","BST",GAME_W-82,GAME_H-174,0x7b36c7);
  }
+ label(t,x,y,d,c){return this.add.text(x,y,t,{fontFamily:"monospace",fontSize:"13px",color:c,backgroundColor:"rgba(0,0,0,.75)",padding:{x:5,y:2}}).setOrigin(.5).setDepth(d);}
  mobileInput(){const m=this.mobile,o={joyX:m.joyX,joyY:m.joyY,gas:m.buttons.gas,brake:m.buttons.brake,use:m.buttons.use,usePressed:m.press.use,boost:m.buttons.boost,lightsPressed:m.press.lights};m.press.use=false;m.press.lights=false;return o;}
- makeHud(){this.h=this.add.container(12,10).setScrollFactor(0).setDepth(1100);const bg=this.add.rectangle(0,0,495,96,0x000000,.72).setOrigin(0).setStrokeStyle(2,0xa66cff,.9);this.hTitle=this.add.text(12,8,"",{fontFamily:"monospace",fontSize:"13px",color:"#9befff"});this.hMode=this.add.text(12,30,"",{fontFamily:"monospace",fontSize:"12px",color:"#fff"});this.hHp=this.add.text(12,52,"",{fontFamily:"monospace",fontSize:"12px",color:"#fff"});this.hpBar=this.add.rectangle(86,60,180,11,0x3fc46b,1).setOrigin(0,.5);this.hFuel=this.add.text(12,72,"",{fontFamily:"monospace",fontSize:"12px",color:"#fff"});this.fuelBar=this.add.rectangle(86,80,180,11,0x9b6cff,1).setOrigin(0,.5);this.h.add([bg,this.hTitle,this.hMode,this.hHp,this.hpBar,this.hFuel,this.fuelBar]);}
+ makeHud(){
+  this.h=this.add.container(12,10).setScrollFactor(0).setDepth(1100);
+  const bg=this.add.rectangle(0,0,500,96,0x000000,.72).setOrigin(0).setStrokeStyle(2,0xa66cff,.9);
+  this.hTitle=this.add.text(12,8,"GLASSWELL HIGHWAY OUTER RING",{fontFamily:"monospace",fontSize:"13px",color:"#9befff"});
+  this.hMode=this.add.text(12,30,"",{fontFamily:"monospace",fontSize:"12px",color:"#fff"});
+  this.hHp=this.add.text(12,52,"",{fontFamily:"monospace",fontSize:"12px",color:"#fff"});
+  this.hpBar=this.add.rectangle(86,60,180,11,0x3fc46b,1).setOrigin(0,.5);
+  this.hFuel=this.add.text(12,72,"",{fontFamily:"monospace",fontSize:"12px",color:"#fff"});
+  this.fuelBar=this.add.rectangle(86,80,180,11,0x9b6cff,1).setOrigin(0,.5);
+  this.h.add([bg,this.hTitle,this.hMode,this.hHp,this.hpBar,this.hFuel,this.fuelBar]);
+ }
  makePrompt(){this.prompt=this.add.text(16,GAME_H-94,"",{fontFamily:"monospace",fontSize:"15px",color:"#fff1b8",backgroundColor:"rgba(0,0,0,.76)",padding:{x:8,y:5},wordWrap:{width:620}}).setScrollFactor(0).setDepth(1150).setVisible(false);}
- makeMapButtons(){this.add.text(530,12,"MAP:",{fontFamily:"monospace",fontSize:"13px",color:"#cfcfcf"}).setScrollFactor(0).setDepth(1200);[["C3",530],["D3",595],["C2",660],["C4",725]].forEach(([k,x])=>{const r=this.add.rectangle(x,42,52,34,0x111111,.72).setScrollFactor(0).setDepth(1200).setStrokeStyle(2,0x9befff,.45).setInteractive();this.add.text(x,42,k,{fontFamily:"monospace",fontSize:"14px",color:"#fff"}).setOrigin(.5).setScrollFactor(0).setDepth(1201);r.on("pointerdown",()=>this.switchChunk(k));});}
  makeDebug(){this.debugText=this.add.text(GAME_W-430,82,"",{fontFamily:"monospace",fontSize:"11px",color:"#9befff",backgroundColor:"rgba(0,0,0,.72)",padding:{x:8,y:6},wordWrap:{width:405}}).setScrollFactor(0).setDepth(1300).setVisible(false);}
- switchChunk(k){const c=CHUNKS[k];if(!c)return;this.chunk=k;if(this.textures.exists(k+"_base"))this.mapBase.setTexture(k+"_base");else this.drawMissingMapScreen(k);if(this.textures.exists(k+"_fg")){this.mapFg.setTexture(k+"_fg").setVisible(true);}else this.mapFg.setVisible(false);this.inCar=false;CAR.speed=0;CAR.condition="Parked";this.car.setPosition(c.car.x,c.car.y);this.carHeading=0;this.car.rotation=this.carHeading+CAR_VISUAL_OFFSET;this.player.body.enable=true;this.player.setVisible(true);this.player.setPosition(c.spawn.x,c.spawn.y);this.missionDone=false;this.drawMarkers();this.flash("Loaded "+c.title,1600);this.updateCamera();}
- drawMarkers(){this.marker.clear();const c=CHUNKS[this.chunk];this.marker.fillStyle(0x9befff,.12).fillCircle(c.spawn.x,c.spawn.y,52);this.marker.lineStyle(3,0x9befff,.75).strokeCircle(c.spawn.x,c.spawn.y,52);this.marker.fillStyle(0xffe070,.14).fillCircle(c.obj.x,c.obj.y,58);this.marker.lineStyle(3,0xffe070,.75).strokeCircle(c.obj.x,c.obj.y,58);}
- update(t,delta){const m=this.mobileInput(),use=Phaser.Input.Keyboard.JustDown(this.keys.interact)||m.usePressed,lights=Phaser.Input.Keyboard.JustDown(this.keys.lights)||m.lightsPressed;if(lights)CAR.headlightsOn=!CAR.headlightsOn;if(use)this.handleUse();this.inCar?this.updateCar(delta,m):this.updatePlayer(delta,m);this.updateMission();this.updateCamera();this.updateLabels();this.drawLocator();this.drawHeadlights();this.checkPrompts();this.updateHud();this.updateDebug();}
- updatePlayer(delta,m){const left=this.keys.left.isDown||m.joyX<-.22,right=this.keys.right.isDown||m.joyX>.22,up=this.keys.up.isDown||m.joyY<-.22,down=this.keys.down.isDown||m.joyY>.22;let vx=(right?1:0)-(left?1:0),vy=(down?1:0)-(up?1:0),mag=Math.hypot(vx,vy);if(mag>0){vx/=mag;vy/=mag;this.player.setVelocity(vx*DONNY.walkSpeed,vy*DONNY.walkSpeed);if(this.hasDonnySheet){if(Math.abs(vx)>Math.abs(vy))this.player.anims.play(vx<0?"donny_walk_left":"donny_walk_right",true);else this.player.anims.play(vy<0?"donny_walk_up":"donny_walk_down",true);}else{if(Math.abs(vx)>Math.abs(vy)){this.player.setTexture("donny_side");this.player.setFlipX(vx<0);}else{this.player.setTexture(vy<0?"donny_up":"donny_down");this.player.setFlipX(false);}}}else{this.player.setVelocity(0,0);if(this.hasDonnySheet)this.player.anims.stop();}}
- updateCar(delta,m){const dt=delta/1000,gas=this.keys.up.isDown||m.gas||m.joyY<-.45,brake=this.keys.down.isDown||this.keys.brake.isDown||m.brake||m.joyY>.45,left=this.keys.left.isDown||m.joyX<-.35,right=this.keys.right.isDown||m.joyX>.35,boost=(this.keys.boost.isDown||m.boost)&&CAR.fuel>0&&Math.abs(CAR.speed)>80;if(gas&&CAR.fuel>0){CAR.speed+=CAR.accel*dt*(boost?1.6:1);CAR.fuel=Math.max(0,CAR.fuel-dt*(boost?1.35:.55));CAR.condition=boost?"Boosting":"Driving";}else if(brake){CAR.speed-=CAR.accel*dt*.76;CAR.condition="Braking";}else{CAR.speed*=Math.pow(CAR.drag,delta/16.6667);if(Math.abs(CAR.speed)<4)CAR.speed=0;CAR.condition="Coasting";}CAR.speed=Phaser.Math.Clamp(CAR.speed,-230,boost?760:CAR.maxSpeed);if(Math.abs(CAR.speed)>10){const steer=(right?1:0)-(left?1:0),reverse=CAR.speed<0?-1:1,ratio=Phaser.Math.Clamp(Math.abs(CAR.speed)/CAR.maxSpeed,.18,1);this.carHeading+=steer*reverse*CAR.turnSpeed*dt*ratio;}this.car.setVelocity(Math.cos(this.carHeading)*CAR.speed,Math.sin(this.carHeading)*CAR.speed);this.car.rotation=this.carHeading+CAR_VISUAL_OFFSET;this.car.x=Phaser.Math.Clamp(this.car.x,48,MAP_W-48);this.car.y=Phaser.Math.Clamp(this.car.y,48,MAP_H-48);}
- handleUse(){if(this.inCar){this.exitCar();return;}if(Phaser.Math.Distance.Between(this.player.x,this.player.y,this.car.x,this.car.y)<110)this.enterCar();}
+ update(t,delta){
+  const m=this.mobileInput(),use=Phaser.Input.Keyboard.JustDown(this.keys.interact)||m.usePressed,lights=Phaser.Input.Keyboard.JustDown(this.keys.lights)||m.lightsPressed;
+  if(lights)CAR.headlightsOn=!CAR.headlightsOn;
+  if(use)this.handleUse();
+  this.inCar?this.updateCar(delta,m):this.updatePlayer(delta,m);
+  this.updateCamera();this.updateLabels();this.drawLocator();this.drawHeadlights();this.checkPrompts();this.updateHud();this.updateDebug();
+ }
+ updatePlayer(delta,m){
+  const left=this.keys.left.isDown||m.joyX<-.22,right=this.keys.right.isDown||m.joyX>.22,up=this.keys.up.isDown||m.joyY<-.22,down=this.keys.down.isDown||m.joyY>.22;
+  let vx=(right?1:0)-(left?1:0),vy=(down?1:0)-(up?1:0),mag=Math.hypot(vx,vy);
+  if(mag>0){vx/=mag;vy/=mag;this.player.setVelocity(vx*DONNY.walkSpeed,vy*DONNY.walkSpeed);
+   if(this.hasDonnySheet){if(Math.abs(vx)>Math.abs(vy))this.player.anims.play(vx<0?"donny_left":"donny_right",true);else this.player.anims.play(vy<0?"donny_up":"donny_down",true);}
+   else{if(Math.abs(vx)>Math.abs(vy)){this.player.setTexture("donny_side");this.player.setFlipX(vx<0);}else{this.player.setTexture(vy<0?"donny_up":"donny_down");this.player.setFlipX(false);}}
+  }else{this.player.setVelocity(0,0);if(this.hasDonnySheet)this.player.anims.stop();}
+ }
+ updateCar(delta,m){
+  const dt=delta/1000,gas=this.keys.up.isDown||m.gas||m.joyY<-.45,brake=this.keys.down.isDown||this.keys.brake.isDown||m.brake||m.joyY>.45,left=this.keys.left.isDown||m.joyX<-.35,right=this.keys.right.isDown||m.joyX>.35,boost=(this.keys.boost.isDown||m.boost)&&CAR.fuel>0&&Math.abs(CAR.speed)>80;
+  if(gas&&CAR.fuel>0){CAR.speed+=CAR.accel*dt*(boost?1.6:1);CAR.fuel=Math.max(0,CAR.fuel-dt*(boost?1.35:.55));CAR.condition=boost?"Boosting":"Driving";}
+  else if(brake){CAR.speed-=CAR.accel*dt*.76;CAR.condition="Braking";}
+  else{CAR.speed*=Math.pow(CAR.drag,delta/16.6667);if(Math.abs(CAR.speed)<4)CAR.speed=0;CAR.condition="Coasting";}
+  CAR.speed=Phaser.Math.Clamp(CAR.speed,-230,boost?760:CAR.maxSpeed);
+  if(Math.abs(CAR.speed)>10){const steer=(right?1:0)-(left?1:0),reverse=CAR.speed<0?-1:1,ratio=Phaser.Math.Clamp(Math.abs(CAR.speed)/CAR.maxSpeed,.18,1);this.carHeading+=steer*reverse*CAR.turnSpeed*dt*ratio;}
+  this.car.setVelocity(Math.cos(this.carHeading)*CAR.speed,Math.sin(this.carHeading)*CAR.speed);
+  this.car.rotation=this.carHeading+CAR_VISUAL_OFFSET;
+  this.car.x=Phaser.Math.Clamp(this.car.x,48,MAP_W-48);this.car.y=Phaser.Math.Clamp(this.car.y,48,MAP_H-48);
+ }
+ handleUse(){if(this.inCar){this.exitCar();return;}if(Phaser.Math.Distance.Between(this.player.x,this.player.y,this.car.x,this.car.y)<115)this.enterCar();}
  enterCar(){this.inCar=true;CAR.condition="Driving";this.player.setVisible(false);this.player.body.enable=false;CAR.speed=0;this.flash("Entered Distortion.",1300);}
  exitCar(){const side=this.carHeading+Math.PI/2;this.player.setPosition(this.car.x+Math.cos(side)*78,this.car.y+Math.sin(side)*78);this.player.body.enable=true;this.player.setVisible(true);this.inCar=false;CAR.speed=0;CAR.condition="Parked";this.car.setVelocity(0,0);this.flash("Exited Distortion.",1300);}
- updateMission(){const c=CHUNKS[this.chunk],a=this.inCar?this.car:this.player;if(!this.missionDone&&Phaser.Math.Distance.Between(a.x,a.y,c.obj.x,c.obj.y)<95){this.missionDone=true;DONNY.rep++;this.flash("Reached "+c.obj.label,2200);}}
  updateCamera(){const cam=this.cameras.main,a=this.inCar?this.car:this.player,ratio=Phaser.Math.Clamp(Math.abs(CAR.speed)/CAR.maxSpeed,0,1);cam.setZoom(this.inCar?Phaser.Math.Linear(ZOOM.carSlow,ZOOM.carFast,ratio):ZOOM.foot);const vw=cam.width/cam.zoom,vh=cam.height/cam.zoom;cam.scrollX=Phaser.Math.Clamp(a.x-vw/2,0,MAP_W-vw);cam.scrollY=Phaser.Math.Clamp(a.y-vh/2,0,MAP_H-vh);}
  updateLabels(){this.playerLabel.setPosition(this.player.x,this.player.y-72).setVisible(!this.inCar);this.carLabel.setPosition(this.car.x,this.car.y-80).setVisible(this.inCar||Phaser.Math.Distance.Between(this.player.x,this.player.y,this.car.x,this.car.y)<200);}
  drawLocator(){this.locator.clear();const a=this.inCar?this.car:this.player;this.locator.lineStyle(4,0x9befff,.85).strokeCircle(a.x,a.y,this.inCar?55:42);}
- drawHeadlights(){this.headlightLayer.clear();if(!this.inCar||!CAR.headlightsOn)return;const a=this.carHeading,fx=this.car.x+Math.cos(a)*52,fy=this.car.y+Math.sin(a)*52,len=300,width=90,ex=fx+Math.cos(a)*len,ey=fy+Math.sin(a)*len,sx=Math.cos(a+Math.PI/2),sy=Math.sin(a+Math.PI/2);this.headlightLayer.fillStyle(0x9befff,.035).fillTriangle(fx,fy,ex+sx*width,ey+sy*width,ex-sx*width,ey-sy*width);}
- checkPrompts(){if(this.tempPrompt)return;let msg="";if(!this.inCar&&Phaser.Math.Distance.Between(this.player.x,this.player.y,this.car.x,this.car.y)<110)msg="Press E / X to enter Distortion";else if(this.inCar)msg="E / X exits vehicle";this.prompt.setText(msg).setVisible(!!msg);}
+ drawHeadlights(){this.headlightLayer.clear();if(!this.inCar||!CAR.headlightsOn)return;const a=this.carHeading,fx=this.car.x+Math.cos(a)*52,fy=this.car.y+Math.sin(a)*52,len=380,width=115,ex=fx+Math.cos(a)*len,ey=fy+Math.sin(a)*len,sx=Math.cos(a+Math.PI/2),sy=Math.sin(a+Math.PI/2);this.headlightLayer.fillStyle(0x9befff,.035).fillTriangle(fx,fy,ex+sx*width,ey+sy*width,ex-sx*width,ey-sy*width);}
+ checkPrompts(){if(this.tempPrompt)return;let msg="";if(!this.inCar&&Phaser.Math.Distance.Between(this.player.x,this.player.y,this.car.x,this.car.y)<115)msg="Press E / X to enter Distortion";else if(this.inCar)msg="E / X exits vehicle";this.prompt.setText(msg).setVisible(!!msg);}
  flash(text,ms){this.tempPrompt=true;this.prompt.setText(text).setVisible(true);this.time.delayedCall(ms,()=>{this.tempPrompt=false;this.prompt.setVisible(false);});}
- updateHud(){const c=CHUNKS[this.chunk];this.hTitle.setText(c.title);this.hMode.setText("Mode: "+(this.inCar?"Driving Distortion":"On foot")+" Rep:"+DONNY.rep);this.hHp.setText("HP: "+DONNY.hp+"/"+DONNY.hpMax);this.hpBar.width=180*(DONNY.hp/DONNY.hpMax);this.hFuel.setText("Fuel: "+Math.round(CAR.fuel/CAR.fuelMax*100)+"% "+CAR.condition);this.fuelBar.width=180*(CAR.fuel/CAR.fuelMax);}
- updateDebug(){if(!this.debugText.visible)return;const a=this.inCar?this.car:this.player,c=CHUNKS[this.chunk];this.debugText.setText("REAL RUNTIME V15\n"+this.chunk+" "+c.title+"\nBASE "+c.base+"\nFG "+c.fg+"\nACTIVE "+Math.round(a.x)+","+Math.round(a.y)+"\nDONNY "+(this.hasDonnySheet?"real sheet":"fallback")+"\nLOAD ERRORS:\n"+(this.loadErrors.length?this.loadErrors.join("\n"):"none"));}
+ updateHud(){this.hMode.setText("Mode: "+(this.inCar?"Driving Distortion":"On foot")+"   Road build first");this.hHp.setText("HP: "+DONNY.hp+"/"+DONNY.hpMax);this.hpBar.width=180*(DONNY.hp/DONNY.hpMax);this.hFuel.setText("Fuel: "+Math.round(CAR.fuel/CAR.fuelMax*100)+"% "+CAR.condition);this.fuelBar.width=180*(CAR.fuel/CAR.fuelMax);}
+ updateDebug(){if(!this.debugText.visible)return;const a=this.inCar?this.car:this.player;this.debugText.setText("HIGHWAY OUTER RING V01\nACTIVE "+Math.round(a.x)+","+Math.round(a.y)+"\nDONNY "+(this.hasDonnySheet?"staging sheet":"fallback")+"\nROAD KIT ERRORS:\n"+(this.loadErrors.length?this.loadErrors.join("\n"):"none"));}
 }
 new Phaser.Game({type:Phaser.AUTO,width:GAME_W,height:GAME_H,backgroundColor:"#050505",pixelArt:true,scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},physics:{default:"arcade",arcade:{debug:false}},scene:[MainScene]});
 </script>
