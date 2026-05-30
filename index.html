@@ -25,9 +25,9 @@
 <div id="help">
   COSMIC FEEDBACK — GLASSWELL MAP PASS 1<br>
   WASD/Arrows or mobile stick = move/steer · E/X = enter/exit/talk/refuel · A = gas · B/Space = brake · Shift/R = boost · H/Y = lights · F3 = debug<br>
-  Goal: test connected Glasswell districts, route markers, faction zones, road blockers, and Blue Candle Alley access.
+  Goal: test connected Glasswell districts, route markers, faction zones, road blockers, and Blue Candle Alley access. Camera hard-locks to Donny/car.
 </div>
-<div id="buildTag">Glasswell Map Pass 1 v4</div>
+<div id="buildTag">Glasswell Map Pass 1 camera-lock v5</div>
 
 <script>
 "use strict";
@@ -51,6 +51,9 @@ const CAMERA_ZOOM = {
 // The Aurelix Distortion top-down sprite art is drawn sideways relative to the driving vector.
 // Keep physics heading separate from sprite rotation so the car drives nose-first.
 const CAR_VISUAL_OFFSET = Math.PI / 2;
+
+// Mobile-safe camera lock. Keeps Donny/car centered even after zoom changes.
+const HARD_CAMERA_LOCK = true;
 
 const DONNY = {
   name: "Donny",
@@ -254,6 +257,8 @@ class GlasswellScene extends Phaser.Scene {
     this.player.setCollideWorldBounds(true);
     this.player.body.setSize(22, 34, true);
 
+    this.playerLocator = this.add.graphics().setDepth(59);
+
     this.inCar = false;
     this.activeActor = this.player;
 
@@ -301,7 +306,9 @@ class GlasswellScene extends Phaser.Scene {
     });
 
     this.cameras.main.startFollow(this.player, true, 0.14, 0.14);
+    this.cameras.main.setDeadzone(0, 0);
     this.cameras.main.setZoom(CAMERA_ZOOM.foot);
+    this.cameras.main.centerOn(this.player.x, this.player.y);
 
     console.log("GLASSWELL SCENE READY");
   }
@@ -963,6 +970,7 @@ class GlasswellScene extends Phaser.Scene {
     this.updatePedestrians(time);
     this.updateMission(delta);
     this.updateCamera();
+    this.drawPlayerLocator();
     this.updateFx();
     this.drawHeadlights();
     this.checkProximity(delta, mobile);
@@ -1099,6 +1107,8 @@ class GlasswellScene extends Phaser.Scene {
     this.player.body.enable = false;
     this.activeActor = this.car;
     this.cameras.main.startFollow(this.car, true, 0.14, 0.14);
+    this.cameras.main.setDeadzone(0, 0);
+    this.cameras.main.centerOn(this.car.x, this.car.y);
     this.showTimedPrompt("Entered Aurelix Distortion.", 1300);
   }
 
@@ -1123,6 +1133,8 @@ class GlasswellScene extends Phaser.Scene {
 
     this.activeActor = this.player;
     this.cameras.main.startFollow(this.player, true, 0.14, 0.14);
+    this.cameras.main.setDeadzone(0, 0);
+    this.cameras.main.centerOn(this.player.x, this.player.y);
     this.showTimedPrompt("Exited Distortion.", 1300);
   }
 
@@ -1188,11 +1200,25 @@ class GlasswellScene extends Phaser.Scene {
   }
 
   updateCamera() {
+    const cam = this.cameras.main;
+    const target = this.inCar ? this.car : this.player;
+    this.activeActor = target;
+
     if (this.inCar) {
       const ratio = Phaser.Math.Clamp(Math.abs(DISTORTION.speed) / DISTORTION.maxSpeed, 0, 1);
-      this.cameras.main.setZoom(Phaser.Math.Linear(CAMERA_ZOOM.carSlow, CAMERA_ZOOM.carFast, ratio));
+      cam.setZoom(Phaser.Math.Linear(CAMERA_ZOOM.carSlow, CAMERA_ZOOM.carFast, ratio));
     } else {
-      this.cameras.main.setZoom(CAMERA_ZOOM.foot);
+      cam.setZoom(CAMERA_ZOOM.foot);
+    }
+
+    // Hard camera lock fixes mobile/zoom drift and keeps the view centered on Donny
+    // while on foot, then centered on the Distortion while driving.
+    if (HARD_CAMERA_LOCK && target) {
+      cam.stopFollow();
+      cam.centerOn(target.x, target.y);
+    } else if (target) {
+      cam.startFollow(target, true, 0.14, 0.14);
+      cam.setDeadzone(0, 0);
     }
   }
 
