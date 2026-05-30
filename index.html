@@ -23,11 +23,11 @@
 </head>
 <body>
 <div id="help">
-  COSMIC FEEDBACK — GLASSWELL WESTGATE VERTICAL SLICE<br>
+  COSMIC FEEDBACK — GLASSWELL WESTGATE + BLUE CANDLE INTERIOR<br>
   WASD/Arrows or mobile stick = move/steer · E/X = enter/exit/talk/refuel · A = gas · B/Space = brake · Shift/R = boost · H/Y = lights · F3 = debug<br>
-  Goal: Reach the Blue Candle Alley. Donny has HP/stats. Camera is zoomed in; mobile controls are screen-locked.
+  Goal: Reach Blue Candle Alley, enter the hideout, and choose whether Donny joins Blue Candle Revue.
 </div>
-<div id="buildTag">Westgate vertical slice v1</div>
+<div id="buildTag">Westgate + Blue Candle interior v2</div>
 
 <script>
 "use strict";
@@ -247,11 +247,16 @@ class GlasswellScene extends Phaser.Scene {
     this.makeHud();
     this.makePrompt();
     this.makeDebugOverlay();
+    this.makeBlueCandleInterior();
     this.setupAudio();
 
     this.wantedLevel = 0;
     this.debugSirenOn = false;
     this.debugVisible = false;
+    this.inInterior = false;
+    this.interiorStep = 0;
+    this.bandJoined = false;
+    DONNY.blueCandleStatus = "not joined";
 
     this.input.keyboard.on("keydown-F3", () => {
       this.debugVisible = !this.debugVisible;
@@ -391,7 +396,7 @@ class GlasswellScene extends Phaser.Scene {
       joyY: 0,
       activePointer: null,
       buttons: { accel:false, brake:false, interact:false, boost:false, headlights:false },
-      buttonPress: { interact:false, headlights:false }
+      buttonPress: { interact:false, headlights:false, brake:false }
     };
 
     const uiDepth = 500;
@@ -448,6 +453,7 @@ class GlasswellScene extends Phaser.Scene {
       circle.on("pointerdown", () => {
         this.mobile.buttons[id] = true;
         if (id === "interact") this.mobile.buttonPress.interact = true;
+        if (id === "brake") this.mobile.buttonPress.brake = true;
         if (id === "headlights") this.mobile.buttonPress.headlights = true;
         circle.setAlpha(0.65);
       });
@@ -484,6 +490,7 @@ class GlasswellScene extends Phaser.Scene {
       )
     };
     m.buttonPress.interact = false;
+    m.buttonPress.brake = false;
     m.buttonPress.headlights = false;
     return out;
   }
@@ -571,6 +578,18 @@ class GlasswellScene extends Phaser.Scene {
       color:"#ffb1b1",
       backgroundColor:"rgba(0,0,0,0.68)",
       padding:{x:6, y:3}
+    }).setOrigin(0.5).setDepth(45);
+
+    gfx.lineStyle(4, 0x8fdcff, 0.85);
+    gfx.strokeCircle(MISSION.marker.x + 72, MISSION.marker.y + 12, 52);
+    gfx.fillStyle(0x8fdcff, 0.16);
+    gfx.fillCircle(MISSION.marker.x + 72, MISSION.marker.y + 12, 52);
+    this.add.text(MISSION.marker.x + 72, MISSION.marker.y + 78, "HIDEOUT DOOR", {
+      fontFamily:"monospace",
+      fontSize:"13px",
+      color:"#dff8ff",
+      backgroundColor:"rgba(0,0,0,0.68)",
+      padding:{x:5, y:2}
     }).setOrigin(0.5).setDepth(45);
   }
 
@@ -727,9 +746,126 @@ class GlasswellScene extends Phaser.Scene {
     }).setScrollFactor(0).setDepth(600).setVisible(false);
   }
 
+  makeBlueCandleInterior() {
+    this.interiorLayer = this.add.container(0, 0).setScrollFactor(0).setDepth(900).setVisible(false);
+
+    const bg = this.add.rectangle(0, 0, GAME_W, GAME_H, 0x031019, 0.96).setOrigin(0);
+    const title = this.add.text(28, 22, "BLUE CANDLE REVUE HIDEOUT", {
+      fontFamily:"monospace",
+      fontSize:"24px",
+      color:"#9befff"
+    });
+
+    const sub = this.add.text(28, 54, "Lean Chapel Alleys / Drip Saints territory", {
+      fontFamily:"monospace",
+      fontSize:"14px",
+      color:"#d8f6ff"
+    });
+
+    const stage = this.add.rectangle(42, 92, 876, 248, 0x0a1d24, 0.94).setOrigin(0);
+    stage.setStrokeStyle(3, 0x6fdcff, 0.75);
+
+    const candles = this.add.text(62, 108,
+      "🕯  Blue candles line wet concrete. Old speakers hum. Relief crates sit near the back door.\n" +
+      "Rafe, Oren, and Toma are waiting. Max's old microphone stand is still on stage.", {
+      fontFamily:"monospace",
+      fontSize:"15px",
+      color:"#e8fbff",
+      wordWrap:{ width: 820 }
+    });
+
+    const rafe = this.add.rectangle(72, 205, 230, 92, 0x101c22, 0.92).setOrigin(0).setStrokeStyle(2, 0x8fdcff, 0.65);
+    const oren = this.add.rectangle(365, 205, 230, 92, 0x101c22, 0.92).setOrigin(0).setStrokeStyle(2, 0x8fdcff, 0.65);
+    const toma = this.add.rectangle(658, 205, 230, 92, 0x101c22, 0.92).setOrigin(0).setStrokeStyle(2, 0x8fdcff, 0.65);
+
+    const rafeT = this.add.text(88, 220, "RAFE\nlead guitar\nattitude test", {fontFamily:"monospace", fontSize:"15px", color:"#ffffff"});
+    const orenT = this.add.text(381, 220, "OREN\nVarkari bass\nloyalty test", {fontFamily:"monospace", fontSize:"15px", color:"#ffffff"});
+    const tomaT = this.add.text(674, 220, "TOMA\ndrums\nsignal timing", {fontFamily:"monospace", fontSize:"15px", color:"#ffffff"});
+
+    const panel = this.add.rectangle(42, 365, 876, 132, 0x000000, 0.74).setOrigin(0);
+    panel.setStrokeStyle(2, 0x6fdcff, 0.7);
+
+    this.interiorText = this.add.text(62, 382, "", {
+      fontFamily:"monospace",
+      fontSize:"17px",
+      color:"#fff7d5",
+      wordWrap:{ width: 830 }
+    });
+
+    this.interiorHelp = this.add.text(62, 508, "E / X = continue or join · B / Space = leave hideout", {
+      fontFamily:"monospace",
+      fontSize:"14px",
+      color:"#9befff"
+    });
+
+    this.interiorLayer.add([bg, title, sub, stage, candles, rafe, oren, toma, rafeT, orenT, tomaT, panel, this.interiorText, this.interiorHelp]);
+  }
+
+  enterBlueCandleInterior() {
+    if (this.inCar) {
+      this.showTimedPrompt("Exit the car before entering Blue Candle Revue hideout.", 1800);
+      return;
+    }
+
+    this.inInterior = true;
+    this.interiorStep = 0;
+    this.player.setVelocity(0, 0);
+    this.interiorLayer.setVisible(true);
+    this.refreshInteriorText();
+    this.showTimedPrompt("Entered Blue Candle Revue hideout.", 1000);
+  }
+
+  leaveBlueCandleInterior() {
+    this.inInterior = false;
+    this.interiorLayer.setVisible(false);
+    this.showTimedPrompt("Back outside Blue Candle Alley.", 1200);
+  }
+
+  handleInteriorInput(interactPressed, brakePressed) {
+    if (brakePressed) {
+      this.leaveBlueCandleInterior();
+      return;
+    }
+
+    if (!interactPressed) return;
+
+    if (this.interiorStep < 3) {
+      this.interiorStep += 1;
+      this.refreshInteriorText();
+      return;
+    }
+
+    if (!this.bandJoined) {
+      this.bandJoined = true;
+      DONNY.blueCandleStatus = "guest singer";
+      DONNY.repDripSaints += 3;
+      this.interiorStep = 4;
+      this.refreshInteriorText();
+      return;
+    }
+
+    this.leaveBlueCandleInterior();
+  }
+
+  refreshInteriorText() {
+    const lines = [
+      "Rafe \"Switchblade\" Vale: Max sold the stage. We kept the alley. If you sing here, you sing for people who can’t afford lies.",
+      "Oren Bluejack: Keep the low end steady. Scared people need something to stand on. I need to know you won’t sell us twice.",
+      "Toma Wickwheel: Blue-candle timing is survival. Sing when the door opens. Stop when patrol lights pass. Let the beat carry the warning.",
+      "Blue Candle Revue offers Donny a temporary slot as guest singer / signal performer. Press E / X to join this Drip Saints music path, or B / Space to leave neutral.",
+      "DONNY JOINED BLUE CANDLE REVUE AS GUEST SINGER. New route opened: blue-candle missions, alley crowd events, anti-Max Crownwell story beats, and Drip Saints safehouse access. Press E / X or B / Space to leave."
+    ];
+    this.interiorText.setText(lines[this.interiorStep] || lines[0]);
+  }
+
+  nearBlueCandleDoor() {
+    return Phaser.Math.Distance.Between(this.player.x, this.player.y, MISSION.marker.x + 72, MISSION.marker.y + 12) < 85;
+  }
+
   update(time, delta) {
     const mobile = this.getMobileInput();
     const interactPressed = Phaser.Input.Keyboard.JustDown(this.keys.interact) || mobile.interactPressed;
+    const brakePressed = Phaser.Input.Keyboard.JustDown(this.keys.brake) || mobile.brakePressed;
     const headlightsPressed = Phaser.Input.Keyboard.JustDown(this.keys.headlights) || mobile.headlightsPressed;
 
     if (mobile.any || this.keys.up.isDown || this.keys.down.isDown || this.keys.left.isDown || this.keys.right.isDown) {
@@ -737,6 +873,13 @@ class GlasswellScene extends Phaser.Scene {
     }
 
     if (headlightsPressed) DISTORTION.headlightsOn = !DISTORTION.headlightsOn;
+
+    if (this.inInterior) {
+      this.handleInteriorInput(interactPressed, brakePressed);
+      this.updateHud();
+      this.updateDebug();
+      return;
+    }
 
     if (interactPressed) this.handleInteract();
 
@@ -854,6 +997,11 @@ class GlasswellScene extends Phaser.Scene {
       const station = this.nearFuelStation();
       if (station) return;
       this.exitCar();
+      return;
+    }
+
+    if (this.nearBlueCandleDoor()) {
+      this.enterBlueCandleInterior();
       return;
     }
 
@@ -1057,6 +1205,10 @@ class GlasswellScene extends Phaser.Scene {
       }
     }
 
+    if (!message && !this.inCar && this.nearBlueCandleDoor()) {
+      message = "Press E / X to enter Blue Candle Revue hideout";
+    }
+
     if (!message && !this.inCar) {
       const distToCar = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.car.x, this.car.y);
       if (distToCar < 90) message = "Press E / X to enter Distortion";
@@ -1127,11 +1279,13 @@ class GlasswellScene extends Phaser.Scene {
     this.fuelBar.fillColor = fuelRatio < 0.18 ? 0xd94d3d : fuelRatio < 0.45 ? 0xd6b94b : 0x9b6cff;
     this.hudFuel.setText(`Fuel: ${Math.round(fuelRatio * 100)}%  ${DISTORTION.condition}`);
 
-    this.hudMode.setText(`Mode: ${this.inCar ? "Driving Distortion" : "On foot"}  Drip Rep: ${DONNY.repDripSaints}`);
+    this.hudMode.setText(`Mode: ${this.inInterior ? "Blue Candle Hideout" : (this.inCar ? "Driving Distortion" : "On foot")}  Drip Rep: ${DONNY.repDripSaints}  Band: ${DONNY.blueCandleStatus}`);
     this.hudWanted.setText(`WANTED ${this.wantedLevel}`);
 
-    if (MISSION.complete) {
-      this.hudMission.setText("Mission complete: Blue Candle Alley reached.");
+    if (this.inInterior) {
+      this.hudMission.setText(this.bandJoined ? "Route opened: Blue Candle Revue guest singer." : "Inside Blue Candle Revue hideout.");
+    } else if (MISSION.complete) {
+      this.hudMission.setText("Mission complete: Blue Candle Alley reached. Enter the hideout door.");
     } else if (MISSION.flagged) {
       this.hudMission.setText("Mission: Reach Blue Candle Alley. Status: FLAGGED.");
     } else {
@@ -1171,7 +1325,7 @@ class GlasswellScene extends Phaser.Scene {
       `ZOOM ${this.cameras.main.zoom.toFixed(2)}\n` +
       `HEADING ${this.carHeading.toFixed(2)} OFFSET ${CAR_VISUAL_OFFSET.toFixed(2)}\n` +
       `CHUNK ${chunk}\n` +
-      `MISSION ${MISSION.state}`
+      `MISSION ${MISSION.state} INTERIOR ${this.inInterior ? "yes" : "no"} BAND ${DONNY.blueCandleStatus}`
     );
   }
 
