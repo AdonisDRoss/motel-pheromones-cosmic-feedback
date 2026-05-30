@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Cosmic Feedback — Glasswell Actual Chunks v14</title>
+<title>Cosmic Feedback — Glasswell Real Runtime v15</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#050505;overflow:hidden;touch-action:none;font-family:monospace}
@@ -15,72 +15,151 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 </head>
 <body>
-<div id="rotateGate"><div><strong>TURN PHONE SIDEWAYS</strong>Cosmic Feedback is landscape-only.<br><br>Rotate your phone for correct movement, map view, and controls.</div></div>
-<div id="buildTag">Glasswell actual chunks + Donny sheet v14</div>
+<div id="rotateGate"><div><strong>TURN PHONE SIDEWAYS</strong>Cosmic Feedback is landscape-only.<br><br>Rotate your phone for correct map, movement, and controls.</div></div>
+<div id="buildTag">Glasswell real runtime pathfix v15</div>
 <script>
 "use strict";
-const GAME_W=960,GAME_H=540,MAP_W=2048,MAP_H=2048;
-const ZOOM={foot:1.05,carSlow:.9,carFast:.74},CAR_VISUAL_OFFSET=Math.PI/2;
+
+/*
+REAL RUNTIME v15
+Uses only real existing repo folders:
+assets/maps/dust9/glasswell/c2
+assets/maps/dust9/glasswell/c3
+assets/maps/dust9/glasswell/c4
+assets/maps/dust9/glasswell/d3
+
+No fake maps, no generated maps, no freeway-ring map.
+*/
+
+const GAME_W=960, GAME_H=540, MAP_W=2048, MAP_H=2048;
+const ZOOM={foot:1.05,carSlow:.9,carFast:.74}, CAR_VISUAL_OFFSET=Math.PI/2;
 const DONNY={hpMax:100,hp:100,walkSpeed:225,rep:0};
 const CAR={fuelMax:180,fuel:180,speed:0,maxSpeed:520,accel:470,drag:.984,turnSpeed:3,condition:"Parked",headlightsOn:true};
+
 const CHUNKS={
- C3:{title:"GLASSWELL_C3 — Main Civic Gate",base:"assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_base.png",fg:"assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_foreground_overlay.png",spawn:{x:1024,y:1510},car:{x:1130,y:1510},obj:{x:1024,y:1110,label:"Civic Gate"}},
- D3:{title:"GLASSWELL_D3 — Red Concord Checkpoint",base:"assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_base.png",fg:"assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_foreground_overlay.png",spawn:{x:940,y:1580},car:{x:1050,y:1580},obj:{x:1215,y:1090,label:"Checkpoint"}},
- C2:{title:"GLASSWELL_C2 — Civic Admin Street",base:"assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_base.png",fg:"assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_foreground_overlay.png",spawn:{x:1024,y:1500},car:{x:1130,y:1500},obj:{x:1024,y:1040,label:"Admin Street"}},
- C4:{title:"GLASSWELL_C4 — Transit Vendor Square",base:"assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_base.png",fg:"assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_foreground_overlay.png",spawn:{x:1024,y:1520},car:{x:1130,y:1520},obj:{x:1024,y:1040,label:"Vendor Square"}},
- B3:{title:"GLASSWELL_B3 — Dryline Outer Road",base:"assets/maps/dust9/glasswell/b3/layers/GLASSWELL_B3_base.png",fg:"assets/maps/dust9/glasswell/b3/layers/GLASSWELL_B3_foreground_overlay.png",spawn:{x:1024,y:1510},car:{x:1130,y:1510},obj:{x:1024,y:1060,label:"Dryline Road"}}
+ C3:{
+  title:"GLASSWELL_C3 — Main Civic Gate",
+  base:"assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_base.png",
+  fg:"assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_foreground_overlay.png",
+  spawn:{x:1024,y:1510}, car:{x:1130,y:1510}, obj:{x:1024,y:1110,label:"Civic Gate"}
+ },
+ D3:{
+  title:"GLASSWELL_D3 — Red Concord Checkpoint",
+  base:"assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_base.png",
+  fg:"assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_foreground_overlay.png",
+  spawn:{x:940,y:1580}, car:{x:1050,y:1580}, obj:{x:1215,y:1090,label:"Checkpoint"}
+ },
+ C2:{
+  title:"GLASSWELL_C2 — Civic Admin Street",
+  base:"assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_base.png",
+  fg:"assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_foreground_overlay.png",
+  spawn:{x:1024,y:1500}, car:{x:1130,y:1500}, obj:{x:1024,y:1040,label:"Admin Street"}
+ },
+ C4:{
+  title:"GLASSWELL_C4 — Transit Vendor Square",
+  base:"assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_base.png",
+  fg:"assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_foreground_overlay.png",
+  spawn:{x:1024,y:1520}, car:{x:1130,y:1520}, obj:{x:1024,y:1040,label:"Vendor Square"}
+ }
 };
+
 const DONNY_SHEET="assets/sprites/player/donny/donny_movement_walk_8x4_181x272.png";
+
 class MainScene extends Phaser.Scene{
- constructor(){super("MainScene");this.chunk="C3";}
+ constructor(){super("MainScene");this.chunk="C3";this.loadErrors=[];}
  preload(){
-  Object.entries(CHUNKS).forEach(([k,c])=>{this.load.image(k+"_base",c.base);this.load.image(k+"_fg",c.fg);});
+  Object.entries(CHUNKS).forEach(([k,c])=>{
+   this.load.image(k+"_base",c.base);
+   this.load.image(k+"_fg",c.fg);
+  });
   this.load.spritesheet("donny_walk",DONNY_SHEET,{frameWidth:181,frameHeight:272});
   this.load.image("distortion_asset","assets/vehicles/special/aurelix_distortion/distortion_topdown.png");
-  this.load.on("loaderror",f=>console.warn("Asset failed",f.key,f.src||f.url));
+  this.load.on("loaderror",file=>{
+   const src=(file.src||file.url||"");
+   console.warn("LOAD ERROR",file.key,src);
+   this.loadErrors.push(file.key+" -> "+src);
+  });
  }
  create(){
-  this.physics.world.setBounds(0,0,MAP_W,MAP_H);this.cameras.main.setBounds(0,0,MAP_W,MAP_H);
-  this.createFallbacks();this.createAnims();
+  this.physics.world.setBounds(0,0,MAP_W,MAP_H);
+  this.cameras.main.setBounds(0,0,MAP_W,MAP_H);
+  this.makeFallbacks();
+  this.makeDonnyAnims();
+
   this.mapBase=this.add.image(0,0,"C3_base").setOrigin(0,0).setDepth(0);
   this.mapFg=this.add.image(0,0,"C3_fg").setOrigin(0,0).setDepth(930);
-  if(!this.textures.exists("C3_base"))this.drawFallbackMap();
-  this.keys=this.input.keyboard.addKeys({up:"W,UP",down:"S,DOWN",left:"A,LEFT",right:"D,RIGHT",interact:"E",brake:"SPACE",boost:"SHIFT",lights:"H",debug:"F3",one:"ONE",two:"TWO",three:"THREE",four:"FOUR",five:"FIVE"});
-  this.mobileControls();
-  const c=CHUNKS[this.chunk],carTex=this.textures.exists("distortion_asset")?"distortion_asset":"car_fallback";
+  if(!this.textures.exists("C3_base")) this.drawMissingMapScreen("C3");
+
+  this.keys=this.input.keyboard.addKeys({
+   up:"W,UP",down:"S,DOWN",left:"A,LEFT",right:"D,RIGHT",
+   interact:"E",brake:"SPACE",boost:"SHIFT",lights:"H",debug:"F3",
+   one:"ONE",two:"TWO",three:"THREE",four:"FOUR"
+  });
+  this.makeMobile();
+
+  const c=CHUNKS[this.chunk], carTex=this.textures.exists("distortion_asset")?"distortion_asset":"car_fallback";
   this.car=this.physics.add.sprite(c.car.x,c.car.y,carTex).setDepth(850).setScale(carTex==="distortion_asset"?.42:1);
-  this.carHeading=0;this.car.rotation=this.carHeading+CAR_VISUAL_OFFSET;
+  this.carHeading=0; this.car.rotation=this.carHeading+CAR_VISUAL_OFFSET;
+
   this.hasDonnySheet=this.textures.exists("donny_walk");
   this.player=this.physics.add.sprite(c.spawn.x,c.spawn.y,this.hasDonnySheet?"donny_walk":"donny_down").setDepth(900).setScale(this.hasDonnySheet?.235:1.25).setCollideWorldBounds(true);
   if(this.hasDonnySheet){this.player.setFrame(0);this.player.body.setSize(70,60);this.player.body.setOffset(55,195);}
+
   this.playerLabel=this.label("DONNY",this.player.x,this.player.y-72,1000,"#9befff");
   this.carLabel=this.label("DISTORTION",this.car.x,this.car.y-80,1000,"#e0c7ff");
-  this.locator=this.add.graphics().setDepth(899);this.headlightLayer=this.add.graphics().setDepth(840).setBlendMode(Phaser.BlendModes.ADD);this.marker=this.add.graphics().setDepth(60);
-  this.inCar=false;this.wanted=0;this.missionDone=false;
-  this.hud();this.promptBox();this.mapButtons();this.debugBox();
+  this.locator=this.add.graphics().setDepth(899);
+  this.headlightLayer=this.add.graphics().setDepth(840).setBlendMode(Phaser.BlendModes.ADD);
+  this.marker=this.add.graphics().setDepth(60);
+
+  this.inCar=false; this.missionDone=false;
+  this.makeHud(); this.makePrompt(); this.makeMapButtons(); this.makeDebug();
+
   this.input.keyboard.on("keydown-F3",()=>this.debugText.setVisible(!this.debugText.visible));
-  this.input.keyboard.on("keydown-ONE",()=>this.switchChunk("C3"));this.input.keyboard.on("keydown-TWO",()=>this.switchChunk("D3"));
-  this.input.keyboard.on("keydown-THREE",()=>this.switchChunk("C2"));this.input.keyboard.on("keydown-FOUR",()=>this.switchChunk("C4"));this.input.keyboard.on("keydown-FIVE",()=>this.switchChunk("B3"));
-  this.drawMarkers();this.updateCamera();
+  this.input.keyboard.on("keydown-ONE",()=>this.switchChunk("C3"));
+  this.input.keyboard.on("keydown-TWO",()=>this.switchChunk("D3"));
+  this.input.keyboard.on("keydown-THREE",()=>this.switchChunk("C2"));
+  this.input.keyboard.on("keydown-FOUR",()=>this.switchChunk("C4"));
+
+  this.drawMarkers(); this.updateCamera();
+  if(this.loadErrors.length) this.flash("Some files did not load. Press F3 for paths.",3000);
  }
- createFallbacks(){
-  const g=this.add.graphics(),mk=(key,up)=>{
-   g.clear();g.fillStyle(0,0.3).fillEllipse(24,58,30,9);g.fillStyle(0x16263a,1).fillRect(16,40,8,22).fillRect(26,40,8,22);
-   g.fillStyle(0x202020,1).fillRoundedRect(11,20,28,30,6);g.fillStyle(0xb98158,1).fillCircle(25,13,10);
-   g.fillStyle(0x111111,1);if(up)g.fillRect(16,4,18,11);else{g.fillRect(14,3,22,7);g.fillCircle(21,13,2);g.fillCircle(29,13,2);}
-   g.fillStyle(0xcfcfcf,1).fillRect(23,21,5,26);g.generateTexture(key,52,68);
+ makeFallbacks(){
+  const g=this.add.graphics();
+  const mk=(key,up)=>{
+   g.clear();g.fillStyle(0,0.3).fillEllipse(24,58,30,9);
+   g.fillStyle(0x16263a,1).fillRect(16,40,8,22).fillRect(26,40,8,22);
+   g.fillStyle(0x202020,1).fillRoundedRect(11,20,28,30,6);
+   g.fillStyle(0xb98158,1).fillCircle(25,13,10);
+   g.fillStyle(0x111111,1);
+   if(up)g.fillRect(16,4,18,11);else{g.fillRect(14,3,22,7);g.fillCircle(21,13,2);g.fillCircle(29,13,2);}
+   g.fillStyle(0xcfcfcf,1).fillRect(23,21,5,26);
+   g.generateTexture(key,52,68);
   };
-  mk("donny_down",false);mk("donny_up",true);mk("donny_side",false);
-  g.clear();g.fillStyle(0x222222,1).fillRoundedRect(0,0,90,46,10);g.fillStyle(0x8b2cff,1).fillRect(10,6,18,5).fillRect(10,35,18,5);
-  g.fillStyle(0x89d8ff,1).fillRoundedRect(42,8,26,30,6);g.lineStyle(3,0xccc,1).strokeRoundedRect(0,0,90,46,10);g.generateTexture("car_fallback",90,46);g.destroy();
+  mk("donny_down",false); mk("donny_up",true); mk("donny_side",false);
+  g.clear();g.fillStyle(0x222222,1).fillRoundedRect(0,0,90,46,10);
+  g.fillStyle(0x8b2cff,1).fillRect(10,6,18,5).fillRect(10,35,18,5);
+  g.fillStyle(0x89d8ff,1).fillRoundedRect(42,8,26,30,6);
+  g.lineStyle(3,0xcccccc,1).strokeRoundedRect(0,0,90,46,10);
+  g.generateTexture("car_fallback",90,46); g.destroy();
  }
- createAnims(){
+ makeDonnyAnims(){
   if(!this.textures.exists("donny_walk"))return;
-  [["down",0,7],["right",8,15],["left",16,23],["up",24,31]].forEach(([d,s,e])=>{if(!this.anims.exists("donny_walk_"+d))this.anims.create({key:"donny_walk_"+d,frames:this.anims.generateFrameNumbers("donny_walk",{start:s,end:e}),frameRate:8,repeat:-1});});
+  [["down",0,7],["right",8,15],["left",16,23],["up",24,31]].forEach(([d,s,e])=>{
+   if(!this.anims.exists("donny_walk_"+d)){
+    this.anims.create({key:"donny_walk_"+d,frames:this.anims.generateFrameNumbers("donny_walk",{start:s,end:e}),frameRate:8,repeat:-1});
+   }
+  });
  }
- drawFallbackMap(){const g=this.add.graphics().setDepth(-1);g.fillStyle(0x141414,1).fillRect(0,0,MAP_W,MAP_H);g.fillStyle(0x303030,1).fillRect(760,0,520,MAP_H).fillRect(0,900,MAP_W,280);}
+ drawMissingMapScreen(k){
+  const g=this.add.graphics().setDepth(-1);
+  g.fillStyle(0x101010,1).fillRect(0,0,MAP_W,MAP_H);
+  g.fillStyle(0x303030,1).fillRect(760,0,520,MAP_H).fillRect(0,900,MAP_W,280);
+  this.add.text(120,120,"MAP FILE NOT LOADED:\n"+CHUNKS[k].base+"\nCheck exact GitHub path/capitalization.",{
+   fontFamily:"monospace",fontSize:"28px",color:"#ff7777",backgroundColor:"rgba(0,0,0,.75)",padding:{x:10,y:8}
+  }).setDepth(10);
+ }
  label(t,x,y,d,c){return this.add.text(x,y,t,{fontFamily:"monospace",fontSize:"13px",color:c,backgroundColor:"rgba(0,0,0,.75)",padding:{x:5,y:2}}).setOrigin(.5).setDepth(d);}
- mobileControls(){
+ makeMobile(){
   this.mobile={joyX:0,joyY:0,pointer:null,buttons:{gas:false,brake:false,use:false,boost:false,lights:false},press:{use:false,lights:false}};
   const depth=1200,jx=105,jy=GAME_H-105,jr=70,kr=26;
   this.add.circle(jx,jy,jr,0x111111,.3).setScrollFactor(0).setDepth(depth).setStrokeStyle(3,0xffffff,.26);
@@ -88,16 +167,17 @@ class MainScene extends Phaser.Scene{
   const zone=this.add.zone(jx,jy,jr*2.3,jr*2.3).setScrollFactor(0).setDepth(depth+2).setInteractive();
   const setJoy=p=>{const dx=p.x-jx,dy=p.y-jy,max=jr-kr*.35,dist=Math.min(Math.hypot(dx,dy),max),a=Math.atan2(dy,dx);knob.setPosition(jx+Math.cos(a)*dist,jy+Math.sin(a)*dist);this.mobile.joyX=Phaser.Math.Clamp(dx/max,-1,1);this.mobile.joyY=Phaser.Math.Clamp(dy/max,-1,1);};
   const reset=()=>{this.mobile.joyX=0;this.mobile.joyY=0;this.mobile.pointer=null;knob.setPosition(jx,jy);};
-  zone.on("pointerdown",p=>{this.mobile.pointer=p.id;setJoy(p);});zone.on("pointermove",p=>{if(this.mobile.pointer===p.id)setJoy(p);});this.input.on("pointerup",p=>{if(this.mobile.pointer===p.id)reset();});
+  zone.on("pointerdown",p=>{this.mobile.pointer=p.id;setJoy(p);}); zone.on("pointermove",p=>{if(this.mobile.pointer===p.id)setJoy(p);});
+  this.input.on("pointerup",p=>{if(this.mobile.pointer===p.id)reset();});
   const btn=(id,a,b,x,y,col)=>{const c=this.add.circle(x,y,38,col,.36).setScrollFactor(0).setDepth(depth).setStrokeStyle(3,0xffffff,.3).setInteractive();this.add.text(x,y-10,a+"\n"+b,{fontFamily:"monospace",fontSize:"12px",color:"#fff",align:"center"}).setOrigin(.5).setScrollFactor(0).setDepth(depth+1);c.on("pointerdown",()=>{this.mobile.buttons[id]=true;if(id==="use")this.mobile.press.use=true;if(id==="lights")this.mobile.press.lights=true;c.setAlpha(.65);});const up=()=>{this.mobile.buttons[id]=false;c.setAlpha(1);};c.on("pointerup",up);c.on("pointerout",up);this.input.on("pointerup",up);};
   btn("gas","A","GAS",GAME_W-82,GAME_H-92,0x2e7d32);btn("brake","B","BRK",GAME_W-148,GAME_H-54,0x8a2020);btn("use","X","USE",GAME_W-148,GAME_H-130,0x245b9a);btn("lights","Y","LTS",GAME_W-214,GAME_H-92,0x8d7a21);btn("boost","R","BST",GAME_W-82,GAME_H-174,0x7b36c7);
  }
  mobileInput(){const m=this.mobile,o={joyX:m.joyX,joyY:m.joyY,gas:m.buttons.gas,brake:m.buttons.brake,use:m.buttons.use,usePressed:m.press.use,boost:m.buttons.boost,lightsPressed:m.press.lights};m.press.use=false;m.press.lights=false;return o;}
- hud(){this.h=this.add.container(12,10).setScrollFactor(0).setDepth(1100);const bg=this.add.rectangle(0,0,470,96,0x000000,.72).setOrigin(0).setStrokeStyle(2,0xa66cff,.9);this.hTitle=this.add.text(12,8,"",{fontFamily:"monospace",fontSize:"13px",color:"#9befff"});this.hMode=this.add.text(12,30,"",{fontFamily:"monospace",fontSize:"12px",color:"#fff"});this.hHp=this.add.text(12,52,"",{fontFamily:"monospace",fontSize:"12px",color:"#fff"});this.hpBar=this.add.rectangle(86,60,180,11,0x3fc46b,1).setOrigin(0,.5);this.hFuel=this.add.text(12,72,"",{fontFamily:"monospace",fontSize:"12px",color:"#fff"});this.fuelBar=this.add.rectangle(86,80,180,11,0x9b6cff,1).setOrigin(0,.5);this.h.add([bg,this.hTitle,this.hMode,this.hHp,this.hpBar,this.hFuel,this.fuelBar]);}
- promptBox(){this.prompt=this.add.text(16,GAME_H-94,"",{fontFamily:"monospace",fontSize:"15px",color:"#fff1b8",backgroundColor:"rgba(0,0,0,.76)",padding:{x:8,y:5},wordWrap:{width:620}}).setScrollFactor(0).setDepth(1150).setVisible(false);}
- debugBox(){this.debugText=this.add.text(GAME_W-380,82,"",{fontFamily:"monospace",fontSize:"12px",color:"#9befff",backgroundColor:"rgba(0,0,0,.72)",padding:{x:8,y:6}}).setScrollFactor(0).setDepth(1300).setVisible(false);}
- mapButtons(){this.add.text(520,12,"MAP:",{fontFamily:"monospace",fontSize:"13px",color:"#cfcfcf"}).setScrollFactor(0).setDepth(1200);[["C3",520],["D3",585],["C2",650],["C4",715],["B3",780]].forEach(([k,x])=>{const r=this.add.rectangle(x,42,52,34,0x111111,.72).setScrollFactor(0).setDepth(1200).setStrokeStyle(2,0x9befff,.45).setInteractive();this.add.text(x,42,k,{fontFamily:"monospace",fontSize:"14px",color:"#fff"}).setOrigin(.5).setScrollFactor(0).setDepth(1201);r.on("pointerdown",()=>this.switchChunk(k));});}
- switchChunk(k){const c=CHUNKS[k];if(!c)return;this.chunk=k;if(this.textures.exists(k+"_base"))this.mapBase.setTexture(k+"_base");if(this.textures.exists(k+"_fg")){this.mapFg.setTexture(k+"_fg").setVisible(true);}else this.mapFg.setVisible(false);this.inCar=false;CAR.speed=0;CAR.condition="Parked";this.car.setPosition(c.car.x,c.car.y);this.carHeading=0;this.car.rotation=this.carHeading+CAR_VISUAL_OFFSET;this.player.body.enable=true;this.player.setVisible(true);this.player.setPosition(c.spawn.x,c.spawn.y);this.missionDone=false;this.wanted=0;this.drawMarkers();this.flash("Loaded "+c.title,1600);this.updateCamera();}
+ makeHud(){this.h=this.add.container(12,10).setScrollFactor(0).setDepth(1100);const bg=this.add.rectangle(0,0,495,96,0x000000,.72).setOrigin(0).setStrokeStyle(2,0xa66cff,.9);this.hTitle=this.add.text(12,8,"",{fontFamily:"monospace",fontSize:"13px",color:"#9befff"});this.hMode=this.add.text(12,30,"",{fontFamily:"monospace",fontSize:"12px",color:"#fff"});this.hHp=this.add.text(12,52,"",{fontFamily:"monospace",fontSize:"12px",color:"#fff"});this.hpBar=this.add.rectangle(86,60,180,11,0x3fc46b,1).setOrigin(0,.5);this.hFuel=this.add.text(12,72,"",{fontFamily:"monospace",fontSize:"12px",color:"#fff"});this.fuelBar=this.add.rectangle(86,80,180,11,0x9b6cff,1).setOrigin(0,.5);this.h.add([bg,this.hTitle,this.hMode,this.hHp,this.hpBar,this.hFuel,this.fuelBar]);}
+ makePrompt(){this.prompt=this.add.text(16,GAME_H-94,"",{fontFamily:"monospace",fontSize:"15px",color:"#fff1b8",backgroundColor:"rgba(0,0,0,.76)",padding:{x:8,y:5},wordWrap:{width:620}}).setScrollFactor(0).setDepth(1150).setVisible(false);}
+ makeMapButtons(){this.add.text(530,12,"MAP:",{fontFamily:"monospace",fontSize:"13px",color:"#cfcfcf"}).setScrollFactor(0).setDepth(1200);[["C3",530],["D3",595],["C2",660],["C4",725]].forEach(([k,x])=>{const r=this.add.rectangle(x,42,52,34,0x111111,.72).setScrollFactor(0).setDepth(1200).setStrokeStyle(2,0x9befff,.45).setInteractive();this.add.text(x,42,k,{fontFamily:"monospace",fontSize:"14px",color:"#fff"}).setOrigin(.5).setScrollFactor(0).setDepth(1201);r.on("pointerdown",()=>this.switchChunk(k));});}
+ makeDebug(){this.debugText=this.add.text(GAME_W-430,82,"",{fontFamily:"monospace",fontSize:"11px",color:"#9befff",backgroundColor:"rgba(0,0,0,.72)",padding:{x:8,y:6},wordWrap:{width:405}}).setScrollFactor(0).setDepth(1300).setVisible(false);}
+ switchChunk(k){const c=CHUNKS[k];if(!c)return;this.chunk=k;if(this.textures.exists(k+"_base"))this.mapBase.setTexture(k+"_base");else this.drawMissingMapScreen(k);if(this.textures.exists(k+"_fg")){this.mapFg.setTexture(k+"_fg").setVisible(true);}else this.mapFg.setVisible(false);this.inCar=false;CAR.speed=0;CAR.condition="Parked";this.car.setPosition(c.car.x,c.car.y);this.carHeading=0;this.car.rotation=this.carHeading+CAR_VISUAL_OFFSET;this.player.body.enable=true;this.player.setVisible(true);this.player.setPosition(c.spawn.x,c.spawn.y);this.missionDone=false;this.drawMarkers();this.flash("Loaded "+c.title,1600);this.updateCamera();}
  drawMarkers(){this.marker.clear();const c=CHUNKS[this.chunk];this.marker.fillStyle(0x9befff,.12).fillCircle(c.spawn.x,c.spawn.y,52);this.marker.lineStyle(3,0x9befff,.75).strokeCircle(c.spawn.x,c.spawn.y,52);this.marker.fillStyle(0xffe070,.14).fillCircle(c.obj.x,c.obj.y,58);this.marker.lineStyle(3,0xffe070,.75).strokeCircle(c.obj.x,c.obj.y,58);}
  update(t,delta){const m=this.mobileInput(),use=Phaser.Input.Keyboard.JustDown(this.keys.interact)||m.usePressed,lights=Phaser.Input.Keyboard.JustDown(this.keys.lights)||m.lightsPressed;if(lights)CAR.headlightsOn=!CAR.headlightsOn;if(use)this.handleUse();this.inCar?this.updateCar(delta,m):this.updatePlayer(delta,m);this.updateMission();this.updateCamera();this.updateLabels();this.drawLocator();this.drawHeadlights();this.checkPrompts();this.updateHud();this.updateDebug();}
  updatePlayer(delta,m){const left=this.keys.left.isDown||m.joyX<-.22,right=this.keys.right.isDown||m.joyX>.22,up=this.keys.up.isDown||m.joyY<-.22,down=this.keys.down.isDown||m.joyY>.22;let vx=(right?1:0)-(left?1:0),vy=(down?1:0)-(up?1:0),mag=Math.hypot(vx,vy);if(mag>0){vx/=mag;vy/=mag;this.player.setVelocity(vx*DONNY.walkSpeed,vy*DONNY.walkSpeed);if(this.hasDonnySheet){if(Math.abs(vx)>Math.abs(vy))this.player.anims.play(vx<0?"donny_walk_left":"donny_walk_right",true);else this.player.anims.play(vy<0?"donny_walk_up":"donny_walk_down",true);}else{if(Math.abs(vx)>Math.abs(vy)){this.player.setTexture("donny_side");this.player.setFlipX(vx<0);}else{this.player.setTexture(vy<0?"donny_up":"donny_down");this.player.setFlipX(false);}}}else{this.player.setVelocity(0,0);if(this.hasDonnySheet)this.player.anims.stop();}}
@@ -113,7 +193,7 @@ class MainScene extends Phaser.Scene{
  checkPrompts(){if(this.tempPrompt)return;let msg="";if(!this.inCar&&Phaser.Math.Distance.Between(this.player.x,this.player.y,this.car.x,this.car.y)<110)msg="Press E / X to enter Distortion";else if(this.inCar)msg="E / X exits vehicle";this.prompt.setText(msg).setVisible(!!msg);}
  flash(text,ms){this.tempPrompt=true;this.prompt.setText(text).setVisible(true);this.time.delayedCall(ms,()=>{this.tempPrompt=false;this.prompt.setVisible(false);});}
  updateHud(){const c=CHUNKS[this.chunk];this.hTitle.setText(c.title);this.hMode.setText("Mode: "+(this.inCar?"Driving Distortion":"On foot")+" Rep:"+DONNY.rep);this.hHp.setText("HP: "+DONNY.hp+"/"+DONNY.hpMax);this.hpBar.width=180*(DONNY.hp/DONNY.hpMax);this.hFuel.setText("Fuel: "+Math.round(CAR.fuel/CAR.fuelMax*100)+"% "+CAR.condition);this.fuelBar.width=180*(CAR.fuel/CAR.fuelMax);}
- updateDebug(){if(!this.debugText.visible)return;const a=this.inCar?this.car:this.player,c=CHUNKS[this.chunk];this.debugText.setText("ACTUAL CHUNK V14\n"+this.chunk+" "+c.title+"\nBASE "+c.base+"\nACTIVE "+Math.round(a.x)+","+Math.round(a.y)+"\nSHEET "+(this.hasDonnySheet?"real Donny":"fallback")+"\nZOOM "+this.cameras.main.zoom.toFixed(2));}
+ updateDebug(){if(!this.debugText.visible)return;const a=this.inCar?this.car:this.player,c=CHUNKS[this.chunk];this.debugText.setText("REAL RUNTIME V15\n"+this.chunk+" "+c.title+"\nBASE "+c.base+"\nFG "+c.fg+"\nACTIVE "+Math.round(a.x)+","+Math.round(a.y)+"\nDONNY "+(this.hasDonnySheet?"real sheet":"fallback")+"\nLOAD ERRORS:\n"+(this.loadErrors.length?this.loadErrors.join("\n"):"none"));}
 }
 new Phaser.Game({type:Phaser.AUTO,width:GAME_W,height:GAME_H,backgroundColor:"#050505",pixelArt:true,scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},physics:{default:"arcade",arcade:{debug:false}},scene:[MainScene]});
 </script>
