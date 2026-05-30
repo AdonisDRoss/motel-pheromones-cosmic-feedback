@@ -1,464 +1,121 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Cosmic Feedback — Glasswell Real Map Clean Test</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <style>
-    html, body { margin:0; padding:0; width:100%; height:100%; background:#050505; overflow:hidden; touch-action:none; }
-    canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
-    #help {
-      position: fixed; left: 10px; top: 8px; z-index: 20;
-      color: #e8dfc8; font: 12px monospace; background: rgba(0,0,0,.72);
-      padding: 8px 10px; border: 1px solid rgba(255,255,255,.25);
-      max-width: 850px;
-    }
-    #buildTag {
-      position: fixed; right: 10px; bottom: 8px; z-index: 20;
-      color:#9befff; font: 12px monospace; background:rgba(0,0,0,.60);
-      padding:6px 8px; border:1px solid rgba(155,239,255,.35);
-    }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+<meta charset="utf-8">
+<title>Cosmic Feedback — Glasswell Actual Chunks v14</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<style>
+html,body{margin:0;padding:0;width:100%;height:100%;background:#050505;overflow:hidden;touch-action:none;font-family:monospace}
+canvas{image-rendering:pixelated;image-rendering:crisp-edges}
+#rotateGate{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;text-align:center;background:#050505;color:#e8dfc8;padding:24px;box-sizing:border-box;font:18px monospace}
+#rotateGate strong{color:#9befff;font-size:24px;display:block;margin-bottom:12px}
+#buildTag{position:fixed;right:10px;bottom:8px;z-index:20;color:#9befff;font:12px monospace;background:rgba(0,0,0,.60);padding:6px 8px;border:1px solid rgba(155,239,255,.35)}
+@media (orientation:portrait){#rotateGate{display:flex}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 </head>
 <body>
-<div id="help">
-  COSMIC FEEDBACK — GLASSWELL REAL MAP CLEAN TEST<br>
-  WASD/Arrows or mobile stick = walk/steer · E/X = enter/exit/talk/refuel · A = gas · B/Space = brake · Shift/R = boost · H/Y = lights · F3 = debug<br>
-  Clean real-map pass: no giant zone circles, no huge district text over the art. Donny/Distortion start on Westgate road.
-</div>
-<div id="buildTag">Glasswell real map clean v13</div>
-
+<div id="rotateGate"><div><strong>TURN PHONE SIDEWAYS</strong>Cosmic Feedback is landscape-only.<br><br>Rotate your phone for correct movement, map view, and controls.</div></div>
+<div id="buildTag">Glasswell actual chunks + Donny sheet v14</div>
 <script>
 "use strict";
-
-const GAME_W = 960;
-const GAME_H = 540;
-const MAP_W = 4096;
-const MAP_H = 4096;
-
-const MAP_PATH = "assets/maps/dust9/glasswell/GLASSWELL_FREEWAY_RING_WITH_FUEL_STATIONS.png";
-
-// Calibrated from the working screenshot: place Donny on the visible Westgate road lane,
-// not on the large connector label/blank panel.
-const DONNY_START = { x: 1880, y: 1205 };
-const CAR_START = { x: 1995, y: 1205 };
-
-const CAMERA_ZOOM = { foot: 1.22, carSlow: 1.02, carFast: 0.80 };
-const CAR_VISUAL_OFFSET = Math.PI / 2;
-
-const DONNY = { hpMax: 100, hp: 100, walkSpeed: 210, rep: 0, band: "none" };
-const CAR = { fuelMax: 180, fuel: 180, speed: 0, maxSpeed: 620, accel: 520, drag: 0.984, turnSpeed: 3.1, condition: "Parked", headlightsOn: true };
-
-// Keep gameplay markers small and readable. No giant overlay circles.
-const POINTS = {
-  westgate: { x: 1880, y: 1205, label: "Westgate Start" },
-  fuel: { x: 760, y: 2860, r: 150, label: "Muckrail Fuel & Salvage" },
-  checkpoint: { x: 2048, y: 3260, r: 240, label: "Red Concord Checkpoint" },
-  blue: { x: 2048, y: 3550, r: 280, label: "Blue Candle Alley" },
-  blacklight: { x: 565, y: 2048, label: "Blacklight Connector" },
-  eastgate: { x: 3530, y: 2048, label: "Eastgate / Rust Jackals" }
+const GAME_W=960,GAME_H=540,MAP_W=2048,MAP_H=2048;
+const ZOOM={foot:1.05,carSlow:.9,carFast:.74},CAR_VISUAL_OFFSET=Math.PI/2;
+const DONNY={hpMax:100,hp:100,walkSpeed:225,rep:0};
+const CAR={fuelMax:180,fuel:180,speed:0,maxSpeed:520,accel:470,drag:.984,turnSpeed:3,condition:"Parked",headlightsOn:true};
+const CHUNKS={
+ C3:{title:"GLASSWELL_C3 — Main Civic Gate",base:"assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_base.png",fg:"assets/maps/dust9/glasswell/c3/layers/GLASSWELL_C3_foreground_overlay.png",spawn:{x:1024,y:1510},car:{x:1130,y:1510},obj:{x:1024,y:1110,label:"Civic Gate"}},
+ D3:{title:"GLASSWELL_D3 — Red Concord Checkpoint",base:"assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_base.png",fg:"assets/maps/dust9/glasswell/d3/layers/GLASSWELL_D3_foreground_overlay.png",spawn:{x:940,y:1580},car:{x:1050,y:1580},obj:{x:1215,y:1090,label:"Checkpoint"}},
+ C2:{title:"GLASSWELL_C2 — Civic Admin Street",base:"assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_base.png",fg:"assets/maps/dust9/glasswell/c2/layers/GLASSWELL_C2_foreground_overlay.png",spawn:{x:1024,y:1500},car:{x:1130,y:1500},obj:{x:1024,y:1040,label:"Admin Street"}},
+ C4:{title:"GLASSWELL_C4 — Transit Vendor Square",base:"assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_base.png",fg:"assets/maps/dust9/glasswell/c4/layers/GLASSWELL_C4_foreground_overlay.png",spawn:{x:1024,y:1520},car:{x:1130,y:1520},obj:{x:1024,y:1040,label:"Vendor Square"}},
+ B3:{title:"GLASSWELL_B3 — Dryline Outer Road",base:"assets/maps/dust9/glasswell/b3/layers/GLASSWELL_B3_base.png",fg:"assets/maps/dust9/glasswell/b3/layers/GLASSWELL_B3_foreground_overlay.png",spawn:{x:1024,y:1510},car:{x:1130,y:1510},obj:{x:1024,y:1060,label:"Dryline Road"}}
 };
-
-const FUEL_STATIONS = [{ name: POINTS.fuel.label, x: POINTS.fuel.x, y: POINTS.fuel.y, r: POINTS.fuel.r }];
-
-const NPCS = [
-  { name:"Westgate Mechanic", x:1850, y:1265, tex:"npc_gold", line:"This is the clean real-map pass. The huge overlays are gone. Test the road and car." },
-  { name:"Drip Saints Runner", x:1940, y:3510, tex:"npc_blue", line:"Blue candle means the alley still breathes. Stay off the red-lit road." },
-  { name:"Red Concord Officer", x:2140, y:3260, tex:"npc_red", line:"Papers out. Eyes down." },
-  { name:"Blacklight Lookout", x:565, y:2048, tex:"npc_purple", line:"Westgate to Blacklight route will use a separate chunk later." },
-  { name:"Rust Jackals Toll Hand", x:3530, y:2048, tex:"npc_orange", line:"Eastgate route exists, but the full yard chunk loads later." }
-];
-
-class MainScene extends Phaser.Scene {
-  constructor() { super("MainScene"); }
-
-  preload() {
-    this.load.image("glasswell_map", MAP_PATH);
-    this.load.image("distortion_asset", "assets/vehicles/special/aurelix_distortion/distortion_topdown.png");
-    this.load.on("loaderror", file => console.warn("Asset failed:", file.key, file.src || file.url));
-  }
-
-  create() {
-    this.physics.world.setBounds(0, 0, MAP_W, MAP_H);
-    this.cameras.main.setBounds(0, 0, MAP_W, MAP_H);
-
-    this.createTextures();
-
-    if (this.textures.exists("glasswell_map")) {
-      this.add.image(0, 0, "glasswell_map").setOrigin(0, 0).setDepth(0);
-    } else {
-      this.drawFallbackMap();
-    }
-
-    this.keys = this.input.keyboard.addKeys({
-      up:"W,UP", down:"S,DOWN", left:"A,LEFT", right:"D,RIGHT",
-      interact:"E", brake:"SPACE", boost:"SHIFT", lights:"H", debug:"F3"
-    });
-
-    this.createMobileControls();
-    this.drawSmallMapMarkers();
-
-    const carTex = this.textures.exists("distortion_asset") ? "distortion_asset" : "car_fallback";
-    this.car = this.physics.add.sprite(CAR_START.x, CAR_START.y, carTex);
-    this.car.setDepth(850);
-    this.car.setScale(carTex === "distortion_asset" ? 0.45 : 1.0);
-    this.carHeading = 0;
-    this.car.rotation = this.carHeading + CAR_VISUAL_OFFSET;
-
-    this.player = this.physics.add.sprite(DONNY_START.x, DONNY_START.y, "donny_down");
-    this.player.setDepth(900);
-    this.player.setScale(1.25);
-    this.player.setCollideWorldBounds(true);
-
-    this.playerLabel = this.add.text(this.player.x, this.player.y - 70, "DONNY", {
-      fontFamily:"monospace", fontSize:"14px", color:"#9befff",
-      backgroundColor:"rgba(0,0,0,0.78)", padding:{x:5,y:2}
-    }).setOrigin(0.5).setDepth(1000);
-
-    this.carLabel = this.add.text(this.car.x, this.car.y - 78, "DISTORTION", {
-      fontFamily:"monospace", fontSize:"13px", color:"#e0c7ff",
-      backgroundColor:"rgba(0,0,0,0.70)", padding:{x:5,y:2}
-    }).setOrigin(0.5).setDepth(1000);
-
-    this.locator = this.add.graphics().setDepth(899);
-    this.headlightLayer = this.add.graphics().setDepth(840).setBlendMode(Phaser.BlendModes.ADD);
-
-    this.npcs = [];
-    for (const data of NPCS) {
-      const npc = this.physics.add.sprite(data.x, data.y, data.tex);
-      npc.setScale(0.95);
-      npc.setDepth(870);
-      npc.dataRef = data;
-      this.add.text(data.x, data.y - 50, data.name, {
-        fontFamily:"monospace", fontSize:"12px", color:"#ffffff",
-        backgroundColor:"rgba(0,0,0,0.72)", padding:{x:4,y:2}
-      }).setOrigin(0.5).setDepth(890);
-      this.npcs.push(npc);
-    }
-
-    this.inCar = false;
-    this.active = this.player;
-    this.wanted = 0;
-    this.checkpointTimer = 0;
-    this.missionDone = false;
-
-    this.makeHud();
-    this.makePrompt();
-    this.makeDebug();
-    this.input.keyboard.on("keydown-F3", () => this.debugText.setVisible(!this.debugText.visible));
-    this.updateCamera();
-  }
-
-  createTextures() {
-    const g = this.add.graphics();
-    const makeDonny = (key, dir) => {
-      g.clear();
-      g.fillStyle(0x000000, 0.30); g.fillEllipse(24, 58, 30, 9);
-      g.fillStyle(0x16263a, 1); g.fillRect(16, 40, 8, 22); g.fillRect(26, 40, 8, 22);
-      g.fillStyle(0x202020, 1); g.fillRoundedRect(11, 20, 28, 30, 6);
-      g.fillStyle(0x111111, 1); g.fillRect(9, 22, 7, 24); g.fillRect(38, 22, 7, 24);
-      g.fillStyle(0xb98158, 1); g.fillCircle(25, 13, 10);
-      g.fillStyle(0x111111, 1);
-      if (dir === "up") g.fillRect(16, 4, 18, 11);
-      else { g.fillRect(14, 3, 22, 7); g.fillCircle(21, 13, 2); g.fillCircle(29, 13, 2); }
-      g.fillStyle(0xcfcfcf, 1); g.fillRect(23, 21, 5, 26);
-      g.generateTexture(key, 52, 68);
-    };
-    makeDonny("donny_down", "down"); makeDonny("donny_up", "up"); makeDonny("donny_side", "side");
-
-    g.clear();
-    g.fillStyle(0x222222, 1); g.fillRoundedRect(0, 0, 90, 46, 10);
-    g.fillStyle(0x8b2cff, 1); g.fillRect(10, 6, 18, 5); g.fillRect(10, 35, 18, 5);
-    g.fillStyle(0x89d8ff, 1); g.fillRoundedRect(42, 8, 26, 30, 6);
-    g.lineStyle(3, 0xcccccc, 1); g.strokeRoundedRect(0, 0, 90, 46, 10);
-    g.generateTexture("car_fallback", 90, 46);
-
-    const makeNpc = (key, color) => {
-      g.clear();
-      g.fillStyle(0x000000, 0.3); g.fillEllipse(20, 58, 24, 8);
-      g.fillStyle(0xb98762, 1); g.fillCircle(20, 11, 8);
-      g.fillStyle(color, 1); g.fillRoundedRect(9, 20, 22, 29, 5);
-      g.fillStyle(0x111111, 1); g.fillRect(12, 47, 6, 15); g.fillRect(22, 47, 6, 15);
-      g.generateTexture(key, 42, 68);
-    };
-    makeNpc("npc_blue", 0x245b9a); makeNpc("npc_red", 0x8a2020); makeNpc("npc_gold", 0x806b22);
-    makeNpc("npc_purple", 0x5b2c84); makeNpc("npc_orange", 0xa85b20);
-    g.destroy();
-  }
-
-  drawFallbackMap() {
-    const g = this.add.graphics().setDepth(0);
-    g.fillStyle(0x141414, 1).fillRect(0,0,MAP_W,MAP_H);
-    g.fillStyle(0x303030, 1).fillRect(560,620,320,3080).fillRect(420,1888,3180,320).fillRect(1888,620,320,3180).fillRect(560,3200,3000,320);
-    g.lineStyle(4,0xc8b46a,0.7).strokeRect(8,8,MAP_W-16,MAP_H-16);
-  }
-
-  drawSmallMapMarkers() {
-    const g = this.add.graphics().setDepth(40);
-
-    const drawPoint = (p, color, label) => {
-      g.fillStyle(color, 0.22);
-      g.fillCircle(p.x, p.y, 34);
-      g.lineStyle(3, color, 0.9);
-      g.strokeCircle(p.x, p.y, 34);
-      this.add.text(p.x, p.y + 42, label, {
-        fontFamily:"monospace", fontSize:"12px", color:"#ffffff",
-        backgroundColor:"rgba(0,0,0,0.66)", padding:{x:4,y:2}
-      }).setOrigin(0.5).setDepth(45);
-    };
-
-    drawPoint(POINTS.westgate, 0x9b6cff, "START");
-    drawPoint(POINTS.fuel, 0x69aaff, "FUEL");
-    drawPoint(POINTS.checkpoint, 0xff3333, "CHECKPOINT");
-    drawPoint(POINTS.blue, 0x70d9ff, "BLUE CANDLE");
-    drawPoint(POINTS.blacklight, 0xb45aff, "BLACKLIGHT");
-    drawPoint(POINTS.eastgate, 0xffaa4d, "EASTGATE");
-  }
-
-  createMobileControls() {
-    this.mobile = { joyX:0, joyY:0, pointer:null, buttons:{gas:false, brake:false, use:false, boost:false, lights:false}, press:{use:false, lights:false} };
-    const depth = 1200;
-    const jx = 105, jy = GAME_H - 105, jr = 70, kr = 26;
-    this.add.circle(jx,jy,jr,0x111111,0.30).setScrollFactor(0).setDepth(depth).setStrokeStyle(3,0xffffff,0.26);
-    const knob = this.add.circle(jx,jy,kr,0xffffff,0.20).setScrollFactor(0).setDepth(depth+1).setStrokeStyle(2,0xffffff,0.35);
-    const zone = this.add.zone(jx,jy,jr*2.3,jr*2.3).setScrollFactor(0).setDepth(depth+2).setInteractive();
-    const setJoy = p => {
-      const dx = p.x-jx, dy=p.y-jy;
-      const max = jr - kr*0.35;
-      const dist = Math.min(Math.sqrt(dx*dx+dy*dy), max);
-      const a = Math.atan2(dy,dx);
-      knob.setPosition(jx+Math.cos(a)*dist, jy+Math.sin(a)*dist);
-      this.mobile.joyX = Phaser.Math.Clamp(dx/max,-1,1);
-      this.mobile.joyY = Phaser.Math.Clamp(dy/max,-1,1);
-    };
-    const reset = () => { this.mobile.joyX=0; this.mobile.joyY=0; this.mobile.pointer=null; knob.setPosition(jx,jy); };
-    zone.on("pointerdown", p => { this.mobile.pointer=p.id; setJoy(p); });
-    zone.on("pointermove", p => { if (this.mobile.pointer===p.id) setJoy(p); });
-    this.input.on("pointerup", p => { if (this.mobile.pointer===p.id) reset(); });
-
-    const btn = (id, top, bottom, x, y, color) => {
-      const c = this.add.circle(x,y,38,color,0.36).setScrollFactor(0).setDepth(depth).setStrokeStyle(3,0xffffff,0.3).setInteractive();
-      this.add.text(x,y-10,top+"\n"+bottom,{fontFamily:"monospace",fontSize:"12px",color:"#fff",align:"center"}).setOrigin(0.5).setScrollFactor(0).setDepth(depth+1);
-      c.on("pointerdown",()=>{this.mobile.buttons[id]=true; if(id==="use")this.mobile.press.use=true; if(id==="lights")this.mobile.press.lights=true; c.setAlpha(0.65);});
-      const up=()=>{this.mobile.buttons[id]=false; c.setAlpha(1);};
-      c.on("pointerup",up); c.on("pointerout",up); this.input.on("pointerup",up);
-    };
-    btn("gas","A","GAS",GAME_W-82,GAME_H-92,0x2e7d32);
-    btn("brake","B","BRK",GAME_W-148,GAME_H-54,0x8a2020);
-    btn("use","X","USE",GAME_W-148,GAME_H-130,0x245b9a);
-    btn("lights","Y","LTS",GAME_W-214,GAME_H-92,0x8d7a21);
-    btn("boost","R","BST",GAME_W-82,GAME_H-174,0x7b36c7);
-  }
-
-  mobileInput() {
-    const m = this.mobile;
-    const out = { joyX:m.joyX, joyY:m.joyY, gas:m.buttons.gas, brake:m.buttons.brake, use:m.buttons.use, usePressed:m.press.use, boost:m.buttons.boost, lightsPressed:m.press.lights };
-    m.press.use = false; m.press.lights = false;
-    return out;
-  }
-
-  makeHud() {
-    this.hud = this.add.container(16, GAME_H-145).setScrollFactor(0).setDepth(1100);
-    const bg = this.add.rectangle(0,0,430,132,0x000000,0.72).setOrigin(0).setStrokeStyle(2,0xa66cff,0.9);
-    this.hudMode = this.add.text(14,10,"Mode: On foot",{fontFamily:"monospace",fontSize:"14px",color:"#fff"});
-    this.hudHp = this.add.text(14,34,"HP",{fontFamily:"monospace",fontSize:"13px",color:"#fff"});
-    this.hpBar = this.add.rectangle(80,42,210,13,0x3fc46b,1).setOrigin(0,0.5);
-    this.hudFuel = this.add.text(14,59,"Fuel",{fontFamily:"monospace",fontSize:"13px",color:"#fff"});
-    this.fuelBar = this.add.rectangle(80,67,210,13,0x9b6cff,1).setOrigin(0,0.5);
-    this.hudMission = this.add.text(14,87,"Mission: Reach Blue Candle Alley",{fontFamily:"monospace",fontSize:"12px",color:"#cbefff",wordWrap:{width:395}});
-    this.hud.add([bg,this.hudMode,this.hudHp,this.hpBar,this.hudFuel,this.fuelBar,this.hudMission]);
-  }
-
-  makePrompt() {
-    this.prompt = this.add.text(20,82,"",{fontFamily:"monospace",fontSize:"17px",color:"#fff1b8",backgroundColor:"rgba(0,0,0,0.76)",padding:{x:8,y:5},wordWrap:{width:720}})
-      .setScrollFactor(0).setDepth(1150).setVisible(false);
-  }
-
-  makeDebug() {
-    this.debugText = this.add.text(GAME_W-380,12,"",{fontFamily:"monospace",fontSize:"12px",color:"#9befff",backgroundColor:"rgba(0,0,0,.72)",padding:{x:8,y:6}})
-      .setScrollFactor(0).setDepth(1300).setVisible(false);
-  }
-
-  update(time, delta) {
-    const m = this.mobileInput();
-    const usePressed = Phaser.Input.Keyboard.JustDown(this.keys.interact) || m.usePressed;
-    const lightsPressed = Phaser.Input.Keyboard.JustDown(this.keys.lights) || m.lightsPressed;
-    if (lightsPressed) CAR.headlightsOn = !CAR.headlightsOn;
-    if (usePressed) this.handleUse();
-    if (this.inCar) this.updateCar(delta, m);
-    else this.updatePlayer(delta, m);
-    this.updateMission(delta);
-    this.updateCamera();
-    this.updateLabels();
-    this.drawLocator();
-    this.drawHeadlights();
-    this.checkPrompts(delta, m);
-    this.updateHud();
-    this.updateDebug();
-  }
-
-  updatePlayer(delta, m) {
-    const left = this.keys.left.isDown || m.joyX < -0.28;
-    const right = this.keys.right.isDown || m.joyX > 0.28;
-    const up = this.keys.up.isDown || m.joyY < -0.28;
-    const down = this.keys.down.isDown || m.joyY > 0.28;
-    let vx = (right?1:0) - (left?1:0);
-    let vy = (down?1:0) - (up?1:0);
-    const mag = Math.sqrt(vx*vx+vy*vy);
-    if (mag>0) {
-      vx/=mag; vy/=mag;
-      this.player.setVelocity(vx*DONNY.walkSpeed, vy*DONNY.walkSpeed);
-      if (Math.abs(vx)>Math.abs(vy)) { this.player.setTexture("donny_side"); this.player.setFlipX(vx<0); }
-      else { this.player.setTexture(vy<0 ? "donny_up" : "donny_down"); this.player.setFlipX(false); }
-    } else this.player.setVelocity(0,0);
-  }
-
-  updateCar(delta, m) {
-    const dt = delta/1000;
-    const gas = this.keys.up.isDown || m.gas || m.joyY < -0.45;
-    const brake = this.keys.down.isDown || this.keys.brake.isDown || m.brake || m.joyY > 0.45;
-    const left = this.keys.left.isDown || m.joyX < -0.35;
-    const right = this.keys.right.isDown || m.joyX > 0.35;
-    const boost = (this.keys.boost.isDown || m.boost) && CAR.fuel > 0 && Math.abs(CAR.speed)>80;
-    if (gas && CAR.fuel>0) { CAR.speed += CAR.accel*dt*(boost?1.6:1); CAR.fuel=Math.max(0,CAR.fuel-dt*(boost?1.35:0.55)); CAR.condition=boost?"Boosting":"Driving"; }
-    else if (brake) { CAR.speed -= CAR.accel*dt*0.76; CAR.condition="Braking"; }
-    else { CAR.speed *= Math.pow(CAR.drag, delta/16.6667); if(Math.abs(CAR.speed)<4)CAR.speed=0; CAR.condition="Coasting"; }
-    CAR.speed = Phaser.Math.Clamp(CAR.speed, -230, boost?760:CAR.maxSpeed);
-    if (Math.abs(CAR.speed)>10) {
-      const steer=(right?1:0)-(left?1:0);
-      const reverse=CAR.speed<0?-1:1;
-      const ratio=Phaser.Math.Clamp(Math.abs(CAR.speed)/CAR.maxSpeed,0.18,1);
-      this.carHeading += steer*reverse*CAR.turnSpeed*dt*ratio;
-    }
-    this.car.setVelocity(Math.cos(this.carHeading)*CAR.speed, Math.sin(this.carHeading)*CAR.speed);
-    this.car.rotation = this.carHeading + CAR_VISUAL_OFFSET;
-    this.car.x=Phaser.Math.Clamp(this.car.x,48,MAP_W-48);
-    this.car.y=Phaser.Math.Clamp(this.car.y,48,MAP_H-48);
-  }
-
-  handleUse() {
-    if (this.inCar) {
-      const fuel = this.nearFuel();
-      if (fuel) return;
-      this.exitCar(); return;
-    }
-    const npc = this.nearNpc();
-    if (npc) { this.showPrompt(npc.dataRef.name+":\n"+npc.dataRef.line, 2600); return; }
-    if (Phaser.Math.Distance.Between(this.player.x,this.player.y,this.car.x,this.car.y)<105) this.enterCar();
-  }
-
-  enterCar() {
-    this.inCar=true; CAR.condition="Driving";
-    this.player.setVisible(false); this.player.body.enable=false;
-    this.active=this.car; CAR.speed=0;
-    this.showPrompt("Entered Distortion.",1300);
-  }
-
-  exitCar() {
-    const side=this.carHeading+Math.PI/2;
-    this.player.setPosition(this.car.x+Math.cos(side)*78, this.car.y+Math.sin(side)*78);
-    this.player.body.enable=true; this.player.setVisible(true);
-    this.inCar=false; CAR.speed=0; CAR.condition="Parked";
-    this.car.setVelocity(0,0); this.active=this.player;
-    this.showPrompt("Exited Distortion.",1300);
-  }
-
-  updateMission(delta) {
-    const t=this.inCar?this.car:this.player;
-    if (!this.missionDone && Phaser.Math.Distance.Between(t.x,t.y,POINTS.blue.x,POINTS.blue.y)<170) {
-      this.missionDone=true; DONNY.rep+=1; this.showPrompt("MISSION COMPLETE:\nBlue Candle Alley reached.",3200);
-    }
-    if (Phaser.Math.Distance.Between(t.x,t.y,POINTS.checkpoint.x,POINTS.checkpoint.y)<POINTS.checkpoint.r && !this.missionDone) {
-      this.checkpointTimer += delta;
-      if (this.checkpointTimer > 2600) { this.wanted=1; DONNY.hp=Math.max(1,DONNY.hp-1); }
-    } else this.checkpointTimer=Math.max(0,this.checkpointTimer-delta);
-  }
-
-  updateCamera() {
-    const cam=this.cameras.main;
-    const t=this.inCar?this.car:this.player;
-    this.active=t;
-    const ratio=Phaser.Math.Clamp(Math.abs(CAR.speed)/CAR.maxSpeed,0,1);
-    cam.setZoom(this.inCar ? Phaser.Math.Linear(CAMERA_ZOOM.carSlow,CAMERA_ZOOM.carFast,ratio) : CAMERA_ZOOM.foot);
-    const viewW=cam.width/cam.zoom, viewH=cam.height/cam.zoom;
-    cam.scrollX=Phaser.Math.Clamp(t.x-viewW/2,0,MAP_W-viewW);
-    cam.scrollY=Phaser.Math.Clamp(t.y-viewH/2,0,MAP_H-viewH);
-  }
-
-  updateLabels() {
-    this.playerLabel.setPosition(this.player.x, this.player.y-72).setVisible(!this.inCar);
-    this.carLabel.setPosition(this.car.x, this.car.y-80).setVisible(this.inCar || Phaser.Math.Distance.Between(this.player.x,this.player.y,this.car.x,this.car.y)<200);
-  }
-
-  drawLocator() {
-    this.locator.clear();
-    const t=this.inCar?this.car:this.player;
-    this.locator.lineStyle(4,0x9befff,0.85);
-    this.locator.strokeCircle(t.x,t.y,this.inCar?55:42);
-  }
-
-  drawHeadlights() {
-    this.headlightLayer.clear();
-    if (!this.inCar || !CAR.headlightsOn) return;
-    const a=this.carHeading, fx=this.car.x+Math.cos(a)*52, fy=this.car.y+Math.sin(a)*52;
-    const len=300, width=90, ex=fx+Math.cos(a)*len, ey=fy+Math.sin(a)*len;
-    const sx=Math.cos(a+Math.PI/2), sy=Math.sin(a+Math.PI/2);
-    this.headlightLayer.fillStyle(0x9befff,0.035);
-    this.headlightLayer.fillTriangle(fx,fy,ex+sx*width,ey+sy*width,ex-sx*width,ey-sy*width);
-  }
-
-  checkPrompts(delta, m) {
-    if (this.tempPrompt) return;
-    let msg="";
-    if (this.inCar) {
-      const f=this.nearFuel();
-      if (f) {
-        msg="Hold E / X to refuel at "+f.name;
-        if (this.keys.interact.isDown || m.use) { CAR.fuel=Math.min(CAR.fuelMax,CAR.fuel+48*delta/1000); CAR.condition="Refueling"; }
-      }
-    } else {
-      if (Phaser.Math.Distance.Between(this.player.x,this.player.y,this.car.x,this.car.y)<105) msg="Press E / X to enter Distortion";
-      const npc=this.nearNpc(); if (npc) msg="Press E / X to talk to "+npc.dataRef.name;
-    }
-    this.prompt.setText(msg).setVisible(!!msg);
-  }
-
-  nearFuel() { for (const f of FUEL_STATIONS) if (Phaser.Math.Distance.Between(this.car.x,this.car.y,f.x,f.y)<f.r) return f; return null; }
-  nearNpc() { for (const n of this.npcs) if (Phaser.Math.Distance.Between(this.player.x,this.player.y,n.x,n.y)<85) return n; return null; }
-
-  showPrompt(text, ms) {
-    this.tempPrompt=true;
-    this.prompt.setText(text).setVisible(true);
-    this.time.delayedCall(ms,()=>{this.tempPrompt=false; this.prompt.setVisible(false);});
-  }
-
-  updateHud() {
-    this.hudMode.setText("Mode: "+(this.inCar?"Driving Distortion":"On foot")+"  Wanted: "+this.wanted+"  Rep: "+DONNY.rep);
-    this.hudHp.setText("HP: "+DONNY.hp+"/"+DONNY.hpMax);
-    this.hpBar.width=210*(DONNY.hp/DONNY.hpMax);
-    this.fuelBar.width=210*(CAR.fuel/CAR.fuelMax);
-    this.hudFuel.setText("Fuel: "+Math.round(CAR.fuel/CAR.fuelMax*100)+"%  "+CAR.condition);
-    this.hudMission.setText(this.missionDone ? "Mission complete: Blue Candle Alley reached." : "Mission: Reach Blue Candle Alley");
-  }
-
-  updateDebug() {
-    if (!this.debugText.visible) return;
-    const t=this.inCar?this.car:this.player;
-    this.debugText.setText("CLEAN REAL MAP V13\n"+MAP_PATH+"\nMODE "+(this.inCar?"car":"foot")+"\nACTIVE "+Math.round(t.x)+","+Math.round(t.y)+"\nZOOM "+this.cameras.main.zoom.toFixed(2)+"\nFUEL "+Math.round(CAR.fuel)+"\nHP "+DONNY.hp);
-  }
+const DONNY_SHEET="assets/sprites/player/donny/donny_movement_walk_8x4_181x272.png";
+class MainScene extends Phaser.Scene{
+ constructor(){super("MainScene");this.chunk="C3";}
+ preload(){
+  Object.entries(CHUNKS).forEach(([k,c])=>{this.load.image(k+"_base",c.base);this.load.image(k+"_fg",c.fg);});
+  this.load.spritesheet("donny_walk",DONNY_SHEET,{frameWidth:181,frameHeight:272});
+  this.load.image("distortion_asset","assets/vehicles/special/aurelix_distortion/distortion_topdown.png");
+  this.load.on("loaderror",f=>console.warn("Asset failed",f.key,f.src||f.url));
+ }
+ create(){
+  this.physics.world.setBounds(0,0,MAP_W,MAP_H);this.cameras.main.setBounds(0,0,MAP_W,MAP_H);
+  this.createFallbacks();this.createAnims();
+  this.mapBase=this.add.image(0,0,"C3_base").setOrigin(0,0).setDepth(0);
+  this.mapFg=this.add.image(0,0,"C3_fg").setOrigin(0,0).setDepth(930);
+  if(!this.textures.exists("C3_base"))this.drawFallbackMap();
+  this.keys=this.input.keyboard.addKeys({up:"W,UP",down:"S,DOWN",left:"A,LEFT",right:"D,RIGHT",interact:"E",brake:"SPACE",boost:"SHIFT",lights:"H",debug:"F3",one:"ONE",two:"TWO",three:"THREE",four:"FOUR",five:"FIVE"});
+  this.mobileControls();
+  const c=CHUNKS[this.chunk],carTex=this.textures.exists("distortion_asset")?"distortion_asset":"car_fallback";
+  this.car=this.physics.add.sprite(c.car.x,c.car.y,carTex).setDepth(850).setScale(carTex==="distortion_asset"?.42:1);
+  this.carHeading=0;this.car.rotation=this.carHeading+CAR_VISUAL_OFFSET;
+  this.hasDonnySheet=this.textures.exists("donny_walk");
+  this.player=this.physics.add.sprite(c.spawn.x,c.spawn.y,this.hasDonnySheet?"donny_walk":"donny_down").setDepth(900).setScale(this.hasDonnySheet?.235:1.25).setCollideWorldBounds(true);
+  if(this.hasDonnySheet){this.player.setFrame(0);this.player.body.setSize(70,60);this.player.body.setOffset(55,195);}
+  this.playerLabel=this.label("DONNY",this.player.x,this.player.y-72,1000,"#9befff");
+  this.carLabel=this.label("DISTORTION",this.car.x,this.car.y-80,1000,"#e0c7ff");
+  this.locator=this.add.graphics().setDepth(899);this.headlightLayer=this.add.graphics().setDepth(840).setBlendMode(Phaser.BlendModes.ADD);this.marker=this.add.graphics().setDepth(60);
+  this.inCar=false;this.wanted=0;this.missionDone=false;
+  this.hud();this.promptBox();this.mapButtons();this.debugBox();
+  this.input.keyboard.on("keydown-F3",()=>this.debugText.setVisible(!this.debugText.visible));
+  this.input.keyboard.on("keydown-ONE",()=>this.switchChunk("C3"));this.input.keyboard.on("keydown-TWO",()=>this.switchChunk("D3"));
+  this.input.keyboard.on("keydown-THREE",()=>this.switchChunk("C2"));this.input.keyboard.on("keydown-FOUR",()=>this.switchChunk("C4"));this.input.keyboard.on("keydown-FIVE",()=>this.switchChunk("B3"));
+  this.drawMarkers();this.updateCamera();
+ }
+ createFallbacks(){
+  const g=this.add.graphics(),mk=(key,up)=>{
+   g.clear();g.fillStyle(0,0.3).fillEllipse(24,58,30,9);g.fillStyle(0x16263a,1).fillRect(16,40,8,22).fillRect(26,40,8,22);
+   g.fillStyle(0x202020,1).fillRoundedRect(11,20,28,30,6);g.fillStyle(0xb98158,1).fillCircle(25,13,10);
+   g.fillStyle(0x111111,1);if(up)g.fillRect(16,4,18,11);else{g.fillRect(14,3,22,7);g.fillCircle(21,13,2);g.fillCircle(29,13,2);}
+   g.fillStyle(0xcfcfcf,1).fillRect(23,21,5,26);g.generateTexture(key,52,68);
+  };
+  mk("donny_down",false);mk("donny_up",true);mk("donny_side",false);
+  g.clear();g.fillStyle(0x222222,1).fillRoundedRect(0,0,90,46,10);g.fillStyle(0x8b2cff,1).fillRect(10,6,18,5).fillRect(10,35,18,5);
+  g.fillStyle(0x89d8ff,1).fillRoundedRect(42,8,26,30,6);g.lineStyle(3,0xccc,1).strokeRoundedRect(0,0,90,46,10);g.generateTexture("car_fallback",90,46);g.destroy();
+ }
+ createAnims(){
+  if(!this.textures.exists("donny_walk"))return;
+  [["down",0,7],["right",8,15],["left",16,23],["up",24,31]].forEach(([d,s,e])=>{if(!this.anims.exists("donny_walk_"+d))this.anims.create({key:"donny_walk_"+d,frames:this.anims.generateFrameNumbers("donny_walk",{start:s,end:e}),frameRate:8,repeat:-1});});
+ }
+ drawFallbackMap(){const g=this.add.graphics().setDepth(-1);g.fillStyle(0x141414,1).fillRect(0,0,MAP_W,MAP_H);g.fillStyle(0x303030,1).fillRect(760,0,520,MAP_H).fillRect(0,900,MAP_W,280);}
+ label(t,x,y,d,c){return this.add.text(x,y,t,{fontFamily:"monospace",fontSize:"13px",color:c,backgroundColor:"rgba(0,0,0,.75)",padding:{x:5,y:2}}).setOrigin(.5).setDepth(d);}
+ mobileControls(){
+  this.mobile={joyX:0,joyY:0,pointer:null,buttons:{gas:false,brake:false,use:false,boost:false,lights:false},press:{use:false,lights:false}};
+  const depth=1200,jx=105,jy=GAME_H-105,jr=70,kr=26;
+  this.add.circle(jx,jy,jr,0x111111,.3).setScrollFactor(0).setDepth(depth).setStrokeStyle(3,0xffffff,.26);
+  const knob=this.add.circle(jx,jy,kr,0xffffff,.2).setScrollFactor(0).setDepth(depth+1).setStrokeStyle(2,0xffffff,.35);
+  const zone=this.add.zone(jx,jy,jr*2.3,jr*2.3).setScrollFactor(0).setDepth(depth+2).setInteractive();
+  const setJoy=p=>{const dx=p.x-jx,dy=p.y-jy,max=jr-kr*.35,dist=Math.min(Math.hypot(dx,dy),max),a=Math.atan2(dy,dx);knob.setPosition(jx+Math.cos(a)*dist,jy+Math.sin(a)*dist);this.mobile.joyX=Phaser.Math.Clamp(dx/max,-1,1);this.mobile.joyY=Phaser.Math.Clamp(dy/max,-1,1);};
+  const reset=()=>{this.mobile.joyX=0;this.mobile.joyY=0;this.mobile.pointer=null;knob.setPosition(jx,jy);};
+  zone.on("pointerdown",p=>{this.mobile.pointer=p.id;setJoy(p);});zone.on("pointermove",p=>{if(this.mobile.pointer===p.id)setJoy(p);});this.input.on("pointerup",p=>{if(this.mobile.pointer===p.id)reset();});
+  const btn=(id,a,b,x,y,col)=>{const c=this.add.circle(x,y,38,col,.36).setScrollFactor(0).setDepth(depth).setStrokeStyle(3,0xffffff,.3).setInteractive();this.add.text(x,y-10,a+"\n"+b,{fontFamily:"monospace",fontSize:"12px",color:"#fff",align:"center"}).setOrigin(.5).setScrollFactor(0).setDepth(depth+1);c.on("pointerdown",()=>{this.mobile.buttons[id]=true;if(id==="use")this.mobile.press.use=true;if(id==="lights")this.mobile.press.lights=true;c.setAlpha(.65);});const up=()=>{this.mobile.buttons[id]=false;c.setAlpha(1);};c.on("pointerup",up);c.on("pointerout",up);this.input.on("pointerup",up);};
+  btn("gas","A","GAS",GAME_W-82,GAME_H-92,0x2e7d32);btn("brake","B","BRK",GAME_W-148,GAME_H-54,0x8a2020);btn("use","X","USE",GAME_W-148,GAME_H-130,0x245b9a);btn("lights","Y","LTS",GAME_W-214,GAME_H-92,0x8d7a21);btn("boost","R","BST",GAME_W-82,GAME_H-174,0x7b36c7);
+ }
+ mobileInput(){const m=this.mobile,o={joyX:m.joyX,joyY:m.joyY,gas:m.buttons.gas,brake:m.buttons.brake,use:m.buttons.use,usePressed:m.press.use,boost:m.buttons.boost,lightsPressed:m.press.lights};m.press.use=false;m.press.lights=false;return o;}
+ hud(){this.h=this.add.container(12,10).setScrollFactor(0).setDepth(1100);const bg=this.add.rectangle(0,0,470,96,0x000000,.72).setOrigin(0).setStrokeStyle(2,0xa66cff,.9);this.hTitle=this.add.text(12,8,"",{fontFamily:"monospace",fontSize:"13px",color:"#9befff"});this.hMode=this.add.text(12,30,"",{fontFamily:"monospace",fontSize:"12px",color:"#fff"});this.hHp=this.add.text(12,52,"",{fontFamily:"monospace",fontSize:"12px",color:"#fff"});this.hpBar=this.add.rectangle(86,60,180,11,0x3fc46b,1).setOrigin(0,.5);this.hFuel=this.add.text(12,72,"",{fontFamily:"monospace",fontSize:"12px",color:"#fff"});this.fuelBar=this.add.rectangle(86,80,180,11,0x9b6cff,1).setOrigin(0,.5);this.h.add([bg,this.hTitle,this.hMode,this.hHp,this.hpBar,this.hFuel,this.fuelBar]);}
+ promptBox(){this.prompt=this.add.text(16,GAME_H-94,"",{fontFamily:"monospace",fontSize:"15px",color:"#fff1b8",backgroundColor:"rgba(0,0,0,.76)",padding:{x:8,y:5},wordWrap:{width:620}}).setScrollFactor(0).setDepth(1150).setVisible(false);}
+ debugBox(){this.debugText=this.add.text(GAME_W-380,82,"",{fontFamily:"monospace",fontSize:"12px",color:"#9befff",backgroundColor:"rgba(0,0,0,.72)",padding:{x:8,y:6}}).setScrollFactor(0).setDepth(1300).setVisible(false);}
+ mapButtons(){this.add.text(520,12,"MAP:",{fontFamily:"monospace",fontSize:"13px",color:"#cfcfcf"}).setScrollFactor(0).setDepth(1200);[["C3",520],["D3",585],["C2",650],["C4",715],["B3",780]].forEach(([k,x])=>{const r=this.add.rectangle(x,42,52,34,0x111111,.72).setScrollFactor(0).setDepth(1200).setStrokeStyle(2,0x9befff,.45).setInteractive();this.add.text(x,42,k,{fontFamily:"monospace",fontSize:"14px",color:"#fff"}).setOrigin(.5).setScrollFactor(0).setDepth(1201);r.on("pointerdown",()=>this.switchChunk(k));});}
+ switchChunk(k){const c=CHUNKS[k];if(!c)return;this.chunk=k;if(this.textures.exists(k+"_base"))this.mapBase.setTexture(k+"_base");if(this.textures.exists(k+"_fg")){this.mapFg.setTexture(k+"_fg").setVisible(true);}else this.mapFg.setVisible(false);this.inCar=false;CAR.speed=0;CAR.condition="Parked";this.car.setPosition(c.car.x,c.car.y);this.carHeading=0;this.car.rotation=this.carHeading+CAR_VISUAL_OFFSET;this.player.body.enable=true;this.player.setVisible(true);this.player.setPosition(c.spawn.x,c.spawn.y);this.missionDone=false;this.wanted=0;this.drawMarkers();this.flash("Loaded "+c.title,1600);this.updateCamera();}
+ drawMarkers(){this.marker.clear();const c=CHUNKS[this.chunk];this.marker.fillStyle(0x9befff,.12).fillCircle(c.spawn.x,c.spawn.y,52);this.marker.lineStyle(3,0x9befff,.75).strokeCircle(c.spawn.x,c.spawn.y,52);this.marker.fillStyle(0xffe070,.14).fillCircle(c.obj.x,c.obj.y,58);this.marker.lineStyle(3,0xffe070,.75).strokeCircle(c.obj.x,c.obj.y,58);}
+ update(t,delta){const m=this.mobileInput(),use=Phaser.Input.Keyboard.JustDown(this.keys.interact)||m.usePressed,lights=Phaser.Input.Keyboard.JustDown(this.keys.lights)||m.lightsPressed;if(lights)CAR.headlightsOn=!CAR.headlightsOn;if(use)this.handleUse();this.inCar?this.updateCar(delta,m):this.updatePlayer(delta,m);this.updateMission();this.updateCamera();this.updateLabels();this.drawLocator();this.drawHeadlights();this.checkPrompts();this.updateHud();this.updateDebug();}
+ updatePlayer(delta,m){const left=this.keys.left.isDown||m.joyX<-.22,right=this.keys.right.isDown||m.joyX>.22,up=this.keys.up.isDown||m.joyY<-.22,down=this.keys.down.isDown||m.joyY>.22;let vx=(right?1:0)-(left?1:0),vy=(down?1:0)-(up?1:0),mag=Math.hypot(vx,vy);if(mag>0){vx/=mag;vy/=mag;this.player.setVelocity(vx*DONNY.walkSpeed,vy*DONNY.walkSpeed);if(this.hasDonnySheet){if(Math.abs(vx)>Math.abs(vy))this.player.anims.play(vx<0?"donny_walk_left":"donny_walk_right",true);else this.player.anims.play(vy<0?"donny_walk_up":"donny_walk_down",true);}else{if(Math.abs(vx)>Math.abs(vy)){this.player.setTexture("donny_side");this.player.setFlipX(vx<0);}else{this.player.setTexture(vy<0?"donny_up":"donny_down");this.player.setFlipX(false);}}}else{this.player.setVelocity(0,0);if(this.hasDonnySheet)this.player.anims.stop();}}
+ updateCar(delta,m){const dt=delta/1000,gas=this.keys.up.isDown||m.gas||m.joyY<-.45,brake=this.keys.down.isDown||this.keys.brake.isDown||m.brake||m.joyY>.45,left=this.keys.left.isDown||m.joyX<-.35,right=this.keys.right.isDown||m.joyX>.35,boost=(this.keys.boost.isDown||m.boost)&&CAR.fuel>0&&Math.abs(CAR.speed)>80;if(gas&&CAR.fuel>0){CAR.speed+=CAR.accel*dt*(boost?1.6:1);CAR.fuel=Math.max(0,CAR.fuel-dt*(boost?1.35:.55));CAR.condition=boost?"Boosting":"Driving";}else if(brake){CAR.speed-=CAR.accel*dt*.76;CAR.condition="Braking";}else{CAR.speed*=Math.pow(CAR.drag,delta/16.6667);if(Math.abs(CAR.speed)<4)CAR.speed=0;CAR.condition="Coasting";}CAR.speed=Phaser.Math.Clamp(CAR.speed,-230,boost?760:CAR.maxSpeed);if(Math.abs(CAR.speed)>10){const steer=(right?1:0)-(left?1:0),reverse=CAR.speed<0?-1:1,ratio=Phaser.Math.Clamp(Math.abs(CAR.speed)/CAR.maxSpeed,.18,1);this.carHeading+=steer*reverse*CAR.turnSpeed*dt*ratio;}this.car.setVelocity(Math.cos(this.carHeading)*CAR.speed,Math.sin(this.carHeading)*CAR.speed);this.car.rotation=this.carHeading+CAR_VISUAL_OFFSET;this.car.x=Phaser.Math.Clamp(this.car.x,48,MAP_W-48);this.car.y=Phaser.Math.Clamp(this.car.y,48,MAP_H-48);}
+ handleUse(){if(this.inCar){this.exitCar();return;}if(Phaser.Math.Distance.Between(this.player.x,this.player.y,this.car.x,this.car.y)<110)this.enterCar();}
+ enterCar(){this.inCar=true;CAR.condition="Driving";this.player.setVisible(false);this.player.body.enable=false;CAR.speed=0;this.flash("Entered Distortion.",1300);}
+ exitCar(){const side=this.carHeading+Math.PI/2;this.player.setPosition(this.car.x+Math.cos(side)*78,this.car.y+Math.sin(side)*78);this.player.body.enable=true;this.player.setVisible(true);this.inCar=false;CAR.speed=0;CAR.condition="Parked";this.car.setVelocity(0,0);this.flash("Exited Distortion.",1300);}
+ updateMission(){const c=CHUNKS[this.chunk],a=this.inCar?this.car:this.player;if(!this.missionDone&&Phaser.Math.Distance.Between(a.x,a.y,c.obj.x,c.obj.y)<95){this.missionDone=true;DONNY.rep++;this.flash("Reached "+c.obj.label,2200);}}
+ updateCamera(){const cam=this.cameras.main,a=this.inCar?this.car:this.player,ratio=Phaser.Math.Clamp(Math.abs(CAR.speed)/CAR.maxSpeed,0,1);cam.setZoom(this.inCar?Phaser.Math.Linear(ZOOM.carSlow,ZOOM.carFast,ratio):ZOOM.foot);const vw=cam.width/cam.zoom,vh=cam.height/cam.zoom;cam.scrollX=Phaser.Math.Clamp(a.x-vw/2,0,MAP_W-vw);cam.scrollY=Phaser.Math.Clamp(a.y-vh/2,0,MAP_H-vh);}
+ updateLabels(){this.playerLabel.setPosition(this.player.x,this.player.y-72).setVisible(!this.inCar);this.carLabel.setPosition(this.car.x,this.car.y-80).setVisible(this.inCar||Phaser.Math.Distance.Between(this.player.x,this.player.y,this.car.x,this.car.y)<200);}
+ drawLocator(){this.locator.clear();const a=this.inCar?this.car:this.player;this.locator.lineStyle(4,0x9befff,.85).strokeCircle(a.x,a.y,this.inCar?55:42);}
+ drawHeadlights(){this.headlightLayer.clear();if(!this.inCar||!CAR.headlightsOn)return;const a=this.carHeading,fx=this.car.x+Math.cos(a)*52,fy=this.car.y+Math.sin(a)*52,len=300,width=90,ex=fx+Math.cos(a)*len,ey=fy+Math.sin(a)*len,sx=Math.cos(a+Math.PI/2),sy=Math.sin(a+Math.PI/2);this.headlightLayer.fillStyle(0x9befff,.035).fillTriangle(fx,fy,ex+sx*width,ey+sy*width,ex-sx*width,ey-sy*width);}
+ checkPrompts(){if(this.tempPrompt)return;let msg="";if(!this.inCar&&Phaser.Math.Distance.Between(this.player.x,this.player.y,this.car.x,this.car.y)<110)msg="Press E / X to enter Distortion";else if(this.inCar)msg="E / X exits vehicle";this.prompt.setText(msg).setVisible(!!msg);}
+ flash(text,ms){this.tempPrompt=true;this.prompt.setText(text).setVisible(true);this.time.delayedCall(ms,()=>{this.tempPrompt=false;this.prompt.setVisible(false);});}
+ updateHud(){const c=CHUNKS[this.chunk];this.hTitle.setText(c.title);this.hMode.setText("Mode: "+(this.inCar?"Driving Distortion":"On foot")+" Rep:"+DONNY.rep);this.hHp.setText("HP: "+DONNY.hp+"/"+DONNY.hpMax);this.hpBar.width=180*(DONNY.hp/DONNY.hpMax);this.hFuel.setText("Fuel: "+Math.round(CAR.fuel/CAR.fuelMax*100)+"% "+CAR.condition);this.fuelBar.width=180*(CAR.fuel/CAR.fuelMax);}
+ updateDebug(){if(!this.debugText.visible)return;const a=this.inCar?this.car:this.player,c=CHUNKS[this.chunk];this.debugText.setText("ACTUAL CHUNK V14\n"+this.chunk+" "+c.title+"\nBASE "+c.base+"\nACTIVE "+Math.round(a.x)+","+Math.round(a.y)+"\nSHEET "+(this.hasDonnySheet?"real Donny":"fallback")+"\nZOOM "+this.cameras.main.zoom.toFixed(2));}
 }
-
-new Phaser.Game({
-  type: Phaser.AUTO,
-  width: GAME_W,
-  height: GAME_H,
-  backgroundColor: "#050505",
-  pixelArt: true,
-  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  physics: { default: "arcade", arcade: { debug: false } },
-  scene: [MainScene]
-});
+new Phaser.Game({type:Phaser.AUTO,width:GAME_W,height:GAME_H,backgroundColor:"#050505",pixelArt:true,scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},physics:{default:"arcade",arcade:{debug:false}},scene:[MainScene]});
 </script>
 </body>
 </html>
