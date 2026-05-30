@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Cosmic Feedback — Westgate Blacklight Connector v05</title>
+<title>Cosmic Feedback — Westgate Blacklight Connector v06</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#050505;overflow:hidden;touch-action:none;font-family:monospace}
@@ -34,7 +34,7 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
   <div id="lights" class="btn" data-btn="lights">Y<br>LTS</div>
   <div id="boost" class="btn" data-btn="boost">R<br>BST</div>
 </div>
-<div id="buildTag">Westgate Blacklight Connector v05</div>
+<div id="buildTag">Westgate Blacklight Connector v06</div>
 
 <script>
 "use strict";
@@ -157,10 +157,10 @@ class MainScene extends Phaser.Scene{
     });
 
     // Tuned to the uploaded Westgate/Blacklight map: start near lower ENTER road area.
-    const spawnX=qNum("spawnX",Math.round(this.mapW*0.66));
-    const spawnY=qNum("spawnY",Math.round(this.mapH*0.76));
-    const carX=qNum("carX",Math.round(this.mapW*0.55));
-    const carY=qNum("carY",Math.round(this.mapH*0.79));
+    const spawnX=qNum("spawnX",Math.round(this.mapW*0.785));
+    const spawnY=qNum("spawnY",Math.round(this.mapH*0.900));
+    const carX=qNum("carX",Math.round(this.mapW*0.715));
+    const carY=qNum("carY",Math.round(this.mapH*0.900));
 
     const carTex=(!this.failed.has("distortion_asset")&&this.textures.exists("distortion_asset"))?"distortion_asset":"car_fallback";
     this.car=this.physics.add.sprite(carX,carY,carTex).setDepth(850);
@@ -183,8 +183,8 @@ class MainScene extends Phaser.Scene{
     this.headlightLayer=this.add.graphics().setDepth(840).setBlendMode(Phaser.BlendModes.ADD);
 
     this.inCar=false;
-    this.spawnSafe={x:spawnX,y:spawnY,r:170};
-    this.carSafe={x:carX,y:carY,r:150};
+    this.spawnSafe={x:spawnX,y:spawnY,r:210};
+    this.carSafe={x:carX,y:carY,r:190};
     this.collisionGraceUntil=this.time.now+1400;
     this.makeHud();
     this.makePrompt();
@@ -413,7 +413,7 @@ class MainScene extends Phaser.Scene{
   checkPrompts(){if(this.tempPrompt)return;let msg="";if(!this.inCar&&Phaser.Math.Distance.Between(this.player.x,this.player.y,this.car.x,this.car.y)<115)msg="Press E / X to enter Distortion";else if(this.inCar)msg="E / X exits vehicle";this.prompt.setText(msg).setVisible(!!msg);}
   flash(text,ms){this.tempPrompt=true;this.prompt.setText(text).setVisible(true);this.time.delayedCall(ms,()=>{this.tempPrompt=false;this.prompt.setVisible(false);});}
   updateHud(){this.hMode.setText("Mode: "+(this.inCar?"Driving Distortion":"On foot")+"   real map");this.hHp.setText("HP: "+DONNY.hp+"/"+DONNY.hpMax);this.hpBar.width=150*(DONNY.hp/DONNY.hpMax);this.hFuel.setText("Fuel: "+Math.round(CAR.fuel/CAR.fuelMax*100)+"% "+CAR.condition);this.fuelBar.width=150*(CAR.fuel/CAR.fuelMax);}
-  updateDebug(){if(!this.debugText.visible)return;const a=this.inCar?this.car:this.player;this.debugText.setText("WESTGATE BLACKLIGHT CONNECTOR v05\nBASE "+MAP_BASE_PATH+"\nMASK "+MAP_MASK_PATH+"\nMAP "+this.mapW+"x"+this.mapH+"\nACTIVE "+Math.round(a.x)+","+Math.round(a.y)+"\nDONNY "+(this.hasDonnySheet?"staging sheet":"fallback")+"\nMASK "+(this.maskCtx?"loaded":"missing/disabled")+"\nFAILED "+(this.failed.size?Array.from(this.failed).join(", "):"none"));}
+  updateDebug(){if(!this.debugText.visible)return;const a=this.inCar?this.car:this.player;this.debugText.setText("WESTGATE BLACKLIGHT CONNECTOR v06\nBASE "+MAP_BASE_PATH+"\nMASK "+MAP_MASK_PATH+"\nMAP "+this.mapW+"x"+this.mapH+"\nACTIVE "+Math.round(a.x)+","+Math.round(a.y)+"\nDONNY "+(this.hasDonnySheet?"staging sheet":"fallback")+"\nMASK "+(this.maskCtx?"loaded":"missing/disabled")+"\nFAILED "+(this.failed.size?Array.from(this.failed).join(", "):"none"));}
 }
 
 new Phaser.Game({
