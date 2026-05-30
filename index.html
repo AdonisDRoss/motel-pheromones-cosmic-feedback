@@ -23,11 +23,11 @@
 </head>
 <body>
 <div id="help">
-  COSMIC FEEDBACK — GLASSWELL WESTGATE + BLUE CANDLE INTERIOR<br>
+  COSMIC FEEDBACK — GLASSWELL MAP PASS 1<br>
   WASD/Arrows or mobile stick = move/steer · E/X = enter/exit/talk/refuel · A = gas · B/Space = brake · Shift/R = boost · H/Y = lights · F3 = debug<br>
-  Goal: Reach Blue Candle Alley, enter the hideout, and choose whether Donny joins Blue Candle Revue. Interior now has touch buttons.
+  Goal: test connected Glasswell districts, route markers, faction zones, road blockers, and Blue Candle Alley access.
 </div>
-<div id="buildTag">Westgate + Blue Candle interior mobilefix v3</div>
+<div id="buildTag">Glasswell Map Pass 1 v4</div>
 
 <script>
 "use strict";
@@ -140,6 +140,41 @@ const NPCS = [
   }
 ];
 
+const MAP_PASS_DISTRICTS = [
+  { id:"westgate_start", label:"WESTGATE START", x:650, y:2048, radius:310, color:0x9b6cff, note:"Donny / Distortion start" },
+  { id:"westgate_fuel", label:"WESTGATE FUEL STOP", x:760, y:2860, radius:200, color:0x69aaff, note:"Muckrail / Dustline services" },
+  { id:"checkpoint_road", label:"RED CONCORD CHECKPOINT ROAD", x:2048, y:3260, radius:250, color:0xff3333, note:"flag risk zone" },
+  { id:"blue_candle_alley", label:"BLUE CANDLE ALLEY", x:2048, y:3550, radius:295, color:0x70d9ff, note:"Drip Saints / Blue Candle Revue" },
+  { id:"blacklight_route", label:"BLACKLIGHT CLUB ROUTE", x:565, y:2048, radius:260, color:0xb45aff, note:"Blacklight Kids nightlife route" },
+  { id:"eastgate_scrap", label:"EASTGATE SCRAPYARDS", x:3530, y:2048, radius:335, color:0xffaa4d, note:"Rust Jackals / Scrapsaw Cathedral" },
+  { id:"civic_lockdown", label:"CIVIC GATE LOCKDOWN", x:2480, y:3060, radius:245, color:0xd92929, note:"Red Concord heavy zone / later" },
+  { id:"northgate_blackroad", label:"NORTHGATE SEALED", x:2048, y:545, radius:245, color:0xb8b8b8, note:"future Black Road foot route" }
+];
+
+const MAP_PASS_ROUTE_LINES = [
+  { label:"Main test route", color:0x70d9ff, points:[{x:650,y:2048},{x:760,y:2860},{x:2048,y:3260},{x:2048,y:3550}] },
+  { label:"Blacklight route", color:0xb45aff, points:[{x:650,y:2048},{x:565,y:2048}] },
+  { label:"Rust Jackals route", color:0xffaa4d, points:[{x:650,y:2048},{x:2048,y:2048},{x:3530,y:2048}] },
+  { label:"Civic lockdown branch", color:0xff3333, points:[{x:2048,y:3260},{x:2480,y:3060}] }
+];
+
+const MAP_PASS_ENTRANCES = [
+  { id:"blue_candle_hideout", label:"BLUE CANDLE REVUE HIDEOUT", x:2120, y:3562, color:0x8fdcff },
+  { id:"blacklight_club_future", label:"BLACKLIGHT CLUB ENTRANCE FUTURE", x:510, y:1980, color:0xb45aff },
+  { id:"rust_jackals_yard_future", label:"SCRAPSAW YARD ENTRANCE FUTURE", x:3525, y:2145, color:0xffaa4d },
+  { id:"civic_gate_future", label:"CIVIC GATE LOCKED FUTURE", x:2480, y:3060, color:0xff3333 },
+  { id:"westgate_garage_future", label:"WESTGATE GARAGE FUTURE", x:690, y:2165, color:0xf0d278 }
+];
+
+const MAP_PASS_ROAD_BLOCKERS = [
+  { id:"northgate_seal", label:"NORTHGATE SEALED BY RED CONCORD", x:2048, y:650, w:430, h:58, color:0xd0d0d0 },
+  { id:"civic_barricade_west", label:"CIVIC DETOUR BARRICADE", x:1700, y:3180, w:330, h:48, color:0xff3333 },
+  { id:"civic_barricade_east", label:"CIVIC CENTER LOCKDOWN", x:2480, y:3180, w:350, h:48, color:0xff3333 },
+  { id:"eastgate_toll_wreck", label:"RUST JACKALS TOLL WRECK", x:3100, y:1850, w:52, h:310, color:0xffaa4d },
+  { id:"westgate_rubble_choke", label:"WESTGATE RUBBLE CHOKE", x:530, y:1740, w:56, h:275, color:0xb45aff }
+];
+
+
 function clampToMap(obj) {
   obj.x = Phaser.Math.Clamp(obj.x, 48, MAP_W - 48);
   obj.y = Phaser.Math.Clamp(obj.y, 48, MAP_H - 48);
@@ -240,6 +275,8 @@ class GlasswellScene extends Phaser.Scene {
     this.drawGateZones();
     this.drawFuelStations();
     this.drawMissionObjects();
+    this.drawMapPassObjects();
+    this.createRoadBlockers();
     this.createTraffic();
     this.createPedestrians();
     this.createNpcs();
@@ -386,6 +423,11 @@ class GlasswellScene extends Phaser.Scene {
     makeNpc("npc_blue", 0x245b9a);
     makeNpc("npc_red", 0x8a2020);
     makeNpc("npc_gold", 0x806b22);
+
+    g.clear();
+    g.fillStyle(0xffffff, 1);
+    g.fillRect(0, 0, 16, 16);
+    g.generateTexture("blocker_body", 16, 16);
 
     g.destroy();
   }
@@ -1248,6 +1290,27 @@ class GlasswellScene extends Phaser.Scene {
     }
 
     if (!message) {
+      for (const e of MAP_PASS_ENTRANCES) {
+        const dist = Phaser.Math.Distance.Between(this.activeActor.x, this.activeActor.y, e.x, e.y);
+        if (dist < 95) {
+          message = `${e.label}\nMap Pass 1 entrance marker`;
+          break;
+        }
+      }
+    }
+
+    if (!message) {
+      for (const b of MAP_PASS_ROAD_BLOCKERS) {
+        const closeX = Math.abs(this.activeActor.x - b.x) < b.w / 2 + 60;
+        const closeY = Math.abs(this.activeActor.y - b.y) < b.h / 2 + 60;
+        if (closeX && closeY) {
+          message = `${b.label}\nRoad blocker: route reserved for later map pass`;
+          break;
+        }
+      }
+    }
+
+    if (!message) {
       for (const z of GATE_ZONES) {
         const dist = Phaser.Math.Distance.Between(this.activeActor.x, this.activeActor.y, z.x, z.y);
         if (dist < z.radius) {
@@ -1353,15 +1416,19 @@ class GlasswellScene extends Phaser.Scene {
       `ZOOM ${this.cameras.main.zoom.toFixed(2)}\n` +
       `HEADING ${this.carHeading.toFixed(2)} OFFSET ${CAR_VISUAL_OFFSET.toFixed(2)}\n` +
       `CHUNK ${chunk}\n` +
-      `MISSION ${MISSION.state} INTERIOR ${this.inInterior ? "yes" : "no"} BAND ${DONNY.blueCandleStatus}`
+      `MISSION ${MISSION.state} INTERIOR ${this.inInterior ? "yes" : "no"} BAND ${DONNY.blueCandleStatus}\n` +
+      `DISTRICTS ${MAP_PASS_DISTRICTS.length} BLOCKERS ${MAP_PASS_ROAD_BLOCKERS.length}`
     );
   }
 
   currentChunkName(x, y) {
-    if (x < 1050 && y > 1500 && y < 2550) return "Westgate / Night Market Offramp";
-    if (x > 1600 && x < 2500 && y > 3050) return "Southgate / Blue Candle Alley Route";
-    if (x > 3000 && y > 1500 && y < 2550) return "Eastgate / Rust Jackals Route";
-    if (y < 1050 && x > 1500 && x < 2550) return "Northgate / Black Road Future Route";
+    if (Phaser.Math.Distance.Between(x, y, 2048, 3550) < 330) return "Blue Candle Alley / Drip Saints";
+    if (Phaser.Math.Distance.Between(x, y, 2048, 3260) < 285) return "Red Concord Checkpoint Road";
+    if (Phaser.Math.Distance.Between(x, y, 760, 2860) < 230) return "Westgate Fuel Stop";
+    if (x < 1050 && y > 1500 && y < 2550) return "Westgate Start / Blacklight Connector";
+    if (x > 3000 && y > 1500 && y < 2550) return "Eastgate Scrapyards / Rust Jackals";
+    if (Phaser.Math.Distance.Between(x, y, 2480, 3060) < 300) return "Civic Gate Lockdown";
+    if (y < 1050 && x > 1500 && x < 2550) return "Northgate Sealed / Black Road Future";
     return "Glasswell Freeway Ring";
   }
 }
