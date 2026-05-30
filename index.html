@@ -27,7 +27,7 @@
   WASD/Arrows or mobile stick = move/steer · E/X = enter/exit/talk/refuel · A = gas · B/Space = brake · Shift/R = boost · H/Y = lights · F3 = debug<br>
   Goal: test a playable Glasswell city route. Bad sign-sheet map is disabled; procedural roads/zones are drawn in code. Procedural city map replaces bad sign-sheet map. Camera manual-locks to Donny/car.
 </div>
-<div id="buildTag">Glasswell Map Pass 1 procedural-city v7</div>
+<div id="buildTag">Glasswell Map Pass 1 procedural-city v8</div>
 
 <script>
 "use strict";
@@ -571,6 +571,123 @@ class GlasswellScene extends Phaser.Scene {
     this.audioEnabled = true;
     Object.values(this.audio).forEach(s => { try { s.play(); } catch(e) {} });
   }
+
+
+  drawPlayableCityBase() {
+    const g = this.add.graphics().setDepth(0);
+
+    g.fillStyle(0x141414, 1);
+    g.fillRect(0, 0, MAP_W, MAP_H);
+    g.lineStyle(8, 0x2d2d2d, 1);
+    g.strokeRect(32, 32, MAP_W - 64, MAP_H - 64);
+
+    const districtRects = [
+      { x:340, y:1540, w:760, h:1030, color:0x1c1426, alpha:0.82, label:"WESTGATE START / NIGHT MARKET ROUTE", lx:720, ly:1568 },
+      { x:520, y:2640, w:520, h:470, color:0x202018, alpha:0.88, label:"WESTGATE FUEL STOP", lx:780, ly:2668 },
+      { x:1730, y:3040, w:650, h:700, color:0x102027, alpha:0.90, label:"BLUE CANDLE ALLEY / DRIP SAINTS", lx:2048, ly:3070 },
+      { x:1750, y:2890, w:900, h:360, color:0x2a1010, alpha:0.58, label:"RED CONCORD CHECKPOINT ROAD", lx:2048, ly:2908 },
+      { x:3070, y:1580, w:820, h:1000, color:0x2a1a0a, alpha:0.82, label:"EASTGATE SCRAPYARDS / RUST JACKALS", lx:3500, ly:1610 },
+      { x:2050, y:2600, w:760, h:600, color:0x241010, alpha:0.68, label:"CIVIC LOCKDOWN BRANCH", lx:2480, ly:2625 },
+      { x:1700, y:300, w:720, h:740, color:0x1a1a1a, alpha:0.84, label:"NORTHGATE SEALED / BLACK ROAD FUTURE", lx:2048, ly:330 }
+    ];
+
+    for (const d of districtRects) {
+      g.fillStyle(d.color, d.alpha);
+      g.fillRect(d.x, d.y, d.w, d.h);
+      g.lineStyle(3, 0x383838, 0.8);
+      g.strokeRect(d.x, d.y, d.w, d.h);
+      this.add.text(d.lx, d.ly, d.label, {
+        fontFamily:"monospace",
+        fontSize:"18px",
+        color:"#d8d8d8",
+        backgroundColor:"rgba(0,0,0,0.65)",
+        padding:{x:8, y:4}
+      }).setOrigin(0.5).setDepth(10);
+    }
+
+    const road = 0x303030;
+    const roadEdge = 0x575757;
+    const lane = 0xc8b46a;
+
+    const roads = [
+      { x:560, y:620, w:320, h:3080 },
+      { x:420, y:1888, w:3180, h:320 },
+      { x:1888, y:620, w:320, h:3180 },
+      { x:3216, y:620, w:320, h:3060 },
+      { x:560, y:3200, w:3000, h:320 },
+      { x:560, y:700, w:3000, h:280 },
+      { x:560, y:2680, w:1480, h:240 },
+      { x:2048, y:2900, w:520, h:230 }
+    ];
+
+    for (const r of roads) {
+      g.fillStyle(road, 1);
+      g.fillRect(r.x, r.y, r.w, r.h);
+      g.lineStyle(5, roadEdge, 0.95);
+      g.strokeRect(r.x, r.y, r.w, r.h);
+    }
+
+    g.lineStyle(4, lane, 0.62);
+    for (let x = 460; x < 3550; x += 150) {
+      g.beginPath(); g.moveTo(x, 2048); g.lineTo(x + 70, 2048); g.strokePath();
+      g.beginPath(); g.moveTo(x, 3360); g.lineTo(x + 70, 3360); g.strokePath();
+      g.beginPath(); g.moveTo(x, 840); g.lineTo(x + 70, 840); g.strokePath();
+    }
+    for (let y = 680; y < 3650; y += 150) {
+      g.beginPath(); g.moveTo(720, y); g.lineTo(720, y + 70); g.strokePath();
+      g.beginPath(); g.moveTo(2048, y); g.lineTo(2048, y + 70); g.strokePath();
+      g.beginPath(); g.moveTo(3376, y); g.lineTo(3376, y + 70); g.strokePath();
+    }
+
+    g.fillStyle(0x202020, 1);
+    g.fillRect(455, 2208, 540, 360);
+    g.fillRect(910, 1780, 360, 450);
+    g.fillRect(1550, 3420, 980, 260);
+    g.fillRect(2890, 1780, 280, 560);
+
+    const blocks = [
+      {x:430,y:1600,w:130,h:250,c:0x25212b}, {x:915,y:1600,w:160,h:250,c:0x25212b},
+      {x:430,y:2260,w:130,h:245,c:0x242424}, {x:905,y:2260,w:170,h:245,c:0x242424},
+      {x:1780,y:3520,w:190,h:165,c:0x102f3a}, {x:2130,y:3520,w:240,h:165,c:0x102f3a},
+      {x:3090,y:1600,w:120,h:300,c:0x3a2410}, {x:3550,y:1600,w:220,h:300,c:0x3a2410},
+      {x:3090,y:2210,w:160,h:300,c:0x3a2410}, {x:3570,y:2210,w:190,h:300,c:0x3a2410},
+      {x:2350,y:2780,w:300,h:240,c:0x341414}
+    ];
+
+    for (const b of blocks) {
+      g.fillStyle(b.c, 0.94);
+      g.fillRect(b.x, b.y, b.w, b.h);
+      g.lineStyle(3, 0x555555, 0.7);
+      g.strokeRect(b.x, b.y, b.w, b.h);
+    }
+
+    g.fillStyle(0x6b4bff, 0.22);
+    g.fillCircle(DONNY_START.x, DONNY_START.y, 72);
+    g.lineStyle(4, 0x9b6cff, 0.9);
+    g.strokeCircle(DONNY_START.x, DONNY_START.y, 72);
+    this.add.text(DONNY_START.x, DONNY_START.y - 92, "DONNY START", {
+      fontFamily:"monospace", fontSize:"15px", color:"#ffffff",
+      backgroundColor:"rgba(0,0,0,0.7)", padding:{x:6,y:3}
+    }).setOrigin(0.5).setDepth(30);
+
+    g.fillStyle(0x9b6cff, 0.15);
+    g.fillRect(START.x - 75, START.y - 50, 150, 100);
+    g.lineStyle(3, 0xd7b8ff, 0.9);
+    g.strokeRect(START.x - 75, START.y - 50, 150, 100);
+    this.add.text(START.x, START.y + 78, "DISTORTION PARKED", {
+      fontFamily:"monospace", fontSize:"13px", color:"#e5d3ff",
+      backgroundColor:"rgba(0,0,0,0.7)", padding:{x:5,y:2}
+    }).setOrigin(0.5).setDepth(30);
+
+    this.add.text(64, 92, "PROCEDURAL GLASSWELL TEST MAP\\nWestgate -> Fuel -> Checkpoint -> Blue Candle Alley\\nEast road = Rust Jackals route · West road = Blacklight route", {
+      fontFamily:"monospace",
+      fontSize:"16px",
+      color:"#9befff",
+      backgroundColor:"rgba(0,0,0,0.72)",
+      padding:{x:10,y:6}
+    }).setDepth(200);
+  }
+
 
   drawGateZones() {
     const gfx = this.add.graphics().setDepth(20);
