@@ -25,9 +25,9 @@
 <div id="help">
   COSMIC FEEDBACK — GLASSWELL MAP PASS 1<br>
   WASD/Arrows or mobile stick = move/steer · E/X = enter/exit/talk/refuel · A = gas · B/Space = brake · Shift/R = boost · H/Y = lights · F3 = debug<br>
-  Goal: test connected Glasswell districts, route markers, faction zones, road blockers, and Blue Candle Alley access. DONNY tag marks player. Camera uses manual center lock on Donny/car.
+  Goal: test a playable Glasswell city route. Bad sign-sheet map is disabled; procedural roads/zones are drawn in code. Procedural city map replaces bad sign-sheet map. Camera manual-locks to Donny/car.
 </div>
-<div id="buildTag">Glasswell Map Pass 1 manual-camera v6</div>
+<div id="buildTag">Glasswell Map Pass 1 procedural-city v7</div>
 
 <script>
 "use strict";
@@ -210,18 +210,9 @@ class GlasswellScene extends Phaser.Scene {
   create() {
     console.log("CREATE START");
 
-    if (this.textures.exists("map")) {
-      this.add.image(0, 0, "map").setOrigin(0, 0).setDepth(0);
-    } else {
-      const fallback = this.add.graphics();
-      fallback.fillStyle(0x202020, 1).fillRect(0, 0, MAP_W, MAP_H);
-      fallback.lineStyle(4, 0x444444, 1);
-      fallback.strokeRect(0, 0, MAP_W, MAP_H);
-      fallback.generateTexture("map_fallback", MAP_W, MAP_H);
-      fallback.destroy();
-      this.add.image(0, 0, "map_fallback").setOrigin(0, 0).setDepth(0);
-      console.warn("Using fallback map texture because map asset failed.");
-    }
+    // The previous map asset path showed a sign-sheet image instead of a playable city map.
+    // Map Pass 1 now draws a temporary playable Glasswell road/city layout in code.
+    this.drawPlayableCityBase();
 
     this.physics.world.setBounds(0, 0, MAP_W, MAP_H);
     this.cameras.main.setBounds(0, 0, MAP_W, MAP_H);
