@@ -25,9 +25,9 @@
 <div id="help">
   COSMIC FEEDBACK — GLASSWELL WESTGATE + BLUE CANDLE INTERIOR<br>
   WASD/Arrows or mobile stick = move/steer · E/X = enter/exit/talk/refuel · A = gas · B/Space = brake · Shift/R = boost · H/Y = lights · F3 = debug<br>
-  Goal: Reach Blue Candle Alley, enter the hideout, and choose whether Donny joins Blue Candle Revue.
+  Goal: Reach Blue Candle Alley, enter the hideout, and choose whether Donny joins Blue Candle Revue. Interior now has touch buttons.
 </div>
-<div id="buildTag">Westgate + Blue Candle interior v2</div>
+<div id="buildTag">Westgate + Blue Candle interior mobilefix v3</div>
 
 <script>
 "use strict";
@@ -399,7 +399,7 @@ class GlasswellScene extends Phaser.Scene {
       buttonPress: { interact:false, headlights:false, brake:false }
     };
 
-    const uiDepth = 500;
+    const uiDepth = 1200; // keep mobile controls above interior overlay
     const joyCX = 105;
     const joyCY = GAME_H - 105;
     const joyRadius = 70;
@@ -798,7 +798,35 @@ class GlasswellScene extends Phaser.Scene {
       color:"#9befff"
     });
 
-    this.interiorLayer.add([bg, title, sub, stage, candles, rafe, oren, toma, rafeT, orenT, tomaT, panel, this.interiorText, this.interiorHelp]);
+    // Mobile/touch-safe interior buttons. These sit inside the overlay so the player
+    // can pick/join/leave even if the normal driving controller is hidden by browser UI.
+    const continueBtn = this.add.rectangle(612, 512, 190, 42, 0x245b9a, 0.72)
+      .setStrokeStyle(2, 0x9befff, 0.95)
+      .setInteractive({ useHandCursor: true });
+    const continueText = this.add.text(612, 512, "CONTINUE / JOIN", {
+      fontFamily:"monospace",
+      fontSize:"14px",
+      color:"#ffffff"
+    }).setOrigin(0.5);
+
+    const leaveBtn = this.add.rectangle(815, 512, 150, 42, 0x8a2020, 0.72)
+      .setStrokeStyle(2, 0xffb4b4, 0.95)
+      .setInteractive({ useHandCursor: true });
+    const leaveText = this.add.text(815, 512, "LEAVE", {
+      fontFamily:"monospace",
+      fontSize:"14px",
+      color:"#ffffff"
+    }).setOrigin(0.5);
+
+    continueBtn.on("pointerdown", () => this.handleInteriorInput(true, false));
+    leaveBtn.on("pointerdown", () => this.handleInteriorInput(false, true));
+
+    this.interiorLayer.add([
+      bg, title, sub, stage, candles,
+      rafe, oren, toma, rafeT, orenT, tomaT,
+      panel, this.interiorText, this.interiorHelp,
+      continueBtn, continueText, leaveBtn, leaveText
+    ]);
   }
 
   enterBlueCandleInterior() {
