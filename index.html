@@ -25,9 +25,9 @@
 <div id="help">
   COSMIC FEEDBACK — GLASSWELL MAP PASS 1<br>
   WASD/Arrows or mobile stick = move/steer · E/X = enter/exit/talk/refuel · A = gas · B/Space = brake · Shift/R = boost · H/Y = lights · F3 = debug<br>
-  Goal: test connected Glasswell districts, route markers, faction zones, road blockers, and Blue Candle Alley access. Camera hard-locks to Donny/car.
+  Goal: test connected Glasswell districts, route markers, faction zones, road blockers, and Blue Candle Alley access. DONNY tag marks player. Camera uses manual center lock on Donny/car.
 </div>
-<div id="buildTag">Glasswell Map Pass 1 camera-lock v5</div>
+<div id="buildTag">Glasswell Map Pass 1 manual-camera v6</div>
 
 <script>
 "use strict";
@@ -249,15 +249,30 @@ class GlasswellScene extends Phaser.Scene {
     this.car.rotation = this.carHeading + CAR_VISUAL_OFFSET;
     this.car.setMaxVelocity(850);
     this.car.setDrag(0, 0);
+    this.car.setDepth(850);
+    this.carNameTag = this.add.text(this.car.x, this.car.y - 74, "DISTORTION", {
+      fontFamily:"monospace",
+      fontSize:"13px",
+      color:"#d7b8ff",
+      backgroundColor:"rgba(0,0,0,0.70)",
+      padding:{x:5, y:2}
+    }).setOrigin(0.5).setDepth(851);
 
     this.playerFacing = "down";
     this.player = this.physics.add.sprite(DONNY_START.x, DONNY_START.y, "donny_down");
-    this.player.setDepth(60);
-    this.player.setScale(1.0);
+    this.player.setDepth(900);
+    this.player.setScale(1.35);
     this.player.setCollideWorldBounds(true);
     this.player.body.setSize(22, 34, true);
 
-    this.playerLocator = this.add.graphics().setDepth(59);
+    this.playerLocator = this.add.graphics().setDepth(899);
+    this.playerNameTag = this.add.text(this.player.x, this.player.y - 58, "DONNY", {
+      fontFamily:"monospace",
+      fontSize:"15px",
+      color:"#9befff",
+      backgroundColor:"rgba(0,0,0,0.75)",
+      padding:{x:5, y:2}
+    }).setOrigin(0.5).setDepth(901);
 
     this.inCar = false;
     this.activeActor = this.player;
@@ -971,6 +986,7 @@ class GlasswellScene extends Phaser.Scene {
     this.updateMission(delta);
     this.updateCamera();
     this.drawPlayerLocator();
+    this.updateActorTags();
     this.updateFx();
     this.drawHeadlights();
     this.checkProximity(delta, mobile);
@@ -1203,6 +1219,7 @@ class GlasswellScene extends Phaser.Scene {
     const cam = this.cameras.main;
     const target = this.inCar ? this.car : this.player;
     this.activeActor = target;
+    if (!target) return;
 
     if (this.inCar) {
       const ratio = Phaser.Math.Clamp(Math.abs(DISTORTION.speed) / DISTORTION.maxSpeed, 0, 1);
@@ -1211,15 +1228,13 @@ class GlasswellScene extends Phaser.Scene {
       cam.setZoom(CAMERA_ZOOM.foot);
     }
 
-    // Hard camera lock fixes mobile/zoom drift and keeps the view centered on Donny
-    // while on foot, then centered on the Distortion while driving.
-    if (HARD_CAMERA_LOCK && target) {
-      cam.stopFollow();
-      cam.centerOn(target.x, target.y);
-    } else if (target) {
-      cam.startFollow(target, true, 0.14, 0.14);
-      cam.setDeadzone(0, 0);
-    }
+    // Manual camera center lock. This avoids Phaser follow drift on mobile browsers
+    // and keeps the target centered after zoom changes.
+    cam.stopFollow();
+    const viewW = cam.width / cam.zoom;
+    const viewH = cam.height / cam.zoom;
+    cam.scrollX = Phaser.Math.Clamp(target.x - viewW * 0.5, 0, MAP_W - viewW);
+    cam.scrollY = Phaser.Math.Clamp(target.y - viewH * 0.5, 0, MAP_H - viewH);
   }
 
   updateFx() {
