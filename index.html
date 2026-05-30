@@ -2,20 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Cosmic Feedback — Glasswell Full Index</title>
+  <title>Cosmic Feedback — Glasswell Westgate Vertical Slice</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <style>
-    html, body {
-      margin:0; padding:0; width:100%; height:100%;
-      background:#050505; overflow:hidden;
-      touch-action:none;
-    }
+    html, body { margin:0; padding:0; width:100%; height:100%; background:#050505; overflow:hidden; touch-action:none; }
     canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
     #help {
       position: fixed; left: 10px; top: 8px; z-index: 20;
-      color: #e8dfc8; font: 13px monospace; background: rgba(0,0,0,.66);
+      color: #e8dfc8; font: 12px monospace; background: rgba(0,0,0,.68);
       padding: 8px 10px; border: 1px solid rgba(255,255,255,.25);
-      max-width: 760px;
+      max-width: 780px;
     }
     #buildTag {
       position: fixed; right: 10px; bottom: 8px; z-index: 20;
@@ -27,39 +23,49 @@
 </head>
 <body>
 <div id="help">
-  COSMIC FEEDBACK — GLASSWELL FULL INDEX<br>
-  Start: outside Westgate with Aurelix Distortion. Full map packs are included in assets/maps/dust9/glasswell/all_chunks/.<br>
-  WASD/Arrows or mobile controller = drive · E/X = refuel / gate info · H/Y = headlights · Space/B = brake · Shift/R = Distortion Boost · A = gas · P = police siren test
+  COSMIC FEEDBACK — GLASSWELL WESTGATE VERTICAL SLICE<br>
+  WASD/Arrows or mobile stick = move/steer · E/X = enter/exit/talk/refuel · A = gas · B/Space = brake · Shift/R = boost · H/Y = lights · F3 = debug<br>
+  Goal: Reach the Blue Candle Alley. Donny has HP/stats. Camera is zoomed in; mobile controls are screen-locked.
 </div>
-<div id="buildTag">Full index build</div>
+<div id="buildTag">Westgate vertical slice v1</div>
+
 <script>
+"use strict";
+
+console.log("GAME BOOT START");
 
 const GAME_W = 960;
 const GAME_H = 540;
+const MAP_W = 4096;
+const MAP_H = 4096;
 
 const START = { x: 720, y: 2048 };
+const DONNY_START = { x: 620, y: 2070 };
 
-const GATE_ZONES = [
-  { id:"westgate_exit", name:"Westgate Night Market / Blacklight Kids", x:565, y:2048, radius:260, color:0xb45aff, status:"Wired: Westgate Offramp → Blacklight Kids Connector" },
-  { id:"southgate_exit", name:"Southgate Main Entry / Drip Saints", x:2048, y:3550, radius:285, color:0xff8f7a, status:"Wired: Southgate → Checkpoint → Drip Saints Connector" },
-  { id:"eastgate_exit", name:"Eastgate Industrial / Rust Jackals", x:3530, y:2048, radius:285, color:0xffaa4d, status:"Wired: Eastgate → Industrial Oversight → Rust Jackals Connector" },
-  { id:"northgate_exit", name:"Northgate Closed / Black Road", x:2048, y:545, radius:260, color:0xd0d0d0, status:"Closed: future Black Road foot route" }
-];
+const CAMERA_ZOOM = {
+  foot: 1.08,
+  carSlow: 0.92,
+  carFast: 0.72
+};
 
-const FUEL_STATIONS = [
-  { id:"fuel_poor_west_outer", name:"Muckrail Fuel & Salvage", tier:"poor", x:760, y:2860, radius:150, color:0xb46e37 },
-  { id:"fuel_poor_north_outer", name:"Muckrail Fuel & Salvage", tier:"poor", x:2850, y:760, radius:150, color:0xb46e37 },
-  { id:"fuel_mid_east_outer", name:"Dustline Waystop", tier:"middle", x:3380, y:2780, radius:165, color:0x69aaff },
-  { id:"fuel_mid_west_outer", name:"Dustline Waystop", tier:"middle", x:780, y:1120, radius:165, color:0x69aaff },
-  { id:"fuel_rich_city_close", name:"Nova Crown Fuel", tier:"rich", x:2510, y:1260, radius:180, color:0xf0d278 },
-];
+const DONNY = {
+  name: "Donny",
+  hpMax: 100,
+  hp: 100,
+  armor: 0,
+  walkSpeed: 195,
+  runSpeed: 245,
+  repDripSaints: 0,
+  cash: 0,
+  mode: "on_foot"
+};
 
 const DISTORTION = {
   id: "aurelix_distortion",
   brand: "Aurelix Motorworks",
   model: "Distortion",
   className: "Prototype sports car",
-  condition: "Prototype",
+  condition: "Parked",
   fuelMax: 180,
   fuel: 180,
   speed: 0,
@@ -70,33 +76,83 @@ const DISTORTION = {
   headlightsOn: true
 };
 
-// GTA rule: one top-down vehicle sprite is rotated in code. No directional vehicle sheet needed.
-// Simple closed-loop freeway lanes around the master map.
+const MISSION = {
+  title: "Reach the Blue Candle Alley",
+  state: "active",
+  objective: "Reach the Drip Saints alley marker without being flagged.",
+  marker: { x: 2048, y: 3550, radius: 120 },
+  checkpoint: { x: 2048, y: 3260, radius: 235 },
+  checkpointTimer: 0,
+  flagged: false,
+  complete: false
+};
+
+const GATE_ZONES = [
+  { id:"westgate_exit", name:"Westgate Night Market / Blacklight Kids", x:565, y:2048, radius:260, color:0xb45aff, status:"Wired: Westgate Offramp to Blacklight Kids Connector" },
+  { id:"southgate_exit", name:"Southgate Main Entry / Drip Saints", x:2048, y:3550, radius:285, color:0xff8f7a, status:"Wired: Southgate to Checkpoint to Drip Saints Connector" },
+  { id:"eastgate_exit", name:"Eastgate Industrial / Rust Jackals", x:3530, y:2048, radius:285, color:0xffaa4d, status:"Wired: Eastgate to Rust Jackals Connector" },
+  { id:"northgate_exit", name:"Northgate Closed / Black Road", x:2048, y:545, radius:260, color:0xd0d0d0, status:"Closed: future Black Road foot route" }
+];
+
+const FUEL_STATIONS = [
+  { id:"fuel_poor_west_outer", name:"Muckrail Fuel & Salvage", tier:"poor", x:760, y:2860, radius:150, color:0xb46e37 },
+  { id:"fuel_poor_north_outer", name:"Muckrail Fuel & Salvage", tier:"poor", x:2850, y:760, radius:150, color:0xb46e37 },
+  { id:"fuel_mid_east_outer", name:"Dustline Waystop", tier:"middle", x:3380, y:2780, radius:165, color:0x69aaff },
+  { id:"fuel_mid_west_outer", name:"Dustline Waystop", tier:"middle", x:780, y:1120, radius:165, color:0x69aaff },
+  { id:"fuel_rich_city_close", name:"Nova Crown Fuel", tier:"rich", x:2510, y:1260, radius:180, color:0xf0d278 }
+];
+
 const TRAFFIC_ROUTE_OUTER = [
   {x:720, y:720}, {x:2048, y:720}, {x:3376, y:720},
   {x:3376, y:2048}, {x:3376, y:3376},
-  {x:2048, y:3376}, {x:720, y:3376},
-  {x:720, y:2048}
+  {x:2048, y:3376}, {x:720, y:3376}, {x:720, y:2048}
 ];
 
 const TRAFFIC_ROUTE_INNER = [
   {x:840, y:840}, {x:2048, y:840}, {x:3256, y:840},
   {x:3256, y:2048}, {x:3256, y:3256},
-  {x:2048, y:3256}, {x:840, y:3256},
-  {x:840, y:2048}
+  {x:2048, y:3256}, {x:840, y:3256}, {x:840, y:2048}
 ];
 
 const PEDESTRIAN_WALK_NODES = [
-  {x:585, y:1900}, {x:620, y:2200}, {x:780, y:2380}, // Westgate
-  {x:1880, y:3500}, {x:2180, y:3500}, {x:2048, y:3260}, // Southgate
-  {x:3480, y:1880}, {x:3480, y:2200}, {x:3260, y:2048}, // Eastgate
-  {x:1880, y:620}, {x:2200, y:620}, {x:2048, y:840}, // Northgate
+  {x:585, y:1900}, {x:620, y:2200}, {x:780, y:2380},
+  {x:1880, y:3500}, {x:2180, y:3500}, {x:2048, y:3260},
+  {x:3480, y:1880}, {x:3480, y:2200}, {x:3260, y:2048},
+  {x:1880, y:620}, {x:2200, y:620}, {x:2048, y:840}
 ];
 
+const NPCS = [
+  {
+    id:"drip_runner", name:"Drip Saints Runner", x:1940, y:3510, color:0x4da9ff,
+    line:"Blue candle means the alley still breathes. Stay off the red-lit road."
+  },
+  {
+    id:"checkpoint_officer", name:"Red Concord Checkpoint Officer", x:2140, y:3260, color:0xff3333,
+    line:"Papers out. Eyes down."
+  },
+  {
+    id:"westgate_mechanic", name:"Westgate Mechanic", x:685, y:2140, color:0xf0d278,
+    line:"That Aurelix thing turns too sharp if you floor it. Ease into the wheel."
+  }
+];
+
+function clampToMap(obj) {
+  obj.x = Phaser.Math.Clamp(obj.x, 48, MAP_W - 48);
+  obj.y = Phaser.Math.Clamp(obj.y, 48, MAP_H - 48);
+}
+
 class GlasswellScene extends Phaser.Scene {
-  constructor() { super("GlasswellScene"); }
+  constructor() {
+    super("GlasswellScene");
+  }
 
   preload() {
+    console.log("PRELOAD START");
+
+    this.load.on("loaderror", file => {
+      console.warn("ASSET LOAD FAILED:", file.key, file.src || file.url);
+    });
+
     this.load.image("map", "assets/maps/dust9/glasswell/GLASSWELL_FREEWAY_RING_WIRED_TEST_MAP.png");
     this.load.image("distortion_topdown", "assets/vehicles/special/aurelix_distortion/distortion_topdown.png");
 
@@ -105,31 +161,61 @@ class GlasswellScene extends Phaser.Scene {
     this.load.audio("engine_boost", "assets/audio/vehicles/vehicle_engine_boost_loop.wav");
     this.load.audio("refuel_loop", "assets/audio/vehicles/fuel_pump_refuel_loop.wav");
     this.load.audio("police_siren", "assets/audio/vehicles/police_siren_loop.wav");
-    this.load.audio("ambulance_siren", "assets/audio/vehicles/ambulance_siren_loop.wav");
+
+    this.load.once("complete", () => console.log("PRELOAD COMPLETE"));
   }
 
   create() {
-    this.add.image(0, 0, "map").setOrigin(0, 0);
-    this.physics.world.setBounds(0, 0, 4096, 4096);
-    this.cameras.main.setBounds(0, 0, 4096, 4096);
+    console.log("CREATE START");
+
+    if (this.textures.exists("map")) {
+      this.add.image(0, 0, "map").setOrigin(0, 0).setDepth(0);
+    } else {
+      const fallback = this.add.graphics();
+      fallback.fillStyle(0x202020, 1).fillRect(0, 0, MAP_W, MAP_H);
+      fallback.lineStyle(4, 0x444444, 1);
+      fallback.strokeRect(0, 0, MAP_W, MAP_H);
+      fallback.generateTexture("map_fallback", MAP_W, MAP_H);
+      fallback.destroy();
+      this.add.image(0, 0, "map_fallback").setOrigin(0, 0).setDepth(0);
+      console.warn("Using fallback map texture because map asset failed.");
+    }
+
+    this.physics.world.setBounds(0, 0, MAP_W, MAP_H);
+    this.cameras.main.setBounds(0, 0, MAP_W, MAP_H);
 
     this.keys = this.input.keyboard.addKeys({
-      up: "W,UP", down: "S,DOWN", left: "A,LEFT", right: "D,RIGHT",
-      interact: "E", brake: "SPACE", boost: "SHIFT", headlights: "H",
-      siren: "P"
+      up: "W,UP",
+      down: "S,DOWN",
+      left: "A,LEFT",
+      right: "D,RIGHT",
+      interact: "E",
+      brake: "SPACE",
+      boost: "SHIFT",
+      headlights: "H",
+      siren: "P",
+      debug: "F3"
     });
 
     this.createRuntimeTextures();
     this.createMobileControls();
 
     this.car = this.physics.add.sprite(START.x, START.y, "distortion_topdown");
-    this.car.setDepth(50);
+    this.car.setDepth(45);
     this.car.setScale(0.45);
     this.car.rotation = -Math.PI / 2;
     this.car.setMaxVelocity(850);
+    this.car.setDrag(0, 0);
 
-    this.cameras.main.startFollow(this.car, true, 0.12, 0.12);
-    this.cameras.main.setZoom(0.60);
+    this.playerFacing = "down";
+    this.player = this.physics.add.sprite(DONNY_START.x, DONNY_START.y, "donny_down");
+    this.player.setDepth(60);
+    this.player.setScale(1.0);
+    this.player.setCollideWorldBounds(true);
+    this.player.body.setSize(22, 34, true);
+
+    this.inCar = false;
+    this.activeActor = this.player;
 
     this.headlightLayer = this.add.graphics().setDepth(42);
     this.headlightLayer.setBlendMode(Phaser.BlendModes.ADD);
@@ -148,26 +234,80 @@ class GlasswellScene extends Phaser.Scene {
 
     this.drawGateZones();
     this.drawFuelStations();
+    this.drawMissionObjects();
     this.createTraffic();
     this.createPedestrians();
+    this.createNpcs();
+
     this.makeHud();
     this.makePrompt();
+    this.makeDebugOverlay();
     this.setupAudio();
 
     this.wantedLevel = 0;
     this.debugSirenOn = false;
+    this.debugVisible = false;
+
+    this.input.keyboard.on("keydown-F3", () => {
+      this.debugVisible = !this.debugVisible;
+      this.debugText.setVisible(this.debugVisible);
+    });
+
+    this.cameras.main.startFollow(this.player, true, 0.14, 0.14);
+    this.cameras.main.setZoom(CAMERA_ZOOM.foot);
+
+    console.log("GLASSWELL SCENE READY");
   }
 
   createRuntimeTextures() {
     const g = this.add.graphics();
 
-    // smoke
     g.fillStyle(0xffffff, 1);
     g.fillCircle(16, 16, 14);
     g.generateTexture("fx_smoke_puff", 32, 32);
     g.clear();
 
-    // Civilian car texture
+    const makeDonny = (key, jacket, face, pants, direction) => {
+      g.clear();
+      g.fillStyle(0x000000, 0.28);
+      g.fillEllipse(24, 54, 24, 8);
+
+      g.fillStyle(pants, 1);
+      g.fillRect(17, 40, 6, 18);
+      g.fillRect(26, 40, 6, 18);
+
+      g.fillStyle(jacket, 1);
+      g.fillRoundedRect(12, 19, 24, 28, 6);
+
+      g.fillStyle(0x333333, 1);
+      g.fillRect(10, 21, 6, 22);
+      g.fillRect(34, 21, 6, 22);
+
+      g.fillStyle(face, 1);
+      g.fillCircle(24, 13, 9);
+
+      g.fillStyle(0x111111, 1);
+      if (direction === "up") {
+        g.fillRect(16, 6, 16, 10);
+      } else {
+        g.fillRect(15, 4, 18, 6);
+        g.fillRect(16, 7, 16, 4);
+        g.fillStyle(0x000000, 1);
+        g.fillCircle(21, 13, 1.5);
+        g.fillCircle(27, 13, 1.5);
+      }
+
+      g.fillStyle(0xc8c8c8, 1);
+      g.fillRect(21, 20, 6, 22);
+
+      g.generateTexture(key, 48, 64);
+    };
+
+    makeDonny("donny_down", 0x252525, 0xb98158, 0x151515, "down");
+    makeDonny("donny_up", 0x222222, 0xb98158, 0x151515, "up");
+    makeDonny("donny_side", 0x272727, 0xb98158, 0x151515, "side");
+
+    g.clear();
     g.fillStyle(0x445d68, 1);
     g.fillRoundedRect(16, 5, 32, 74, 10);
     g.fillStyle(0xa9d7e8, 1);
@@ -177,9 +317,8 @@ class GlasswellScene extends Phaser.Scene {
     g.fillStyle(0xd9d29c, 1);
     g.fillRect(21, 5, 22, 3);
     g.generateTexture("traffic_civilian", 64, 84);
-    g.clear();
 
-    // Police / Civic Patrol
+    g.clear();
     g.fillStyle(0x111116, 1);
     g.fillRoundedRect(15, 4, 34, 78, 9);
     g.fillStyle(0x661e1e, 1);
@@ -191,9 +330,8 @@ class GlasswellScene extends Phaser.Scene {
     g.fillStyle(0xffffff, 1);
     g.fillCircle(40, 23, 4);
     g.generateTexture("traffic_police", 64, 88);
-    g.clear();
 
-    // EMS
+    g.clear();
     g.fillStyle(0xe9e9e9, 1);
     g.fillRoundedRect(14, 3, 36, 82, 8);
     g.fillStyle(0x841c1c, 1);
@@ -205,162 +343,50 @@ class GlasswellScene extends Phaser.Scene {
     g.fillStyle(0xffffff, 1);
     g.fillCircle(40, 28, 4);
     g.generateTexture("traffic_ems", 64, 90);
-    g.clear();
 
-    // Pedestrian
-    g.fillStyle(0x222222, 1);
-    g.fillCircle(16, 11, 7);
-    g.fillStyle(0x2a76a8, 1);
-    g.fillRoundedRect(9, 18, 14, 22, 5);
-    g.fillStyle(0x1a1a1a, 1);
-    g.fillRect(10, 38, 5, 14);
-    g.fillRect(18, 38, 5, 14);
-    g.generateTexture("pedestrian_a", 32, 56);
-    g.clear();
+    const makePed = (key, head, shirt) => {
+      g.clear();
+      g.fillStyle(0x111111, 0.30);
+      g.fillEllipse(16, 53, 18, 6);
+      g.fillStyle(head, 1);
+      g.fillCircle(16, 10, 7);
+      g.fillStyle(shirt, 1);
+      g.fillRoundedRect(8, 17, 16, 24, 5);
+      g.fillStyle(0x202020, 1);
+      g.fillRect(10, 39, 5, 14);
+      g.fillRect(18, 39, 5, 14);
+      g.generateTexture(key, 32, 56);
+    };
+    makePed("pedestrian_a", 0x4d4035, 0x2a76a8);
+    makePed("pedestrian_b", 0x8b674c, 0x7c2c84);
 
-    g.fillStyle(0x4d4035, 1);
-    g.fillCircle(16, 10, 7);
-    g.fillStyle(0x7c2c84, 1);
-    g.fillRoundedRect(8, 17, 16, 24, 5);
-    g.fillStyle(0x202020, 1);
-    g.fillRect(10, 39, 5, 14);
-    g.fillRect(18, 39, 5, 14);
-    g.generateTexture("pedestrian_b", 32, 56);
+    const makeNpc = (key, color) => {
+      g.clear();
+      g.fillStyle(0x111111, 0.32);
+      g.fillEllipse(20, 58, 22, 7);
+      g.fillStyle(0xb98762, 1);
+      g.fillCircle(20, 10, 8);
+      g.fillStyle(color, 1);
+      g.fillRoundedRect(10, 19, 20, 28, 5);
+      g.fillStyle(0x151515, 1);
+      g.fillRect(12, 45, 6, 14);
+      g.fillRect(22, 45, 6, 14);
+      g.generateTexture(key, 40, 64);
+    };
+    makeNpc("npc_blue", 0x245b9a);
+    makeNpc("npc_red", 0x8a2020);
+    makeNpc("npc_gold", 0x806b22);
 
     g.destroy();
   }
 
-  setupAudio() {
-    this.audioEnabled = false;
-    this.audio = {};
-    for (const [key, asset] of Object.entries({
-      idle:"engine_idle", drive:"engine_drive", boost:"engine_boost", refuel:"refuel_loop",
-      police:"police_siren", ambulance:"ambulance_siren"
-    })) {
-      if (this.cache.audio.exists(asset)) this.audio[key] = this.sound.add(asset, { loop:true, volume:0 });
-    }
-  }
-
-  startAudioOnce() {
-    if (this.audioEnabled) return;
-    this.audioEnabled = true;
-    Object.values(this.audio).forEach(s => { try { s.play(); } catch(e) {} });
-  }
-
-  drawGateZones() {
-    const gfx = this.add.graphics().setDepth(20);
-    for (const z of GATE_ZONES) {
-      gfx.lineStyle(5, z.color, 0.40);
-      gfx.strokeCircle(z.x, z.y, z.radius);
-      gfx.fillStyle(z.color, 0.12);
-      gfx.fillCircle(z.x, z.y, 44);
-      this.add.text(z.x, z.y - z.radius - 22, z.name, {
-        fontFamily:"monospace", fontSize:"17px", color:"#ffffff",
-        backgroundColor:"rgba(0,0,0,0.6)", padding:{x:6,y:3}
-      }).setOrigin(0.5).setDepth(40);
-    }
-  }
-
-  drawFuelStations() {
-    const gfx = this.add.graphics().setDepth(21);
-    for (const s of FUEL_STATIONS) {
-      gfx.lineStyle(4, s.color, 0.45);
-      gfx.strokeCircle(s.x, s.y, s.radius);
-      gfx.fillStyle(s.color, 0.18);
-      gfx.fillCircle(s.x, s.y, 46);
-      this.add.text(s.x, s.y + s.radius + 18, s.name, {
-        fontFamily:"monospace", fontSize:"15px", color:"#fff4ce",
-        backgroundColor:"rgba(0,0,0,0.55)", padding:{x:5,y:2}
-      }).setOrigin(0.5).setDepth(40);
-    }
-  }
-
-  createTraffic() {
-    this.traffic = [];
-
-    const configs = [
-      { type:"civilian", texture:"traffic_civilian", route:TRAFFIC_ROUTE_OUTER, start:0, speed:125, color:0x69aaff },
-      { type:"civilian", texture:"traffic_civilian", route:TRAFFIC_ROUTE_OUTER, start:2, speed:118, color:0x69aaff },
-      { type:"civilian", texture:"traffic_civilian", route:TRAFFIC_ROUTE_INNER, start:4, speed:112, color:0x69aaff },
-      { type:"civilian", texture:"traffic_civilian", route:TRAFFIC_ROUTE_INNER, start:6, speed:106, color:0x69aaff },
-      { type:"police", texture:"traffic_police", route:TRAFFIC_ROUTE_OUTER, start:1, speed:145, color:0xff4444 },
-      { type:"police", texture:"traffic_police", route:TRAFFIC_ROUTE_INNER, start:5, speed:140, color:0xff4444 },
-      { type:"ems", texture:"traffic_ems", route:TRAFFIC_ROUTE_OUTER, start:3, speed:135, color:0xffffff },
-      { type:"ems", texture:"traffic_ems", route:TRAFFIC_ROUTE_INNER, start:7, speed:130, color:0xffffff },
-    ];
-
-    for (const cfg of configs) {
-      const p = cfg.route[cfg.start % cfg.route.length];
-      const sprite = this.physics.add.sprite(p.x, p.y, cfg.texture);
-      sprite.setDepth(cfg.type === "civilian" ? 35 : 38);
-      sprite.setScale(cfg.type === "ems" ? 0.70 : 0.65);
-      sprite.route = cfg.route;
-      sprite.routeIndex = (cfg.start + 1) % cfg.route.length;
-      sprite.aiSpeed = cfg.speed;
-      sprite.vehicleType = cfg.type;
-      sprite.sirenPhase = Math.random() * 100;
-      this.traffic.push(sprite);
-    }
-  }
-
-  createPedestrians() {
-    this.pedestrians = [];
-    for (let i = 0; i < 18; i++) {
-      const node = PEDESTRIAN_WALK_NODES[i % PEDESTRIAN_WALK_NODES.length];
-      const tex = i % 2 === 0 ? "pedestrian_a" : "pedestrian_b";
-      const ped = this.physics.add.sprite(node.x + (Math.random()*90-45), node.y + (Math.random()*90-45), tex);
-      ped.setDepth(44);
-      ped.setScale(0.78);
-      ped.homeX = ped.x;
-      ped.homeY = ped.y;
-      ped.walkAngle = Math.random() * Math.PI * 2;
-      ped.walkRadius = 44 + Math.random() * 60;
-      ped.walkSpeed = 0.35 + Math.random() * 0.35;
-      ped.phase = Math.random() * Math.PI * 2;
-      this.pedestrians.push(ped);
-    }
-  }
-
-  updateTraffic(delta) {
-    for (const car of this.traffic) {
-      const target = car.route[car.routeIndex];
-      const dist = Phaser.Math.Distance.Between(car.x, car.y, target.x, target.y);
-      if (dist < 26) {
-        car.routeIndex = (car.routeIndex + 1) % car.route.length;
-        continue;
-      }
-
-      const angle = Phaser.Math.Angle.Between(car.x, car.y, target.x, target.y);
-      car.rotation = angle + Math.PI / 2;
-      car.setVelocity(Math.cos(angle) * car.aiSpeed, Math.sin(angle) * car.aiSpeed);
-
-      // Siren flashing tint, visual only. Audio handled globally.
-      if (car.vehicleType === "police" || car.vehicleType === "ems") {
-        const flash = Math.sin((this.time.now + car.sirenPhase) * 0.018) > 0;
-        car.setTint(flash ? (car.vehicleType === "police" ? 0xff5555 : 0xffffff) : 0xffffff);
-      }
-
-      const playerDist = Phaser.Math.Distance.Between(this.car.x, this.car.y, car.x, car.y);
-      if (car.vehicleType === "police" && playerDist < 520 && DISTORTION.speed > 420) {
-        this.wantedLevel = Math.max(this.wantedLevel, 1);
-      }
-    }
-  }
-
-  updatePedestrians(time) {
-    for (const ped of this.pedestrians) {
-      const t = time * 0.001 * ped.walkSpeed + ped.phase;
-      ped.x = ped.homeX + Math.cos(t) * ped.walkRadius;
-      ped.y = ped.homeY + Math.sin(t * 0.7) * ped.walkRadius * 0.55;
-      ped.rotation = Math.sin(t) * 0.08;
-    }
-  }
-
   createMobileControls() {
     this.mobile = {
-      joyX: 0, joyY: 0, activePointer: null,
+      joyX: 0,
+      joyY: 0,
+      activePointer: null,
       buttons: { accel:false, brake:false, interact:false, boost:false, headlights:false },
-      buttonPress: { headlights:false }
+      buttonPress: { interact:false, headlights:false }
     };
 
     const uiDepth = 500;
@@ -371,6 +397,7 @@ class GlasswellScene extends Phaser.Scene {
 
     this.add.circle(joyCX, joyCY, joyRadius, 0x111111, 0.30)
       .setScrollFactor(0).setDepth(uiDepth).setStrokeStyle(3, 0xffffff, 0.26);
+
     const knob = this.add.circle(joyCX, joyCY, knobRadius, 0xffffff, 0.20)
       .setScrollFactor(0).setDepth(uiDepth + 1).setStrokeStyle(2, 0xffffff, 0.35);
 
@@ -380,11 +407,11 @@ class GlasswellScene extends Phaser.Scene {
     const setJoy = (pointer) => {
       const dx = pointer.x - joyCX;
       const dy = pointer.y - joyCY;
-      const dist = Math.sqrt(dx*dx + dy*dy);
+      const dist = Math.sqrt(dx * dx + dy * dy);
       const max = joyRadius - knobRadius * 0.35;
       const clamped = Math.min(dist, max);
       const angle = Math.atan2(dy, dx);
-      knob.setPosition(joyCX + Math.cos(angle)*clamped, joyCY + Math.sin(angle)*clamped);
+      knob.setPosition(joyCX + Math.cos(angle) * clamped, joyCY + Math.sin(angle) * clamped);
       this.mobile.joyX = Phaser.Math.Clamp(dx / max, -1, 1);
       this.mobile.joyY = Phaser.Math.Clamp(dy / max, -1, 1);
     };
@@ -405,12 +432,17 @@ class GlasswellScene extends Phaser.Scene {
       const circle = this.add.circle(x, y, 38, color, 0.34)
         .setScrollFactor(0).setDepth(uiDepth).setStrokeStyle(3, 0xffffff, 0.30)
         .setInteractive({ useHandCursor: true });
+
       this.add.text(x, y - 10, labelTop + (labelBottom ? "\n" + labelBottom : ""), {
-        fontFamily: "monospace", fontSize: labelBottom ? "12px" : "18px", color: "#ffffff", align: "center"
+        fontFamily: "monospace",
+        fontSize: labelBottom ? "12px" : "18px",
+        color: "#ffffff",
+        align: "center"
       }).setOrigin(0.5).setScrollFactor(0).setDepth(uiDepth + 1);
 
       circle.on("pointerdown", () => {
         this.mobile.buttons[id] = true;
+        if (id === "interact") this.mobile.buttonPress.interact = true;
         if (id === "headlights") this.mobile.buttonPress.headlights = true;
         circle.setAlpha(0.65);
       });
@@ -428,7 +460,9 @@ class GlasswellScene extends Phaser.Scene {
   }
 
   getMobileInput() {
-    if (!this.mobile) return { joyX:0, joyY:0, accel:false, brake:false, interact:false, boost:false, headlightsPressed:false, any:false };
+    if (!this.mobile) {
+      return { joyX:0, joyY:0, accel:false, brake:false, interact:false, interactPressed:false, boost:false, headlightsPressed:false, any:false };
+    }
     const m = this.mobile;
     const out = {
       joyX: m.joyX || 0,
@@ -436,103 +470,516 @@ class GlasswellScene extends Phaser.Scene {
       accel: !!m.buttons.accel,
       brake: !!m.buttons.brake,
       interact: !!m.buttons.interact,
+      interactPressed: !!m.buttonPress.interact,
       boost: !!m.buttons.boost,
       headlightsPressed: !!m.buttonPress.headlights,
-      any: !!(m.buttons.accel || m.buttons.brake || m.buttons.interact || m.buttons.boost || m.buttons.headlights || Math.abs(m.joyX) > 0.05 || Math.abs(m.joyY) > 0.05)
+      any: !!(
+        m.buttons.accel || m.buttons.brake || m.buttons.interact || m.buttons.boost ||
+        m.buttons.headlights || Math.abs(m.joyX) > 0.05 || Math.abs(m.joyY) > 0.05
+      )
     };
+    m.buttonPress.interact = false;
     m.buttonPress.headlights = false;
     return out;
   }
 
+  setupAudio() {
+    this.audioEnabled = false;
+    this.audio = {};
+    for (const [key, asset] of Object.entries({
+      idle:"engine_idle",
+      drive:"engine_drive",
+      boost:"engine_boost",
+      refuel:"refuel_loop",
+      police:"police_siren"
+    })) {
+      if (this.cache.audio.exists(asset)) {
+        this.audio[key] = this.sound.add(asset, { loop:true, volume:0 });
+      }
+    }
+  }
+
+  startAudioOnce() {
+    if (this.audioEnabled) return;
+    this.audioEnabled = true;
+    Object.values(this.audio).forEach(s => { try { s.play(); } catch(e) {} });
+  }
+
+  drawGateZones() {
+    const gfx = this.add.graphics().setDepth(20);
+    for (const z of GATE_ZONES) {
+      gfx.lineStyle(5, z.color, 0.35);
+      gfx.strokeCircle(z.x, z.y, z.radius);
+      gfx.fillStyle(z.color, 0.10);
+      gfx.fillCircle(z.x, z.y, 44);
+      this.add.text(z.x, z.y - z.radius - 22, z.name, {
+        fontFamily:"monospace",
+        fontSize:"16px",
+        color:"#ffffff",
+        backgroundColor:"rgba(0,0,0,0.58)",
+        padding:{x:6, y:3}
+      }).setOrigin(0.5).setDepth(40);
+    }
+  }
+
+  drawFuelStations() {
+    const gfx = this.add.graphics().setDepth(21);
+    for (const s of FUEL_STATIONS) {
+      gfx.lineStyle(4, s.color, 0.45);
+      gfx.strokeCircle(s.x, s.y, s.radius);
+      gfx.fillStyle(s.color, 0.18);
+      gfx.fillCircle(s.x, s.y, 46);
+      this.add.text(s.x, s.y + s.radius + 18, s.name, {
+        fontFamily:"monospace",
+        fontSize:"15px",
+        color:"#fff4ce",
+        backgroundColor:"rgba(0,0,0,0.55)",
+        padding:{x:5, y:2}
+      }).setOrigin(0.5).setDepth(40);
+    }
+  }
+
+  drawMissionObjects() {
+    const gfx = this.add.graphics().setDepth(23);
+
+    gfx.lineStyle(5, 0x3ea7ff, 0.75);
+    gfx.strokeCircle(MISSION.marker.x, MISSION.marker.y, MISSION.marker.radius);
+    gfx.fillStyle(0x3ea7ff, 0.12);
+    gfx.fillCircle(MISSION.marker.x, MISSION.marker.y, MISSION.marker.radius);
+
+    this.add.text(MISSION.marker.x, MISSION.marker.y - 150, "BLUE CANDLE ALLEY OBJECTIVE", {
+      fontFamily:"monospace",
+      fontSize:"17px",
+      color:"#cbefff",
+      backgroundColor:"rgba(0,0,0,0.68)",
+      padding:{x:6, y:3}
+    }).setOrigin(0.5).setDepth(45);
+
+    gfx.lineStyle(5, 0xff3333, 0.40);
+    gfx.strokeCircle(MISSION.checkpoint.x, MISSION.checkpoint.y, MISSION.checkpoint.radius);
+    gfx.fillStyle(0xff3333, 0.06);
+    gfx.fillCircle(MISSION.checkpoint.x, MISSION.checkpoint.y, MISSION.checkpoint.radius);
+
+    this.add.text(MISSION.checkpoint.x, MISSION.checkpoint.y - 265, "RED CONCORD CHECKPOINT ZONE", {
+      fontFamily:"monospace",
+      fontSize:"15px",
+      color:"#ffb1b1",
+      backgroundColor:"rgba(0,0,0,0.68)",
+      padding:{x:6, y:3}
+    }).setOrigin(0.5).setDepth(45);
+  }
+
+  createTraffic() {
+    this.traffic = [];
+    const configs = [
+      { type:"civilian", texture:"traffic_civilian", route:TRAFFIC_ROUTE_OUTER, start:0, speed:125 },
+      { type:"civilian", texture:"traffic_civilian", route:TRAFFIC_ROUTE_OUTER, start:2, speed:118 },
+      { type:"civilian", texture:"traffic_civilian", route:TRAFFIC_ROUTE_INNER, start:4, speed:112 },
+      { type:"civilian", texture:"traffic_civilian", route:TRAFFIC_ROUTE_INNER, start:6, speed:106 },
+      { type:"police", texture:"traffic_police", route:TRAFFIC_ROUTE_OUTER, start:1, speed:145 },
+      { type:"police", texture:"traffic_police", route:TRAFFIC_ROUTE_INNER, start:5, speed:140 },
+      { type:"ems", texture:"traffic_ems", route:TRAFFIC_ROUTE_OUTER, start:3, speed:135 },
+      { type:"ems", texture:"traffic_ems", route:TRAFFIC_ROUTE_INNER, start:7, speed:130 }
+    ];
+
+    for (const cfg of configs) {
+      const pos = cfg.route[cfg.start % cfg.route.length];
+      const sprite = this.physics.add.sprite(pos.x, pos.y, cfg.texture);
+      sprite.setDepth(cfg.type === "civilian" ? 35 : 38);
+      sprite.setScale(cfg.type === "ems" ? 0.70 : 0.65);
+      sprite.route = cfg.route;
+      sprite.routeIndex = (cfg.start + 1) % cfg.route.length;
+      sprite.aiSpeed = cfg.speed;
+      sprite.vehicleType = cfg.type;
+      sprite.sirenPhase = Math.random() * 100;
+      this.traffic.push(sprite);
+    }
+  }
+
+  createPedestrians() {
+    this.pedestrians = [];
+    for (let i = 0; i < 18; i++) {
+      const node = PEDESTRIAN_WALK_NODES[i % PEDESTRIAN_WALK_NODES.length];
+      const tex = i % 2 === 0 ? "pedestrian_a" : "pedestrian_b";
+      const ped = this.physics.add.sprite(node.x + (Math.random() * 90 - 45), node.y + (Math.random() * 90 - 45), tex);
+      ped.setDepth(44);
+      ped.setScale(0.78);
+      ped.homeX = ped.x;
+      ped.homeY = ped.y;
+      ped.walkRadius = 44 + Math.random() * 60;
+      ped.walkSpeed = 0.35 + Math.random() * 0.35;
+      ped.phase = Math.random() * Math.PI * 2;
+      this.pedestrians.push(ped);
+    }
+  }
+
+  createNpcs() {
+    this.npcs = [];
+    const textureFor = (id) => {
+      if (id === "checkpoint_officer") return "npc_red";
+      if (id === "westgate_mechanic") return "npc_gold";
+      return "npc_blue";
+    };
+
+    for (const data of NPCS) {
+      const npc = this.physics.add.sprite(data.x, data.y, textureFor(data.id));
+      npc.setDepth(58);
+      npc.setScale(1.0);
+      npc.npcData = data;
+      this.add.text(data.x, data.y - 52, data.name, {
+        fontFamily:"monospace",
+        fontSize:"13px",
+        color:"#ffffff",
+        backgroundColor:"rgba(0,0,0,0.58)",
+        padding:{x:4, y:2}
+      }).setOrigin(0.5).setDepth(80);
+      this.npcs.push(npc);
+    }
+  }
+
   makeHud() {
-    this.hud = this.add.container(16, GAME_H - 130).setScrollFactor(0).setDepth(300);
-    const bg = this.add.rectangle(0, 0, 390, 116, 0x000000, 0.68).setOrigin(0);
+    this.hud = this.add.container(16, GAME_H - 154).setScrollFactor(0).setDepth(300);
+
+    const bg = this.add.rectangle(0, 0, 430, 140, 0x000000, 0.70).setOrigin(0);
     bg.setStrokeStyle(2, 0xa66cff, 0.9);
-    this.hudTitle = this.add.text(14, 10, DISTORTION.brand.toUpperCase(), {fontFamily:"monospace", fontSize:"16px", color:"#e5b8ff"});
-    this.hudModel = this.add.text(14, 33, "Distortion", {fontFamily:"monospace", fontSize:"18px", color:"#ffffff"});
-    this.hudClass = this.add.text(14, 57, "Prototype sports car", {fontFamily:"monospace", fontSize:"13px", color:"#9befff"});
-    this.hudFuel = this.add.text(14, 82, "Fuel", {fontFamily:"monospace", fontSize:"13px", color:"#ffffff"});
-    this.hudWanted = this.add.text(292, 10, "WANTED 0", {fontFamily:"monospace", fontSize:"13px", color:"#ff7777"});
-    this.fuelBack = this.add.rectangle(78, 90, 210, 13, 0x303030, 1).setOrigin(0, 0.5);
-    this.fuelBar = this.add.rectangle(78, 90, 210, 13, 0x9b6cff, 1).setOrigin(0, 0.5);
-    this.hud.add([bg, this.hudTitle, this.hudModel, this.hudClass, this.hudFuel, this.hudWanted, this.fuelBack, this.fuelBar]);
+
+    this.hudTitle = this.add.text(14, 8, "DONNY / GLASSWELL", {
+      fontFamily:"monospace",
+      fontSize:"15px",
+      color:"#e5b8ff"
+    });
+
+    this.hudMode = this.add.text(14, 30, "Mode: On foot", {
+      fontFamily:"monospace",
+      fontSize:"13px",
+      color:"#ffffff"
+    });
+
+    this.hudHp = this.add.text(14, 54, "HP", {
+      fontFamily:"monospace",
+      fontSize:"13px",
+      color:"#ffffff"
+    });
+
+    this.hpBack = this.add.rectangle(78, 62, 210, 13, 0x303030, 1).setOrigin(0, 0.5);
+    this.hpBar = this.add.rectangle(78, 62, 210, 13, 0x3fc46b, 1).setOrigin(0, 0.5);
+
+    this.hudFuel = this.add.text(14, 79, "Fuel", {
+      fontFamily:"monospace",
+      fontSize:"13px",
+      color:"#ffffff"
+    });
+
+    this.fuelBack = this.add.rectangle(78, 87, 210, 13, 0x303030, 1).setOrigin(0, 0.5);
+    this.fuelBar = this.add.rectangle(78, 87, 210, 13, 0x9b6cff, 1).setOrigin(0, 0.5);
+
+    this.hudMission = this.add.text(14, 106, "Mission", {
+      fontFamily:"monospace",
+      fontSize:"12px",
+      color:"#cbefff",
+      wordWrap: { width: 390 }
+    });
+
+    this.hudWanted = this.add.text(300, 8, "WANTED 0", {
+      fontFamily:"monospace",
+      fontSize:"13px",
+      color:"#ff7777"
+    });
+
+    this.hud.add([
+      bg,
+      this.hudTitle,
+      this.hudMode,
+      this.hudHp,
+      this.hpBack,
+      this.hpBar,
+      this.hudFuel,
+      this.fuelBack,
+      this.fuelBar,
+      this.hudMission,
+      this.hudWanted
+    ]);
   }
 
   makePrompt() {
     this.prompt = this.add.text(20, 82, "", {
-      fontFamily:"monospace", fontSize:"18px", color:"#fff1b8",
-      backgroundColor:"rgba(0,0,0,0.72)", padding:{x:8,y:5}
+      fontFamily:"monospace",
+      fontSize:"17px",
+      color:"#fff1b8",
+      backgroundColor:"rgba(0,0,0,0.76)",
+      padding:{x:8, y:5},
+      wordWrap:{ width: 700 }
     }).setDepth(350).setScrollFactor(0).setVisible(false);
   }
 
+  makeDebugOverlay() {
+    this.debugText = this.add.text(GAME_W - 340, 12, "", {
+      fontFamily:"monospace",
+      fontSize:"12px",
+      color:"#9befff",
+      backgroundColor:"rgba(0,0,0,0.72)",
+      padding:{x:8, y:6}
+    }).setScrollFactor(0).setDepth(600).setVisible(false);
+  }
+
   update(time, delta) {
-    const dt = delta / 1000;
-    const c = this.car;
-
     const mobile = this.getMobileInput();
-    const up = this.keys.up.isDown || mobile.accel || mobile.joyY < -0.45;
-    const down = this.keys.down.isDown || mobile.brake || mobile.joyY > 0.45;
-    const left = this.keys.left.isDown || mobile.joyX < -0.35;
-    const right = this.keys.right.isDown || mobile.joyX > 0.35;
-    const braking = this.keys.brake.isDown || mobile.brake || down;
-    const boosting = (this.keys.boost.isDown || mobile.boost) && DISTORTION.fuel > 0;
-    this.mobileInteract = mobile.interact;
+    const interactPressed = Phaser.Input.Keyboard.JustDown(this.keys.interact) || mobile.interactPressed;
+    const headlightsPressed = Phaser.Input.Keyboard.JustDown(this.keys.headlights) || mobile.headlightsPressed;
 
-    if (up || down || left || right || boosting || this.keys.interact.isDown || mobile.any) this.startAudioOnce();
-
-    if (Phaser.Input.Keyboard.JustDown(this.keys.headlights) || mobile.headlightsPressed) {
-      DISTORTION.headlightsOn = !DISTORTION.headlightsOn;
-    }
-    if (Phaser.Input.Keyboard.JustDown(this.keys.siren)) {
-      this.debugSirenOn = !this.debugSirenOn;
-      this.wantedLevel = this.debugSirenOn ? 1 : 0;
+    if (mobile.any || this.keys.up.isDown || this.keys.down.isDown || this.keys.left.isDown || this.keys.right.isDown) {
+      this.startAudioOnce();
     }
 
-    const canDrive = DISTORTION.fuel > 0.01;
-    if (left) c.rotation -= DISTORTION.turnSpeed * dt * (DISTORTION.speed > 30 ? 1 : 0.55);
-    if (right) c.rotation += DISTORTION.turnSpeed * dt * (DISTORTION.speed > 30 ? 1 : 0.55);
+    if (headlightsPressed) DISTORTION.headlightsOn = !DISTORTION.headlightsOn;
 
-    if (up && canDrive) {
-      DISTORTION.speed += DISTORTION.accel * dt * (boosting ? 1.8 : 1);
-      DISTORTION.fuel -= (boosting ? 2.5 : 0.65) * dt;
+    if (interactPressed) this.handleInteract();
+
+    if (this.inCar) {
+      this.updateDriving(delta, mobile);
     } else {
-      DISTORTION.speed *= Math.pow(DISTORTION.drag, delta / 16.67);
+      this.updateOnFoot(delta, mobile);
     }
-
-    if (braking) {
-      DISTORTION.speed *= Math.pow(0.94, delta / 16.67);
-      if (DISTORTION.speed > 150) this.drawTireTracks();
-    }
-
-    DISTORTION.speed = Phaser.Math.Clamp(Number.isFinite(DISTORTION.speed) ? DISTORTION.speed : 0, 0, DISTORTION.maxSpeed * (boosting ? 1.30 : 1));
-    if (DISTORTION.fuel <= 0) {
-      DISTORTION.fuel = 0;
-      DISTORTION.speed *= Math.pow(0.93, delta / 16.67);
-    }
-
-    c.setVelocity(Math.cos(c.rotation) * DISTORTION.speed, Math.sin(c.rotation) * DISTORTION.speed);
-    c.setTexture("distortion_topdown");
 
     this.updateTraffic(delta);
     this.updatePedestrians(time);
+    this.updateMission(delta);
     this.updateCamera();
-    this.updateFx(up, braking, boosting);
+    this.updateFx();
     this.drawHeadlights();
-    this.checkInteractions(delta);
+    this.checkProximity(delta, mobile);
     this.updateHud();
-    this.updateAudio(boosting);
+    this.updateAudio();
+    this.updateDebug();
+  }
+
+  updateOnFoot(delta, mobile) {
+    const left = this.keys.left.isDown || mobile.joyX < -0.28;
+    const right = this.keys.right.isDown || mobile.joyX > 0.28;
+    const up = this.keys.up.isDown || mobile.joyY < -0.28;
+    const down = this.keys.down.isDown || mobile.joyY > 0.28;
+
+    let vx = 0;
+    let vy = 0;
+    if (left) vx -= 1;
+    if (right) vx += 1;
+    if (up) vy -= 1;
+    if (down) vy += 1;
+
+    const mag = Math.sqrt(vx * vx + vy * vy);
+    const speed = DONNY.walkSpeed;
+
+    if (mag > 0) {
+      vx /= mag;
+      vy /= mag;
+      this.player.setVelocity(vx * speed, vy * speed);
+
+      if (Math.abs(vx) > Math.abs(vy)) {
+        this.playerFacing = vx < 0 ? "left" : "right";
+      } else {
+        this.playerFacing = vy < 0 ? "up" : "down";
+      }
+      this.setPlayerFacing(this.playerFacing);
+    } else {
+      this.player.setVelocity(0, 0);
+    }
+  }
+
+  setPlayerFacing(facing) {
+    if (facing === "up") {
+      this.player.setTexture("donny_up");
+      this.player.setFlipX(false);
+    } else if (facing === "left") {
+      this.player.setTexture("donny_side");
+      this.player.setFlipX(true);
+    } else if (facing === "right") {
+      this.player.setTexture("donny_side");
+      this.player.setFlipX(false);
+    } else {
+      this.player.setTexture("donny_down");
+      this.player.setFlipX(false);
+    }
+  }
+
+  updateDriving(delta, mobile) {
+    const dt = delta / 1000;
+    const c = this.car;
+
+    const gas = this.keys.up.isDown || mobile.accel || mobile.joyY < -0.45;
+    const reverseOrBrake = this.keys.down.isDown || this.keys.brake.isDown || mobile.brake || mobile.joyY > 0.45;
+    const left = this.keys.left.isDown || mobile.joyX < -0.35;
+    const right = this.keys.right.isDown || mobile.joyX > 0.35;
+    const boosting = (this.keys.boost.isDown || mobile.boost) && DISTORTION.fuel > 0 && Math.abs(DISTORTION.speed) > 80;
+
+    if (gas && DISTORTION.fuel > 0) {
+      DISTORTION.speed += DISTORTION.accel * dt * (boosting ? 1.65 : 1.0);
+      DISTORTION.fuel = Math.max(0, DISTORTION.fuel - dt * (boosting ? 1.35 : 0.55));
+      DISTORTION.condition = boosting ? "Boosting" : "Driving";
+    } else if (reverseOrBrake) {
+      DISTORTION.speed -= DISTORTION.accel * dt * 0.76;
+      DISTORTION.condition = "Braking";
+    } else {
+      DISTORTION.speed *= Math.pow(DISTORTION.drag, delta / 16.6667);
+      if (Math.abs(DISTORTION.speed) < 4) DISTORTION.speed = 0;
+      DISTORTION.condition = this.isRefueling ? "Refueling" : "Coasting";
+    }
+
+    DISTORTION.speed = Phaser.Math.Clamp(DISTORTION.speed, -235, boosting ? 760 : DISTORTION.maxSpeed);
+
+    const moving = Math.abs(DISTORTION.speed) > 10;
+    if (moving) {
+      const steer = (left ? -1 : 0) + (right ? 1 : 0);
+      const reverseFactor = DISTORTION.speed < 0 ? -1 : 1;
+      const speedRatio = Phaser.Math.Clamp(Math.abs(DISTORTION.speed) / DISTORTION.maxSpeed, 0.18, 1);
+      c.rotation += steer * reverseFactor * DISTORTION.turnSpeed * dt * speedRatio;
+    }
+
+    c.setVelocity(Math.cos(c.rotation) * DISTORTION.speed, Math.sin(c.rotation) * DISTORTION.speed);
+    clampToMap(c);
+
+    if (moving && Math.abs(DISTORTION.speed) > 220) this.drawTireTracks();
+  }
+
+  handleInteract() {
+    if (this.inCar) {
+      const station = this.nearFuelStation();
+      if (station) return;
+      this.exitCar();
+      return;
+    }
+
+    const npc = this.nearNpc();
+    if (npc) {
+      this.showTimedPrompt(`${npc.npcData.name}:\n"${npc.npcData.line}"`, 2800);
+      if (npc.npcData.id === "drip_runner" && !MISSION.complete) {
+        DONNY.repDripSaints = Math.max(DONNY.repDripSaints, 1);
+      }
+      return;
+    }
+
+    const distToCar = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.car.x, this.car.y);
+    if (distToCar < 90) {
+      this.enterCar();
+      return;
+    }
+  }
+
+  enterCar() {
+    this.inCar = true;
+    DONNY.mode = "driving";
+    DISTORTION.condition = "Driving";
+    this.player.setVisible(false);
+    this.player.body.enable = false;
+    this.activeActor = this.car;
+    this.cameras.main.startFollow(this.car, true, 0.14, 0.14);
+    this.showTimedPrompt("Entered Aurelix Distortion.", 1300);
+  }
+
+  exitCar() {
+    const exitDistance = 70;
+    const side = this.car.rotation + Math.PI / 2;
+    let ex = this.car.x + Math.cos(side) * exitDistance;
+    let ey = this.car.y + Math.sin(side) * exitDistance;
+
+    ex = Phaser.Math.Clamp(ex, 48, MAP_W - 48);
+    ey = Phaser.Math.Clamp(ey, 48, MAP_H - 48);
+
+    this.inCar = false;
+    DONNY.mode = "on_foot";
+    DISTORTION.speed = 0;
+    DISTORTION.condition = "Parked";
+    this.car.setVelocity(0, 0);
+
+    this.player.setPosition(ex, ey);
+    this.player.body.enable = true;
+    this.player.setVisible(true);
+
+    this.activeActor = this.player;
+    this.cameras.main.startFollow(this.player, true, 0.14, 0.14);
+    this.showTimedPrompt("Exited Distortion.", 1300);
+  }
+
+  updateTraffic(delta) {
+    for (const car of this.traffic) {
+      const target = car.route[car.routeIndex];
+      const dist = Phaser.Math.Distance.Between(car.x, car.y, target.x, target.y);
+      if (dist < 26) {
+        car.routeIndex = (car.routeIndex + 1) % car.route.length;
+        continue;
+      }
+
+      const angle = Phaser.Math.Angle.Between(car.x, car.y, target.x, target.y);
+      car.rotation = angle + Math.PI / 2;
+      car.setVelocity(Math.cos(angle) * car.aiSpeed, Math.sin(angle) * car.aiSpeed);
+
+      if (car.vehicleType === "police" || car.vehicleType === "ems") {
+        const flash = Math.sin((this.time.now + car.sirenPhase) * 0.018) > 0;
+        car.setTint(flash ? (car.vehicleType === "police" ? 0xff5555 : 0xffffff) : 0xffffff);
+      }
+
+      const playerDist = Phaser.Math.Distance.Between(this.activeActor.x, this.activeActor.y, car.x, car.y);
+      if (car.vehicleType === "police" && playerDist < 520 && this.inCar && DISTORTION.speed > 420) {
+        this.wantedLevel = Math.max(this.wantedLevel, 1);
+      }
+    }
+  }
+
+  updatePedestrians(time) {
+    for (const ped of this.pedestrians) {
+      const t = time * 0.001 * ped.walkSpeed + ped.phase;
+      ped.x = ped.homeX + Math.cos(t) * ped.walkRadius;
+      ped.y = ped.homeY + Math.sin(t * 0.7) * ped.walkRadius * 0.55;
+      ped.rotation = Math.sin(t) * 0.08;
+    }
+  }
+
+  updateMission(delta) {
+    const actor = this.activeActor;
+    if (!actor || MISSION.complete) return;
+
+    const dGoal = Phaser.Math.Distance.Between(actor.x, actor.y, MISSION.marker.x, MISSION.marker.y);
+    if (dGoal < MISSION.marker.radius) {
+      MISSION.complete = true;
+      MISSION.state = "complete";
+      DONNY.repDripSaints += 2;
+      this.showTimedPrompt("MISSION COMPLETE:\nBlue Candle Alley reached.", 3600);
+    }
+
+    const dCheckpoint = Phaser.Math.Distance.Between(actor.x, actor.y, MISSION.checkpoint.x, MISSION.checkpoint.y);
+    if (dCheckpoint < MISSION.checkpoint.radius && !MISSION.flagged) {
+      MISSION.checkpointTimer += delta;
+      if (MISSION.checkpointTimer > 2600) {
+        MISSION.flagged = true;
+        MISSION.state = "flagged";
+        this.wantedLevel = Math.max(this.wantedLevel, 1);
+        DONNY.hp = Math.max(1, DONNY.hp - 5);
+        this.showTimedPrompt("FLAGGED BY RED CONCORD.\nGet moving before they box you in.", 3400);
+      }
+    } else if (!MISSION.flagged) {
+      MISSION.checkpointTimer = Math.max(0, MISSION.checkpointTimer - delta * 0.5);
+    }
   }
 
   updateCamera() {
-    const ratio = Phaser.Math.Clamp(DISTORTION.speed / DISTORTION.maxSpeed, 0, 1);
-    this.cameras.main.setZoom(Phaser.Math.Linear(0.68, 0.44, ratio));
+    if (this.inCar) {
+      const ratio = Phaser.Math.Clamp(Math.abs(DISTORTION.speed) / DISTORTION.maxSpeed, 0, 1);
+      this.cameras.main.setZoom(Phaser.Math.Linear(CAMERA_ZOOM.carSlow, CAMERA_ZOOM.carFast, ratio));
+    } else {
+      this.cameras.main.setZoom(CAMERA_ZOOM.foot);
+    }
   }
 
-  updateFx(accel, braking, boosting) {
+  updateFx() {
     const c = this.car;
     const rearX = c.x - Math.cos(c.rotation) * 42;
     const rearY = c.y - Math.sin(c.rotation) * 42;
-    const shouldSmoke = braking || boosting || DISTORTION.fuel <= 0 || (accel && DISTORTION.speed > 280);
+    const shouldSmoke = this.inCar && (
+      DISTORTION.fuel <= 0 ||
+      Math.abs(DISTORTION.speed) > 280 ||
+      DISTORTION.condition === "Boosting" ||
+      DISTORTION.condition === "Braking"
+    );
+
     if (shouldSmoke) {
       this.smoke.setPosition(rearX, rearY);
       this.smoke.start();
@@ -549,6 +996,7 @@ class GlasswellScene extends Phaser.Scene {
     const rearX = c.x - Math.cos(angle) * 38;
     const rearY = c.y - Math.sin(angle) * 38;
     const off = 18;
+
     this.trackLayer.lineStyle(3, 0x101010, 0.30);
     for (const side of [-1, 1]) {
       const x = rearX + sx * off * side;
@@ -563,42 +1011,56 @@ class GlasswellScene extends Phaser.Scene {
   drawHeadlights() {
     this.headlightLayer.clear();
     if (!DISTORTION.headlightsOn) return;
+
     const c = this.car;
     const a = c.rotation;
     const fx = c.x + Math.cos(a) * 52;
     const fy = c.y + Math.sin(a) * 52;
-    const len = 340;
-    const width = 110;
+    const len = 300;
+    const width = 95;
     const ex = fx + Math.cos(a) * len;
     const ey = fy + Math.sin(a) * len;
-    const sx = Math.cos(a + Math.PI/2);
-    const sy = Math.sin(a + Math.PI/2);
-    this.headlightLayer.fillStyle(0x9befff, 0.035);
-    this.headlightLayer.fillTriangle(fx, fy, ex + sx*width, ey + sy*width, ex - sx*width, ey - sy*width);
-    this.headlightLayer.fillStyle(0xd7f7ff, 0.11);
-    this.headlightLayer.fillTriangle(fx, fy, ex + sx*42, ey + sy*42, ex - sx*42, ey - sy*42);
+    const sx = Math.cos(a + Math.PI / 2);
+    const sy = Math.sin(a + Math.PI / 2);
+
+    this.headlightLayer.fillStyle(0x9befff, 0.030);
+    this.headlightLayer.fillTriangle(fx, fy, ex + sx * width, ey + sy * width, ex - sx * width, ey - sy * width);
+    this.headlightLayer.fillStyle(0xd7f7ff, 0.095);
+    this.headlightLayer.fillTriangle(fx, fy, ex + sx * 38, ey + sy * 38, ex - sx * 38, ey - sy * 38);
   }
 
-  checkInteractions(delta) {
+  checkProximity(delta, mobile) {
     let message = "";
     let refueling = false;
 
-    for (const s of FUEL_STATIONS) {
-      const dist = Phaser.Math.Distance.Between(this.car.x, this.car.y, s.x, s.y);
-      if (dist < s.radius) {
-        message = `Press E / X to refuel at ${s.name}`;
-        if (this.keys.interact.isDown || this.mobileInteract) {
-          DISTORTION.fuel = Math.min(DISTORTION.fuelMax, DISTORTION.fuel + 42 * delta / 1000);
-          DISTORTION.condition = "Refueling";
-          refueling = true;
+    if (this.inCar) {
+      for (const s of FUEL_STATIONS) {
+        const dist = Phaser.Math.Distance.Between(this.car.x, this.car.y, s.x, s.y);
+        if (dist < s.radius) {
+          message = `Press E / X to refuel at ${s.name}`;
+          if (this.keys.interact.isDown || mobile.interact) {
+            DISTORTION.fuel = Math.min(DISTORTION.fuelMax, DISTORTION.fuel + 48 * delta / 1000);
+            DISTORTION.condition = "Refueling";
+            refueling = true;
+          }
+          break;
         }
-        break;
       }
+    }
+
+    if (!message && !this.inCar) {
+      const distToCar = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.car.x, this.car.y);
+      if (distToCar < 90) message = "Press E / X to enter Distortion";
+    }
+
+    if (!message && !this.inCar) {
+      const npc = this.nearNpc();
+      if (npc) message = `Press E / X to talk to ${npc.npcData.name}`;
     }
 
     if (!message) {
       for (const z of GATE_ZONES) {
-        const dist = Phaser.Math.Distance.Between(this.car.x, this.car.y, z.x, z.y);
+        const dist = Phaser.Math.Distance.Between(this.activeActor.x, this.activeActor.y, z.x, z.y);
         if (dist < z.radius) {
           message = `${z.name}\n${z.status}`;
           break;
@@ -606,35 +1068,109 @@ class GlasswellScene extends Phaser.Scene {
       }
     }
 
-    if (!refueling && DISTORTION.condition === "Refueling") DISTORTION.condition = "Prototype";
+    if (!refueling && DISTORTION.condition === "Refueling") {
+      DISTORTION.condition = this.inCar ? "Driving" : "Parked";
+    }
+
     this.isRefueling = refueling;
 
     if (message) {
       this.prompt.setText(message);
       this.prompt.setVisible(true);
-    } else {
+    } else if (!this.tempPromptActive) {
       this.prompt.setVisible(false);
     }
   }
 
-  updateHud() {
-    const ratio = Phaser.Math.Clamp(DISTORTION.fuel / DISTORTION.fuelMax, 0, 1);
-    this.fuelBar.width = 210 * ratio;
-    this.fuelBar.fillColor = ratio < 0.18 ? 0xd94d3d : ratio < 0.45 ? 0xd6b94b : 0x9b6cff;
-    this.hudFuel.setText(`Fuel: ${Math.round(ratio * 100)}%  ${DISTORTION.condition}`);
-    this.hudWanted.setText(`WANTED ${this.wantedLevel}`);
+  nearFuelStation() {
+    for (const s of FUEL_STATIONS) {
+      if (Phaser.Math.Distance.Between(this.car.x, this.car.y, s.x, s.y) < s.radius) return s;
+    }
+    return null;
   }
 
-  updateAudio(boosting) {
+  nearNpc() {
+    if (!this.npcs) return null;
+    for (const npc of this.npcs) {
+      if (Phaser.Math.Distance.Between(this.player.x, this.player.y, npc.x, npc.y) < 82) return npc;
+    }
+    return null;
+  }
+
+  showTimedPrompt(text, ms) {
+    this.tempPromptActive = true;
+    this.prompt.setText(text);
+    this.prompt.setVisible(true);
+    this.time.delayedCall(ms, () => {
+      this.tempPromptActive = false;
+      this.prompt.setVisible(false);
+    });
+  }
+
+  updateHud() {
+    const hpRatio = Phaser.Math.Clamp(DONNY.hp / DONNY.hpMax, 0, 1);
+    this.hpBar.width = 210 * hpRatio;
+    this.hpBar.fillColor = hpRatio < 0.25 ? 0xd94d3d : hpRatio < 0.55 ? 0xd6b94b : 0x3fc46b;
+    this.hudHp.setText(`HP: ${DONNY.hp}/${DONNY.hpMax}`);
+
+    const fuelRatio = Phaser.Math.Clamp(DISTORTION.fuel / DISTORTION.fuelMax, 0, 1);
+    this.fuelBar.width = 210 * fuelRatio;
+    this.fuelBar.fillColor = fuelRatio < 0.18 ? 0xd94d3d : fuelRatio < 0.45 ? 0xd6b94b : 0x9b6cff;
+    this.hudFuel.setText(`Fuel: ${Math.round(fuelRatio * 100)}%  ${DISTORTION.condition}`);
+
+    this.hudMode.setText(`Mode: ${this.inCar ? "Driving Distortion" : "On foot"}  Drip Rep: ${DONNY.repDripSaints}`);
+    this.hudWanted.setText(`WANTED ${this.wantedLevel}`);
+
+    if (MISSION.complete) {
+      this.hudMission.setText("Mission complete: Blue Candle Alley reached.");
+    } else if (MISSION.flagged) {
+      this.hudMission.setText("Mission: Reach Blue Candle Alley. Status: FLAGGED.");
+    } else {
+      this.hudMission.setText(`Mission: ${MISSION.title}`);
+    }
+  }
+
+  updateAudio() {
     if (!this.audioEnabled || !this.audio.idle) return;
-    const ratio = Phaser.Math.Clamp(DISTORTION.speed / DISTORTION.maxSpeed, 0, 1);
-    this.audio.idle.setVolume(Phaser.Math.Linear(0.20, 0.04, ratio));
-    this.audio.drive.setVolume(Phaser.Math.Linear(0.00, 0.34, ratio));
-    this.audio.drive.setRate(Phaser.Math.Linear(0.80, 1.45, ratio));
-    this.audio.boost.setVolume(boosting ? 0.30 : 0.0);
-    this.audio.refuel.setVolume(this.isRefueling ? 0.24 : 0.0);
-    if (this.audio.police) this.audio.police.setVolume(this.wantedLevel > 0 ? 0.24 : 0.0);
-    if (this.audio.ambulance) this.audio.ambulance.setVolume(0.10); // low ambient EMS traffic siren
+
+    const ratio = Phaser.Math.Clamp(Math.abs(DISTORTION.speed) / DISTORTION.maxSpeed, 0, 1);
+    const driving = this.inCar;
+
+    if (this.audio.idle) this.audio.idle.setVolume(driving ? Phaser.Math.Linear(0.18, 0.04, ratio) : 0);
+    if (this.audio.drive) {
+      this.audio.drive.setVolume(driving ? Phaser.Math.Linear(0.00, 0.34, ratio) : 0);
+      this.audio.drive.setRate(Phaser.Math.Linear(0.80, 1.45, ratio));
+    }
+    if (this.audio.boost) this.audio.boost.setVolume(driving && DISTORTION.condition === "Boosting" ? 0.30 : 0.0);
+    if (this.audio.refuel) this.audio.refuel.setVolume(this.isRefueling ? 0.24 : 0.0);
+    if (this.audio.police) this.audio.police.setVolume(this.wantedLevel > 0 ? 0.22 : 0.0);
+  }
+
+  updateDebug() {
+    if (!this.debugText || !this.debugVisible) return;
+
+    const actor = this.activeActor || this.player;
+    const chunk = this.currentChunkName(actor.x, actor.y);
+    this.debugText.setText(
+      `SCENE GlasswellScene\n` +
+      `MODE ${this.inCar ? "driving" : "on_foot"}\n` +
+      `PLAYER ${Math.round(this.player.x)}, ${Math.round(this.player.y)}\n` +
+      `CAR ${Math.round(this.car.x)}, ${Math.round(this.car.y)}\n` +
+      `ACTIVE ${Math.round(actor.x)}, ${Math.round(actor.y)}\n` +
+      `FUEL ${Math.round(DISTORTION.fuel)} / ${DISTORTION.fuelMax}\n` +
+      `HP ${DONNY.hp} / ${DONNY.hpMax}\n` +
+      `ZOOM ${this.cameras.main.zoom.toFixed(2)}\n` +
+      `CHUNK ${chunk}\n` +
+      `MISSION ${MISSION.state}`
+    );
+  }
+
+  currentChunkName(x, y) {
+    if (x < 1050 && y > 1500 && y < 2550) return "Westgate / Night Market Offramp";
+    if (x > 1600 && x < 2500 && y > 3050) return "Southgate / Blue Candle Alley Route";
+    if (x > 3000 && y > 1500 && y < 2550) return "Eastgate / Rust Jackals Route";
+    if (y < 1050 && x > 1500 && x < 2550) return "Northgate / Black Road Future Route";
+    return "Glasswell Freeway Ring";
   }
 }
 
@@ -644,11 +1180,18 @@ new Phaser.Game({
   height: GAME_H,
   backgroundColor: "#050505",
   pixelArt: true,
-  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  physics: { default: "arcade", arcade: { debug: false } },
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
+  physics: {
+    default: "arcade",
+    arcade: {
+      debug: false
+    }
+  },
   scene: [GlasswellScene]
 });
-
 </script>
 </body>
 </html>
