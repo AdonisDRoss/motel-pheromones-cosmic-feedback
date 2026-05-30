@@ -48,6 +48,10 @@ const CAMERA_ZOOM = {
   carFast: 0.72
 };
 
+// The Aurelix Distortion top-down sprite art is drawn sideways relative to the driving vector.
+// Keep physics heading separate from sprite rotation so the car drives nose-first.
+const CAR_VISUAL_OFFSET = Math.PI / 2;
+
 const DONNY = {
   name: "Donny",
   hpMax: 100,
@@ -203,7 +207,8 @@ class GlasswellScene extends Phaser.Scene {
     this.car = this.physics.add.sprite(START.x, START.y, "distortion_topdown");
     this.car.setDepth(45);
     this.car.setScale(0.45);
-    this.car.rotation = -Math.PI / 2;
+    this.carHeading = -Math.PI / 2;
+    this.car.rotation = this.carHeading + CAR_VISUAL_OFFSET;
     this.car.setMaxVelocity(850);
     this.car.setDrag(0, 0);
 
@@ -831,10 +836,14 @@ class GlasswellScene extends Phaser.Scene {
       const steer = (left ? -1 : 0) + (right ? 1 : 0);
       const reverseFactor = DISTORTION.speed < 0 ? -1 : 1;
       const speedRatio = Phaser.Math.Clamp(Math.abs(DISTORTION.speed) / DISTORTION.maxSpeed, 0.18, 1);
-      c.rotation += steer * reverseFactor * DISTORTION.turnSpeed * dt * speedRatio;
+      this.carHeading += steer * reverseFactor * DISTORTION.turnSpeed * dt * speedRatio;
     }
 
-    c.setVelocity(Math.cos(c.rotation) * DISTORTION.speed, Math.sin(c.rotation) * DISTORTION.speed);
+    c.setVelocity(
+      Math.cos(this.carHeading) * DISTORTION.speed,
+      Math.sin(this.carHeading) * DISTORTION.speed
+    );
+    c.rotation = this.carHeading + CAR_VISUAL_OFFSET;
     clampToMap(c);
 
     if (moving && Math.abs(DISTORTION.speed) > 220) this.drawTireTracks();
@@ -877,7 +886,7 @@ class GlasswellScene extends Phaser.Scene {
 
   exitCar() {
     const exitDistance = 70;
-    const side = this.car.rotation + Math.PI / 2;
+    const side = this.carHeading + Math.PI / 2;
     let ex = this.car.x + Math.cos(side) * exitDistance;
     let ey = this.car.y + Math.sin(side) * exitDistance;
 
@@ -971,8 +980,8 @@ class GlasswellScene extends Phaser.Scene {
 
   updateFx() {
     const c = this.car;
-    const rearX = c.x - Math.cos(c.rotation) * 42;
-    const rearY = c.y - Math.sin(c.rotation) * 42;
+    const rearX = c.x - Math.cos(this.carHeading) * 42;
+    const rearY = c.y - Math.sin(this.carHeading) * 42;
     const shouldSmoke = this.inCar && (
       DISTORTION.fuel <= 0 ||
       Math.abs(DISTORTION.speed) > 280 ||
@@ -990,7 +999,7 @@ class GlasswellScene extends Phaser.Scene {
 
   drawTireTracks() {
     const c = this.car;
-    const angle = c.rotation;
+    const angle = this.carHeading;
     const sx = Math.cos(angle + Math.PI / 2);
     const sy = Math.sin(angle + Math.PI / 2);
     const rearX = c.x - Math.cos(angle) * 38;
@@ -1013,7 +1022,7 @@ class GlasswellScene extends Phaser.Scene {
     if (!DISTORTION.headlightsOn) return;
 
     const c = this.car;
-    const a = c.rotation;
+    const a = this.carHeading;
     const fx = c.x + Math.cos(a) * 52;
     const fy = c.y + Math.sin(a) * 52;
     const len = 300;
@@ -1160,6 +1169,7 @@ class GlasswellScene extends Phaser.Scene {
       `FUEL ${Math.round(DISTORTION.fuel)} / ${DISTORTION.fuelMax}\n` +
       `HP ${DONNY.hp} / ${DONNY.hpMax}\n` +
       `ZOOM ${this.cameras.main.zoom.toFixed(2)}\n` +
+      `HEADING ${this.carHeading.toFixed(2)} OFFSET ${CAR_VISUAL_OFFSET.toFixed(2)}\n` +
       `CHUNK ${chunk}\n` +
       `MISSION ${MISSION.state}`
     );
