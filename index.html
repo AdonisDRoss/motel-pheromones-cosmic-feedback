@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Cosmic Feedback — Westgate Blacklight Connector v06</title>
+<title>Cosmic Feedback — Westgate Blacklight Connector v07</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#050505;overflow:hidden;touch-action:none;font-family:monospace}
@@ -34,7 +34,7 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
   <div id="lights" class="btn" data-btn="lights">Y<br>LTS</div>
   <div id="boost" class="btn" data-btn="boost">R<br>BST</div>
 </div>
-<div id="buildTag">Westgate Blacklight Connector v06</div>
+<div id="buildTag">Westgate Blacklight Connector v07</div>
 
 <script>
 "use strict";
@@ -104,7 +104,8 @@ const DISTORTION_PATH="assets/vehicles/special/aurelix_distortion/distortion_top
 const DONNY={hpMax:100,hp:100,walkSpeed:220,rep:0};
 const CAR={fuelMax:180,fuel:180,speed:0,maxSpeed:520,accel:470,reverseSpeed:210,drag:.985,turnSpeed:3.0,condition:"Parked",headlightsOn:true};
 const CAR_VISUAL_OFFSET=Math.PI/2;
-const ZOOM={foot:.82,carSlow:.74,carFast:.60};
+const ZOOM={foot:.76,carSlow:.70,carFast:.58};
+const COLLISION_MODE=(new URLSearchParams(location.search).get("collision")||"off").toLowerCase();
 
 function qNum(name,fallback){
   const n=Number(new URLSearchParams(location.search).get(name));
@@ -157,10 +158,12 @@ class MainScene extends Phaser.Scene{
     });
 
     // Tuned to the uploaded Westgate/Blacklight map: start near lower ENTER road area.
-    const spawnX=qNum("spawnX",Math.round(this.mapW*0.785));
-    const spawnY=qNum("spawnY",Math.round(this.mapH*0.900));
-    const carX=qNum("carX",Math.round(this.mapW*0.715));
-    const carY=qNum("carY",Math.round(this.mapH*0.900));
+    // v07 default: spawn on the left road area Donny circled in the screenshot.
+    // URL params still override this.
+    const spawnX=qNum("spawnX",Math.round(this.mapW*0.315));
+    const spawnY=qNum("spawnY",Math.round(this.mapH*0.610));
+    const carX=qNum("carX",Math.round(this.mapW*0.245));
+    const carY=qNum("carY",Math.round(this.mapH*0.610));
 
     const carTex=(!this.failed.has("distortion_asset")&&this.textures.exists("distortion_asset"))?"distortion_asset":"car_fallback";
     this.car=this.physics.add.sprite(carX,carY,carTex).setDepth(850);
@@ -191,7 +194,17 @@ class MainScene extends Phaser.Scene{
     this.makeDebug();
 
     this.input.keyboard.on("keydown-F3",()=>this.debugText.setVisible(!this.debugText.visible));
-    if(this.failed.has("map_mask"))this.flash("Mask missing. Using widened road collision + safe start zone.",3600);
+    if((new URLSearchParams(location.search).get("calibrate")||"0")==="1"){
+      this.debugText.setVisible(true);
+      this.input.on("pointerdown",p=>{
+        if(this.inCar)return;
+        const wp=this.cameras.main.getWorldPoint(p.x,p.y);
+        this.player.setPosition(Phaser.Math.Clamp(wp.x,48,this.mapW-48),Phaser.Math.Clamp(wp.y,48,this.mapH-48));
+        this.spawnSafe={x:this.player.x,y:this.player.y,r:220};
+        this.flash("Spawn test: "+Math.round(this.player.x)+","+Math.round(this.player.y),1800);
+      });
+    }
+    if(this.failed.has("map_mask"))this.flash("Collision off by default. Upload aligned mask, then test ?collision=mask.",3600);
 
     this.updateCamera();
   }
@@ -329,8 +342,14 @@ class MainScene extends Phaser.Scene{
   }
 
   canMoveTo(x,y,radius=18){
+    // v07: collision is OFF by default while we line up the uploaded base/mask.
+    // Use ?collision=mask to test the real black/white mask once it is confirmed uploaded/aligned.
+    // Use ?collision=road to test the temporary road-zone collision.
     if(this.inSafeStartZone(x,y))return true;
-    if(!this.maskCtx||!this.maskCanvas)return this.fallbackRoadCollision(x,y);
+    if(COLLISION_MODE==="off")return true;
+    if(COLLISION_MODE==="road")return this.fallbackRoadCollision(x,y);
+    if(!this.maskCtx||!this.maskCanvas)return true;
+
     const sx=Math.round((x/this.mapW)*this.maskCanvas.width), sy=Math.round((y/this.mapH)*this.maskCanvas.height);
     const points=[[sx,sy],[sx-radius,sy],[sx+radius,sy],[sx,sy-radius],[sx,sy+radius]];
     for(const [px,py] of points){
@@ -413,7 +432,7 @@ class MainScene extends Phaser.Scene{
   checkPrompts(){if(this.tempPrompt)return;let msg="";if(!this.inCar&&Phaser.Math.Distance.Between(this.player.x,this.player.y,this.car.x,this.car.y)<115)msg="Press E / X to enter Distortion";else if(this.inCar)msg="E / X exits vehicle";this.prompt.setText(msg).setVisible(!!msg);}
   flash(text,ms){this.tempPrompt=true;this.prompt.setText(text).setVisible(true);this.time.delayedCall(ms,()=>{this.tempPrompt=false;this.prompt.setVisible(false);});}
   updateHud(){this.hMode.setText("Mode: "+(this.inCar?"Driving Distortion":"On foot")+"   real map");this.hHp.setText("HP: "+DONNY.hp+"/"+DONNY.hpMax);this.hpBar.width=150*(DONNY.hp/DONNY.hpMax);this.hFuel.setText("Fuel: "+Math.round(CAR.fuel/CAR.fuelMax*100)+"% "+CAR.condition);this.fuelBar.width=150*(CAR.fuel/CAR.fuelMax);}
-  updateDebug(){if(!this.debugText.visible)return;const a=this.inCar?this.car:this.player;this.debugText.setText("WESTGATE BLACKLIGHT CONNECTOR v06\nBASE "+MAP_BASE_PATH+"\nMASK "+MAP_MASK_PATH+"\nMAP "+this.mapW+"x"+this.mapH+"\nACTIVE "+Math.round(a.x)+","+Math.round(a.y)+"\nDONNY "+(this.hasDonnySheet?"staging sheet":"fallback")+"\nMASK "+(this.maskCtx?"loaded":"missing/disabled")+"\nFAILED "+(this.failed.size?Array.from(this.failed).join(", "):"none"));}
+  updateDebug(){if(!this.debugText.visible)return;const a=this.inCar?this.car:this.player;this.debugText.setText("WESTGATE BLACKLIGHT CONNECTOR v07\nBASE "+MAP_BASE_PATH+"\nMASK "+MAP_MASK_PATH+"\nMAP "+this.mapW+"x"+this.mapH+"\nACTIVE "+Math.round(a.x)+","+Math.round(a.y)+"\nDONNY "+(this.hasDonnySheet?"staging sheet":"fallback")+"\nMASK "+(this.maskCtx?"loaded":"missing/disabled")+"\nFAILED "+(this.failed.size?Array.from(this.failed).join(", "):"none"));}
 }
 
 new Phaser.Game({
