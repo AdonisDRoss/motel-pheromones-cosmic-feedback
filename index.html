@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Cosmic Feedback — Glasswell Correct Map File Test</title>
+  <title>Cosmic Feedback — Glasswell Real Map Clean Test</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <style>
     html, body { margin:0; padding:0; width:100%; height:100%; background:#050505; overflow:hidden; touch-action:none; }
@@ -23,11 +23,11 @@
 </head>
 <body>
 <div id="help">
-  COSMIC FEEDBACK — GLASSWELL CORRECT MAP FILE TEST<br>
+  COSMIC FEEDBACK — GLASSWELL REAL MAP CLEAN TEST<br>
   WASD/Arrows or mobile stick = walk/steer · E/X = enter/exit/talk/refuel · A = gas · B/Space = brake · Shift/R = boost · H/Y = lights · F3 = debug<br>
-  This build loads the existing repo map: GLASSWELL_FREEWAY_RING_WITH_FUEL_STATIONS.png
+  Clean real-map pass: no giant zone circles, no huge district text over the art. Donny/Distortion start on Westgate road.
 </div>
-<div id="buildTag">Glasswell correct map file v12</div>
+<div id="buildTag">Glasswell real map clean v13</div>
 
 <script>
 "use strict";
@@ -38,37 +38,36 @@ const MAP_W = 4096;
 const MAP_H = 4096;
 
 const MAP_PATH = "assets/maps/dust9/glasswell/GLASSWELL_FREEWAY_RING_WITH_FUEL_STATIONS.png";
-const DONNY_START = { x: 720, y: 2048 };
-const CAR_START = { x: 840, y: 2048 };
 
-const CAMERA_ZOOM = { foot: 1.08, carSlow: 0.92, carFast: 0.74 };
+// Calibrated from the working screenshot: place Donny on the visible Westgate road lane,
+// not on the large connector label/blank panel.
+const DONNY_START = { x: 1880, y: 1205 };
+const CAR_START = { x: 1995, y: 1205 };
+
+const CAMERA_ZOOM = { foot: 1.22, carSlow: 1.02, carFast: 0.80 };
 const CAR_VISUAL_OFFSET = Math.PI / 2;
 
 const DONNY = { hpMax: 100, hp: 100, walkSpeed: 210, rep: 0, band: "none" };
 const CAR = { fuelMax: 180, fuel: 180, speed: 0, maxSpeed: 620, accel: 520, drag: 0.984, turnSpeed: 3.1, condition: "Parked", headlightsOn: true };
 
-const FUEL_STATIONS = [
-  { name:"Muckrail Fuel & Salvage", x:760, y:2860, r:150, color:0x69aaff },
-  { name:"Dustline Waystop", x:2850, y:760, r:150, color:0x69aaff },
-  { name:"Nova Crown Fuel", x:2510, y:1260, r:160, color:0xf0d278 }
-];
+// Keep gameplay markers small and readable. No giant overlay circles.
+const POINTS = {
+  westgate: { x: 1880, y: 1205, label: "Westgate Start" },
+  fuel: { x: 760, y: 2860, r: 150, label: "Muckrail Fuel & Salvage" },
+  checkpoint: { x: 2048, y: 3260, r: 240, label: "Red Concord Checkpoint" },
+  blue: { x: 2048, y: 3550, r: 280, label: "Blue Candle Alley" },
+  blacklight: { x: 565, y: 2048, label: "Blacklight Connector" },
+  eastgate: { x: 3530, y: 2048, label: "Eastgate / Rust Jackals" }
+};
+
+const FUEL_STATIONS = [{ name: POINTS.fuel.label, x: POINTS.fuel.x, y: POINTS.fuel.y, r: POINTS.fuel.r }];
 
 const NPCS = [
-  { name:"Westgate Mechanic", x:675, y:2150, tex:"npc_gold", line:"Correct map file is loaded. Test driving, fuel, checkpoint, and Blue Candle route." },
+  { name:"Westgate Mechanic", x:1850, y:1265, tex:"npc_gold", line:"This is the clean real-map pass. The huge overlays are gone. Test the road and car." },
   { name:"Drip Saints Runner", x:1940, y:3510, tex:"npc_blue", line:"Blue candle means the alley still breathes. Stay off the red-lit road." },
   { name:"Red Concord Officer", x:2140, y:3260, tex:"npc_red", line:"Papers out. Eyes down." },
   { name:"Blacklight Lookout", x:565, y:2048, tex:"npc_purple", line:"Westgate to Blacklight route will use a separate chunk later." },
   { name:"Rust Jackals Toll Hand", x:3530, y:2048, tex:"npc_orange", line:"Eastgate route exists, but the full yard chunk loads later." }
-];
-
-const DISTRICTS = [
-  { label:"WESTGATE START", x:720, y:2048, r:260, color:0x9b6cff },
-  { label:"WESTGATE FUEL STOP", x:760, y:2860, r:185, color:0x69aaff },
-  { label:"RED CONCORD CHECKPOINT", x:2048, y:3260, r:240, color:0xff3333 },
-  { label:"BLUE CANDLE ALLEY", x:2048, y:3550, r:280, color:0x70d9ff },
-  { label:"BLACKLIGHT CLUB ROUTE", x:565, y:2048, r:230, color:0xb45aff },
-  { label:"EASTGATE SCRAPYARDS", x:3530, y:2048, r:300, color:0xffaa4d },
-  { label:"NORTHGATE SEALED", x:2048, y:545, r:240, color:0xb8b8b8 }
 ];
 
 class MainScene extends Phaser.Scene {
@@ -92,13 +91,13 @@ class MainScene extends Phaser.Scene {
       this.drawFallbackMap();
     }
 
-    this.drawOverlays();
-
     this.keys = this.input.keyboard.addKeys({
       up:"W,UP", down:"S,DOWN", left:"A,LEFT", right:"D,RIGHT",
       interact:"E", brake:"SPACE", boost:"SHIFT", lights:"H", debug:"F3"
     });
+
     this.createMobileControls();
+    this.drawSmallMapMarkers();
 
     const carTex = this.textures.exists("distortion_asset") ? "distortion_asset" : "car_fallback";
     this.car = this.physics.add.sprite(CAR_START.x, CAR_START.y, carTex);
@@ -109,17 +108,17 @@ class MainScene extends Phaser.Scene {
 
     this.player = this.physics.add.sprite(DONNY_START.x, DONNY_START.y, "donny_down");
     this.player.setDepth(900);
-    this.player.setScale(1.45);
+    this.player.setScale(1.25);
     this.player.setCollideWorldBounds(true);
 
-    this.playerLabel = this.add.text(this.player.x, this.player.y - 74, "DONNY", {
-      fontFamily:"monospace", fontSize:"16px", color:"#9befff",
-      backgroundColor:"rgba(0,0,0,0.78)", padding:{x:6,y:3}
+    this.playerLabel = this.add.text(this.player.x, this.player.y - 70, "DONNY", {
+      fontFamily:"monospace", fontSize:"14px", color:"#9befff",
+      backgroundColor:"rgba(0,0,0,0.78)", padding:{x:5,y:2}
     }).setOrigin(0.5).setDepth(1000);
 
-    this.carLabel = this.add.text(this.car.x, this.car.y - 82, "DISTORTION", {
-      fontFamily:"monospace", fontSize:"14px", color:"#e0c7ff",
-      backgroundColor:"rgba(0,0,0,0.70)", padding:{x:6,y:3}
+    this.carLabel = this.add.text(this.car.x, this.car.y - 78, "DISTORTION", {
+      fontFamily:"monospace", fontSize:"13px", color:"#e0c7ff",
+      backgroundColor:"rgba(0,0,0,0.70)", padding:{x:5,y:2}
     }).setOrigin(0.5).setDepth(1000);
 
     this.locator = this.add.graphics().setDepth(899);
@@ -128,11 +127,11 @@ class MainScene extends Phaser.Scene {
     this.npcs = [];
     for (const data of NPCS) {
       const npc = this.physics.add.sprite(data.x, data.y, data.tex);
-      npc.setScale(1.1);
+      npc.setScale(0.95);
       npc.setDepth(870);
       npc.dataRef = data;
-      this.add.text(data.x, data.y - 56, data.name, {
-        fontFamily:"monospace", fontSize:"13px", color:"#ffffff",
+      this.add.text(data.x, data.y - 50, data.name, {
+        fontFamily:"monospace", fontSize:"12px", color:"#ffffff",
         backgroundColor:"rgba(0,0,0,0.72)", padding:{x:4,y:2}
       }).setOrigin(0.5).setDepth(890);
       this.npcs.push(npc);
@@ -166,9 +165,7 @@ class MainScene extends Phaser.Scene {
       g.fillStyle(0xcfcfcf, 1); g.fillRect(23, 21, 5, 26);
       g.generateTexture(key, 52, 68);
     };
-    makeDonny("donny_down", "down");
-    makeDonny("donny_up", "up");
-    makeDonny("donny_side", "side");
+    makeDonny("donny_down", "down"); makeDonny("donny_up", "up"); makeDonny("donny_side", "side");
 
     g.clear();
     g.fillStyle(0x222222, 1); g.fillRoundedRect(0, 0, 90, 46, 10);
@@ -197,22 +194,26 @@ class MainScene extends Phaser.Scene {
     g.lineStyle(4,0xc8b46a,0.7).strokeRect(8,8,MAP_W-16,MAP_H-16);
   }
 
-  drawOverlays() {
-    const g = this.add.graphics().setDepth(30);
-    for (const d of DISTRICTS) {
-      g.lineStyle(4, d.color, 0.55);
-      g.strokeCircle(d.x, d.y, d.r);
-      g.fillStyle(d.color, 0.05);
-      g.fillCircle(d.x, d.y, d.r);
-      this.add.text(d.x, d.y - d.r - 24, d.label, {
-        fontFamily:"monospace", fontSize:"14px", color:"#ffffff", align:"center",
-        backgroundColor:"rgba(0,0,0,0.68)", padding:{x:6,y:4}
-      }).setOrigin(0.5).setDepth(40);
-    }
-    g.fillStyle(0x9b6cff, 0.18).fillCircle(DONNY_START.x, DONNY_START.y, 74);
-    g.lineStyle(5, 0x9b6cff, 0.95).strokeCircle(DONNY_START.x, DONNY_START.y, 74);
-    g.fillStyle(0x9b6cff, 0.12).fillRect(CAR_START.x - 76, CAR_START.y - 50, 152, 100);
-    g.lineStyle(3, 0xd7b8ff, 0.9).strokeRect(CAR_START.x - 76, CAR_START.y - 50, 152, 100);
+  drawSmallMapMarkers() {
+    const g = this.add.graphics().setDepth(40);
+
+    const drawPoint = (p, color, label) => {
+      g.fillStyle(color, 0.22);
+      g.fillCircle(p.x, p.y, 34);
+      g.lineStyle(3, color, 0.9);
+      g.strokeCircle(p.x, p.y, 34);
+      this.add.text(p.x, p.y + 42, label, {
+        fontFamily:"monospace", fontSize:"12px", color:"#ffffff",
+        backgroundColor:"rgba(0,0,0,0.66)", padding:{x:4,y:2}
+      }).setOrigin(0.5).setDepth(45);
+    };
+
+    drawPoint(POINTS.westgate, 0x9b6cff, "START");
+    drawPoint(POINTS.fuel, 0x69aaff, "FUEL");
+    drawPoint(POINTS.checkpoint, 0xff3333, "CHECKPOINT");
+    drawPoint(POINTS.blue, 0x70d9ff, "BLUE CANDLE");
+    drawPoint(POINTS.blacklight, 0xb45aff, "BLACKLIGHT");
+    drawPoint(POINTS.eastgate, 0xffaa4d, "EASTGATE");
   }
 
   createMobileControls() {
@@ -235,6 +236,7 @@ class MainScene extends Phaser.Scene {
     zone.on("pointerdown", p => { this.mobile.pointer=p.id; setJoy(p); });
     zone.on("pointermove", p => { if (this.mobile.pointer===p.id) setJoy(p); });
     this.input.on("pointerup", p => { if (this.mobile.pointer===p.id) reset(); });
+
     const btn = (id, top, bottom, x, y, color) => {
       const c = this.add.circle(x,y,38,color,0.36).setScrollFactor(0).setDepth(depth).setStrokeStyle(3,0xffffff,0.3).setInteractive();
       this.add.text(x,y-10,top+"\n"+bottom,{fontFamily:"monospace",fontSize:"12px",color:"#fff",align:"center"}).setOrigin(0.5).setScrollFactor(0).setDepth(depth+1);
@@ -364,10 +366,10 @@ class MainScene extends Phaser.Scene {
 
   updateMission(delta) {
     const t=this.inCar?this.car:this.player;
-    if (!this.missionDone && Phaser.Math.Distance.Between(t.x,t.y,2048,3550)<160) {
+    if (!this.missionDone && Phaser.Math.Distance.Between(t.x,t.y,POINTS.blue.x,POINTS.blue.y)<170) {
       this.missionDone=true; DONNY.rep+=1; this.showPrompt("MISSION COMPLETE:\nBlue Candle Alley reached.",3200);
     }
-    if (Phaser.Math.Distance.Between(t.x,t.y,2048,3260)<240 && !this.missionDone) {
+    if (Phaser.Math.Distance.Between(t.x,t.y,POINTS.checkpoint.x,POINTS.checkpoint.y)<POINTS.checkpoint.r && !this.missionDone) {
       this.checkpointTimer += delta;
       if (this.checkpointTimer > 2600) { this.wanted=1; DONNY.hp=Math.max(1,DONNY.hp-1); }
     } else this.checkpointTimer=Math.max(0,this.checkpointTimer-delta);
@@ -385,22 +387,22 @@ class MainScene extends Phaser.Scene {
   }
 
   updateLabels() {
-    this.playerLabel.setPosition(this.player.x, this.player.y-78).setVisible(!this.inCar);
-    this.carLabel.setPosition(this.car.x, this.car.y-86).setVisible(this.inCar || Phaser.Math.Distance.Between(this.player.x,this.player.y,this.car.x,this.car.y)<200);
+    this.playerLabel.setPosition(this.player.x, this.player.y-72).setVisible(!this.inCar);
+    this.carLabel.setPosition(this.car.x, this.car.y-80).setVisible(this.inCar || Phaser.Math.Distance.Between(this.player.x,this.player.y,this.car.x,this.car.y)<200);
   }
 
   drawLocator() {
     this.locator.clear();
     const t=this.inCar?this.car:this.player;
-    this.locator.lineStyle(5,0x9befff,0.95);
-    this.locator.strokeCircle(t.x,t.y,this.inCar?62:48);
+    this.locator.lineStyle(4,0x9befff,0.85);
+    this.locator.strokeCircle(t.x,t.y,this.inCar?55:42);
   }
 
   drawHeadlights() {
     this.headlightLayer.clear();
     if (!this.inCar || !CAR.headlightsOn) return;
     const a=this.carHeading, fx=this.car.x+Math.cos(a)*52, fy=this.car.y+Math.sin(a)*52;
-    const len=310, width=100, ex=fx+Math.cos(a)*len, ey=fy+Math.sin(a)*len;
+    const len=300, width=90, ex=fx+Math.cos(a)*len, ey=fy+Math.sin(a)*len;
     const sx=Math.cos(a+Math.PI/2), sy=Math.sin(a+Math.PI/2);
     this.headlightLayer.fillStyle(0x9befff,0.035);
     this.headlightLayer.fillTriangle(fx,fy,ex+sx*width,ey+sy*width,ex-sx*width,ey-sy*width);
@@ -423,7 +425,7 @@ class MainScene extends Phaser.Scene {
   }
 
   nearFuel() { for (const f of FUEL_STATIONS) if (Phaser.Math.Distance.Between(this.car.x,this.car.y,f.x,f.y)<f.r) return f; return null; }
-  nearNpc() { for (const n of this.npcs) if (Phaser.Math.Distance.Between(this.player.x,this.player.y,n.x,n.y)<90) return n; return null; }
+  nearNpc() { for (const n of this.npcs) if (Phaser.Math.Distance.Between(this.player.x,this.player.y,n.x,n.y)<85) return n; return null; }
 
   showPrompt(text, ms) {
     this.tempPrompt=true;
@@ -443,7 +445,7 @@ class MainScene extends Phaser.Scene {
   updateDebug() {
     if (!this.debugText.visible) return;
     const t=this.inCar?this.car:this.player;
-    this.debugText.setText("CORRECT MAP FILE\n"+MAP_PATH+"\nMODE "+(this.inCar?"car":"foot")+"\nACTIVE "+Math.round(t.x)+","+Math.round(t.y)+"\nZOOM "+this.cameras.main.zoom.toFixed(2)+"\nFUEL "+Math.round(CAR.fuel)+"\nHP "+DONNY.hp);
+    this.debugText.setText("CLEAN REAL MAP V13\n"+MAP_PATH+"\nMODE "+(this.inCar?"car":"foot")+"\nACTIVE "+Math.round(t.x)+","+Math.round(t.y)+"\nZOOM "+this.cameras.main.zoom.toFixed(2)+"\nFUEL "+Math.round(CAR.fuel)+"\nHP "+DONNY.hp);
   }
 }
 
