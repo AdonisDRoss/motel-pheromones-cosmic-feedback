@@ -2,20 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Cosmic Feedback — Glasswell Westgate Vertical Slice</title>
+  <title>Cosmic Feedback — Glasswell Map Pass 1 Stable</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <style>
     html, body { margin:0; padding:0; width:100%; height:100%; background:#050505; overflow:hidden; touch-action:none; }
     canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
     #help {
       position: fixed; left: 10px; top: 8px; z-index: 20;
-      color: #e8dfc8; font: 12px monospace; background: rgba(0,0,0,.68);
+      color: #e8dfc8; font: 12px monospace; background: rgba(0,0,0,.72);
       padding: 8px 10px; border: 1px solid rgba(255,255,255,.25);
-      max-width: 780px;
+      max-width: 820px;
     }
     #buildTag {
       position: fixed; right: 10px; bottom: 8px; z-index: 20;
-      color:#9befff; font: 12px monospace; background:rgba(0,0,0,.55);
+      color:#9befff; font: 12px monospace; background:rgba(0,0,0,.60);
       padding:6px 8px; border:1px solid rgba(155,239,255,.35);
     }
   </style>
@@ -23,591 +23,222 @@
 </head>
 <body>
 <div id="help">
-  COSMIC FEEDBACK — GLASSWELL MAP PASS 1<br>
-  WASD/Arrows or mobile stick = move/steer · E/X = enter/exit/talk/refuel · A = gas · B/Space = brake · Shift/R = boost · H/Y = lights · F3 = debug<br>
-  Goal: test a playable Glasswell city route. Bad sign-sheet map is disabled; procedural roads/zones are drawn in code. Procedural city map replaces bad sign-sheet map. Camera manual-locks to Donny/car.
+  COSMIC FEEDBACK — GLASSWELL MAP PASS 1 STABLE<br>
+  WASD/Arrows or mobile stick = walk/steer · E/X = enter/exit/talk/refuel · A = gas · B/Space = brake · Shift/R = boost · H/Y = lights<br>
+  Stable map build: procedural Glasswell roads, Donny visible, car visible, camera locked to active player/car.
 </div>
-<div id="buildTag">Glasswell Map Pass 1 procedural-city v8</div>
+<div id="buildTag">Glasswell Map Pass 1 stable v9</div>
 
 <script>
 "use strict";
-
-console.log("GAME BOOT START");
 
 const GAME_W = 960;
 const GAME_H = 540;
 const MAP_W = 4096;
 const MAP_H = 4096;
 
-const START = { x: 720, y: 2048 };
-const DONNY_START = { x: 620, y: 2070 };
+const DONNY_START = { x: 720, y: 2048 };
+const CAR_START = { x: 840, y: 2048 };
 
 const CAMERA_ZOOM = {
-  foot: 1.08,
-  carSlow: 0.92,
+  foot: 1.05,
+  carSlow: 0.90,
   carFast: 0.72
 };
 
-// The Aurelix Distortion top-down sprite art is drawn sideways relative to the driving vector.
-// Keep physics heading separate from sprite rotation so the car drives nose-first.
 const CAR_VISUAL_OFFSET = Math.PI / 2;
 
-// Mobile-safe camera lock. Keeps Donny/car centered even after zoom changes.
-const HARD_CAMERA_LOCK = true;
-
 const DONNY = {
-  name: "Donny",
   hpMax: 100,
   hp: 100,
-  armor: 0,
-  walkSpeed: 195,
-  runSpeed: 245,
-  repDripSaints: 0,
-  cash: 0,
-  mode: "on_foot"
+  walkSpeed: 210,
+  rep: 0,
+  band: "none"
 };
 
-const DISTORTION = {
-  id: "aurelix_distortion",
-  brand: "Aurelix Motorworks",
-  model: "Distortion",
-  className: "Prototype sports car",
-  condition: "Parked",
+const CAR = {
   fuelMax: 180,
   fuel: 180,
   speed: 0,
-  maxSpeed: 650,
+  maxSpeed: 620,
   accel: 520,
-  drag: 0.985,
-  turnSpeed: 3.15,
+  drag: 0.984,
+  turnSpeed: 3.1,
+  condition: "Parked",
   headlightsOn: true
 };
 
-const MISSION = {
-  title: "Reach the Blue Candle Alley",
-  state: "active",
-  objective: "Reach the Drip Saints alley marker without being flagged.",
-  marker: { x: 2048, y: 3550, radius: 120 },
-  checkpoint: { x: 2048, y: 3260, radius: 235 },
-  checkpointTimer: 0,
-  flagged: false,
-  complete: false
-};
-
-const GATE_ZONES = [
-  { id:"westgate_exit", name:"Westgate Night Market / Blacklight Kids", x:565, y:2048, radius:260, color:0xb45aff, status:"Wired: Westgate Offramp to Blacklight Kids Connector" },
-  { id:"southgate_exit", name:"Southgate Main Entry / Drip Saints", x:2048, y:3550, radius:285, color:0xff8f7a, status:"Wired: Southgate to Checkpoint to Drip Saints Connector" },
-  { id:"eastgate_exit", name:"Eastgate Industrial / Rust Jackals", x:3530, y:2048, radius:285, color:0xffaa4d, status:"Wired: Eastgate to Rust Jackals Connector" },
-  { id:"northgate_exit", name:"Northgate Closed / Black Road", x:2048, y:545, radius:260, color:0xd0d0d0, status:"Closed: future Black Road foot route" }
+const DISTRICTS = [
+  { id:"westgate", label:"WESTGATE START", x:720, y:2048, r:320, color:0x9b6cff, note:"Donny / Distortion start" },
+  { id:"fuel", label:"WESTGATE FUEL STOP", x:760, y:2860, r:190, color:0x69aaff, note:"refuel test" },
+  { id:"checkpoint", label:"RED CONCORD CHECKPOINT", x:2048, y:3260, r:250, color:0xff3333, note:"flag risk" },
+  { id:"blue", label:"BLUE CANDLE ALLEY", x:2048, y:3550, r:300, color:0x70d9ff, note:"Drip Saints route" },
+  { id:"blacklight", label:"BLACKLIGHT CLUB ROUTE", x:565, y:2048, r:250, color:0xb45aff, note:"future nightlife" },
+  { id:"eastgate", label:"EASTGATE SCRAPYARDS", x:3530, y:2048, r:330, color:0xffaa4d, note:"Rust Jackals" },
+  { id:"civic", label:"CIVIC LOCKDOWN BRANCH", x:2480, y:3060, r:245, color:0xd92929, note:"future Red Concord zone" },
+  { id:"north", label:"NORTHGATE SEALED", x:2048, y:545, r:245, color:0xb8b8b8, note:"future Black Road" }
 ];
 
 const FUEL_STATIONS = [
-  { id:"fuel_poor_west_outer", name:"Muckrail Fuel & Salvage", tier:"poor", x:760, y:2860, radius:150, color:0xb46e37 },
-  { id:"fuel_poor_north_outer", name:"Muckrail Fuel & Salvage", tier:"poor", x:2850, y:760, radius:150, color:0xb46e37 },
-  { id:"fuel_mid_east_outer", name:"Dustline Waystop", tier:"middle", x:3380, y:2780, radius:165, color:0x69aaff },
-  { id:"fuel_mid_west_outer", name:"Dustline Waystop", tier:"middle", x:780, y:1120, radius:165, color:0x69aaff },
-  { id:"fuel_rich_city_close", name:"Nova Crown Fuel", tier:"rich", x:2510, y:1260, radius:180, color:0xf0d278 }
-];
-
-const TRAFFIC_ROUTE_OUTER = [
-  {x:720, y:720}, {x:2048, y:720}, {x:3376, y:720},
-  {x:3376, y:2048}, {x:3376, y:3376},
-  {x:2048, y:3376}, {x:720, y:3376}, {x:720, y:2048}
-];
-
-const TRAFFIC_ROUTE_INNER = [
-  {x:840, y:840}, {x:2048, y:840}, {x:3256, y:840},
-  {x:3256, y:2048}, {x:3256, y:3256},
-  {x:2048, y:3256}, {x:840, y:3256}, {x:840, y:2048}
-];
-
-const PEDESTRIAN_WALK_NODES = [
-  {x:585, y:1900}, {x:620, y:2200}, {x:780, y:2380},
-  {x:1880, y:3500}, {x:2180, y:3500}, {x:2048, y:3260},
-  {x:3480, y:1880}, {x:3480, y:2200}, {x:3260, y:2048},
-  {x:1880, y:620}, {x:2200, y:620}, {x:2048, y:840}
+  { name:"Muckrail Fuel & Salvage", x:760, y:2860, r:150, color:0x69aaff },
+  { name:"Dustline Waystop", x:2850, y:760, r:150, color:0x69aaff },
+  { name:"Nova Crown Fuel", x:2510, y:1260, r:160, color:0xf0d278 }
 ];
 
 const NPCS = [
-  {
-    id:"drip_runner", name:"Drip Saints Runner", x:1940, y:3510, color:0x4da9ff,
-    line:"Blue candle means the alley still breathes. Stay off the red-lit road."
-  },
-  {
-    id:"checkpoint_officer", name:"Red Concord Checkpoint Officer", x:2140, y:3260, color:0xff3333,
-    line:"Papers out. Eyes down."
-  },
-  {
-    id:"westgate_mechanic", name:"Westgate Mechanic", x:685, y:2140, color:0xf0d278,
-    line:"That Aurelix thing turns too sharp if you floor it. Ease into the wheel."
-  }
+  { name:"Westgate Mechanic", x:675, y:2150, tex:"npc_gold", line:"That Aurelix thing turns too sharp if you floor it. Ease into the wheel." },
+  { name:"Drip Saints Runner", x:1940, y:3510, tex:"npc_blue", line:"Blue candle means the alley still breathes. Stay off the red-lit road." },
+  { name:"Red Concord Officer", x:2140, y:3260, tex:"npc_red", line:"Papers out. Eyes down." }
 ];
 
-const MAP_PASS_DISTRICTS = [
-  { id:"westgate_start", label:"WESTGATE START", x:650, y:2048, radius:310, color:0x9b6cff, note:"Donny / Distortion start" },
-  { id:"westgate_fuel", label:"WESTGATE FUEL STOP", x:760, y:2860, radius:200, color:0x69aaff, note:"Muckrail / Dustline services" },
-  { id:"checkpoint_road", label:"RED CONCORD CHECKPOINT ROAD", x:2048, y:3260, radius:250, color:0xff3333, note:"flag risk zone" },
-  { id:"blue_candle_alley", label:"BLUE CANDLE ALLEY", x:2048, y:3550, radius:295, color:0x70d9ff, note:"Drip Saints / Blue Candle Revue" },
-  { id:"blacklight_route", label:"BLACKLIGHT CLUB ROUTE", x:565, y:2048, radius:260, color:0xb45aff, note:"Blacklight Kids nightlife route" },
-  { id:"eastgate_scrap", label:"EASTGATE SCRAPYARDS", x:3530, y:2048, radius:335, color:0xffaa4d, note:"Rust Jackals / Scrapsaw Cathedral" },
-  { id:"civic_lockdown", label:"CIVIC GATE LOCKDOWN", x:2480, y:3060, radius:245, color:0xd92929, note:"Red Concord heavy zone / later" },
-  { id:"northgate_blackroad", label:"NORTHGATE SEALED", x:2048, y:545, radius:245, color:0xb8b8b8, note:"future Black Road foot route" }
-];
-
-const MAP_PASS_ROUTE_LINES = [
-  { label:"Main test route", color:0x70d9ff, points:[{x:650,y:2048},{x:760,y:2860},{x:2048,y:3260},{x:2048,y:3550}] },
-  { label:"Blacklight route", color:0xb45aff, points:[{x:650,y:2048},{x:565,y:2048}] },
-  { label:"Rust Jackals route", color:0xffaa4d, points:[{x:650,y:2048},{x:2048,y:2048},{x:3530,y:2048}] },
-  { label:"Civic lockdown branch", color:0xff3333, points:[{x:2048,y:3260},{x:2480,y:3060}] }
-];
-
-const MAP_PASS_ENTRANCES = [
-  { id:"blue_candle_hideout", label:"BLUE CANDLE REVUE HIDEOUT", x:2120, y:3562, color:0x8fdcff },
-  { id:"blacklight_club_future", label:"BLACKLIGHT CLUB ENTRANCE FUTURE", x:510, y:1980, color:0xb45aff },
-  { id:"rust_jackals_yard_future", label:"SCRAPSAW YARD ENTRANCE FUTURE", x:3525, y:2145, color:0xffaa4d },
-  { id:"civic_gate_future", label:"CIVIC GATE LOCKED FUTURE", x:2480, y:3060, color:0xff3333 },
-  { id:"westgate_garage_future", label:"WESTGATE GARAGE FUTURE", x:690, y:2165, color:0xf0d278 }
-];
-
-const MAP_PASS_ROAD_BLOCKERS = [
-  { id:"northgate_seal", label:"NORTHGATE SEALED BY RED CONCORD", x:2048, y:650, w:430, h:58, color:0xd0d0d0 },
-  { id:"civic_barricade_west", label:"CIVIC DETOUR BARRICADE", x:1700, y:3180, w:330, h:48, color:0xff3333 },
-  { id:"civic_barricade_east", label:"CIVIC CENTER LOCKDOWN", x:2480, y:3180, w:350, h:48, color:0xff3333 },
-  { id:"eastgate_toll_wreck", label:"RUST JACKALS TOLL WRECK", x:3100, y:1850, w:52, h:310, color:0xffaa4d },
-  { id:"westgate_rubble_choke", label:"WESTGATE RUBBLE CHOKE", x:530, y:1740, w:56, h:275, color:0xb45aff }
-];
-
-
-function clampToMap(obj) {
-  obj.x = Phaser.Math.Clamp(obj.x, 48, MAP_W - 48);
-  obj.y = Phaser.Math.Clamp(obj.y, 48, MAP_H - 48);
-}
-
-class GlasswellScene extends Phaser.Scene {
+class MainScene extends Phaser.Scene {
   constructor() {
-    super("GlasswellScene");
+    super("MainScene");
   }
 
   preload() {
     console.log("PRELOAD START");
-
-    this.load.on("loaderror", file => {
-      console.warn("ASSET LOAD FAILED:", file.key, file.src || file.url);
-    });
-
-    this.load.image("map", "assets/maps/dust9/glasswell/GLASSWELL_FREEWAY_RING_WIRED_TEST_MAP.png");
-    this.load.image("distortion_topdown", "assets/vehicles/special/aurelix_distortion/distortion_topdown.png");
-
-    this.load.audio("engine_idle", "assets/audio/vehicles/vehicle_engine_idle_loop.wav");
-    this.load.audio("engine_drive", "assets/audio/vehicles/vehicle_engine_drive_loop.wav");
-    this.load.audio("engine_boost", "assets/audio/vehicles/vehicle_engine_boost_loop.wav");
-    this.load.audio("refuel_loop", "assets/audio/vehicles/fuel_pump_refuel_loop.wav");
-    this.load.audio("police_siren", "assets/audio/vehicles/police_siren_loop.wav");
-
-    this.load.once("complete", () => console.log("PRELOAD COMPLETE"));
+    this.load.image("distortion_asset", "assets/vehicles/special/aurelix_distortion/distortion_topdown.png");
+    this.load.on("loaderror", file => console.warn("Asset failed:", file.key, file.src || file.url));
   }
 
   create() {
     console.log("CREATE START");
-
-    // The previous map asset path showed a sign-sheet image instead of a playable city map.
-    // Map Pass 1 now draws a temporary playable Glasswell road/city layout in code.
-    this.drawPlayableCityBase();
-
     this.physics.world.setBounds(0, 0, MAP_W, MAP_H);
     this.cameras.main.setBounds(0, 0, MAP_W, MAP_H);
 
+    this.createTextures();
+    this.drawCityMap();
+
     this.keys = this.input.keyboard.addKeys({
-      up: "W,UP",
-      down: "S,DOWN",
-      left: "A,LEFT",
-      right: "D,RIGHT",
-      interact: "E",
-      brake: "SPACE",
-      boost: "SHIFT",
-      headlights: "H",
-      siren: "P",
-      debug: "F3"
+      up:"W,UP", down:"S,DOWN", left:"A,LEFT", right:"D,RIGHT",
+      interact:"E", brake:"SPACE", boost:"SHIFT", lights:"H", debug:"F3"
     });
 
-    this.createRuntimeTextures();
     this.createMobileControls();
 
-    this.car = this.physics.add.sprite(START.x, START.y, "distortion_topdown");
-    this.car.setDepth(45);
-    this.car.setScale(0.45);
-    this.carHeading = -Math.PI / 2;
-    this.car.rotation = this.carHeading + CAR_VISUAL_OFFSET;
-    this.car.setMaxVelocity(850);
-    this.car.setDrag(0, 0);
+    const carTex = this.textures.exists("distortion_asset") ? "distortion_asset" : "car_fallback";
+    this.car = this.physics.add.sprite(CAR_START.x, CAR_START.y, carTex);
     this.car.setDepth(850);
-    this.carNameTag = this.add.text(this.car.x, this.car.y - 74, "DISTORTION", {
-      fontFamily:"monospace",
-      fontSize:"13px",
-      color:"#d7b8ff",
-      backgroundColor:"rgba(0,0,0,0.70)",
-      padding:{x:5, y:2}
-    }).setOrigin(0.5).setDepth(851);
+    this.car.setScale(carTex === "distortion_asset" ? 0.45 : 1.0);
+    this.carHeading = 0;
+    this.car.rotation = this.carHeading + CAR_VISUAL_OFFSET;
 
-    this.playerFacing = "down";
     this.player = this.physics.add.sprite(DONNY_START.x, DONNY_START.y, "donny_down");
     this.player.setDepth(900);
-    this.player.setScale(1.35);
+    this.player.setScale(1.45);
     this.player.setCollideWorldBounds(true);
-    this.player.body.setSize(22, 34, true);
 
-    this.playerLocator = this.add.graphics().setDepth(899);
-    this.playerNameTag = this.add.text(this.player.x, this.player.y - 58, "DONNY", {
-      fontFamily:"monospace",
-      fontSize:"15px",
-      color:"#9befff",
-      backgroundColor:"rgba(0,0,0,0.75)",
-      padding:{x:5, y:2}
-    }).setOrigin(0.5).setDepth(901);
+    this.playerLabel = this.add.text(this.player.x, this.player.y - 74, "DONNY", {
+      fontFamily:"monospace", fontSize:"16px", color:"#9befff",
+      backgroundColor:"rgba(0,0,0,0.78)", padding:{x:6,y:3}
+    }).setOrigin(0.5).setDepth(1000);
+
+    this.carLabel = this.add.text(this.car.x, this.car.y - 82, "DISTORTION", {
+      fontFamily:"monospace", fontSize:"14px", color:"#e0c7ff",
+      backgroundColor:"rgba(0,0,0,0.70)", padding:{x:6,y:3}
+    }).setOrigin(0.5).setDepth(1000);
+
+    this.locator = this.add.graphics().setDepth(899);
+    this.headlightLayer = this.add.graphics().setDepth(840).setBlendMode(Phaser.BlendModes.ADD);
+
+    this.npcs = [];
+    for (const data of NPCS) {
+      const npc = this.physics.add.sprite(data.x, data.y, data.tex);
+      npc.setScale(1.1);
+      npc.setDepth(870);
+      npc.dataRef = data;
+      this.add.text(data.x, data.y - 56, data.name, {
+        fontFamily:"monospace", fontSize:"13px", color:"#ffffff",
+        backgroundColor:"rgba(0,0,0,0.72)", padding:{x:4,y:2}
+      }).setOrigin(0.5).setDepth(890);
+      this.npcs.push(npc);
+    }
 
     this.inCar = false;
-    this.activeActor = this.player;
-
-    this.headlightLayer = this.add.graphics().setDepth(42);
-    this.headlightLayer.setBlendMode(Phaser.BlendModes.ADD);
-    this.trackLayer = this.add.graphics().setDepth(18);
-
-    this.smoke = this.add.particles(0, 0, "fx_smoke_puff", {
-      lifespan: { min: 350, max: 850 },
-      speed: { min: 8, max: 34 },
-      scale: { start: 0.14, end: 0.70 },
-      alpha: { start: 0.26, end: 0 },
-      quantity: 1,
-      frequency: 55,
-      tint: [0x777777, 0x9a9a9a, 0x5a5a5a],
-      emitting: false
-    }).setDepth(45);
-
-    this.drawGateZones();
-    this.drawFuelStations();
-    this.drawMissionObjects();
-    this.drawMapPassObjects();
-    this.createRoadBlockers();
-    this.createTraffic();
-    this.createPedestrians();
-    this.createNpcs();
+    this.active = this.player;
+    this.wanted = 0;
+    this.checkpointTimer = 0;
+    this.missionDone = false;
 
     this.makeHud();
     this.makePrompt();
-    this.makeDebugOverlay();
-    this.makeBlueCandleInterior();
-    this.setupAudio();
+    this.makeDebug();
 
-    this.wantedLevel = 0;
-    this.debugSirenOn = false;
-    this.debugVisible = false;
-    this.inInterior = false;
-    this.interiorStep = 0;
-    this.bandJoined = false;
-    DONNY.blueCandleStatus = "not joined";
+    this.input.keyboard.on("keydown-F3", () => this.debugText.setVisible(!this.debugText.visible));
 
-    this.input.keyboard.on("keydown-F3", () => {
-      this.debugVisible = !this.debugVisible;
-      this.debugText.setVisible(this.debugVisible);
-    });
-
-    this.cameras.main.startFollow(this.player, true, 0.14, 0.14);
-    this.cameras.main.setDeadzone(0, 0);
-    this.cameras.main.setZoom(CAMERA_ZOOM.foot);
-    this.cameras.main.centerOn(this.player.x, this.player.y);
-
-    console.log("GLASSWELL SCENE READY");
+    this.updateCamera();
+    console.log("GLASSWELL STABLE MAP READY");
   }
 
-  createRuntimeTextures() {
+  createTextures() {
     const g = this.add.graphics();
 
-    g.fillStyle(0xffffff, 1);
-    g.fillCircle(16, 16, 14);
-    g.generateTexture("fx_smoke_puff", 32, 32);
-    g.clear();
-
-    const makeDonny = (key, jacket, face, pants, direction) => {
+    const makeDonny = (key, dir) => {
       g.clear();
-      g.fillStyle(0x000000, 0.28);
-      g.fillEllipse(24, 54, 24, 8);
-
-      g.fillStyle(pants, 1);
-      g.fillRect(17, 40, 6, 18);
-      g.fillRect(26, 40, 6, 18);
-
-      g.fillStyle(jacket, 1);
-      g.fillRoundedRect(12, 19, 24, 28, 6);
-
-      g.fillStyle(0x333333, 1);
-      g.fillRect(10, 21, 6, 22);
-      g.fillRect(34, 21, 6, 22);
-
-      g.fillStyle(face, 1);
-      g.fillCircle(24, 13, 9);
-
+      g.fillStyle(0x000000, 0.30); g.fillEllipse(24, 58, 30, 9);
+      g.fillStyle(0x16263a, 1); g.fillRect(16, 40, 8, 22); g.fillRect(26, 40, 8, 22);
+      g.fillStyle(0x202020, 1); g.fillRoundedRect(11, 20, 28, 30, 6);
+      g.fillStyle(0x111111, 1); g.fillRect(9, 22, 7, 24); g.fillRect(38, 22, 7, 24);
+      g.fillStyle(0xb98158, 1); g.fillCircle(25, 13, 10);
       g.fillStyle(0x111111, 1);
-      if (direction === "up") {
-        g.fillRect(16, 6, 16, 10);
+      if (dir === "up") {
+        g.fillRect(16, 4, 18, 11);
       } else {
-        g.fillRect(15, 4, 18, 6);
-        g.fillRect(16, 7, 16, 4);
-        g.fillStyle(0x000000, 1);
-        g.fillCircle(21, 13, 1.5);
-        g.fillCircle(27, 13, 1.5);
+        g.fillRect(14, 3, 22, 7);
+        g.fillCircle(21, 13, 2);
+        g.fillCircle(29, 13, 2);
       }
-
-      g.fillStyle(0xc8c8c8, 1);
-      g.fillRect(21, 20, 6, 22);
-
-      g.generateTexture(key, 48, 64);
+      g.fillStyle(0xcfcfcf, 1); g.fillRect(23, 21, 5, 26);
+      g.generateTexture(key, 52, 68);
     };
 
-    makeDonny("donny_down", 0x252525, 0xb98158, 0x151515, "down");
-    makeDonny("donny_up", 0x222222, 0xb98158, 0x151515, "up");
-    makeDonny("donny_side", 0x272727, 0xb98158, 0x151515, "side");
+    makeDonny("donny_down", "down");
+    makeDonny("donny_up", "up");
+    makeDonny("donny_side", "side");
 
     g.clear();
-    g.fillStyle(0x445d68, 1);
-    g.fillRoundedRect(16, 5, 32, 74, 10);
-    g.fillStyle(0xa9d7e8, 1);
-    g.fillRoundedRect(21, 13, 22, 18, 5);
-    g.fillStyle(0x202328, 1);
-    g.fillRoundedRect(22, 47, 20, 19, 4);
-    g.fillStyle(0xd9d29c, 1);
-    g.fillRect(21, 5, 22, 3);
-    g.generateTexture("traffic_civilian", 64, 84);
-
-    g.clear();
-    g.fillStyle(0x111116, 1);
-    g.fillRoundedRect(15, 4, 34, 78, 9);
-    g.fillStyle(0x661e1e, 1);
-    g.fillRect(18, 8, 28, 9);
-    g.fillStyle(0xdddddd, 1);
-    g.fillRect(24, 28, 16, 7);
-    g.fillStyle(0xb01818, 1);
-    g.fillCircle(24, 23, 4);
-    g.fillStyle(0xffffff, 1);
-    g.fillCircle(40, 23, 4);
-    g.generateTexture("traffic_police", 64, 88);
-
-    g.clear();
-    g.fillStyle(0xe9e9e9, 1);
-    g.fillRoundedRect(14, 3, 36, 82, 8);
-    g.fillStyle(0x841c1c, 1);
-    g.fillRect(17, 11, 30, 8);
-    g.fillStyle(0x1f2f37, 1);
-    g.fillRoundedRect(20, 45, 24, 22, 5);
-    g.fillStyle(0xff2222, 1);
-    g.fillCircle(24, 28, 4);
-    g.fillStyle(0xffffff, 1);
-    g.fillCircle(40, 28, 4);
-    g.generateTexture("traffic_ems", 64, 90);
-
-    const makePed = (key, head, shirt) => {
-      g.clear();
-      g.fillStyle(0x111111, 0.30);
-      g.fillEllipse(16, 53, 18, 6);
-      g.fillStyle(head, 1);
-      g.fillCircle(16, 10, 7);
-      g.fillStyle(shirt, 1);
-      g.fillRoundedRect(8, 17, 16, 24, 5);
-      g.fillStyle(0x202020, 1);
-      g.fillRect(10, 39, 5, 14);
-      g.fillRect(18, 39, 5, 14);
-      g.generateTexture(key, 32, 56);
-    };
-    makePed("pedestrian_a", 0x4d4035, 0x2a76a8);
-    makePed("pedestrian_b", 0x8b674c, 0x7c2c84);
+    g.fillStyle(0x222222, 1); g.fillRoundedRect(0, 0, 90, 46, 10);
+    g.fillStyle(0x8b2cff, 1); g.fillRect(10, 6, 18, 5); g.fillRect(10, 35, 18, 5);
+    g.fillStyle(0x89d8ff, 1); g.fillRoundedRect(42, 8, 26, 30, 6);
+    g.lineStyle(3, 0xcccccc, 1); g.strokeRoundedRect(0, 0, 90, 46, 10);
+    g.generateTexture("car_fallback", 90, 46);
 
     const makeNpc = (key, color) => {
       g.clear();
-      g.fillStyle(0x111111, 0.32);
-      g.fillEllipse(20, 58, 22, 7);
-      g.fillStyle(0xb98762, 1);
-      g.fillCircle(20, 10, 8);
-      g.fillStyle(color, 1);
-      g.fillRoundedRect(10, 19, 20, 28, 5);
-      g.fillStyle(0x151515, 1);
-      g.fillRect(12, 45, 6, 14);
-      g.fillRect(22, 45, 6, 14);
-      g.generateTexture(key, 40, 64);
+      g.fillStyle(0x000000, 0.3); g.fillEllipse(20, 58, 24, 8);
+      g.fillStyle(0xb98762, 1); g.fillCircle(20, 11, 8);
+      g.fillStyle(color, 1); g.fillRoundedRect(9, 20, 22, 29, 5);
+      g.fillStyle(0x111111, 1); g.fillRect(12, 47, 6, 15); g.fillRect(22, 47, 6, 15);
+      g.generateTexture(key, 42, 68);
     };
     makeNpc("npc_blue", 0x245b9a);
     makeNpc("npc_red", 0x8a2020);
     makeNpc("npc_gold", 0x806b22);
 
-    g.clear();
-    g.fillStyle(0xffffff, 1);
-    g.fillRect(0, 0, 16, 16);
-    g.generateTexture("blocker_body", 16, 16);
-
     g.destroy();
   }
 
-  createMobileControls() {
-    this.mobile = {
-      joyX: 0,
-      joyY: 0,
-      activePointer: null,
-      buttons: { accel:false, brake:false, interact:false, boost:false, headlights:false },
-      buttonPress: { interact:false, headlights:false, brake:false }
-    };
-
-    const uiDepth = 1200; // keep mobile controls above interior overlay
-    const joyCX = 105;
-    const joyCY = GAME_H - 105;
-    const joyRadius = 70;
-    const knobRadius = 26;
-
-    this.add.circle(joyCX, joyCY, joyRadius, 0x111111, 0.30)
-      .setScrollFactor(0).setDepth(uiDepth).setStrokeStyle(3, 0xffffff, 0.26);
-
-    const knob = this.add.circle(joyCX, joyCY, knobRadius, 0xffffff, 0.20)
-      .setScrollFactor(0).setDepth(uiDepth + 1).setStrokeStyle(2, 0xffffff, 0.35);
-
-    const zone = this.add.zone(joyCX, joyCY, joyRadius * 2.3, joyRadius * 2.3)
-      .setScrollFactor(0).setDepth(uiDepth + 2).setInteractive();
-
-    const setJoy = (pointer) => {
-      const dx = pointer.x - joyCX;
-      const dy = pointer.y - joyCY;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const max = joyRadius - knobRadius * 0.35;
-      const clamped = Math.min(dist, max);
-      const angle = Math.atan2(dy, dx);
-      knob.setPosition(joyCX + Math.cos(angle) * clamped, joyCY + Math.sin(angle) * clamped);
-      this.mobile.joyX = Phaser.Math.Clamp(dx / max, -1, 1);
-      this.mobile.joyY = Phaser.Math.Clamp(dy / max, -1, 1);
-    };
-
-    const resetJoy = () => {
-      this.mobile.joyX = 0;
-      this.mobile.joyY = 0;
-      this.mobile.activePointer = null;
-      knob.setPosition(joyCX, joyCY);
-    };
-
-    zone.on("pointerdown", pointer => { this.mobile.activePointer = pointer.id; setJoy(pointer); });
-    zone.on("pointermove", pointer => { if (this.mobile.activePointer === pointer.id) setJoy(pointer); });
-    this.input.on("pointerup", pointer => { if (this.mobile.activePointer === pointer.id) resetJoy(); });
-    this.input.on("pointerupoutside", pointer => { if (this.mobile.activePointer === pointer.id) resetJoy(); });
-
-    const makeButton = (id, labelTop, labelBottom, x, y, color) => {
-      const circle = this.add.circle(x, y, 38, color, 0.34)
-        .setScrollFactor(0).setDepth(uiDepth).setStrokeStyle(3, 0xffffff, 0.30)
-        .setInteractive({ useHandCursor: true });
-
-      this.add.text(x, y - 10, labelTop + (labelBottom ? "\n" + labelBottom : ""), {
-        fontFamily: "monospace",
-        fontSize: labelBottom ? "12px" : "18px",
-        color: "#ffffff",
-        align: "center"
-      }).setOrigin(0.5).setScrollFactor(0).setDepth(uiDepth + 1);
-
-      circle.on("pointerdown", () => {
-        this.mobile.buttons[id] = true;
-        if (id === "interact") this.mobile.buttonPress.interact = true;
-        if (id === "brake") this.mobile.buttonPress.brake = true;
-        if (id === "headlights") this.mobile.buttonPress.headlights = true;
-        circle.setAlpha(0.65);
-      });
-      const release = () => { this.mobile.buttons[id] = false; circle.setAlpha(1); };
-      circle.on("pointerup", release);
-      circle.on("pointerout", release);
-      this.input.on("pointerup", release);
-    };
-
-    makeButton("accel", "A", "GAS", GAME_W - 82, GAME_H - 92, 0x2e7d32);
-    makeButton("brake", "B", "BRK", GAME_W - 148, GAME_H - 54, 0x8a2020);
-    makeButton("interact", "X", "USE", GAME_W - 148, GAME_H - 130, 0x245b9a);
-    makeButton("headlights", "Y", "LTS", GAME_W - 214, GAME_H - 92, 0x8d7a21);
-    makeButton("boost", "R", "BST", GAME_W - 82, GAME_H - 174, 0x7b36c7);
-  }
-
-  getMobileInput() {
-    if (!this.mobile) {
-      return { joyX:0, joyY:0, accel:false, brake:false, interact:false, interactPressed:false, boost:false, headlightsPressed:false, any:false };
-    }
-    const m = this.mobile;
-    const out = {
-      joyX: m.joyX || 0,
-      joyY: m.joyY || 0,
-      accel: !!m.buttons.accel,
-      brake: !!m.buttons.brake,
-      interact: !!m.buttons.interact,
-      interactPressed: !!m.buttonPress.interact,
-      boost: !!m.buttons.boost,
-      headlightsPressed: !!m.buttonPress.headlights,
-      any: !!(
-        m.buttons.accel || m.buttons.brake || m.buttons.interact || m.buttons.boost ||
-        m.buttons.headlights || Math.abs(m.joyX) > 0.05 || Math.abs(m.joyY) > 0.05
-      )
-    };
-    m.buttonPress.interact = false;
-    m.buttonPress.brake = false;
-    m.buttonPress.headlights = false;
-    return out;
-  }
-
-  setupAudio() {
-    this.audioEnabled = false;
-    this.audio = {};
-    for (const [key, asset] of Object.entries({
-      idle:"engine_idle",
-      drive:"engine_drive",
-      boost:"engine_boost",
-      refuel:"refuel_loop",
-      police:"police_siren"
-    })) {
-      if (this.cache.audio.exists(asset)) {
-        this.audio[key] = this.sound.add(asset, { loop:true, volume:0 });
-      }
-    }
-  }
-
-  startAudioOnce() {
-    if (this.audioEnabled) return;
-    this.audioEnabled = true;
-    Object.values(this.audio).forEach(s => { try { s.play(); } catch(e) {} });
-  }
-
-
-  drawPlayableCityBase() {
+  drawCityMap() {
     const g = this.add.graphics().setDepth(0);
-
     g.fillStyle(0x141414, 1);
     g.fillRect(0, 0, MAP_W, MAP_H);
-    g.lineStyle(8, 0x2d2d2d, 1);
-    g.strokeRect(32, 32, MAP_W - 64, MAP_H - 64);
 
     const districtRects = [
-      { x:340, y:1540, w:760, h:1030, color:0x1c1426, alpha:0.82, label:"WESTGATE START / NIGHT MARKET ROUTE", lx:720, ly:1568 },
-      { x:520, y:2640, w:520, h:470, color:0x202018, alpha:0.88, label:"WESTGATE FUEL STOP", lx:780, ly:2668 },
-      { x:1730, y:3040, w:650, h:700, color:0x102027, alpha:0.90, label:"BLUE CANDLE ALLEY / DRIP SAINTS", lx:2048, ly:3070 },
-      { x:1750, y:2890, w:900, h:360, color:0x2a1010, alpha:0.58, label:"RED CONCORD CHECKPOINT ROAD", lx:2048, ly:2908 },
-      { x:3070, y:1580, w:820, h:1000, color:0x2a1a0a, alpha:0.82, label:"EASTGATE SCRAPYARDS / RUST JACKALS", lx:3500, ly:1610 },
-      { x:2050, y:2600, w:760, h:600, color:0x241010, alpha:0.68, label:"CIVIC LOCKDOWN BRANCH", lx:2480, ly:2625 },
-      { x:1700, y:300, w:720, h:740, color:0x1a1a1a, alpha:0.84, label:"NORTHGATE SEALED / BLACK ROAD FUTURE", lx:2048, ly:330 }
+      { x:340, y:1540, w:760, h:1030, c:0x1c1426 },
+      { x:520, y:2640, w:520, h:470, c:0x202018 },
+      { x:1730, y:3040, w:650, h:700, c:0x102027 },
+      { x:1750, y:2890, w:900, h:360, c:0x2a1010 },
+      { x:3070, y:1580, w:820, h:1000, c:0x2a1a0a },
+      { x:2050, y:2600, w:760, h:600, c:0x241010 },
+      { x:1700, y:300, w:720, h:740, c:0x1a1a1a }
     ];
-
     for (const d of districtRects) {
-      g.fillStyle(d.color, d.alpha);
+      g.fillStyle(d.c, 0.84);
       g.fillRect(d.x, d.y, d.w, d.h);
       g.lineStyle(3, 0x383838, 0.8);
       g.strokeRect(d.x, d.y, d.w, d.h);
-      this.add.text(d.lx, d.ly, d.label, {
-        fontFamily:"monospace",
-        fontSize:"18px",
-        color:"#d8d8d8",
-        backgroundColor:"rgba(0,0,0,0.65)",
-        padding:{x:8, y:4}
-      }).setOrigin(0.5).setDepth(10);
     }
-
-    const road = 0x303030;
-    const roadEdge = 0x575757;
-    const lane = 0xc8b46a;
 
     const roads = [
       { x:560, y:620, w:320, h:3080 },
@@ -619,15 +250,14 @@ class GlasswellScene extends Phaser.Scene {
       { x:560, y:2680, w:1480, h:240 },
       { x:2048, y:2900, w:520, h:230 }
     ];
-
     for (const r of roads) {
-      g.fillStyle(road, 1);
+      g.fillStyle(0x303030, 1);
       g.fillRect(r.x, r.y, r.w, r.h);
-      g.lineStyle(5, roadEdge, 0.95);
+      g.lineStyle(5, 0x575757, 0.95);
       g.strokeRect(r.x, r.y, r.w, r.h);
     }
 
-    g.lineStyle(4, lane, 0.62);
+    g.lineStyle(4, 0xc8b46a, 0.62);
     for (let x = 460; x < 3550; x += 150) {
       g.beginPath(); g.moveTo(x, 2048); g.lineTo(x + 70, 2048); g.strokePath();
       g.beginPath(); g.moveTo(x, 3360); g.lineTo(x + 70, 3360); g.strokePath();
@@ -639,12 +269,18 @@ class GlasswellScene extends Phaser.Scene {
       g.beginPath(); g.moveTo(3376, y); g.lineTo(3376, y + 70); g.strokePath();
     }
 
-    g.fillStyle(0x202020, 1);
-    g.fillRect(455, 2208, 540, 360);
-    g.fillRect(910, 1780, 360, 450);
-    g.fillRect(1550, 3420, 980, 260);
-    g.fillRect(2890, 1780, 280, 560);
+    for (const d of DISTRICTS) {
+      g.lineStyle(4, d.color, 0.42);
+      g.strokeCircle(d.x, d.y, d.r);
+      g.fillStyle(d.color, 0.05);
+      g.fillCircle(d.x, d.y, d.r);
+      this.add.text(d.x, d.y - d.r - 24, d.label + "\n" + d.note, {
+        fontFamily:"monospace", fontSize:"14px", color:"#ffffff", align:"center",
+        backgroundColor:"rgba(0,0,0,0.68)", padding:{x:6,y:4}
+      }).setOrigin(0.5).setDepth(40);
+    }
 
+    // Buildings / simple blocks
     const blocks = [
       {x:430,y:1600,w:130,h:250,c:0x25212b}, {x:915,y:1600,w:160,h:250,c:0x25212b},
       {x:430,y:2260,w:130,h:245,c:0x242424}, {x:905,y:2260,w:170,h:245,c:0x242424},
@@ -653,7 +289,6 @@ class GlasswellScene extends Phaser.Scene {
       {x:3090,y:2210,w:160,h:300,c:0x3a2410}, {x:3570,y:2210,w:190,h:300,c:0x3a2410},
       {x:2350,y:2780,w:300,h:240,c:0x341414}
     ];
-
     for (const b of blocks) {
       g.fillStyle(b.c, 0.94);
       g.fillRect(b.x, b.y, b.w, b.h);
@@ -661,924 +296,289 @@ class GlasswellScene extends Phaser.Scene {
       g.strokeRect(b.x, b.y, b.w, b.h);
     }
 
-    g.fillStyle(0x6b4bff, 0.22);
-    g.fillCircle(DONNY_START.x, DONNY_START.y, 72);
-    g.lineStyle(4, 0x9b6cff, 0.9);
-    g.strokeCircle(DONNY_START.x, DONNY_START.y, 72);
-    this.add.text(DONNY_START.x, DONNY_START.y - 92, "DONNY START", {
+    // Road blockers visual only for now
+    const blockers = [
+      {x:2048,y:650,w:430,h:58,label:"NORTHGATE SEALED"},
+      {x:2480,y:3180,w:350,h:48,label:"CIVIC LOCKDOWN"},
+      {x:3100,y:1850,w:52,h:310,label:"RUST JACKALS TOLL"}
+    ];
+    for (const b of blockers) {
+      g.fillStyle(0x111111, 0.74); g.fillRect(b.x-b.w/2,b.y-b.h/2,b.w,b.h);
+      g.lineStyle(5,0xff3333,0.85); g.strokeRect(b.x-b.w/2,b.y-b.h/2,b.w,b.h);
+      this.add.text(b.x,b.y-b.h/2-18,b.label,{fontFamily:"monospace",fontSize:"13px",color:"#fff",backgroundColor:"rgba(0,0,0,0.7)",padding:{x:5,y:2}}).setOrigin(0.5).setDepth(50);
+    }
+
+    g.fillStyle(0x6b4bff, 0.25);
+    g.fillCircle(DONNY_START.x, DONNY_START.y, 74);
+    g.lineStyle(5, 0x9b6cff, 0.95);
+    g.strokeCircle(DONNY_START.x, DONNY_START.y, 74);
+    this.add.text(DONNY_START.x, DONNY_START.y - 96, "DONNY START", {
       fontFamily:"monospace", fontSize:"15px", color:"#ffffff",
-      backgroundColor:"rgba(0,0,0,0.7)", padding:{x:6,y:3}
-    }).setOrigin(0.5).setDepth(30);
+      backgroundColor:"rgba(0,0,0,0.72)", padding:{x:6,y:3}
+    }).setOrigin(0.5).setDepth(45);
 
     g.fillStyle(0x9b6cff, 0.15);
-    g.fillRect(START.x - 75, START.y - 50, 150, 100);
+    g.fillRect(CAR_START.x - 76, CAR_START.y - 50, 152, 100);
     g.lineStyle(3, 0xd7b8ff, 0.9);
-    g.strokeRect(START.x - 75, START.y - 50, 150, 100);
-    this.add.text(START.x, START.y + 78, "DISTORTION PARKED", {
+    g.strokeRect(CAR_START.x - 76, CAR_START.y - 50, 152, 100);
+    this.add.text(CAR_START.x, CAR_START.y + 82, "DISTORTION PARKED", {
       fontFamily:"monospace", fontSize:"13px", color:"#e5d3ff",
-      backgroundColor:"rgba(0,0,0,0.7)", padding:{x:5,y:2}
-    }).setOrigin(0.5).setDepth(30);
-
-    this.add.text(64, 92, "PROCEDURAL GLASSWELL TEST MAP\\nWestgate -> Fuel -> Checkpoint -> Blue Candle Alley\\nEast road = Rust Jackals route · West road = Blacklight route", {
-      fontFamily:"monospace",
-      fontSize:"16px",
-      color:"#9befff",
-      backgroundColor:"rgba(0,0,0,0.72)",
-      padding:{x:10,y:6}
-    }).setDepth(200);
-  }
-
-
-  drawGateZones() {
-    const gfx = this.add.graphics().setDepth(20);
-    for (const z of GATE_ZONES) {
-      gfx.lineStyle(5, z.color, 0.35);
-      gfx.strokeCircle(z.x, z.y, z.radius);
-      gfx.fillStyle(z.color, 0.10);
-      gfx.fillCircle(z.x, z.y, 44);
-      this.add.text(z.x, z.y - z.radius - 22, z.name, {
-        fontFamily:"monospace",
-        fontSize:"16px",
-        color:"#ffffff",
-        backgroundColor:"rgba(0,0,0,0.58)",
-        padding:{x:6, y:3}
-      }).setOrigin(0.5).setDepth(40);
-    }
-  }
-
-  drawFuelStations() {
-    const gfx = this.add.graphics().setDepth(21);
-    for (const s of FUEL_STATIONS) {
-      gfx.lineStyle(4, s.color, 0.45);
-      gfx.strokeCircle(s.x, s.y, s.radius);
-      gfx.fillStyle(s.color, 0.18);
-      gfx.fillCircle(s.x, s.y, 46);
-      this.add.text(s.x, s.y + s.radius + 18, s.name, {
-        fontFamily:"monospace",
-        fontSize:"15px",
-        color:"#fff4ce",
-        backgroundColor:"rgba(0,0,0,0.55)",
-        padding:{x:5, y:2}
-      }).setOrigin(0.5).setDepth(40);
-    }
-  }
-
-  drawMissionObjects() {
-    const gfx = this.add.graphics().setDepth(23);
-
-    gfx.lineStyle(5, 0x3ea7ff, 0.75);
-    gfx.strokeCircle(MISSION.marker.x, MISSION.marker.y, MISSION.marker.radius);
-    gfx.fillStyle(0x3ea7ff, 0.12);
-    gfx.fillCircle(MISSION.marker.x, MISSION.marker.y, MISSION.marker.radius);
-
-    this.add.text(MISSION.marker.x, MISSION.marker.y - 150, "BLUE CANDLE ALLEY OBJECTIVE", {
-      fontFamily:"monospace",
-      fontSize:"17px",
-      color:"#cbefff",
-      backgroundColor:"rgba(0,0,0,0.68)",
-      padding:{x:6, y:3}
-    }).setOrigin(0.5).setDepth(45);
-
-    gfx.lineStyle(5, 0xff3333, 0.40);
-    gfx.strokeCircle(MISSION.checkpoint.x, MISSION.checkpoint.y, MISSION.checkpoint.radius);
-    gfx.fillStyle(0xff3333, 0.06);
-    gfx.fillCircle(MISSION.checkpoint.x, MISSION.checkpoint.y, MISSION.checkpoint.radius);
-
-    this.add.text(MISSION.checkpoint.x, MISSION.checkpoint.y - 265, "RED CONCORD CHECKPOINT ZONE", {
-      fontFamily:"monospace",
-      fontSize:"15px",
-      color:"#ffb1b1",
-      backgroundColor:"rgba(0,0,0,0.68)",
-      padding:{x:6, y:3}
-    }).setOrigin(0.5).setDepth(45);
-
-    gfx.lineStyle(4, 0x8fdcff, 0.85);
-    gfx.strokeCircle(MISSION.marker.x + 72, MISSION.marker.y + 12, 52);
-    gfx.fillStyle(0x8fdcff, 0.16);
-    gfx.fillCircle(MISSION.marker.x + 72, MISSION.marker.y + 12, 52);
-    this.add.text(MISSION.marker.x + 72, MISSION.marker.y + 78, "HIDEOUT DOOR", {
-      fontFamily:"monospace",
-      fontSize:"13px",
-      color:"#dff8ff",
-      backgroundColor:"rgba(0,0,0,0.68)",
-      padding:{x:5, y:2}
+      backgroundColor:"rgba(0,0,0,0.70)", padding:{x:5,y:2}
     }).setOrigin(0.5).setDepth(45);
   }
 
-  createTraffic() {
-    this.traffic = [];
-    const configs = [
-      { type:"civilian", texture:"traffic_civilian", route:TRAFFIC_ROUTE_OUTER, start:0, speed:125 },
-      { type:"civilian", texture:"traffic_civilian", route:TRAFFIC_ROUTE_OUTER, start:2, speed:118 },
-      { type:"civilian", texture:"traffic_civilian", route:TRAFFIC_ROUTE_INNER, start:4, speed:112 },
-      { type:"civilian", texture:"traffic_civilian", route:TRAFFIC_ROUTE_INNER, start:6, speed:106 },
-      { type:"police", texture:"traffic_police", route:TRAFFIC_ROUTE_OUTER, start:1, speed:145 },
-      { type:"police", texture:"traffic_police", route:TRAFFIC_ROUTE_INNER, start:5, speed:140 },
-      { type:"ems", texture:"traffic_ems", route:TRAFFIC_ROUTE_OUTER, start:3, speed:135 },
-      { type:"ems", texture:"traffic_ems", route:TRAFFIC_ROUTE_INNER, start:7, speed:130 }
-    ];
-
-    for (const cfg of configs) {
-      const pos = cfg.route[cfg.start % cfg.route.length];
-      const sprite = this.physics.add.sprite(pos.x, pos.y, cfg.texture);
-      sprite.setDepth(cfg.type === "civilian" ? 35 : 38);
-      sprite.setScale(cfg.type === "ems" ? 0.70 : 0.65);
-      sprite.route = cfg.route;
-      sprite.routeIndex = (cfg.start + 1) % cfg.route.length;
-      sprite.aiSpeed = cfg.speed;
-      sprite.vehicleType = cfg.type;
-      sprite.sirenPhase = Math.random() * 100;
-      this.traffic.push(sprite);
-    }
-  }
-
-  createPedestrians() {
-    this.pedestrians = [];
-    for (let i = 0; i < 18; i++) {
-      const node = PEDESTRIAN_WALK_NODES[i % PEDESTRIAN_WALK_NODES.length];
-      const tex = i % 2 === 0 ? "pedestrian_a" : "pedestrian_b";
-      const ped = this.physics.add.sprite(node.x + (Math.random() * 90 - 45), node.y + (Math.random() * 90 - 45), tex);
-      ped.setDepth(44);
-      ped.setScale(0.78);
-      ped.homeX = ped.x;
-      ped.homeY = ped.y;
-      ped.walkRadius = 44 + Math.random() * 60;
-      ped.walkSpeed = 0.35 + Math.random() * 0.35;
-      ped.phase = Math.random() * Math.PI * 2;
-      this.pedestrians.push(ped);
-    }
-  }
-
-  createNpcs() {
-    this.npcs = [];
-    const textureFor = (id) => {
-      if (id === "checkpoint_officer") return "npc_red";
-      if (id === "westgate_mechanic") return "npc_gold";
-      return "npc_blue";
+  createMobileControls() {
+    this.mobile = { joyX:0, joyY:0, pointer:null, buttons:{gas:false, brake:false, use:false, boost:false, lights:false}, press:{use:false, lights:false} };
+    const depth = 1200;
+    const jx = 105, jy = GAME_H - 105, jr = 70, kr = 26;
+    this.add.circle(jx,jy,jr,0x111111,0.30).setScrollFactor(0).setDepth(depth).setStrokeStyle(3,0xffffff,0.26);
+    const knob = this.add.circle(jx,jy,kr,0xffffff,0.20).setScrollFactor(0).setDepth(depth+1).setStrokeStyle(2,0xffffff,0.35);
+    const zone = this.add.zone(jx,jy,jr*2.3,jr*2.3).setScrollFactor(0).setDepth(depth+2).setInteractive();
+    const setJoy = p => {
+      const dx = p.x-jx, dy=p.y-jy;
+      const max = jr - kr*0.35;
+      const dist = Math.min(Math.sqrt(dx*dx+dy*dy), max);
+      const a = Math.atan2(dy,dx);
+      knob.setPosition(jx+Math.cos(a)*dist, jy+Math.sin(a)*dist);
+      this.mobile.joyX = Phaser.Math.Clamp(dx/max,-1,1);
+      this.mobile.joyY = Phaser.Math.Clamp(dy/max,-1,1);
     };
+    const reset = () => { this.mobile.joyX=0; this.mobile.joyY=0; this.mobile.pointer=null; knob.setPosition(jx,jy); };
+    zone.on("pointerdown", p => { this.mobile.pointer=p.id; setJoy(p); });
+    zone.on("pointermove", p => { if (this.mobile.pointer===p.id) setJoy(p); });
+    this.input.on("pointerup", p => { if (this.mobile.pointer===p.id) reset(); });
 
-    for (const data of NPCS) {
-      const npc = this.physics.add.sprite(data.x, data.y, textureFor(data.id));
-      npc.setDepth(58);
-      npc.setScale(1.0);
-      npc.npcData = data;
-      this.add.text(data.x, data.y - 52, data.name, {
-        fontFamily:"monospace",
-        fontSize:"13px",
-        color:"#ffffff",
-        backgroundColor:"rgba(0,0,0,0.58)",
-        padding:{x:4, y:2}
-      }).setOrigin(0.5).setDepth(80);
-      this.npcs.push(npc);
-    }
+    const btn = (id, top, bottom, x, y, color) => {
+      const c = this.add.circle(x,y,38,color,0.36).setScrollFactor(0).setDepth(depth).setStrokeStyle(3,0xffffff,0.3).setInteractive();
+      this.add.text(x,y-10,top+"\n"+bottom,{fontFamily:"monospace",fontSize:"12px",color:"#fff",align:"center"}).setOrigin(0.5).setScrollFactor(0).setDepth(depth+1);
+      c.on("pointerdown",()=>{this.mobile.buttons[id]=true; if(id==="use")this.mobile.press.use=true; if(id==="lights")this.mobile.press.lights=true; c.setAlpha(0.65);});
+      const up=()=>{this.mobile.buttons[id]=false; c.setAlpha(1);};
+      c.on("pointerup",up); c.on("pointerout",up); this.input.on("pointerup",up);
+    };
+    btn("gas","A","GAS",GAME_W-82,GAME_H-92,0x2e7d32);
+    btn("brake","B","BRK",GAME_W-148,GAME_H-54,0x8a2020);
+    btn("use","X","USE",GAME_W-148,GAME_H-130,0x245b9a);
+    btn("lights","Y","LTS",GAME_W-214,GAME_H-92,0x8d7a21);
+    btn("boost","R","BST",GAME_W-82,GAME_H-174,0x7b36c7);
+  }
+
+  mobileInput() {
+    const m = this.mobile;
+    const out = {
+      joyX:m.joyX, joyY:m.joyY, gas:m.buttons.gas, brake:m.buttons.brake,
+      use:m.buttons.use, usePressed:m.press.use, boost:m.buttons.boost, lightsPressed:m.press.lights
+    };
+    m.press.use = false;
+    m.press.lights = false;
+    return out;
   }
 
   makeHud() {
-    this.hud = this.add.container(16, GAME_H - 154).setScrollFactor(0).setDepth(300);
-
-    const bg = this.add.rectangle(0, 0, 430, 140, 0x000000, 0.70).setOrigin(0);
-    bg.setStrokeStyle(2, 0xa66cff, 0.9);
-
-    this.hudTitle = this.add.text(14, 8, "DONNY / GLASSWELL", {
-      fontFamily:"monospace",
-      fontSize:"15px",
-      color:"#e5b8ff"
-    });
-
-    this.hudMode = this.add.text(14, 30, "Mode: On foot", {
-      fontFamily:"monospace",
-      fontSize:"13px",
-      color:"#ffffff"
-    });
-
-    this.hudHp = this.add.text(14, 54, "HP", {
-      fontFamily:"monospace",
-      fontSize:"13px",
-      color:"#ffffff"
-    });
-
-    this.hpBack = this.add.rectangle(78, 62, 210, 13, 0x303030, 1).setOrigin(0, 0.5);
-    this.hpBar = this.add.rectangle(78, 62, 210, 13, 0x3fc46b, 1).setOrigin(0, 0.5);
-
-    this.hudFuel = this.add.text(14, 79, "Fuel", {
-      fontFamily:"monospace",
-      fontSize:"13px",
-      color:"#ffffff"
-    });
-
-    this.fuelBack = this.add.rectangle(78, 87, 210, 13, 0x303030, 1).setOrigin(0, 0.5);
-    this.fuelBar = this.add.rectangle(78, 87, 210, 13, 0x9b6cff, 1).setOrigin(0, 0.5);
-
-    this.hudMission = this.add.text(14, 106, "Mission", {
-      fontFamily:"monospace",
-      fontSize:"12px",
-      color:"#cbefff",
-      wordWrap: { width: 390 }
-    });
-
-    this.hudWanted = this.add.text(300, 8, "WANTED 0", {
-      fontFamily:"monospace",
-      fontSize:"13px",
-      color:"#ff7777"
-    });
-
-    this.hud.add([
-      bg,
-      this.hudTitle,
-      this.hudMode,
-      this.hudHp,
-      this.hpBack,
-      this.hpBar,
-      this.hudFuel,
-      this.fuelBack,
-      this.fuelBar,
-      this.hudMission,
-      this.hudWanted
-    ]);
+    this.hud = this.add.container(16, GAME_H-145).setScrollFactor(0).setDepth(1100);
+    const bg = this.add.rectangle(0,0,430,132,0x000000,0.72).setOrigin(0).setStrokeStyle(2,0xa66cff,0.9);
+    this.hudMode = this.add.text(14,10,"Mode: On foot",{fontFamily:"monospace",fontSize:"14px",color:"#fff"});
+    this.hudHp = this.add.text(14,34,"HP",{fontFamily:"monospace",fontSize:"13px",color:"#fff"});
+    this.hpBar = this.add.rectangle(80,42,210,13,0x3fc46b,1).setOrigin(0,0.5);
+    this.hudFuel = this.add.text(14,59,"Fuel",{fontFamily:"monospace",fontSize:"13px",color:"#fff"});
+    this.fuelBar = this.add.rectangle(80,67,210,13,0x9b6cff,1).setOrigin(0,0.5);
+    this.hudMission = this.add.text(14,87,"Mission: Reach Blue Candle Alley",{fontFamily:"monospace",fontSize:"12px",color:"#cbefff",wordWrap:{width:395}});
+    this.hud.add([bg,this.hudMode,this.hudHp,this.hpBar,this.hudFuel,this.fuelBar,this.hudMission]);
   }
 
   makePrompt() {
-    this.prompt = this.add.text(20, 82, "", {
-      fontFamily:"monospace",
-      fontSize:"17px",
-      color:"#fff1b8",
-      backgroundColor:"rgba(0,0,0,0.76)",
-      padding:{x:8, y:5},
-      wordWrap:{ width: 700 }
-    }).setDepth(350).setScrollFactor(0).setVisible(false);
+    this.prompt = this.add.text(20,82,"",{fontFamily:"monospace",fontSize:"17px",color:"#fff1b8",backgroundColor:"rgba(0,0,0,0.76)",padding:{x:8,y:5},wordWrap:{width:720}})
+      .setScrollFactor(0).setDepth(1150).setVisible(false);
   }
 
-  makeDebugOverlay() {
-    this.debugText = this.add.text(GAME_W - 340, 12, "", {
-      fontFamily:"monospace",
-      fontSize:"12px",
-      color:"#9befff",
-      backgroundColor:"rgba(0,0,0,0.72)",
-      padding:{x:8, y:6}
-    }).setScrollFactor(0).setDepth(600).setVisible(false);
-  }
-
-  makeBlueCandleInterior() {
-    this.interiorLayer = this.add.container(0, 0).setScrollFactor(0).setDepth(900).setVisible(false);
-
-    const bg = this.add.rectangle(0, 0, GAME_W, GAME_H, 0x031019, 0.96).setOrigin(0);
-    const title = this.add.text(28, 22, "BLUE CANDLE REVUE HIDEOUT", {
-      fontFamily:"monospace",
-      fontSize:"24px",
-      color:"#9befff"
-    });
-
-    const sub = this.add.text(28, 54, "Lean Chapel Alleys / Drip Saints territory", {
-      fontFamily:"monospace",
-      fontSize:"14px",
-      color:"#d8f6ff"
-    });
-
-    const stage = this.add.rectangle(42, 92, 876, 248, 0x0a1d24, 0.94).setOrigin(0);
-    stage.setStrokeStyle(3, 0x6fdcff, 0.75);
-
-    const candles = this.add.text(62, 108,
-      "🕯  Blue candles line wet concrete. Old speakers hum. Relief crates sit near the back door.\n" +
-      "Rafe, Oren, and Toma are waiting. Max's old microphone stand is still on stage.", {
-      fontFamily:"monospace",
-      fontSize:"15px",
-      color:"#e8fbff",
-      wordWrap:{ width: 820 }
-    });
-
-    const rafe = this.add.rectangle(72, 205, 230, 92, 0x101c22, 0.92).setOrigin(0).setStrokeStyle(2, 0x8fdcff, 0.65);
-    const oren = this.add.rectangle(365, 205, 230, 92, 0x101c22, 0.92).setOrigin(0).setStrokeStyle(2, 0x8fdcff, 0.65);
-    const toma = this.add.rectangle(658, 205, 230, 92, 0x101c22, 0.92).setOrigin(0).setStrokeStyle(2, 0x8fdcff, 0.65);
-
-    const rafeT = this.add.text(88, 220, "RAFE\nlead guitar\nattitude test", {fontFamily:"monospace", fontSize:"15px", color:"#ffffff"});
-    const orenT = this.add.text(381, 220, "OREN\nVarkari bass\nloyalty test", {fontFamily:"monospace", fontSize:"15px", color:"#ffffff"});
-    const tomaT = this.add.text(674, 220, "TOMA\ndrums\nsignal timing", {fontFamily:"monospace", fontSize:"15px", color:"#ffffff"});
-
-    const panel = this.add.rectangle(42, 365, 876, 132, 0x000000, 0.74).setOrigin(0);
-    panel.setStrokeStyle(2, 0x6fdcff, 0.7);
-
-    this.interiorText = this.add.text(62, 382, "", {
-      fontFamily:"monospace",
-      fontSize:"17px",
-      color:"#fff7d5",
-      wordWrap:{ width: 830 }
-    });
-
-    this.interiorHelp = this.add.text(62, 508, "E / X = continue or join · B / Space = leave hideout", {
-      fontFamily:"monospace",
-      fontSize:"14px",
-      color:"#9befff"
-    });
-
-    // Mobile/touch-safe interior buttons. These sit inside the overlay so the player
-    // can pick/join/leave even if the normal driving controller is hidden by browser UI.
-    const continueBtn = this.add.rectangle(612, 512, 190, 42, 0x245b9a, 0.72)
-      .setStrokeStyle(2, 0x9befff, 0.95)
-      .setInteractive({ useHandCursor: true });
-    const continueText = this.add.text(612, 512, "CONTINUE / JOIN", {
-      fontFamily:"monospace",
-      fontSize:"14px",
-      color:"#ffffff"
-    }).setOrigin(0.5);
-
-    const leaveBtn = this.add.rectangle(815, 512, 150, 42, 0x8a2020, 0.72)
-      .setStrokeStyle(2, 0xffb4b4, 0.95)
-      .setInteractive({ useHandCursor: true });
-    const leaveText = this.add.text(815, 512, "LEAVE", {
-      fontFamily:"monospace",
-      fontSize:"14px",
-      color:"#ffffff"
-    }).setOrigin(0.5);
-
-    continueBtn.on("pointerdown", () => this.handleInteriorInput(true, false));
-    leaveBtn.on("pointerdown", () => this.handleInteriorInput(false, true));
-
-    this.interiorLayer.add([
-      bg, title, sub, stage, candles,
-      rafe, oren, toma, rafeT, orenT, tomaT,
-      panel, this.interiorText, this.interiorHelp,
-      continueBtn, continueText, leaveBtn, leaveText
-    ]);
-  }
-
-  enterBlueCandleInterior() {
-    if (this.inCar) {
-      this.showTimedPrompt("Exit the car before entering Blue Candle Revue hideout.", 1800);
-      return;
-    }
-
-    this.inInterior = true;
-    this.interiorStep = 0;
-    this.player.setVelocity(0, 0);
-    this.interiorLayer.setVisible(true);
-    this.refreshInteriorText();
-    this.showTimedPrompt("Entered Blue Candle Revue hideout.", 1000);
-  }
-
-  leaveBlueCandleInterior() {
-    this.inInterior = false;
-    this.interiorLayer.setVisible(false);
-    this.showTimedPrompt("Back outside Blue Candle Alley.", 1200);
-  }
-
-  handleInteriorInput(interactPressed, brakePressed) {
-    if (brakePressed) {
-      this.leaveBlueCandleInterior();
-      return;
-    }
-
-    if (!interactPressed) return;
-
-    if (this.interiorStep < 3) {
-      this.interiorStep += 1;
-      this.refreshInteriorText();
-      return;
-    }
-
-    if (!this.bandJoined) {
-      this.bandJoined = true;
-      DONNY.blueCandleStatus = "guest singer";
-      DONNY.repDripSaints += 3;
-      this.interiorStep = 4;
-      this.refreshInteriorText();
-      return;
-    }
-
-    this.leaveBlueCandleInterior();
-  }
-
-  refreshInteriorText() {
-    const lines = [
-      "Rafe \"Switchblade\" Vale: Max sold the stage. We kept the alley. If you sing here, you sing for people who can’t afford lies.",
-      "Oren Bluejack: Keep the low end steady. Scared people need something to stand on. I need to know you won’t sell us twice.",
-      "Toma Wickwheel: Blue-candle timing is survival. Sing when the door opens. Stop when patrol lights pass. Let the beat carry the warning.",
-      "Blue Candle Revue offers Donny a temporary slot as guest singer / signal performer. Press E / X to join this Drip Saints music path, or B / Space to leave neutral.",
-      "DONNY JOINED BLUE CANDLE REVUE AS GUEST SINGER. New route opened: blue-candle missions, alley crowd events, anti-Max Crownwell story beats, and Drip Saints safehouse access. Press E / X or B / Space to leave."
-    ];
-    this.interiorText.setText(lines[this.interiorStep] || lines[0]);
-  }
-
-  nearBlueCandleDoor() {
-    return Phaser.Math.Distance.Between(this.player.x, this.player.y, MISSION.marker.x + 72, MISSION.marker.y + 12) < 85;
+  makeDebug() {
+    this.debugText = this.add.text(GAME_W-360,12,"",{fontFamily:"monospace",fontSize:"12px",color:"#9befff",backgroundColor:"rgba(0,0,0,.72)",padding:{x:8,y:6}})
+      .setScrollFactor(0).setDepth(1300).setVisible(false);
   }
 
   update(time, delta) {
-    const mobile = this.getMobileInput();
-    const interactPressed = Phaser.Input.Keyboard.JustDown(this.keys.interact) || mobile.interactPressed;
-    const brakePressed = Phaser.Input.Keyboard.JustDown(this.keys.brake) || mobile.brakePressed;
-    const headlightsPressed = Phaser.Input.Keyboard.JustDown(this.keys.headlights) || mobile.headlightsPressed;
+    const m = this.mobileInput();
+    const usePressed = Phaser.Input.Keyboard.JustDown(this.keys.interact) || m.usePressed;
+    const lightsPressed = Phaser.Input.Keyboard.JustDown(this.keys.lights) || m.lightsPressed;
+    if (lightsPressed) CAR.headlightsOn = !CAR.headlightsOn;
+    if (usePressed) this.handleUse();
 
-    if (mobile.any || this.keys.up.isDown || this.keys.down.isDown || this.keys.left.isDown || this.keys.right.isDown) {
-      this.startAudioOnce();
-    }
+    if (this.inCar) this.updateCar(delta, m);
+    else this.updatePlayer(delta, m);
 
-    if (headlightsPressed) DISTORTION.headlightsOn = !DISTORTION.headlightsOn;
-
-    if (this.inInterior) {
-      this.handleInteriorInput(interactPressed, brakePressed);
-      this.updateHud();
-      this.updateDebug();
-      return;
-    }
-
-    if (interactPressed) this.handleInteract();
-
-    if (this.inCar) {
-      this.updateDriving(delta, mobile);
-    } else {
-      this.updateOnFoot(delta, mobile);
-    }
-
-    this.updateTraffic(delta);
-    this.updatePedestrians(time);
     this.updateMission(delta);
     this.updateCamera();
-    this.drawPlayerLocator();
-    this.updateActorTags();
-    this.updateFx();
+    this.updateLabels();
+    this.drawLocator();
     this.drawHeadlights();
-    this.checkProximity(delta, mobile);
+    this.checkPrompts(delta, m);
     this.updateHud();
-    this.updateAudio();
     this.updateDebug();
   }
 
-  updateOnFoot(delta, mobile) {
-    const left = this.keys.left.isDown || mobile.joyX < -0.28;
-    const right = this.keys.right.isDown || mobile.joyX > 0.28;
-    const up = this.keys.up.isDown || mobile.joyY < -0.28;
-    const down = this.keys.down.isDown || mobile.joyY > 0.28;
-
-    let vx = 0;
-    let vy = 0;
-    if (left) vx -= 1;
-    if (right) vx += 1;
-    if (up) vy -= 1;
-    if (down) vy += 1;
-
-    const mag = Math.sqrt(vx * vx + vy * vy);
-    const speed = DONNY.walkSpeed;
-
-    if (mag > 0) {
-      vx /= mag;
-      vy /= mag;
-      this.player.setVelocity(vx * speed, vy * speed);
-
-      if (Math.abs(vx) > Math.abs(vy)) {
-        this.playerFacing = vx < 0 ? "left" : "right";
-      } else {
-        this.playerFacing = vy < 0 ? "up" : "down";
-      }
-      this.setPlayerFacing(this.playerFacing);
-    } else {
-      this.player.setVelocity(0, 0);
-    }
+  updatePlayer(delta, m) {
+    const left = this.keys.left.isDown || m.joyX < -0.28;
+    const right = this.keys.right.isDown || m.joyX > 0.28;
+    const up = this.keys.up.isDown || m.joyY < -0.28;
+    const down = this.keys.down.isDown || m.joyY > 0.28;
+    let vx = (right?1:0) - (left?1:0);
+    let vy = (down?1:0) - (up?1:0);
+    const mag = Math.sqrt(vx*vx+vy*vy);
+    if (mag>0) {
+      vx/=mag; vy/=mag;
+      this.player.setVelocity(vx*DONNY.walkSpeed, vy*DONNY.walkSpeed);
+      if (Math.abs(vx)>Math.abs(vy)) { this.player.setTexture("donny_side"); this.player.setFlipX(vx<0); }
+      else { this.player.setTexture(vy<0 ? "donny_up" : "donny_down"); this.player.setFlipX(false); }
+    } else this.player.setVelocity(0,0);
   }
 
-  setPlayerFacing(facing) {
-    if (facing === "up") {
-      this.player.setTexture("donny_up");
-      this.player.setFlipX(false);
-    } else if (facing === "left") {
-      this.player.setTexture("donny_side");
-      this.player.setFlipX(true);
-    } else if (facing === "right") {
-      this.player.setTexture("donny_side");
-      this.player.setFlipX(false);
-    } else {
-      this.player.setTexture("donny_down");
-      this.player.setFlipX(false);
+  updateCar(delta, m) {
+    const dt = delta/1000;
+    const gas = this.keys.up.isDown || m.gas || m.joyY < -0.45;
+    const brake = this.keys.down.isDown || this.keys.brake.isDown || m.brake || m.joyY > 0.45;
+    const left = this.keys.left.isDown || m.joyX < -0.35;
+    const right = this.keys.right.isDown || m.joyX > 0.35;
+    const boost = (this.keys.boost.isDown || m.boost) && CAR.fuel > 0 && Math.abs(CAR.speed)>80;
+
+    if (gas && CAR.fuel>0) { CAR.speed += CAR.accel*dt*(boost?1.6:1); CAR.fuel=Math.max(0,CAR.fuel-dt*(boost?1.35:0.55)); CAR.condition=boost?"Boosting":"Driving"; }
+    else if (brake) { CAR.speed -= CAR.accel*dt*0.76; CAR.condition="Braking"; }
+    else { CAR.speed *= Math.pow(CAR.drag, delta/16.6667); if(Math.abs(CAR.speed)<4)CAR.speed=0; CAR.condition="Coasting"; }
+
+    CAR.speed = Phaser.Math.Clamp(CAR.speed, -230, boost?760:CAR.maxSpeed);
+    if (Math.abs(CAR.speed)>10) {
+      const steer=(right?1:0)-(left?1:0);
+      const reverse=CAR.speed<0?-1:1;
+      const ratio=Phaser.Math.Clamp(Math.abs(CAR.speed)/CAR.maxSpeed,0.18,1);
+      this.carHeading += steer*reverse*CAR.turnSpeed*dt*ratio;
     }
+    this.car.setVelocity(Math.cos(this.carHeading)*CAR.speed, Math.sin(this.carHeading)*CAR.speed);
+    this.car.rotation = this.carHeading + CAR_VISUAL_OFFSET;
+    this.car.x=Phaser.Math.Clamp(this.car.x,48,MAP_W-48);
+    this.car.y=Phaser.Math.Clamp(this.car.y,48,MAP_H-48);
   }
 
-  updateDriving(delta, mobile) {
-    const dt = delta / 1000;
-    const c = this.car;
-
-    const gas = this.keys.up.isDown || mobile.accel || mobile.joyY < -0.45;
-    const reverseOrBrake = this.keys.down.isDown || this.keys.brake.isDown || mobile.brake || mobile.joyY > 0.45;
-    const left = this.keys.left.isDown || mobile.joyX < -0.35;
-    const right = this.keys.right.isDown || mobile.joyX > 0.35;
-    const boosting = (this.keys.boost.isDown || mobile.boost) && DISTORTION.fuel > 0 && Math.abs(DISTORTION.speed) > 80;
-
-    if (gas && DISTORTION.fuel > 0) {
-      DISTORTION.speed += DISTORTION.accel * dt * (boosting ? 1.65 : 1.0);
-      DISTORTION.fuel = Math.max(0, DISTORTION.fuel - dt * (boosting ? 1.35 : 0.55));
-      DISTORTION.condition = boosting ? "Boosting" : "Driving";
-    } else if (reverseOrBrake) {
-      DISTORTION.speed -= DISTORTION.accel * dt * 0.76;
-      DISTORTION.condition = "Braking";
-    } else {
-      DISTORTION.speed *= Math.pow(DISTORTION.drag, delta / 16.6667);
-      if (Math.abs(DISTORTION.speed) < 4) DISTORTION.speed = 0;
-      DISTORTION.condition = this.isRefueling ? "Refueling" : "Coasting";
-    }
-
-    DISTORTION.speed = Phaser.Math.Clamp(DISTORTION.speed, -235, boosting ? 760 : DISTORTION.maxSpeed);
-
-    const moving = Math.abs(DISTORTION.speed) > 10;
-    if (moving) {
-      const steer = (left ? -1 : 0) + (right ? 1 : 0);
-      const reverseFactor = DISTORTION.speed < 0 ? -1 : 1;
-      const speedRatio = Phaser.Math.Clamp(Math.abs(DISTORTION.speed) / DISTORTION.maxSpeed, 0.18, 1);
-      this.carHeading += steer * reverseFactor * DISTORTION.turnSpeed * dt * speedRatio;
-    }
-
-    c.setVelocity(
-      Math.cos(this.carHeading) * DISTORTION.speed,
-      Math.sin(this.carHeading) * DISTORTION.speed
-    );
-    c.rotation = this.carHeading + CAR_VISUAL_OFFSET;
-    clampToMap(c);
-
-    if (moving && Math.abs(DISTORTION.speed) > 220) this.drawTireTracks();
-  }
-
-  handleInteract() {
+  handleUse() {
     if (this.inCar) {
-      const station = this.nearFuelStation();
-      if (station) return;
+      const fuel = this.nearFuel();
+      if (fuel) return;
       this.exitCar();
       return;
     }
-
-    if (this.nearBlueCandleDoor()) {
-      this.enterBlueCandleInterior();
-      return;
-    }
-
     const npc = this.nearNpc();
-    if (npc) {
-      this.showTimedPrompt(`${npc.npcData.name}:\n"${npc.npcData.line}"`, 2800);
-      if (npc.npcData.id === "drip_runner" && !MISSION.complete) {
-        DONNY.repDripSaints = Math.max(DONNY.repDripSaints, 1);
-      }
-      return;
-    }
-
-    const distToCar = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.car.x, this.car.y);
-    if (distToCar < 90) {
-      this.enterCar();
-      return;
-    }
+    if (npc) { this.showPrompt(npc.dataRef.name+":\n"+npc.dataRef.line, 2600); return; }
+    if (Phaser.Math.Distance.Between(this.player.x,this.player.y,this.car.x,this.car.y)<105) this.enterCar();
   }
 
   enterCar() {
-    this.inCar = true;
-    DONNY.mode = "driving";
-    DISTORTION.condition = "Driving";
-    this.player.setVisible(false);
-    this.player.body.enable = false;
-    this.activeActor = this.car;
-    this.cameras.main.startFollow(this.car, true, 0.14, 0.14);
-    this.cameras.main.setDeadzone(0, 0);
-    this.cameras.main.centerOn(this.car.x, this.car.y);
-    this.showTimedPrompt("Entered Aurelix Distortion.", 1300);
+    this.inCar=true; CAR.condition="Driving";
+    this.player.setVisible(false); this.player.body.enable=false;
+    this.active=this.car; CAR.speed=0;
+    this.showPrompt("Entered Distortion.",1300);
   }
 
   exitCar() {
-    const exitDistance = 70;
-    const side = this.carHeading + Math.PI / 2;
-    let ex = this.car.x + Math.cos(side) * exitDistance;
-    let ey = this.car.y + Math.sin(side) * exitDistance;
-
-    ex = Phaser.Math.Clamp(ex, 48, MAP_W - 48);
-    ey = Phaser.Math.Clamp(ey, 48, MAP_H - 48);
-
-    this.inCar = false;
-    DONNY.mode = "on_foot";
-    DISTORTION.speed = 0;
-    DISTORTION.condition = "Parked";
-    this.car.setVelocity(0, 0);
-
-    this.player.setPosition(ex, ey);
-    this.player.body.enable = true;
-    this.player.setVisible(true);
-
-    this.activeActor = this.player;
-    this.cameras.main.startFollow(this.player, true, 0.14, 0.14);
-    this.cameras.main.setDeadzone(0, 0);
-    this.cameras.main.centerOn(this.player.x, this.player.y);
-    this.showTimedPrompt("Exited Distortion.", 1300);
-  }
-
-  updateTraffic(delta) {
-    for (const car of this.traffic) {
-      const target = car.route[car.routeIndex];
-      const dist = Phaser.Math.Distance.Between(car.x, car.y, target.x, target.y);
-      if (dist < 26) {
-        car.routeIndex = (car.routeIndex + 1) % car.route.length;
-        continue;
-      }
-
-      const angle = Phaser.Math.Angle.Between(car.x, car.y, target.x, target.y);
-      car.rotation = angle + Math.PI / 2;
-      car.setVelocity(Math.cos(angle) * car.aiSpeed, Math.sin(angle) * car.aiSpeed);
-
-      if (car.vehicleType === "police" || car.vehicleType === "ems") {
-        const flash = Math.sin((this.time.now + car.sirenPhase) * 0.018) > 0;
-        car.setTint(flash ? (car.vehicleType === "police" ? 0xff5555 : 0xffffff) : 0xffffff);
-      }
-
-      const playerDist = Phaser.Math.Distance.Between(this.activeActor.x, this.activeActor.y, car.x, car.y);
-      if (car.vehicleType === "police" && playerDist < 520 && this.inCar && DISTORTION.speed > 420) {
-        this.wantedLevel = Math.max(this.wantedLevel, 1);
-      }
-    }
-  }
-
-  updatePedestrians(time) {
-    for (const ped of this.pedestrians) {
-      const t = time * 0.001 * ped.walkSpeed + ped.phase;
-      ped.x = ped.homeX + Math.cos(t) * ped.walkRadius;
-      ped.y = ped.homeY + Math.sin(t * 0.7) * ped.walkRadius * 0.55;
-      ped.rotation = Math.sin(t) * 0.08;
-    }
+    const side=this.carHeading+Math.PI/2;
+    this.player.setPosition(this.car.x+Math.cos(side)*78, this.car.y+Math.sin(side)*78);
+    this.player.body.enable=true; this.player.setVisible(true);
+    this.inCar=false; CAR.speed=0; CAR.condition="Parked";
+    this.car.setVelocity(0,0); this.active=this.player;
+    this.showPrompt("Exited Distortion.",1300);
   }
 
   updateMission(delta) {
-    const actor = this.activeActor;
-    if (!actor || MISSION.complete) return;
-
-    const dGoal = Phaser.Math.Distance.Between(actor.x, actor.y, MISSION.marker.x, MISSION.marker.y);
-    if (dGoal < MISSION.marker.radius) {
-      MISSION.complete = true;
-      MISSION.state = "complete";
-      DONNY.repDripSaints += 2;
-      this.showTimedPrompt("MISSION COMPLETE:\nBlue Candle Alley reached.", 3600);
+    const t=this.inCar?this.car:this.player;
+    if (!this.missionDone && Phaser.Math.Distance.Between(t.x,t.y,2048,3550)<150) {
+      this.missionDone=true; DONNY.rep+=1; this.showPrompt("MISSION COMPLETE:\nBlue Candle Alley reached.",3200);
     }
-
-    const dCheckpoint = Phaser.Math.Distance.Between(actor.x, actor.y, MISSION.checkpoint.x, MISSION.checkpoint.y);
-    if (dCheckpoint < MISSION.checkpoint.radius && !MISSION.flagged) {
-      MISSION.checkpointTimer += delta;
-      if (MISSION.checkpointTimer > 2600) {
-        MISSION.flagged = true;
-        MISSION.state = "flagged";
-        this.wantedLevel = Math.max(this.wantedLevel, 1);
-        DONNY.hp = Math.max(1, DONNY.hp - 5);
-        this.showTimedPrompt("FLAGGED BY RED CONCORD.\nGet moving before they box you in.", 3400);
-      }
-    } else if (!MISSION.flagged) {
-      MISSION.checkpointTimer = Math.max(0, MISSION.checkpointTimer - delta * 0.5);
-    }
+    if (Phaser.Math.Distance.Between(t.x,t.y,2048,3260)<235 && !this.missionDone) {
+      this.checkpointTimer += delta;
+      if (this.checkpointTimer > 2600) { this.wanted=1; DONNY.hp=Math.max(1,DONNY.hp-1); }
+    } else this.checkpointTimer=Math.max(0,this.checkpointTimer-delta);
   }
 
   updateCamera() {
-    const cam = this.cameras.main;
-    const target = this.inCar ? this.car : this.player;
-    this.activeActor = target;
-    if (!target) return;
-
-    if (this.inCar) {
-      const ratio = Phaser.Math.Clamp(Math.abs(DISTORTION.speed) / DISTORTION.maxSpeed, 0, 1);
-      cam.setZoom(Phaser.Math.Linear(CAMERA_ZOOM.carSlow, CAMERA_ZOOM.carFast, ratio));
-    } else {
-      cam.setZoom(CAMERA_ZOOM.foot);
-    }
-
-    // Manual camera center lock. This avoids Phaser follow drift on mobile browsers
-    // and keeps the target centered after zoom changes.
-    cam.stopFollow();
-    const viewW = cam.width / cam.zoom;
-    const viewH = cam.height / cam.zoom;
-    cam.scrollX = Phaser.Math.Clamp(target.x - viewW * 0.5, 0, MAP_W - viewW);
-    cam.scrollY = Phaser.Math.Clamp(target.y - viewH * 0.5, 0, MAP_H - viewH);
+    const cam=this.cameras.main;
+    const t=this.inCar?this.car:this.player;
+    this.active=t;
+    const ratio=Phaser.Math.Clamp(Math.abs(CAR.speed)/CAR.maxSpeed,0,1);
+    cam.setZoom(this.inCar ? Phaser.Math.Linear(CAMERA_ZOOM.carSlow,CAMERA_ZOOM.carFast,ratio) : CAMERA_ZOOM.foot);
+    const viewW=cam.width/cam.zoom, viewH=cam.height/cam.zoom;
+    cam.scrollX=Phaser.Math.Clamp(t.x-viewW/2,0,MAP_W-viewW);
+    cam.scrollY=Phaser.Math.Clamp(t.y-viewH/2,0,MAP_H-viewH);
   }
 
-  updateFx() {
-    const c = this.car;
-    const rearX = c.x - Math.cos(this.carHeading) * 42;
-    const rearY = c.y - Math.sin(this.carHeading) * 42;
-    const shouldSmoke = this.inCar && (
-      DISTORTION.fuel <= 0 ||
-      Math.abs(DISTORTION.speed) > 280 ||
-      DISTORTION.condition === "Boosting" ||
-      DISTORTION.condition === "Braking"
-    );
-
-    if (shouldSmoke) {
-      this.smoke.setPosition(rearX, rearY);
-      this.smoke.start();
-    } else {
-      this.smoke.stop();
-    }
+  updateLabels() {
+    this.playerLabel.setPosition(this.player.x, this.player.y-78).setVisible(!this.inCar);
+    this.carLabel.setPosition(this.car.x, this.car.y-86).setVisible(this.inCar || Phaser.Math.Distance.Between(this.player.x,this.player.y,this.car.x,this.car.y)<200);
   }
 
-  drawTireTracks() {
-    const c = this.car;
-    const angle = this.carHeading;
-    const sx = Math.cos(angle + Math.PI / 2);
-    const sy = Math.sin(angle + Math.PI / 2);
-    const rearX = c.x - Math.cos(angle) * 38;
-    const rearY = c.y - Math.sin(angle) * 38;
-    const off = 18;
-
-    this.trackLayer.lineStyle(3, 0x101010, 0.30);
-    for (const side of [-1, 1]) {
-      const x = rearX + sx * off * side;
-      const y = rearY + sy * off * side;
-      this.trackLayer.beginPath();
-      this.trackLayer.moveTo(x, y);
-      this.trackLayer.lineTo(x - Math.cos(angle) * 22, y - Math.sin(angle) * 22);
-      this.trackLayer.strokePath();
-    }
+  drawLocator() {
+    this.locator.clear();
+    const t=this.inCar?this.car:this.player;
+    this.locator.lineStyle(5,0x9befff,0.95);
+    this.locator.strokeCircle(t.x,t.y,this.inCar?62:48);
+    this.locator.lineStyle(2,0xffffff,0.85);
+    this.locator.beginPath();
+    this.locator.moveTo(t.x-15,t.y); this.locator.lineTo(t.x+15,t.y);
+    this.locator.moveTo(t.x,t.y-15); this.locator.lineTo(t.x,t.y+15);
+    this.locator.strokePath();
   }
 
   drawHeadlights() {
     this.headlightLayer.clear();
-    if (!DISTORTION.headlightsOn) return;
-
-    const c = this.car;
-    const a = this.carHeading;
-    const fx = c.x + Math.cos(a) * 52;
-    const fy = c.y + Math.sin(a) * 52;
-    const len = 300;
-    const width = 95;
-    const ex = fx + Math.cos(a) * len;
-    const ey = fy + Math.sin(a) * len;
-    const sx = Math.cos(a + Math.PI / 2);
-    const sy = Math.sin(a + Math.PI / 2);
-
-    this.headlightLayer.fillStyle(0x9befff, 0.030);
-    this.headlightLayer.fillTriangle(fx, fy, ex + sx * width, ey + sy * width, ex - sx * width, ey - sy * width);
-    this.headlightLayer.fillStyle(0xd7f7ff, 0.095);
-    this.headlightLayer.fillTriangle(fx, fy, ex + sx * 38, ey + sy * 38, ex - sx * 38, ey - sy * 38);
+    if (!this.inCar || !CAR.headlightsOn) return;
+    const a=this.carHeading, fx=this.car.x+Math.cos(a)*52, fy=this.car.y+Math.sin(a)*52;
+    const len=310, width=100, ex=fx+Math.cos(a)*len, ey=fy+Math.sin(a)*len;
+    const sx=Math.cos(a+Math.PI/2), sy=Math.sin(a+Math.PI/2);
+    this.headlightLayer.fillStyle(0x9befff,0.035);
+    this.headlightLayer.fillTriangle(fx,fy,ex+sx*width,ey+sy*width,ex-sx*width,ey-sy*width);
   }
 
-  checkProximity(delta, mobile) {
-    let message = "";
-    let refueling = false;
-
+  checkPrompts(delta, m) {
+    if (this.tempPrompt) return;
+    let msg="";
     if (this.inCar) {
-      for (const s of FUEL_STATIONS) {
-        const dist = Phaser.Math.Distance.Between(this.car.x, this.car.y, s.x, s.y);
-        if (dist < s.radius) {
-          message = `Press E / X to refuel at ${s.name}`;
-          if (this.keys.interact.isDown || mobile.interact) {
-            DISTORTION.fuel = Math.min(DISTORTION.fuelMax, DISTORTION.fuel + 48 * delta / 1000);
-            DISTORTION.condition = "Refueling";
-            refueling = true;
-          }
-          break;
-        }
+      const f=this.nearFuel();
+      if (f) {
+        msg="Hold E / X to refuel at "+f.name;
+        if (this.keys.interact.isDown || m.use) { CAR.fuel=Math.min(CAR.fuelMax,CAR.fuel+48*delta/1000); CAR.condition="Refueling"; }
       }
+    } else {
+      if (Phaser.Math.Distance.Between(this.player.x,this.player.y,this.car.x,this.car.y)<105) msg="Press E / X to enter Distortion";
+      const npc=this.nearNpc();
+      if (npc) msg="Press E / X to talk to "+npc.dataRef.name;
     }
-
-    if (!message && !this.inCar && this.nearBlueCandleDoor()) {
-      message = "Press E / X to enter Blue Candle Revue hideout";
-    }
-
-    if (!message && !this.inCar) {
-      const distToCar = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.car.x, this.car.y);
-      if (distToCar < 90) message = "Press E / X to enter Distortion";
-    }
-
-    if (!message && !this.inCar) {
-      const npc = this.nearNpc();
-      if (npc) message = `Press E / X to talk to ${npc.npcData.name}`;
-    }
-
-    if (!message) {
-      for (const e of MAP_PASS_ENTRANCES) {
-        const dist = Phaser.Math.Distance.Between(this.activeActor.x, this.activeActor.y, e.x, e.y);
-        if (dist < 95) {
-          message = `${e.label}\nMap Pass 1 entrance marker`;
-          break;
-        }
-      }
-    }
-
-    if (!message) {
-      for (const b of MAP_PASS_ROAD_BLOCKERS) {
-        const closeX = Math.abs(this.activeActor.x - b.x) < b.w / 2 + 60;
-        const closeY = Math.abs(this.activeActor.y - b.y) < b.h / 2 + 60;
-        if (closeX && closeY) {
-          message = `${b.label}\nRoad blocker: route reserved for later map pass`;
-          break;
-        }
-      }
-    }
-
-    if (!message) {
-      for (const z of GATE_ZONES) {
-        const dist = Phaser.Math.Distance.Between(this.activeActor.x, this.activeActor.y, z.x, z.y);
-        if (dist < z.radius) {
-          message = `${z.name}\n${z.status}`;
-          break;
-        }
-      }
-    }
-
-    if (!refueling && DISTORTION.condition === "Refueling") {
-      DISTORTION.condition = this.inCar ? "Driving" : "Parked";
-    }
-
-    this.isRefueling = refueling;
-
-    if (message) {
-      this.prompt.setText(message);
-      this.prompt.setVisible(true);
-    } else if (!this.tempPromptActive) {
-      this.prompt.setVisible(false);
-    }
+    this.prompt.setText(msg).setVisible(!!msg);
   }
 
-  nearFuelStation() {
-    for (const s of FUEL_STATIONS) {
-      if (Phaser.Math.Distance.Between(this.car.x, this.car.y, s.x, s.y) < s.radius) return s;
-    }
+  nearFuel() {
+    for (const f of FUEL_STATIONS) if (Phaser.Math.Distance.Between(this.car.x,this.car.y,f.x,f.y)<f.r) return f;
     return null;
   }
 
   nearNpc() {
-    if (!this.npcs) return null;
-    for (const npc of this.npcs) {
-      if (Phaser.Math.Distance.Between(this.player.x, this.player.y, npc.x, npc.y) < 82) return npc;
-    }
+    for (const n of this.npcs) if (Phaser.Math.Distance.Between(this.player.x,this.player.y,n.x,n.y)<90) return n;
     return null;
   }
 
-  showTimedPrompt(text, ms) {
-    this.tempPromptActive = true;
-    this.prompt.setText(text);
-    this.prompt.setVisible(true);
-    this.time.delayedCall(ms, () => {
-      this.tempPromptActive = false;
-      this.prompt.setVisible(false);
-    });
+  showPrompt(text, ms) {
+    this.tempPrompt=true;
+    this.prompt.setText(text).setVisible(true);
+    this.time.delayedCall(ms,()=>{this.tempPrompt=false; this.prompt.setVisible(false);});
   }
 
   updateHud() {
-    const hpRatio = Phaser.Math.Clamp(DONNY.hp / DONNY.hpMax, 0, 1);
-    this.hpBar.width = 210 * hpRatio;
-    this.hpBar.fillColor = hpRatio < 0.25 ? 0xd94d3d : hpRatio < 0.55 ? 0xd6b94b : 0x3fc46b;
-    this.hudHp.setText(`HP: ${DONNY.hp}/${DONNY.hpMax}`);
-
-    const fuelRatio = Phaser.Math.Clamp(DISTORTION.fuel / DISTORTION.fuelMax, 0, 1);
-    this.fuelBar.width = 210 * fuelRatio;
-    this.fuelBar.fillColor = fuelRatio < 0.18 ? 0xd94d3d : fuelRatio < 0.45 ? 0xd6b94b : 0x9b6cff;
-    this.hudFuel.setText(`Fuel: ${Math.round(fuelRatio * 100)}%  ${DISTORTION.condition}`);
-
-    this.hudMode.setText(`Mode: ${this.inInterior ? "Blue Candle Hideout" : (this.inCar ? "Driving Distortion" : "On foot")}  Drip Rep: ${DONNY.repDripSaints}  Band: ${DONNY.blueCandleStatus}`);
-    this.hudWanted.setText(`WANTED ${this.wantedLevel}`);
-
-    if (this.inInterior) {
-      this.hudMission.setText(this.bandJoined ? "Route opened: Blue Candle Revue guest singer." : "Inside Blue Candle Revue hideout.");
-    } else if (MISSION.complete) {
-      this.hudMission.setText("Mission complete: Blue Candle Alley reached. Enter the hideout door.");
-    } else if (MISSION.flagged) {
-      this.hudMission.setText("Mission: Reach Blue Candle Alley. Status: FLAGGED.");
-    } else {
-      this.hudMission.setText(`Mission: ${MISSION.title}`);
-    }
-  }
-
-  updateAudio() {
-    if (!this.audioEnabled || !this.audio.idle) return;
-
-    const ratio = Phaser.Math.Clamp(Math.abs(DISTORTION.speed) / DISTORTION.maxSpeed, 0, 1);
-    const driving = this.inCar;
-
-    if (this.audio.idle) this.audio.idle.setVolume(driving ? Phaser.Math.Linear(0.18, 0.04, ratio) : 0);
-    if (this.audio.drive) {
-      this.audio.drive.setVolume(driving ? Phaser.Math.Linear(0.00, 0.34, ratio) : 0);
-      this.audio.drive.setRate(Phaser.Math.Linear(0.80, 1.45, ratio));
-    }
-    if (this.audio.boost) this.audio.boost.setVolume(driving && DISTORTION.condition === "Boosting" ? 0.30 : 0.0);
-    if (this.audio.refuel) this.audio.refuel.setVolume(this.isRefueling ? 0.24 : 0.0);
-    if (this.audio.police) this.audio.police.setVolume(this.wantedLevel > 0 ? 0.22 : 0.0);
+    this.hudMode.setText("Mode: "+(this.inCar?"Driving Distortion":"On foot")+"  Wanted: "+this.wanted+"  Rep: "+DONNY.rep);
+    this.hudHp.setText("HP: "+DONNY.hp+"/"+DONNY.hpMax);
+    this.hpBar.width=210*(DONNY.hp/DONNY.hpMax);
+    this.fuelBar.width=210*(CAR.fuel/CAR.fuelMax);
+    this.hudFuel.setText("Fuel: "+Math.round(CAR.fuel/CAR.fuelMax*100)+"%  "+CAR.condition);
+    this.hudMission.setText(this.missionDone ? "Mission complete: Blue Candle Alley reached." : "Mission: Reach Blue Candle Alley");
   }
 
   updateDebug() {
-    if (!this.debugText || !this.debugVisible) return;
-
-    const actor = this.activeActor || this.player;
-    const chunk = this.currentChunkName(actor.x, actor.y);
-    this.debugText.setText(
-      `SCENE GlasswellScene\n` +
-      `MODE ${this.inCar ? "driving" : "on_foot"}\n` +
-      `PLAYER ${Math.round(this.player.x)}, ${Math.round(this.player.y)}\n` +
-      `CAR ${Math.round(this.car.x)}, ${Math.round(this.car.y)}\n` +
-      `ACTIVE ${Math.round(actor.x)}, ${Math.round(actor.y)}\n` +
-      `FUEL ${Math.round(DISTORTION.fuel)} / ${DISTORTION.fuelMax}\n` +
-      `HP ${DONNY.hp} / ${DONNY.hpMax}\n` +
-      `ZOOM ${this.cameras.main.zoom.toFixed(2)}\n` +
-      `HEADING ${this.carHeading.toFixed(2)} OFFSET ${CAR_VISUAL_OFFSET.toFixed(2)}\n` +
-      `CHUNK ${chunk}\n` +
-      `MISSION ${MISSION.state} INTERIOR ${this.inInterior ? "yes" : "no"} BAND ${DONNY.blueCandleStatus}\n` +
-      `DISTRICTS ${MAP_PASS_DISTRICTS.length} BLOCKERS ${MAP_PASS_ROAD_BLOCKERS.length}`
-    );
-  }
-
-  currentChunkName(x, y) {
-    if (Phaser.Math.Distance.Between(x, y, 2048, 3550) < 330) return "Blue Candle Alley / Drip Saints";
-    if (Phaser.Math.Distance.Between(x, y, 2048, 3260) < 285) return "Red Concord Checkpoint Road";
-    if (Phaser.Math.Distance.Between(x, y, 760, 2860) < 230) return "Westgate Fuel Stop";
-    if (x < 1050 && y > 1500 && y < 2550) return "Westgate Start / Blacklight Connector";
-    if (x > 3000 && y > 1500 && y < 2550) return "Eastgate Scrapyards / Rust Jackals";
-    if (Phaser.Math.Distance.Between(x, y, 2480, 3060) < 300) return "Civic Gate Lockdown";
-    if (y < 1050 && x > 1500 && x < 2550) return "Northgate Sealed / Black Road Future";
-    return "Glasswell Freeway Ring";
+    if (!this.debugText.visible) return;
+    const t=this.inCar?this.car:this.player;
+    this.debugText.setText("MODE "+(this.inCar?"car":"foot")+"\nACTIVE "+Math.round(t.x)+","+Math.round(t.y)+"\nZOOM "+this.cameras.main.zoom.toFixed(2)+"\nFUEL "+Math.round(CAR.fuel)+"\nHP "+DONNY.hp);
   }
 }
 
@@ -1588,17 +588,9 @@ new Phaser.Game({
   height: GAME_H,
   backgroundColor: "#050505",
   pixelArt: true,
-  scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH
-  },
-  physics: {
-    default: "arcade",
-    arcade: {
-      debug: false
-    }
-  },
-  scene: [GlasswellScene]
+  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  physics: { default: "arcade", arcade: { debug: false } },
+  scene: [MainScene]
 });
 </script>
 </body>
