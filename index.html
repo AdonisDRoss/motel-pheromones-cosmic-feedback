@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight District A1 v16</title>
+<title>Cosmic Feedback - Blacklight District A1 v17</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -38,7 +38,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 <div id="dialogue"><div class="name" id="dlgName"></div><div id="dlgText"></div><div class="choices" id="dlgChoices"></div></div>
 <div class="stick" id="stick"><div class="nub" id="nub"></div></div>
 <div class="buttons"><div class="btn r" data-btn="r">R<br>BST</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
-<div class="version">Blacklight District A1 v16</div>
+<div class="version">Blacklight District A1 v17</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -65,6 +65,7 @@ const MAPS = {
   }
 };
 const mapCfg = MAPS[AREA] || MAPS.a1;
+const WORLD_SCALE = AREA === "a1" ? 3.0 : 1.0;
 const DONNY = {
   idle:"assets/sprites/player/donny/donny_idle_4dir.png",
   walk:"assets/sprites/player/donny/donny_walk_4dir.png",
@@ -90,14 +91,14 @@ class GameScene extends Phaser.Scene {
  }
  create(){
   objectiveText.textContent = mapCfg.objective;
-  this.map=this.add.image(0,0,"map").setOrigin(0,0); this.mapW=this.map.width; this.mapH=this.map.height;
+  this.map=this.add.image(0,0,"map").setOrigin(0,0).setScale(WORLD_SCALE); this.mapW=this.map.width * WORLD_SCALE; this.mapH=this.map.height * WORLD_SCALE;
   this.physics.world.setBounds(0,0,this.mapW,this.mapH);
   this.cameras.main.setBounds(0,0,this.mapW,this.mapH);
-  this.applyCover=()=>{const vw=this.scale.width||innerWidth, vh=this.scale.height||innerHeight; this.cameras.main.setZoom(Phaser.Math.Clamp(Math.max(vw/this.mapW,vh/this.mapH),.7,3.2));this.cameras.main.setDeadzone(80,60);};
+  this.applyCover=()=>{const vw=this.scale.width||innerWidth, vh=this.scale.height||innerHeight; const cover=Math.max(vw/this.mapW,vh/this.mapH); const z = AREA==="a1" ? 1.25 : Phaser.Math.Clamp(cover,.7,3.2); this.cameras.main.setZoom(z); this.cameras.main.setDeadzone(70,50);};
   this.applyCover();
   try{const src=this.textures.get("mask").getSourceImage();this.maskCanvas=document.createElement("canvas");this.maskCanvas.width=src.width;this.maskCanvas.height=src.height;this.maskCtx=this.maskCanvas.getContext("2d",{willReadFrequently:true});this.maskCtx.drawImage(src,0,0);this.maskReady=true;}catch(e){this.maskReady=false;}
   this.makeAnims();
-  this.player=this.physics.add.sprite(this.mapW*mapCfg.spawn[0],this.mapH*mapCfg.spawn[1],"donny_idle",0).setDepth(20).setScale(0.45);
+  this.player=this.physics.add.sprite(this.mapW*mapCfg.spawn[0],this.mapH*mapCfg.spawn[1],"donny_idle",0).setDepth(20).setScale(0.58);
   this.player.body.setSize(28,34).setOffset(50,78); this.player.dir="down"; this.player.play("donny_idle_down");
   this.cameras.main.startFollow(this.player,true,.12,.12);
   this.npcs=[];
@@ -116,14 +117,21 @@ class GameScene extends Phaser.Scene {
   localStorage.setItem("cf_checkpoint", AREA==="a1" ? "blacklight_a1" : "westgate_connector");
  }
  addNpc(name,xn,yn,line,mission){
-  const n=this.physics.add.sprite(this.mapW*xn,this.mapH*yn,"blk_idle",0).setDepth(21).setScale(.42);
+  const n=this.physics.add.sprite(this.mapW*xn,this.mapH*yn,"blk_idle",0).setDepth(21).setScale(.58);
   n.body.setSize(28,36).setOffset(50,76); n.body.immovable=true; n.play("blk_idle_down");
   n.npc={name,line,mission};
   this.add.text(n.x,n.y-34,name,{fontFamily:"monospace",fontSize:"7px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.55)",padding:{x:2,y:1}}).setOrigin(.5).setDepth(30);
   this.npcs.push(n);
  }
  makeAnims(){
-  ["down","right","left","up"].forEach((d,r)=>{this.anims.create({key:`donny_idle_${d}`,frames:this.anims.generateFrameNumbers("donny_idle",{start:r*8,end:r*8+3}),frameRate:4,repeat:-1});this.anims.create({key:`donny_walk_${d}`,frames:this.anims.generateFrameNumbers("donny_walk",{start:r*8,end:r*8+7}),frameRate:9,repeat:-1});this.anims.create({key:`donny_run_${d}`,frames:this.anims.generateFrameNumbers("donny_run",{start:r*8,end:r*8+7}),frameRate:12,repeat:-1});this.anims.create({key:`blk_idle_${d}`,frames:this.anims.generateFrameNumbers("blk_idle",{start:r*4,end:r*4+3}),frameRate:4,repeat:-1});});
+  const donnyRows = {down:0, right:2, left:2, up:3}; // v17: use Donny LEFT row for both side directions; flip for right.
+  ["down","right","left","up"].forEach((d,r)=>{
+    const dr = donnyRows[d];
+    this.anims.create({key:`donny_idle_${d}`,frames:this.anims.generateFrameNumbers("donny_idle",{start:dr*8,end:dr*8+3}),frameRate:4,repeat:-1});
+    this.anims.create({key:`donny_walk_${d}`,frames:this.anims.generateFrameNumbers("donny_walk",{start:dr*8,end:dr*8+7}),frameRate:9,repeat:-1});
+    this.anims.create({key:`donny_run_${d}`,frames:this.anims.generateFrameNumbers("donny_run",{start:dr*8,end:dr*8+7}),frameRate:12,repeat:-1});
+    this.anims.create({key:`blk_idle_${d}`,frames:this.anims.generateFrameNumbers("blk_idle",{start:r*4,end:r*4+3}),frameRate:4,repeat:-1});
+  });
  }
  blocked(x,y){
   if(COLLISION_MODE==="off") return false;
@@ -139,8 +147,18 @@ class GameScene extends Phaser.Scene {
   if(dialogueOpen)return; this.applyCover();
   let vx=0,vy=0; if(this.keys.LEFT.isDown||this.keys.A.isDown)vx--; if(this.keys.RIGHT.isDown||this.keys.D.isDown)vx++; if(this.keys.UP.isDown||this.keys.W.isDown)vy--; if(this.keys.DOWN.isDown||this.keys.S.isDown)vy++; vx+=input.x;vy+=input.y;
   const len=Math.hypot(vx,vy), moving=len>.15; if(moving){vx/=len;vy/=len;}
-  const running=input.r||this.keys.SPACE.isDown, speed=running?130:90;
-  if(moving){this.tryMove(vx*speed*dt/1000,vy*speed*dt/1000);this.player.dir=Math.abs(vx)>Math.abs(vy)?(vx>0?"right":"left"):(vy>0?"down":"up");this.player.play(`donny_${running?"run":"walk"}_${this.player.dir}`,true);} else this.player.play(`donny_idle_${this.player.dir}`,true);
+  const running=input.r||this.keys.SPACE.isDown, speed=running?190:125;
+  if(moving){
+    this.tryMove(vx*speed*dt/1000,vy*speed*dt/1000);
+    this.player.dir=Math.abs(vx)>Math.abs(vy)?(vx>0?"right":"left"):(vy>0?"down":"up");
+    this.player.setFlipX(this.player.dir==="right");
+    if(this.player.dir==="down"||this.player.dir==="up") this.player.setFlipX(false);
+    this.player.play(`donny_${running?"run":"walk"}_${this.player.dir}`,true);
+  } else {
+    this.player.setFlipX(this.player.dir==="right");
+    if(this.player.dir==="down"||this.player.dir==="up") this.player.setFlipX(false);
+    this.player.play(`donny_idle_${this.player.dir}`,true);
+  }
   let near=null; for(const n of this.npcs) if(Phaser.Math.Distance.Between(this.player.x,this.player.y,n.x,n.y)<42) near=n;
   if(near) showHint(`X / E: Talk to ${near.npc.name}`); else if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)) showHint(`X / E: ${mapCfg.exitText}`); else hideHint();
   if(input.usePressed){input.usePressed=false;this.handleUse();}
@@ -151,8 +169,8 @@ class GameScene extends Phaser.Scene {
   let near=null; for(const n of this.npcs) if(Phaser.Math.Distance.Between(this.player.x,this.player.y,n.x,n.y)<48) near=n;
   if(near){showDialogue(near.npc.name, near.npc.line, [{label:"Ask about signal",onClick:()=>{objectiveText.textContent=near.npc.mission;localStorage.setItem("cf_objective",near.npc.mission);showDialogue(near.npc.name,near.npc.mission,[{label:"Close",onClick:closeDialogue}]);}},{label:"Leave",onClick:closeDialogue}]);return;}
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v16&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v16&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v17&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v17&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
