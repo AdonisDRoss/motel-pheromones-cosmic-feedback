@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight District A1 v55</title>
+<title>Cosmic Feedback - Blacklight District A1 v56</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -164,7 +164,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 
 <div class="stick" id="stick"><div class="nub" id="nub"></div></div>
 <div class="buttons"><div class="btn r" data-btn="r">R<br>BST</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
-<div class="version">Blacklight District / Club v55</div>
+<div class="version">Blacklight District / Club v56</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -474,105 +474,33 @@ ensureFallbackTextures(){
 }
 
 createDoorMarkerTexture(){
-  if(this.textures.exists("door_marker")) return;
+  // v56: single marker texture only. Older version made an 8-frame-wide canvas,
+  // which displayed as a row of repeated arrows.
+  if(this.textures.exists("door_marker")) this.textures.remove("door_marker");
   const c=document.createElement("canvas");
-  c.width=1024; c.height=128;
+  c.width=128; c.height=128;
   const ctx=c.getContext("2d");
-  for(let i=0;i<8;i++){
-    const x=i*128+64, y=64;
-    const pulse=0.45+0.45*Math.sin(i/8*Math.PI*2);
-    ctx.save();
-    ctx.globalAlpha=.45+pulse*.35;
-    ctx.strokeStyle="#8f4cff";
-    ctx.lineWidth=5;
-    ctx.beginPath(); ctx.ellipse(x,y+18,34,16,0,0,Math.PI*2); ctx.stroke();
-    ctx.strokeStyle="#54e7ff";
-    ctx.lineWidth=4;
-    ctx.beginPath();
-    ctx.moveTo(x,y-28); ctx.lineTo(x+24,y+12); ctx.lineTo(x+7,y+8); ctx.lineTo(x+7,y+34);
-    ctx.moveTo(x,y-28); ctx.lineTo(x-24,y+12); ctx.lineTo(x-7,y+8); ctx.lineTo(x-7,y+34);
-    ctx.stroke();
-    ctx.restore();
-  }
-  this.textures.addCanvas("door_marker", c);
-}
-loadMaskAsync(){
-  this.maskReady=false;
-  this.maskCanvas=null;
-  this.maskCtx=null;
-  if(COLLISION_MODE!=="mask") return;
-  const img=new Image();
-  img.crossOrigin="anonymous";
-  img.onload=()=>{
-    this.maskCanvas=document.createElement("canvas");
-    this.maskCanvas.width=img.width;
-    this.maskCanvas.height=img.height;
-    this.maskCtx=this.maskCanvas.getContext("2d",{willReadFrequently:true});
-    this.maskCtx.drawImage(img,0,0);
-    this.maskReady=true;
-    showToast("MASK READY");
-  };
-  img.onerror=()=>{
-    this.maskReady=false;
-    showToast("NO MASK FOUND\nCollision disabled");
-    if(coordLine) coordLine.innerHTML = `<span class="tag">NO MASK:</span> collision off`;
-  };
-  img.src=mapCfg.mask + (mapCfg.mask.includes("?") ? "&" : "?") + "v=55";
-}
-
-
-startAreaMusic(){
-  if(!this.sound) return;
-
-  const musicKey =
-    AREA === "club" && this.cache.audio.exists("club_interior_theme")
-      ? "club_interior_theme"
-      : (this.cache.audio.exists("blacklight_theme") ? "blacklight_theme" : null);
-
-  if(!musicKey){
-    showToast("MUSIC FILE NOT FOUND\nassets/audio/music/blacklight/");
-    return;
-  }
-
-  if(currentMusic && currentMusic.key !== musicKey){
-    currentMusic.stop();
-    currentMusic = null;
-  }
-
-  if(!currentMusic){
-    currentMusic = this.sound.add(musicKey, { loop:true, volume:getMusicVolume() });
-  }
-
-  const playNow = () => {
-    try{
-      const ctx = this.sound.context;
-      if(ctx && ctx.state === "suspended"){
-        ctx.resume().then(()=>{
-          if(currentMusic && !currentMusic.isPlaying) currentMusic.play();
-        }).catch(()=>{});
-      } else if(currentMusic && !currentMusic.isPlaying){
-        currentMusic.play();
-      }
-    } catch(e){
-      console.warn("music start failed", e);
-    }
-  };
-
-  playNow();
-
-  // iPhone/Safari: any user action should unlock music.
-  if(!window.__musicHandlersInstalled){
-    window.__musicHandlersInstalled=true;
-    this.input.on("pointerdown", playNow);
-    window.addEventListener("pointerdown", playNow, { passive:true });
-    window.addEventListener("touchstart", playNow, { passive:true });
-    document.querySelectorAll(".btn,.stick,#game").forEach(el=>{
-      el.addEventListener("pointerdown", playNow, { passive:true });
-      el.addEventListener("touchstart", playNow, { passive:true });
-    });
-  }
-
-  showToast("MUSIC READY\nTap screen or X if silent");
+  ctx.clearRect(0,0,128,128);
+  ctx.save();
+  ctx.translate(64,64);
+  ctx.strokeStyle="#5de7ff";
+  ctx.fillStyle="rgba(122,54,255,.28)";
+  ctx.lineWidth=5;
+  ctx.shadowColor="#8d5cff";
+  ctx.shadowBlur=10;
+  ctx.beginPath();
+  ctx.moveTo(0,-38);
+  ctx.lineTo(30,10);
+  ctx.lineTo(12,10);
+  ctx.lineTo(12,34);
+  ctx.lineTo(-12,34);
+  ctx.lineTo(-12,10);
+  ctx.lineTo(-30,10);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+  this.textures.addCanvas("door_marker",c);
 }
 preload(){
   this.load.on("loaderror", file => {
@@ -646,8 +574,7 @@ preload(){
     this.addNpc("CLUB BOUNCER", .745,.445, "Passphrase first. Door second.", "Bring the passphrase to the club door.", "talk", "blacklight_bouncer");
     this.exitZone=new Phaser.Geom.Rectangle(this.mapW*.03,this.mapH*.65,this.mapW*.16,this.mapH*.25);
     this.clubDoorZone=new Phaser.Geom.Rectangle(this.mapW*.795,this.mapH*.245,this.mapW*.095,this.mapH*.15);
-    this.clubDoorMarker=this.add.sprite(this.mapW*.835,this.mapH*.315,"door_marker",0).setDepth(DEPTH.CHARACTER_BASE + this.mapH + 250).setScale(.62);
-    if(this.anims.exists("door_marker_idle")) this.clubDoorMarker.play("door_marker_idle");
+    this.clubDoorMarker=this.add.image(this.mapW*.835,this.mapH*.315,"door_marker").setDepth(DEPTH.CHARACTER_BASE + 80).setScale(.42);
     this.clubDoorMarker.setVisible(hasFlag("club_access") || hasFlag("talked_bouncer"));
   } else if(AREA==="club") {
     this.addNpc("KIRA VOLT", .18,.28, "Signal board is live. The club is hiding more than music.", "Recover the Signal Relay Fragment.", "talk", "kira_volt");
@@ -676,8 +603,8 @@ preload(){
  makeAnims(){
   const donnyDirs = {
     down:{idle:"donny_idle_down", run:"donny_run_down", walkRow:0},
-    left:{idle:"donny_idle_left", run:"donny_run_left", walkRow:2},
-    right:{idle:"donny_idle_right", run:"donny_run_left", walkRow:2},
+    left:{idle:"donny_idle_left", run:"donny_run_left", walkRow:1},
+    right:{idle:"donny_idle_right", run:"donny_run_left", walkRow:1},
     up:{idle:"donny_idle_up", run:"donny_run_up", walkRow:3}
   };
   Object.entries(donnyDirs).forEach(([d,cfg])=>{
@@ -703,9 +630,6 @@ preload(){
   if(this.textures.exists("vendor_stall")){
     if(this.anims.exists("vendor_stall_idle")) this.anims.remove("vendor_stall_idle"); this.anims.create({key:"vendor_stall_idle",frames:this.anims.generateFrameNumbers("vendor_stall",{start:0,end:3}),frameRate:4,repeat:-1});
   }
-  if(this.textures.exists("door_marker")){
-    if(this.anims.exists("door_marker_idle")) this.anims.remove("door_marker_idle"); this.anims.create({key:"door_marker_idle",frames:this.anims.generateFrameNumbers("door_marker",{start:0,end:7}),frameRate:8,repeat:-1});
-  }
  }
 
  blocked(x,y){
@@ -726,13 +650,13 @@ preload(){
     for(const n of this.npcs){
       const nx=n.x, ny=n.y+18;
       const dx=Math.abs(px-nx), dy=Math.abs(py-ny);
-      if(dx<14 && dy<16) return true;
+      if(dx<10 && dy<12) return true;
     }
   }
 
   if(this.vendorStall){
     const sx=this.vendorStall.x, sy=this.vendorStall.y+34;
-    if(Math.abs(px-sx)<46 && Math.abs(py-sy)<22) return true;
+    if(Math.abs(px-sx)<34 && Math.abs(py-sy)<16) return true;
   }
 
   return false;
@@ -776,11 +700,12 @@ tryMove(dx,dy){
   const cam=this.cameras.main, viewW=cam.width/cam.zoom, viewH=cam.height/cam.zoom; cam.scrollX=Phaser.Math.Clamp(cam.scrollX,0,Math.max(0,this.mapW-viewW));cam.scrollY=Phaser.Math.Clamp(cam.scrollY,0,Math.max(0,this.mapH-viewH));
   // v48: grounded foot-depth sorting. Uses sprite feet, not body center,
   // so Donny does not appear to float over walls/furniture as often.
-  // v55: keep Donny above street NPCs/props. This fixes NPC/vendor sprites visually hovering over him.
-  this.npcs.forEach(n=>n.setDepth(DEPTH.CHARACTER_BASE + n.y));
-  if(this.vendorStall) this.vendorStall.setDepth(DEPTH.CHARACTER_BASE + this.vendorStall.y + 8);
-  if(this.clubDoorMarker) this.clubDoorMarker.setDepth(DEPTH.CHARACTER_BASE + this.mapH + 250);
-  this.player.setDepth(DEPTH.CHARACTER_BASE + this.mapH + 120);
+  // v56: force street objects below Donny. This removes the visual hover/overlap issue.
+  this.npcs.forEach(n=>n.setDepth(DEPTH.CHARACTER_BASE + 100));
+  if(this.vendorStall) this.vendorStall.setDepth(DEPTH.CHARACTER_BASE + 90);
+  if(this.clubDoorMarker) this.clubDoorMarker.setDepth(DEPTH.CHARACTER_BASE + 80);
+  this.player.setDepth(DEPTH.CHARACTER_BASE + 1000);
+  this.children.bringToTop(this.player);
   coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.player.x)}, ${Math.round(this.player.y)} <span class="tag">JOY:</span> ${input.x.toFixed(1)},${input.y.toFixed(1)} <span class="tag">USE:</span> ${input.usePressed?1:0} <span class="tag">DYN:</span> ${this.dynamicBlocked(this.player.x,this.player.y)?1:0} <span class="tag">COL:</span> ${COLLISION_MODE} ${this.maskReady?"READY":"NO MASK"}`;
  }
  handleUse(){
@@ -823,7 +748,7 @@ tryMove(dx,dy){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v55&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v56&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -840,16 +765,16 @@ tryMove(dx,dy){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v55&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v56&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v55&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v55&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v55&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v56&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v56&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v56&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
