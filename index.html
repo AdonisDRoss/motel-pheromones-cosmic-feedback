@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight District A1 v71</title>
+<title>Cosmic Feedback - Blacklight District A1 v73</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -164,7 +164,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 
 <div class="stick" id="stick"><div class="nub" id="nub"></div></div>
 <div class="buttons"><div class="btn r" data-btn="r">R<br>BST</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
-<div class="version">Blacklight District / Club v71</div>
+<div class="version">Blacklight District / Club v73</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -539,9 +539,9 @@ preload(){
   this.load.spritesheet("blacklight_runner_idle", NPC_ASSETS.blacklight_runner.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("kira_volt_idle", NPC_ASSETS.kira_volt.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("vendor_stall", PROPS.vendorStall, {frameWidth:256,frameHeight:256});
-  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=71");
-  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=71");
-  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=71");
+  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=73");
+  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=73");
+  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=73");
  }
  create(){
   window.__cfScene=this;
@@ -562,8 +562,8 @@ preload(){
   this.cameras.main.roundPixels=true;
 
   // v60: create Donny FIRST, before marker/anims/mask/NPC code can stop create().
-  this.player=this.physics.add.sprite(this.mapW*mapCfg.spawn[0],this.mapH*mapCfg.spawn[1],"donny_idle_down",0).setDepth(DEPTH.CHARACTER_BASE+3000).setScale(0.64);
-  this.player.body.setSize(22,18).setOffset(53,104);
+  this.player=this.physics.add.sprite(this.mapW*mapCfg.spawn[0],this.mapH*mapCfg.spawn[1],"donny_idle_down",0).setDepth(DEPTH.CHARACTER_BASE+3000).setScale(0.66);
+  this.player.body.setSize(22,16).setOffset(53,106);
   this.player.dir="down"; this.spawnGraceUntil=this.time.now+5000; this.lastMoveX=this.player.x; this.lastMoveY=this.player.y;
   this.donnyDebugDot=null;
   this.cameras.main.startFollow(this.player,true,0.12,0.12,0,0);
@@ -611,6 +611,7 @@ preload(){
     this.addNpc('KADE "STATIC"', .40,.34, "You looking for the club?", "Blacklight opens for signal.", "talk", "blacklight_kid");
     this.exitZone=new Phaser.Geom.Rectangle(this.mapW*.55,this.mapH*.30,this.mapW*.18,this.mapH*.18);
   }
+  this.fixClubNpcFloorDepth();
   this.lockCameraToPlayer();
   this.cameras.main.centerOn(this.player.x,this.player.y);
   this.time.delayedCall(50, ()=>{ this.lockCameraToPlayer(); this.cameras.main.centerOn(this.player.x,this.player.y); });
@@ -626,9 +627,9 @@ preload(){
  addNpc(name,xn,yn,line,mission,kind="talk",assetKey="blacklight_kid"){
   const texKey = this.textures.exists(`${assetKey}_idle`) ? `${assetKey}_idle` : (this.textures.exists("blacklight_kid_idle") ? "blacklight_kid_idle" : "__DEFAULT");
   const n=this.physics.add.sprite(this.mapW*xn,this.mapH*yn,texKey,0).setDepth(DEPTH.CHARACTER_BASE).setScale(.82);
-  n.body.setSize(14,18).setOffset(57,90); n.body.immovable=true; this.safePlay(n, this.anims.exists(`${assetKey}_idle_down`) ? `${assetKey}_idle_down` : "blacklight_kid_idle_down");
+  n.body.setSize(12,16).setOffset(58,92); n.body.immovable=true; this.safePlay(n, this.anims.exists(`${assetKey}_idle_down`) ? `${assetKey}_idle_down` : "blacklight_kid_idle_down");
   n.npc={name,line,mission,kind,assetKey};
-  this.add.text(n.x,n.y-48,name,{fontFamily:"monospace",fontSize:"7px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.55)",padding:{x:2,y:1}}).setOrigin(.5).setDepth(DEPTH.LABEL);
+  this.add.text(n.x,n.y-48,name,{fontFamily:"monospace",fontSize:"7px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.55)",padding:{x:2,y:1}}).setOrigin(.5).setDepth(DEPTH.LABEL+500);
   this.npcs.push(n);
  }
  makeAnims(){
@@ -696,7 +697,35 @@ tryMove(dx,dy){
     if(!this.blockedAll(this.player.x,this.player.y+dy+34)) this.player.y+=dy;
   }
 }
- lockCameraToPlayer(){
+ fixClubNpcFloorDepth(){
+  // v73: club/A1 sprites are baked over a flat image, so force characters above floor.
+  if(this.npcs){
+    this.npcs.forEach((n,i)=>{
+      n.setDepth(DEPTH.CHARACTER_BASE + 4200 + i);
+      if(n.body){
+        n.body.setSize(12,16).setOffset(58,92);
+      }
+      // Lift visual feet slightly if sprite appears buried.
+      if(AREA==="club" && !n.v73Lifted){
+        n.y -= 8;
+        n.v73Lifted = true;
+      }
+    });
+  }
+  if(this.vendorStall){
+    this.vendorStall.setDepth(DEPTH.CHARACTER_BASE + 4100);
+    if(AREA==="club" && !this.vendorStall.v73Lifted){
+      this.vendorStall.y -= 6;
+      this.vendorStall.v73Lifted = true;
+    }
+  }
+  if(this.clubDoorMarker) this.clubDoorMarker.setDepth(DEPTH.CHARACTER_BASE + 4050);
+  if(this.player){
+    this.player.setDepth(DEPTH.CHARACTER_BASE + 5000);
+    this.children.bringToTop(this.player);
+  }
+}
+lockCameraToPlayer(){
   if(!this.cameras || !this.cameras.main) return;
   const cam=this.cameras.main;
   const viewW=cam.width/cam.zoom;
@@ -733,12 +762,14 @@ tryMove(dx,dy){
   else hideHint();
   if(input.usePressed){input.usePressed=false;this.handleUse();}
   this.lockCameraToPlayer();
-  // v71: stable A1 draw order. Donny stays above visual NPCs/props during testing.
+  // v72: stable draw order for A1 + club interior.
+  // Keep Donny above baked floor/props while interior depth is being calibrated.
   this.npcs.forEach(n=>n.setDepth(DEPTH.CHARACTER_BASE + 100));
   if(this.vendorStall) this.vendorStall.setDepth(DEPTH.CHARACTER_BASE + 90);
   if(this.clubDoorMarker) this.clubDoorMarker.setDepth(DEPTH.CHARACTER_BASE + 80);
-  this.player.setDepth(DEPTH.CHARACTER_BASE + 3000);
+  this.player.setDepth(DEPTH.CHARACTER_BASE + 5000);
   this.children.bringToTop(this.player);
+  this.fixClubNpcFloorDepth();
   coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.player.x)}, ${Math.round(this.player.y)} <span class="tag">JOY:</span> ${input.x.toFixed(1)},${input.y.toFixed(1)} <span class="tag">USE:</span> ${input.usePressed?1:0} <span class="tag">DYN:</span> ${this.dynamicBlocked(this.player.x,this.player.y)?1:0} <span class="tag">CAM:</span> ${Math.round(this.cameras.main.scrollX)},${Math.round(this.cameras.main.scrollY)} <span class="tag">FREE:</span> ${(this.spawnGraceUntil&&this.time.now<this.spawnGraceUntil)?1:0} <span class="tag">COL:</span> ${COLLISION_MODE} ${this.maskReady?"MASK READY":"NO MASK"}`;
  }
  unstuckPlayer(){
@@ -788,7 +819,7 @@ handleUse(){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v71&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v73&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -805,16 +836,16 @@ handleUse(){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v71&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v73&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v71&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v71&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v71&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v73&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v73&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v73&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
