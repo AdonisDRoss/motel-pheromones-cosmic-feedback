@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Off-Ramp v81</title>
+<title>Cosmic Feedback - Blacklight Highway Off-Ramp v82</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -164,7 +164,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 
 <div class="stick" id="stick"><div class="nub" id="nub"></div></div>
 <div class="buttons"><div class="btn r" data-btn="r">R<br>BST</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
-<div class="version">Highway Off-Ramp / Vehicle Test v81</div>
+<div class="version">Highway Off-Ramp / Vehicle Test v82</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -552,9 +552,9 @@ preload(){
   this.load.spritesheet("blacklight_runner_idle", NPC_ASSETS.blacklight_runner.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("kira_volt_idle", NPC_ASSETS.kira_volt.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("vendor_stall", PROPS.vendorStall, {frameWidth:256,frameHeight:256});
-  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=81");
-  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=81");
-  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=81");
+  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=82");
+  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=82");
+  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=82");
  }
  create(){
   window.__cfScene=this;
@@ -740,7 +740,7 @@ tryMove(dx,dy){
   }
   this.vehicleMode=false;
   this.vehicleSpeed=0;
-  this.vehicleMaxSpeed=7.5;
+  this.vehicleMaxSpeed=10.0;
   this.vehicleTurnRate=2.7;
   this.vehicleFriction=0.94;
   this.vehicleLabel=this.add.text(this.vehicle.x,this.vehicle.y-58,"DONNY'S CAR\nX / A / TAP: ENTER",{
@@ -830,11 +830,11 @@ updateVehicle(dt){
   if(!this.vehicle || !this.vehicleMode) return;
   const delta=Math.max(0.8,Math.min(2.0,(dt||16)/16.666));
   // v81: vehicle reads the real HUD input flags.
-  const gas = input.a === true || !!(this.keys && this.keys.SPACE && this.keys.SPACE.isDown);
+  const gas = input.a === true || input.y < -0.25 || input.y > 0.25 || !!(this.keys && this.keys.SPACE && this.keys.SPACE.isDown);
   const brake = input.b === true;
   const steer = (input.x || 0) + ((this.keys.LEFT?.isDown)?-1:0) + ((this.keys.RIGHT?.isDown)?1:0);
 
-  if(gas) this.vehicleSpeed += 0.42*delta;
+  if(gas){ this.vehicleSpeed += 0.55*delta; if(Math.abs(this.vehicleSpeed)<0.9) this.vehicleSpeed=0.9; }
   if(brake) this.vehicleSpeed -= 0.30*delta;
   if(!gas && !brake) this.vehicleSpeed *= Math.pow(this.vehicleFriction,delta);
   this.vehicleSpeed=Phaser.Math.Clamp(this.vehicleSpeed,-2.2,this.vehicleMaxSpeed || 7.5);
@@ -922,7 +922,7 @@ if(this.vehicle){
     const vd=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.vehicle.x,this.vehicle.y);
     if(vd<95) objectiveText.textContent="X / E: Enter Donny's car";
   }
-coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.vehicle.x)},${Math.round(this.vehicle.y)} <span class="tag">MODE:</span> DRIVING <span class="tag">A:</span> ${input.a?1:0} <span class="tag">B:</span> ${input.b?1:0} <span class="tag">SPD:</span> ${this.vehicleSpeed.toFixed(1)}`;
+coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.vehicle.x)},${Math.round(this.vehicle.y)} <span class="tag">DRIVE:</span> A${input.a?1:0} B${input.b?1:0} X${input.xbtn?1:0} JY${input.y.toFixed(1)} <span class="tag">SPD:</span> ${this.vehicleSpeed.toFixed(1)}`;
       return;
     }
   }
@@ -982,11 +982,7 @@ coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.player.x)}, 
 }
 handleUse(){
   // v80 hard vehicle use: X enters/exits regardless of dialogue/objectives.
-  if(AREA==="highway" && this.vehicle){
-    if(this.vehicleMode){ this.exitVehicle(); return; }
-    const d=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.vehicle.x,this.vehicle.y);
-    if(d < 220){ this.enterVehicle(); return; }
-  }
+  if(AREA==="highway" && this.vehicle){ if(this.vehicleMode){ this.exitVehicle(); return; } this.enterVehicle(); return; }
 
   if(AREA==="highway" && this.vehicle && !this.vehicleMode && this.nearCarForEntry()){
     this.enterVehicle();
@@ -1008,7 +1004,7 @@ handleUse(){
   if(AREA==="highway" && this.highwayWestgateExit){
     const d=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.highwayWestgateExit.x,this.highwayWestgateExit.y);
     if(d < this.highwayWestgateExit.r){
-      location.href=location.pathname+"?v=westgate-v81&area=westgate&collision=mask";
+      location.href=location.pathname+"?v=westgate-v82&area=westgate&collision=mask";
       return;
     }
     showToast("Follow the marked ramp exit to Westgate.");
@@ -1054,7 +1050,7 @@ handleUse(){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v81&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v82&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -1071,16 +1067,16 @@ handleUse(){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v81&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v82&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v81&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v81&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v81&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v82&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v82&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v82&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
@@ -1215,7 +1211,7 @@ function setupControls(){
       btn.classList.add("down");
       if(name==="x"){ input.xbtn=true; input.usePressed=true; useNow(); }
       if(name==="r") input.r=true;
-      if(name==="a"){ input.a=true; showToast(window.__cfScene?.vehicleMode ? "GAS ON" : "GAS / action slot ready"); }
+      if(name==="a"){ input.a=true; if(window.__cfScene?.vehicleMode && window.__cfScene.vehicleSpeed<0.9) window.__cfScene.vehicleSpeed=0.9; showToast(window.__cfScene?.vehicleMode ? "GAS ON" : "GAS / action slot ready"); }
       if(name==="b"){ input.b=true; showToast(window.__cfScene?.vehicleMode ? "BRAKE ON" : "BRK / action slot ready"); }
       if(name==="y") showToast("LTS / action slot ready");
     }
@@ -1238,7 +1234,81 @@ function setupControls(){
   });
 }
 
+
+function installHardVehicleButtons(){
+  if(window.__hardVehicleButtonsInstalled) return;
+  window.__hardVehicleButtonsInstalled = true;
+
+  function setBtn(el, down){
+    const name = el && el.dataset ? el.dataset.btn : null;
+    if(!name) return;
+    if(down) el.classList.add("down"); else el.classList.remove("down");
+
+    if(name==="a"){
+      input.a = down;
+      if(down && window.__cfScene && window.__cfScene.vehicleMode){
+        window.__cfScene.vehicleSpeed = Math.max(window.__cfScene.vehicleSpeed || 0, 0.85);
+        window.__cfScene.setEngineVolume(true);
+      }
+    }
+    if(name==="b") input.b = down;
+    if(name==="r") input.r = down;
+    if(name==="x"){
+      input.xbtn = down;
+      if(down){
+        input.usePressed = true;
+        const sc = window.__cfScene;
+        if(sc && AREA==="highway" && sc.vehicle){
+          if(sc.vehicleMode) sc.exitVehicle();
+          else sc.enterVehicle();
+        } else if(sc && typeof sc.handleUse === "function"){
+          sc.handleUse();
+        }
+      } else {
+        input.usePressed = false;
+      }
+    }
+  }
+
+  ["pointerdown","touchstart","mousedown"].forEach(type=>{
+    document.addEventListener(type,e=>{
+      const btn=e.target && e.target.closest ? e.target.closest(".btn") : null;
+      if(!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setBtn(btn,true);
+    }, {passive:false, capture:true});
+  });
+
+  ["pointerup","pointercancel","touchend","touchcancel","mouseup","mouseleave"].forEach(type=>{
+    document.addEventListener(type,e=>{
+      document.querySelectorAll(".btn.down").forEach(btn=>setBtn(btn,false));
+    }, {passive:false, capture:true});
+  });
+
+  document.addEventListener("keydown", e=>{
+    const k=e.key.toLowerCase();
+    if(k===" " || k==="a") input.a=true;
+    if(k==="b") input.b=true;
+    if(k==="x" || k==="e"){
+      input.xbtn=true; input.usePressed=true;
+      const sc=window.__cfScene;
+      if(sc && AREA==="highway" && sc.vehicle){
+        if(sc.vehicleMode) sc.exitVehicle(); else sc.enterVehicle();
+      } else if(sc && typeof sc.handleUse==="function") sc.handleUse();
+    }
+  }, true);
+
+  document.addEventListener("keyup", e=>{
+    const k=e.key.toLowerCase();
+    if(k===" " || k==="a") input.a=false;
+    if(k==="b") input.b=false;
+    if(k==="x" || k==="e"){ input.xbtn=false; input.usePressed=false; }
+  }, true);
+}
+
 setupControls();
+installHardVehicleButtons();
 function viewportW(){return Math.max(320,Math.floor(window.visualViewport?window.visualViewport.width:innerWidth));} function viewportH(){return Math.max(240,Math.floor(window.visualViewport?window.visualViewport.height:innerHeight));}
 const game=new Phaser.Game({type:Phaser.AUTO,parent:"game",backgroundColor:"#05070b",scale:{mode:Phaser.Scale.RESIZE,autoCenter:Phaser.Scale.NO_CENTER,width:viewportW(),height:viewportH()},physics:{default:"arcade",arcade:{debug:false}}, pixelArt:true, roundPixels:true,scene:[GameScene],render:{pixelArt:false,antialias:true}});
 function forceResize(){const w=viewportW(),h=viewportH();document.getElementById("game").style.width=w+"px";document.getElementById("game").style.height=h+"px";if(game&&game.scale)game.scale.resize(w,h);}
