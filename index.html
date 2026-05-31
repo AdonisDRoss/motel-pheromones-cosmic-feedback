@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight District A1 v52</title>
+<title>Cosmic Feedback - Blacklight District A1 v53</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -164,7 +164,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 
 <div class="stick" id="stick"><div class="nub" id="nub"></div></div>
 <div class="buttons"><div class="btn r" data-btn="r">R<br>BST</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
-<div class="version">Blacklight District / Club v52</div>
+<div class="version">Blacklight District / Club v53</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -517,7 +517,7 @@ loadMaskAsync(){
     showToast("NO MASK FOUND\nCollision disabled");
     if(coordLine) coordLine.innerHTML = `<span class="tag">NO MASK:</span> collision off`;
   };
-  img.src=mapCfg.mask + (mapCfg.mask.includes("?") ? "&" : "?") + "v=52";
+  img.src=mapCfg.mask + (mapCfg.mask.includes("?") ? "&" : "?") + "v=53";
 }
 
 
@@ -596,9 +596,9 @@ preload(){
   this.load.spritesheet("blacklight_runner_idle", NPC_ASSETS.blacklight_runner.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("kira_volt_idle", NPC_ASSETS.kira_volt.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("vendor_stall", PROPS.vendorStall, {frameWidth:256,frameHeight:256});
-  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=52");
-  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=52");
-  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=52");
+  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=53");
+  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=53");
+  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=53");
  }
  create(){
   window.__cfScene=this;
@@ -748,7 +748,7 @@ preload(){
   this.player.setDepth(DEPTH.CHARACTER_BASE + playerFeet);
   this.npcs.forEach(n=>n.setDepth(DEPTH.CHARACTER_BASE + n.y + 28));
   if(this.vendorStall) this.vendorStall.setDepth(DEPTH.CHARACTER_BASE + this.vendorStall.y + (this.vendorStall.depthBaseOffset || 58));
-  coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.player.x)}, ${Math.round(this.player.y)} <span class="tag">JOY:</span> ${input.x.toFixed(1)},${input.y.toFixed(1)} <span class="tag">COL:</span> ${COLLISION_MODE} ${this.maskReady?"READY":"NO MASK"}`;
+  coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.player.x)}, ${Math.round(this.player.y)} <span class="tag">JOY:</span> ${input.x.toFixed(1)},${input.y.toFixed(1)} <span class="tag">USE:</span> ${input.usePressed?1:0} <span class="tag">COL:</span> ${COLLISION_MODE} ${this.maskReady?"READY":"NO MASK"}`;
  }
  handleUse(){
   let near=null; for(const n of this.npcs) if(Phaser.Math.Distance.Between(this.player.x,this.player.y,n.x,n.y)<48) near=n;
@@ -790,7 +790,7 @@ preload(){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v52&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v53&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -807,19 +807,20 @@ preload(){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v52&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v53&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v52&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v52&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v52&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v53&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v53&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v53&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
+
 
 
 function hardStartMusic(){
@@ -838,19 +839,31 @@ function setupControls(){
   if(buttons){
     buttons.style.pointerEvents="auto";
     buttons.style.opacity="1";
+    buttons.style.zIndex=9999;
   }
   if(stick){
     stick.style.pointerEvents="auto";
     stick.style.touchAction="none";
+    stick.style.zIndex=9999;
   }
+  document.querySelectorAll(".btn").forEach(btn=>{
+    btn.style.pointerEvents="auto";
+    btn.style.touchAction="none";
+  });
 
   let dragging=false;
+  let lastDir="down";
 
   function resetStick(){
     dragging=false;
     input.x=0;
     input.y=0;
     if(nub) nub.style.transform="translate(0px,0px)";
+  }
+
+  function point(e){
+    if(e.touches && e.touches.length) return {x:e.touches[0].clientX, y:e.touches[0].clientY};
+    return {x:e.clientX, y:e.clientY};
   }
 
   function moveStick(clientX, clientY){
@@ -861,7 +874,7 @@ function setupControls(){
     let dx=clientX-cx;
     let dy=clientY-cy;
     const max=42;
-    const len=Math.hypot(dx,dy);
+    const len=Math.hypot(dx,dy) || 1;
     if(len>max){
       dx=dx/len*max;
       dy=dy/len*max;
@@ -871,10 +884,25 @@ function setupControls(){
     nub.style.transform=`translate(${dx}px,${dy}px)`;
   }
 
-  function point(e){
-    if(e.touches && e.touches.length) return {x:e.touches[0].clientX, y:e.touches[0].clientY};
-    return {x:e.clientX, y:e.clientY};
+  function directMoveTick(){
+    const sc=window.__cfScene;
+    if(dragging && sc && sc.player && !dialogueOpen && !shopOpen && !pauseOpen){
+      const vx=input.x, vy=input.y;
+      const len=Math.hypot(vx,vy);
+      if(len>.12){
+        const speed=input.r ? 4.1 : 2.75; // pixels per frame, direct fallback
+        sc.tryMove(vx*speed, vy*speed);
+        const dir=Math.abs(vx)>Math.abs(vy)?(vx>0?"right":"left"):(vy>0?"down":"up");
+        lastDir=dir;
+        sc.player.dir=dir;
+        sc.player.setFlipX(false);
+        const key=`donny_${input.r?"run":"walk"}_${dir}`;
+        if(sc.anims.exists(key)) sc.player.play(key,true);
+      }
+    }
+    requestAnimationFrame(directMoveTick);
   }
+  requestAnimationFrame(directMoveTick);
 
   if(stick){
     ["pointerdown","touchstart","mousedown"].forEach(type=>{
@@ -892,38 +920,49 @@ function setupControls(){
       window.addEventListener(type,e=>{
         if(!dragging) return;
         e.preventDefault();
+        e.stopPropagation();
         const p=point(e);
         moveStick(p.x,p.y);
       }, {passive:false});
     });
 
-    ["pointerup","touchend","mouseup","touchcancel","pointercancel"].forEach(type=>{
-      window.addEventListener(type,e=>resetStick(), {passive:false});
+    ["pointerup","touchend","mouseup","touchcancel","pointercancel","blur"].forEach(type=>{
+      window.addEventListener(type,resetStick, {passive:false});
     });
   }
 
-  document.querySelectorAll(".btn").forEach(btn=>{
-    btn.style.pointerEvents="auto";
-    btn.style.touchAction="none";
+  function useNow(){
+    input.usePressed=true;
+    const sc=window.__cfScene;
+    if(sc && typeof sc.handleUse === "function" && !dialogueOpen && !shopOpen && !pauseOpen){
+      try{ sc.handleUse(); }catch(e){ console.warn("direct use failed", e); }
+    }
+  }
 
+  document.querySelectorAll(".btn").forEach(btn=>{
     function down(e){
       e.preventDefault();
       e.stopPropagation();
       hardStartMusic();
       const name=btn.dataset.btn;
-      if(name==="x") input.usePressed=true;
+      if(name==="x") useNow();
       if(name==="r") input.r=true;
+      if(name==="a") showToast("GAS / action slot ready");
+      if(name==="b") showToast("BRK / action slot ready");
+      if(name==="y") showToast("LTS / action slot ready");
     }
-
     function up(e){
       e.preventDefault();
       e.stopPropagation();
-      const name=btn.dataset.btn;
-      if(name==="r") input.r=false;
+      if(btn.dataset.btn==="r") input.r=false;
     }
-
     ["pointerdown","touchstart","mousedown"].forEach(type=>btn.addEventListener(type,down,{passive:false}));
     ["pointerup","touchend","mouseup","touchcancel","pointercancel"].forEach(type=>btn.addEventListener(type,up,{passive:false}));
+  });
+
+  // Emergency keyboard/mouse click fallback:
+  document.addEventListener("keydown", e=>{
+    if(e.key==="x" || e.key==="X" || e.key==="e" || e.key==="E") useNow();
   });
 }
 
