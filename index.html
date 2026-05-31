@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Off-Ramp v82</title>
+<title>Cosmic Feedback - Blacklight Highway Off-Ramp v83</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -121,6 +121,33 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   #pauseMenu{top:50%; width:min(340px,60vw);}
 }
 
+
+#vehicleControls{
+  position:fixed;
+  right:calc(env(safe-area-inset-right) + 18px);
+  top:calc(env(safe-area-inset-top) + 82px);
+  z-index:130;
+  display:none;
+  gap:7px;
+  flex-direction:column;
+  pointer-events:auto;
+}
+.vbtn{
+  width:92px;
+  min-height:42px;
+  border-radius:10px;
+  border:2px solid rgba(158,239,255,.65);
+  background:rgba(3,12,24,.82);
+  color:#e8fbff;
+  font:10px/1.1 monospace;
+  font-weight:900;
+  touch-action:none;
+  user-select:none;
+}
+.vbtn.gas{background:rgba(35,140,70,.82);}
+.vbtn.brake{background:rgba(150,55,70,.82);}
+.vbtn.exit{background:rgba(70,120,180,.82);}
+
 </style>
 </head>
 <body>
@@ -164,7 +191,14 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 
 <div class="stick" id="stick"><div class="nub" id="nub"></div></div>
 <div class="buttons"><div class="btn r" data-btn="r">R<br>BST</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
-<div class="version">Highway Off-Ramp / Vehicle Test v82</div>
+
+<div id="vehicleControls">
+  <button class="vbtn gas" id="driveGas">GAS<br>HOLD</button>
+  <button class="vbtn brake" id="driveBrake">BRAKE<br>HOLD</button>
+  <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
+</div>
+
+<div class="version">Highway Off-Ramp / Vehicle Test v83</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -265,8 +299,8 @@ const PROPS = {
   vendorStall:"assets/props/blacklight/neon_vendor_stall_idle_256.png",
   doorMarker:"assets/props/blacklight/blacklight_door_marker_idle_128.png"
 };
-const hint=document.getElementById("hint"), toast=document.getElementById("toast"), objectiveText=document.getElementById("objectiveText"), dlg=document.getElementById("dialogue"), dlgName=document.getElementById("dlgName"), dlgText=document.getElementById("dlgText"), dlgChoices=document.getElementById("dlgChoices"), coordLine=document.getElementById("coordLine"), shop=document.getElementById("shop"), shopBuyList=document.getElementById("shopBuyList"), shopSellList=document.getElementById("shopSellList"), creditLine=document.getElementById("creditLine"), shopLog=document.getElementById("shopLog"), pauseMenu=document.getElementById("pauseMenu"), musicVolume=document.getElementById("musicVolume"), volumeReadout=document.getElementById("volumeReadout"), resumeBtn=document.getElementById("resumeBtn"), muteBtn=document.getElementById("muteBtn");
-let input={x:0,y:0,r:false,a:false,b:false,xbtn:false,usePressed:false}, dialogueOpen=false, shopOpen=false, pauseOpen=false, currentMusic=null; const FAILED_ASSETS=new Set();
+const hint=document.getElementById("hint"), toast=document.getElementById("toast"), objectiveText=document.getElementById("objectiveText"), dlg=document.getElementById("dialogue"), dlgName=document.getElementById("dlgName"), dlgText=document.getElementById("dlgText"), dlgChoices=document.getElementById("dlgChoices"), coordLine=document.getElementById("coordLine"), shop=document.getElementById("shop"), shopBuyList=document.getElementById("shopBuyList"), shopSellList=document.getElementById("shopSellList"), creditLine=document.getElementById("creditLine"), shopLog=document.getElementById("shopLog"), pauseMenu=document.getElementById("pauseMenu"), vehicleControls=document.getElementById("vehicleControls"), driveGas=document.getElementById("driveGas"), driveBrake=document.getElementById("driveBrake"), driveExit=document.getElementById("driveExit"), musicVolume=document.getElementById("musicVolume"), volumeReadout=document.getElementById("volumeReadout"), resumeBtn=document.getElementById("resumeBtn"), muteBtn=document.getElementById("muteBtn");
+let input={x:0,y:0,r:false,a:false,b:false,xbtn:false,usePressed:false,vgas:false,vbrake:false}, dialogueOpen=false, shopOpen=false, pauseOpen=false, currentMusic=null; const FAILED_ASSETS=new Set();
 function showHint(t){hint.textContent=t;hint.style.display="block";} function hideHint(){hint.style.display="none";}
 function showToast(t){toast.innerHTML=t.replace(/\n/g,"<br>");toast.style.display="block";clearTimeout(showToast._t);showToast._t=setTimeout(()=>toast.style.display="none",2600);}
 function closeDialogue(){dlg.style.display="none";dialogueOpen=false;if(!shopOpen){document.querySelector(".buttons").style.opacity="1";document.querySelector(".buttons").style.pointerEvents="auto";}}
@@ -552,9 +586,9 @@ preload(){
   this.load.spritesheet("blacklight_runner_idle", NPC_ASSETS.blacklight_runner.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("kira_volt_idle", NPC_ASSETS.kira_volt.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("vendor_stall", PROPS.vendorStall, {frameWidth:256,frameHeight:256});
-  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=82");
-  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=82");
-  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=82");
+  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=83");
+  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=83");
+  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=83");
  }
  create(){
   window.__cfScene=this;
@@ -739,11 +773,14 @@ tryMove(dx,dy){
     this.vehicle.body.immovable = true;
   }
   this.vehicleMode=false;
+  if(vehicleControls) vehicleControls.style.display="none";
+  const normalBtns=document.querySelector(".buttons"); if(normalBtns) normalBtns.style.display="block";
+  input.a=false; input.b=false; input.vgas=false; input.vbrake=false;
   this.vehicleSpeed=0;
   this.vehicleMaxSpeed=10.0;
   this.vehicleTurnRate=2.7;
   this.vehicleFriction=0.94;
-  this.vehicleLabel=this.add.text(this.vehicle.x,this.vehicle.y-58,"DONNY'S CAR\nX / A / TAP: ENTER",{
+  this.vehicleLabel=this.add.text(this.vehicle.x,this.vehicle.y-58,"DONNY'S CAR\nTAP CAR TO ENTER",{
     fontFamily:"monospace",fontSize:"10px",color:"#9eefff",
     backgroundColor:"rgba(0,0,0,.60)",padding:{x:4,y:2},align:"center"
   }).setOrigin(.5).setDepth(DEPTH.LABEL+700);
@@ -802,6 +839,8 @@ mobileUsePressed(){
 enterVehicle(){
   if(!this.vehicle || this.vehicleMode) return;
   this.vehicleMode=true;
+  if(vehicleControls) vehicleControls.style.display="flex";
+  const normalBtns=document.querySelector(".buttons"); if(normalBtns) normalBtns.style.display="none";
   this.player.setVisible(false);
   this.player.body.enable=false;
   this.vehicleSpeed=0;
@@ -814,6 +853,9 @@ enterVehicle(){
 exitVehicle(){
   if(!this.vehicle || !this.vehicleMode) return;
   this.vehicleMode=false;
+  if(vehicleControls) vehicleControls.style.display="none";
+  const normalBtns=document.querySelector(".buttons"); if(normalBtns) normalBtns.style.display="block";
+  input.a=false; input.b=false; input.vgas=false; input.vbrake=false;
   this.vehicleSpeed=0;
   this.setEngineVolume(false);
   const a=Phaser.Math.DegToRad(this.vehicle.angle);
@@ -829,40 +871,47 @@ exitVehicle(){
 updateVehicle(dt){
   if(!this.vehicle || !this.vehicleMode) return;
   const delta=Math.max(0.8,Math.min(2.0,(dt||16)/16.666));
-  // v81: vehicle reads the real HUD input flags.
-  const gas = input.a === true || input.y < -0.25 || input.y > 0.25 || !!(this.keys && this.keys.SPACE && this.keys.SPACE.isDown);
-  const brake = input.b === true;
-  const steer = (input.x || 0) + ((this.keys.LEFT?.isDown)?-1:0) + ((this.keys.RIGHT?.isDown)?1:0);
 
-  if(gas){ this.vehicleSpeed += 0.55*delta; if(Math.abs(this.vehicleSpeed)<0.9) this.vehicleSpeed=0.9; }
-  if(brake) this.vehicleSpeed -= 0.30*delta;
-  if(!gas && !brake) this.vehicleSpeed *= Math.pow(this.vehicleFriction,delta);
-  this.vehicleSpeed=Phaser.Math.Clamp(this.vehicleSpeed,-2.2,this.vehicleMaxSpeed || 7.5);
+  // v83 separate car controls:
+  // joystick moves the car directly; GAS boosts; BRAKE slows/reverses.
+  const joyX = input.x || 0;
+  const joyY = input.y || 0;
+  const joyLen = Math.hypot(joyX, joyY);
+  const gas = input.a === true || input.vgas === true;
+  const brake = input.b === true || input.vbrake === true;
 
-  if(Math.abs(this.vehicleSpeed)>0.08 && Math.abs(steer)>0.06){
-    this.vehicle.angle += steer*this.vehicleTurnRate*delta*(this.vehicleSpeed>=0?1:-1);
-  }
-
-  // v76: top-down car sprite points upward at angle 0.
-  const rad=Phaser.Math.DegToRad(this.vehicle.angle-90);
-  const nx=this.vehicle.x + Math.cos(rad)*this.vehicleSpeed*delta;
-  const ny=this.vehicle.y + Math.sin(rad)*this.vehicleSpeed*delta;
-  if(nx>12 && ny>12 && nx<this.mapW-12 && ny<this.mapH-12){
-    this.vehicle.setPosition(nx,ny);
+  if(joyLen > 0.12){
+    const nx = joyX / joyLen;
+    const ny = joyY / joyLen;
+    const driveSpeed = (gas ? 7.5 : 4.2) * delta;
+    this.vehicle.x += nx * driveSpeed;
+    this.vehicle.y += ny * driveSpeed;
+    this.vehicle.angle = Phaser.Math.RadToDeg(Math.atan2(ny, nx)) + 90;
+    this.vehicleSpeed = driveSpeed;
   } else {
-    this.vehicleSpeed *= -0.25;
+    if(gas) this.vehicleSpeed = Math.min((this.vehicleSpeed||0)+0.55*delta, this.vehicleMaxSpeed||10);
+    else if(brake) this.vehicleSpeed = Math.max((this.vehicleSpeed||0)-0.55*delta, -2.2);
+    else this.vehicleSpeed *= Math.pow(this.vehicleFriction||0.94, delta);
+
+    const rad=Phaser.Math.DegToRad(this.vehicle.angle-90);
+    this.vehicle.x += Math.cos(rad)*this.vehicleSpeed*delta;
+    this.vehicle.y += Math.sin(rad)*this.vehicleSpeed*delta;
   }
+
+  this.vehicle.x=Phaser.Math.Clamp(this.vehicle.x,12,this.mapW-12);
+  this.vehicle.y=Phaser.Math.Clamp(this.vehicle.y,12,this.mapH-12);
+
   this.setEngineVolume(true);
 
   if(this.vehicleLabel){
     this.vehicleLabel.setPosition(this.vehicle.x,this.vehicle.y-58);
-    this.vehicleLabel.setText("DRIVING\nX / USE: EXIT");
+    this.vehicleLabel.setText("DRIVING\nJOYSTICK MOVE • GAS BOOST • EXIT");
   }
 
   if(this.highwayWestgateExit){
     const d=Phaser.Math.Distance.Between(this.vehicle.x,this.vehicle.y,this.highwayWestgateExit.x,this.highwayWestgateExit.y);
     if(d < this.highwayWestgateExit.r+20){
-      setObjective("X / E: Enter Westgate Connector");
+      setObjective("EXIT CAR / Enter Westgate Connector");
     }
   }
 }
@@ -913,7 +962,7 @@ if(this.vehicle){
     if(this.vehicleLabel && !this.vehicleMode){
       this.vehicleLabel.setPosition(this.vehicle.x,this.vehicle.y-58);
       const vd=this.player ? Phaser.Math.Distance.Between(this.player.x,this.player.y,this.vehicle.x,this.vehicle.y) : 999;
-      this.vehicleLabel.setText(vd<190 ? "DONNY'S CAR\nX / A / TAP: ENTER" : "DONNY'S CAR");
+      this.vehicleLabel.setText(vd<190 ? "DONNY'S CAR\nTAP CAR TO ENTER" : "DONNY'S CAR");
     }
     if(this.vehicleMode){
       this.updateVehicle(dt);
@@ -922,7 +971,7 @@ if(this.vehicle){
     const vd=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.vehicle.x,this.vehicle.y);
     if(vd<95) objectiveText.textContent="X / E: Enter Donny's car";
   }
-coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.vehicle.x)},${Math.round(this.vehicle.y)} <span class="tag">DRIVE:</span> A${input.a?1:0} B${input.b?1:0} X${input.xbtn?1:0} JY${input.y.toFixed(1)} <span class="tag">SPD:</span> ${this.vehicleSpeed.toFixed(1)}`;
+coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.vehicle.x)},${Math.round(this.vehicle.y)} <span class="tag">CAR:</span> JOY ${input.x.toFixed(1)},${input.y.toFixed(1)} GAS:${(input.a||input.vgas)?1:0} BRK:${(input.b||input.vbrake)?1:0} SPD:${this.vehicleSpeed.toFixed(1)}`;
       return;
     }
   }
@@ -981,6 +1030,13 @@ coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.player.x)}, 
   showToast("DONNY MOVED TO SAFE SPOT");
 }
 handleUse(){
+  // v83 highway X enter anywhere: highway is a vehicle test page.
+  if(AREA==="highway" && this.vehicle){
+    if(this.vehicleMode){ this.exitVehicle(); return; }
+    this.enterVehicle();
+    return;
+  }
+
   // v80 hard vehicle use: X enters/exits regardless of dialogue/objectives.
   if(AREA==="highway" && this.vehicle){ if(this.vehicleMode){ this.exitVehicle(); return; } this.enterVehicle(); return; }
 
@@ -1004,7 +1060,7 @@ handleUse(){
   if(AREA==="highway" && this.highwayWestgateExit){
     const d=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.highwayWestgateExit.x,this.highwayWestgateExit.y);
     if(d < this.highwayWestgateExit.r){
-      location.href=location.pathname+"?v=westgate-v82&area=westgate&collision=mask";
+      location.href=location.pathname+"?v=westgate-v83&area=westgate&collision=mask";
       return;
     }
     showToast("Follow the marked ramp exit to Westgate.");
@@ -1050,7 +1106,7 @@ handleUse(){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v82&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v83&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -1067,16 +1123,16 @@ handleUse(){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v82&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v83&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v82&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v82&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v82&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v83&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v83&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v83&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
@@ -1307,7 +1363,50 @@ function installHardVehicleButtons(){
   }, true);
 }
 
+
+function installDedicatedVehicleControls(){
+  if(window.__dedicatedVehicleControlsInstalled) return;
+  window.__dedicatedVehicleControlsInstalled = true;
+
+  function bindHold(el, key){
+    if(!el) return;
+    const down = e => {
+      e.preventDefault(); e.stopPropagation();
+      input[key]=true;
+      if(key==="vgas") input.a=true;
+      if(key==="vbrake") input.b=true;
+      const sc=window.__cfScene;
+      if(sc && sc.vehicleMode && key==="vgas"){
+        sc.vehicleSpeed = Math.max(sc.vehicleSpeed || 0, 1.2);
+        sc.setEngineVolume(true);
+      }
+    };
+    const up = e => {
+      e.preventDefault(); e.stopPropagation();
+      input[key]=false;
+      if(key==="vgas") input.a=false;
+      if(key==="vbrake") input.b=false;
+    };
+    ["pointerdown","touchstart","mousedown"].forEach(t=>el.addEventListener(t,down,{passive:false}));
+    ["pointerup","pointercancel","touchend","touchcancel","mouseup","mouseleave"].forEach(t=>el.addEventListener(t,up,{passive:false}));
+  }
+
+  bindHold(driveGas,"vgas");
+  bindHold(driveBrake,"vbrake");
+
+  if(driveExit){
+    ["pointerdown","touchstart","mousedown","click"].forEach(t=>{
+      driveExit.addEventListener(t,e=>{
+        e.preventDefault(); e.stopPropagation();
+        const sc=window.__cfScene;
+        if(sc && sc.vehicleMode) sc.exitVehicle();
+      },{passive:false});
+    });
+  }
+}
+
 setupControls();
+installDedicatedVehicleControls();
 installHardVehicleButtons();
 function viewportW(){return Math.max(320,Math.floor(window.visualViewport?window.visualViewport.width:innerWidth));} function viewportH(){return Math.max(240,Math.floor(window.visualViewport?window.visualViewport.height:innerHeight));}
 const game=new Phaser.Game({type:Phaser.AUTO,parent:"game",backgroundColor:"#05070b",scale:{mode:Phaser.Scale.RESIZE,autoCenter:Phaser.Scale.NO_CENTER,width:viewportW(),height:viewportH()},physics:{default:"arcade",arcade:{debug:false}}, pixelArt:true, roundPixels:true,scene:[GameScene],render:{pixelArt:false,antialias:true}});
