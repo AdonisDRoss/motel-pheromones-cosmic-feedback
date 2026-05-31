@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-  <title>Cosmic Feedback - Westgate Blacklight Connector v13</title>
+  <title>Cosmic Feedback - Westgate Blacklight Connector v14</title>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
   <style>
     html,body{
@@ -127,7 +127,7 @@
   <div class="btn b" data-btn="b">B<br>BRK</div>
   <div class="btn y" data-btn="y">Y<br>LTS</div>
 </div>
-<div class="version">Westgate Blacklight Connector v13</div>
+<div class="version">Westgate Blacklight Connector v14</div>
 
 <script>
 (() => {
@@ -275,7 +275,7 @@
 
       this.missionShown = false;
       this.time.delayedCall(500, () => {
-        showHint("MISSION UPDATED: Reach the Blacklight connector. Find the lookout. Enter the club district.");
+        showHint(COLLISION_MODE==="mask" ? "MASK COLLISION ACTIVE. Reach the lookout." : "COLLISION OFF. Add &collision=mask to test the real mask.");
         this.time.delayedCall(3500, hideHint);
       });
     }
@@ -295,21 +295,41 @@
     }
 
     blocked(x,y){
+      // v14 collision rules:
+      // default: off for safe testing
+      // ?collision=mask uses the real black/white PNG mask
+      // ?collision=road stays permissive while tuning
       if(COLLISION_MODE === "off") return false;
+
+      // Always keep player inside actual map bounds.
       if(x < 6 || y < 6 || x > this.mapW-6 || y > this.mapH-6) return true;
 
       if(COLLISION_MODE === "road"){
-        // Temporary broad road-zone collision: permissive near roads/market connector.
         return false;
       }
 
-      if(COLLISION_MODE === "mask" && this.maskReady){
-        const mx = Math.floor(x / this.mapW * this.maskCanvas.width);
-        const my = Math.floor(y / this.mapH * this.maskCanvas.height);
-        const p = this.maskCtx.getImageData(mx,my,1,1).data;
-        const bright = (p[0]+p[1]+p[2])/3;
-        return bright < 128;
+      if(COLLISION_MODE === "mask"){
+        if(!this.maskReady) return false;
+
+        const mx = Phaser.Math.Clamp(Math.floor(x / this.mapW * this.maskCanvas.width), 0, this.maskCanvas.width - 1);
+        const my = Phaser.Math.Clamp(Math.floor(y / this.mapH * this.maskCanvas.height), 0, this.maskCanvas.height - 1);
+
+        // Sample a tiny 3x3 foot area. If the majority is black, block.
+        // This prevents one stray black pixel from snagging Donny.
+        let black = 0, total = 0;
+        for(let oy=-1; oy<=1; oy++){
+          for(let ox=-1; ox<=1; ox++){
+            const sx = Phaser.Math.Clamp(mx+ox, 0, this.maskCanvas.width-1);
+            const sy = Phaser.Math.Clamp(my+oy, 0, this.maskCanvas.height-1);
+            const p = this.maskCtx.getImageData(sx, sy, 1, 1).data;
+            const bright = (p[0]+p[1]+p[2])/3;
+            if(bright < 128) black++;
+            total++;
+          }
+        }
+        return black >= 5;
       }
+
       return false;
     }
 
@@ -375,7 +395,7 @@
       cam.scrollX = Phaser.Math.Clamp(cam.scrollX, 0, Math.max(0, this.mapW - viewW));
       cam.scrollY = Phaser.Math.Clamp(cam.scrollY, 0, Math.max(0, this.mapH - viewH));
 
-      coordLine.innerHTML = `<span class="tag">XY:</span> ${Math.round(this.player.x)}, ${Math.round(this.player.y)} <span class="tag">COL:</span> ${COLLISION_MODE}`;
+      coordLine.innerHTML = `<span class="tag">XY:</span> ${Math.round(this.player.x)}, ${Math.round(this.player.y)} <span class="tag">COL:</span> ${COLLISION_MODE}${COLLISION_MODE==="mask" ? " " + (this.maskReady ? "READY" : "NO MASK") : ""}`;
     }
 
     handleUse(){
