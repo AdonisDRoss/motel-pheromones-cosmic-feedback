@@ -3,8 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight District A1 v24</title>
-<title>Cosmic Feedback - Blacklight District A1 v23</title>
+<title>Cosmic Feedback - Blacklight District A1 v25</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -94,8 +93,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 
 <div class="stick" id="stick"><div class="nub" id="nub"></div></div>
 <div class="buttons"><div class="btn r" data-btn="r">R<br>BST</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
-<div class="version">Blacklight District A1 v24</div>
-<div class="version">Blacklight District A1 v23</div>
+<div class="version">Blacklight District A1 v25</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -171,7 +169,7 @@ const ShopState = {
     {id:"scrap_cable", name:"Scrap Cable", buy:6, sell:2}
   ],
   load(){
-    this.credits = parseInt(localStorage.getItem("cf_credits") || "50", 10);
+    this.credits = parseInt(localStorage.getItem("cf_credits") || "100", 10);
     try { this.inv = JSON.parse(localStorage.getItem("cf_inventory") || "{}"); } catch(e){ this.inv = {}; }
   },
   save(){
@@ -222,6 +220,35 @@ function closeShop(){
 }
 document.getElementById("shopClose").onclick = closeShop;
 
+function invQty(id){
+  ShopState.load();
+  return ShopState.qty(id);
+}
+function hasItem(id){
+  return invQty(id) > 0;
+}
+function setObjective(text){
+  objectiveText.textContent = text;
+  localStorage.setItem("cf_objective", text);
+}
+function setFlag(name, value="1"){
+  localStorage.setItem("cf_flag_" + name, value);
+}
+function hasFlag(name){
+  return localStorage.getItem("cf_flag_" + name) === "1";
+}
+function currentMissionText(){
+  if(!hasFlag("talked_kira")) return "Talk to Kira Volt";
+  if(!hasItem("signal_charm")) return "Buy Hacked Signal Charm";
+  if(!hasFlag("talked_runner")) return "Talk to Blacklight Runner";
+  if(!hasFlag("talked_bouncer")) return "Talk to Club Bouncer";
+  return "Enter Blacklight Club";
+}
+function refreshMission(){
+  setObjective(currentMissionText());
+}
+
+
 class GameScene extends Phaser.Scene {
  preload(){
   this.load.image("map", mapCfg.base); this.load.image("mask", mapCfg.mask);
@@ -238,6 +265,7 @@ class GameScene extends Phaser.Scene {
  }
  create(){
   objectiveText.textContent = mapCfg.objective;
+  if(AREA==="a1") refreshMission();
   this.map=this.add.image(0,0,"map").setOrigin(0,0).setScale(WORLD_SCALE); this.mapW=this.map.width * WORLD_SCALE; this.mapH=this.map.height * WORLD_SCALE;
   this.physics.world.setBounds(0,0,this.mapW,this.mapH);
   this.cameras.main.setBounds(0,0,this.mapW,this.mapH);
@@ -266,7 +294,7 @@ class GameScene extends Phaser.Scene {
   }
   this.keys=this.input.keyboard.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT,E,X,SPACE");
   this.input.keyboard.on("keydown-E",()=>this.handleUse()); this.input.keyboard.on("keydown-X",()=>this.handleUse());
-  showToast(AREA==="a1" ? "BLACKLIGHT DISTRICT A1\nCheckpoint saved" : "WESTGATE CONNECTOR");
+  showToast(AREA==="a1" ? "BLACKLIGHT DISTRICT A1\nMission chain active" : "WESTGATE CONNECTOR");
   localStorage.setItem("cf_checkpoint", AREA==="a1" ? "blacklight_a1" : "westgate_connector");
  }
  addNpc(name,xn,yn,line,mission,kind="talk",assetKey="blacklight_kid"){
@@ -291,7 +319,8 @@ class GameScene extends Phaser.Scene {
     npcKeys.forEach(k=>{
       const textureKey = `${k}_idle`;
       if(this.textures.exists(textureKey)){
-        this.anims.create({key:`${k}_idle_${d}`,frames:this.anims.generateFrameNumbers(textureKey,{start:r*4,end:r*4+3}),frameRate:4,repeat:-1});
+        // v25: hold a single clean idle frame so NPCs do not cycle through bad generated frames.
+        this.anims.create({key:`${k}_idle_${d}`,frames:[{key:textureKey, frame:r*4}],frameRate:1,repeat:-1});
       }
     });
   });
@@ -342,20 +371,53 @@ class GameScene extends Phaser.Scene {
  handleUse(){
   let near=null; for(const n of this.npcs) if(Phaser.Math.Distance.Between(this.player.x,this.player.y,n.x,n.y)<48) near=n;
   if(near){
-    if(near.npc.kind==="vendor"){
-      showDialogue(near.npc.name, near.npc.line, [
-        {label:"BUY / SELL", onClick:openShop},
-        {label:"Ask", onClick:()=>{objectiveText.textContent=near.npc.mission;localStorage.setItem("cf_objective",near.npc.mission);showDialogue(near.npc.name, "Credits spend fast. Water spends faster.", [{label:"Close",onClick:closeDialogue}]);}},
+    if(near.npc.name==="KIRA VOLT"){
+      showDialogue("KIRA VOLT", "You want in? Buy a hacked signal charm. Runner will tell you which route is clean.", [
+        {label:"Got it.", onClick:()=>{setFlag("talked_kira"); refreshMission(); showToast("NEW OBJECTIVE\nBuy Hacked Signal Charm"); closeDialogue();}},
         {label:"Leave", onClick:closeDialogue}
       ]);
       return;
     }
-    showDialogue(near.npc.name, near.npc.line, [{label:"Ask about signal",onClick:()=>{objectiveText.textContent=near.npc.mission;localStorage.setItem("cf_objective",near.npc.mission);showDialogue(near.npc.name,near.npc.mission,[{label:"Close",onClick:closeDialogue}]);}},{label:"Leave",onClick:closeDialogue}]);return;}
+
+    if(near.npc.kind==="vendor"){
+      showDialogue(near.npc.name, near.npc.line, [
+        {label:"BUY / SELL", onClick:()=>{openShop(); refreshMission();}},
+        {label:"Ask", onClick:()=>showDialogue(near.npc.name, "Charm costs 18 credits. No charm, no club door.", [{label:"Close",onClick:()=>{refreshMission(); closeDialogue();}}])},
+        {label:"Leave", onClick:()=>{refreshMission(); closeDialogue();}}
+      ]);
+      return;
+    }
+
+    if(near.npc.name==="BLACKLIGHT RUNNER"){
+      if(!hasItem("signal_charm")){
+        showDialogue("BLACKLIGHT RUNNER", "Get a hacked signal charm first. Then I’ll tell you which door is listening.", [{label:"Close",onClick:closeDialogue}]);
+      } else {
+        showDialogue("BLACKLIGHT RUNNER", "Passphrase is: static drinks water. Tell the bouncer and keep moving.", [
+          {label:"Memorized.", onClick:()=>{setFlag("talked_runner"); refreshMission(); showToast("PASS PHRASE LEARNED\nTalk to Club Bouncer"); closeDialogue();}},
+          {label:"Close", onClick:closeDialogue}
+        ]);
+      }
+      return;
+    }
+
+    if(near.npc.name==="CLUB BOUNCER"){
+      if(!hasItem("signal_charm")){
+        showDialogue("CLUB BOUNCER", "No charm, no door.", [{label:"Close",onClick:closeDialogue}]);
+      } else if(!hasFlag("talked_runner")){
+        showDialogue("CLUB BOUNCER", "Charm checks out. Passphrase is still missing.", [{label:"Close",onClick:closeDialogue}]);
+      } else {
+        showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
+          {label:"Enter.", onClick:()=>{setFlag("talked_bouncer"); refreshMission(); showToast("CLUB ACCESS CLEARED"); closeDialogue();}},
+          {label:"Close", onClick:closeDialogue}
+        ]);
+      }
+      return;
+    }
+
+    showDialogue(near.npc.name, near.npc.line, [{label:"Ask about signal",onClick:()=>{setObjective(near.npc.mission);showDialogue(near.npc.name,near.npc.mission,[{label:"Close",onClick:closeDialogue}]);}},{label:"Leave",onClick:closeDialogue}]);return;}
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v24&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v24&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v23&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v23&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v25&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v25&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
