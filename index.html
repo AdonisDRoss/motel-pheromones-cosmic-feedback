@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight District A1 v21</title>
+<title>Cosmic Feedback - Blacklight District A1 v22</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -93,7 +93,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 
 <div class="stick" id="stick"><div class="nub" id="nub"></div></div>
 <div class="buttons"><div class="btn r" data-btn="r">R<br>BST</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
-<div class="version">Blacklight District A1 v21</div>
+<div class="version">Blacklight District A1 v22</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -126,9 +126,27 @@ const DONNY = {
   walk:"assets/sprites/player/donny/donny_walk_4dir.png",
   run:"assets/sprites/player/donny/donny_run_4dir.png"
 };
-const BLK = {
-  idle:"assets/sprites/npcs/blacklight_kid/blacklight_kid_idle_4dir_128.png",
-  walk:"assets/sprites/npcs/blacklight_kid/blacklight_kid_walk_4dir_128.png"
+const NPC_ASSETS = {
+  blacklight_kid: {
+    idle:"assets/sprites/npcs/blacklight_kid/blacklight_kid_idle_4dir_128.png",
+    walk:"assets/sprites/npcs/blacklight_kid/blacklight_kid_walk_4dir_128.png"
+  },
+  neon_vendor: {
+    idle:"assets/sprites/npcs/neon_vendor/neon_vendor_idle_4dir_128.png",
+    walk:"assets/sprites/npcs/neon_vendor/neon_vendor_walk_4dir_128.png"
+  },
+  blacklight_bouncer: {
+    idle:"assets/sprites/npcs/blacklight_bouncer/blacklight_bouncer_idle_4dir_128.png",
+    walk:"assets/sprites/npcs/blacklight_bouncer/blacklight_bouncer_walk_4dir_128.png"
+  },
+  blacklight_runner: {
+    idle:"assets/sprites/npcs/blacklight_runner/blacklight_runner_idle_4dir_128.png",
+    walk:"assets/sprites/npcs/blacklight_runner/blacklight_runner_walk_4dir_128.png"
+  },
+  kira_volt: {
+    idle:"assets/sprites/npcs/kira_volt/kira_volt_idle_4dir_128.png",
+    walk:"assets/sprites/npcs/kira_volt/kira_volt_walk_4dir_128.png"
+  }
 };
 const PROPS = {
   vendorStall:"assets/props/blacklight/neon_vendor_stall_idle_256.png"
@@ -207,7 +225,11 @@ class GameScene extends Phaser.Scene {
   this.load.spritesheet("donny_idle", DONNY.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("donny_walk", DONNY.walk, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("donny_run", DONNY.run, {frameWidth:128,frameHeight:128});
-  this.load.spritesheet("blk_idle", BLK.idle, {frameWidth:128,frameHeight:128});
+  this.load.spritesheet("blacklight_kid_idle", NPC_ASSETS.blacklight_kid.idle, {frameWidth:128,frameHeight:128});
+  this.load.spritesheet("neon_vendor_idle", NPC_ASSETS.neon_vendor.idle, {frameWidth:128,frameHeight:128});
+  this.load.spritesheet("blacklight_bouncer_idle", NPC_ASSETS.blacklight_bouncer.idle, {frameWidth:128,frameHeight:128});
+  this.load.spritesheet("blacklight_runner_idle", NPC_ASSETS.blacklight_runner.idle, {frameWidth:128,frameHeight:128});
+  this.load.spritesheet("kira_volt_idle", NPC_ASSETS.kira_volt.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("vendor_stall", PROPS.vendorStall, {frameWidth:256,frameHeight:256});
  }
  create(){
@@ -228,13 +250,13 @@ class GameScene extends Phaser.Scene {
     this.vendorStall=this.add.sprite(this.mapW*.415,this.mapH*.610,"vendor_stall",0).setDepth(19).setScale(0.72);
     this.vendorStall.play("vendor_stall_idle");
 
-    this.addNpc("KIRA VOLT", .72,.36, "The club hears everything.", "Find the hidden signal relay.");
-    this.addNpc("NEON VENDOR", .455,.585, "Water, batteries, noodles, glow junk. Buying or selling?", "Buy or sell supplies.", "vendor");
-    this.addNpc("BLACKLIGHT RUNNER", .58,.72, "Concord patrol rolled through an hour ago.", "Get the passphrase from the runner.");
-    this.addNpc("CLUB BOUNCER", .82,.56, "Passphrase first. Door second.", "Bring the passphrase to the club door.");
+    this.addNpc("KIRA VOLT", .72,.36, "The club hears everything.", "Find the hidden signal relay.", "talk", "kira_volt");
+    this.addNpc("NEON VENDOR", .455,.585, "Water, batteries, noodles, glow junk. Buying or selling?", "Buy or sell supplies.", "vendor", "neon_vendor");
+    this.addNpc("BLACKLIGHT RUNNER", .58,.72, "Concord patrol rolled through an hour ago.", "Get the passphrase from the runner.", "talk", "blacklight_runner");
+    this.addNpc("CLUB BOUNCER", .82,.56, "Passphrase first. Door second.", "Bring the passphrase to the club door.", "talk", "blacklight_bouncer");
     this.exitZone=new Phaser.Geom.Rectangle(this.mapW*.03,this.mapH*.65,this.mapW*.16,this.mapH*.25);
   } else {
-    this.addNpc('KADE "STATIC"', .40,.34, "You looking for the club?", "Blacklight opens for signal.");
+    this.addNpc('KADE "STATIC"', .40,.34, "You looking for the club?", "Blacklight opens for signal.", "talk", "blacklight_kid");
     this.exitZone=new Phaser.Geom.Rectangle(this.mapW*.55,this.mapH*.30,this.mapW*.18,this.mapH*.18);
   }
   this.keys=this.input.keyboard.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT,E,X,SPACE");
@@ -242,23 +264,38 @@ class GameScene extends Phaser.Scene {
   showToast(AREA==="a1" ? "BLACKLIGHT DISTRICT A1\nCheckpoint saved" : "WESTGATE CONNECTOR");
   localStorage.setItem("cf_checkpoint", AREA==="a1" ? "blacklight_a1" : "westgate_connector");
  }
- addNpc(name,xn,yn,line,mission,kind="talk"){
-  const n=this.physics.add.sprite(this.mapW*xn,this.mapH*yn,"blk_idle",0).setDepth(21).setScale(.78);
-  n.body.setSize(28,36).setOffset(50,76); n.body.immovable=true; n.play("blk_idle_down");
-  n.npc={name,line,mission,kind};
+ addNpc(name,xn,yn,line,mission,kind="talk",assetKey="blacklight_kid"){
+  const texKey = this.textures.exists(`${assetKey}_idle`) ? `${assetKey}_idle` : "blacklight_kid_idle";
+  const n=this.physics.add.sprite(this.mapW*xn,this.mapH*yn,texKey,0).setDepth(21).setScale(.82);
+  n.body.setSize(28,36).setOffset(50,76); n.body.immovable=true; n.play(this.anims.exists(`${assetKey}_idle_down`) ? `${assetKey}_idle_down` : "blacklight_kid_idle_down");
+  n.npc={name,line,mission,kind,assetKey};
   this.add.text(n.x,n.y-48,name,{fontFamily:"monospace",fontSize:"7px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.55)",padding:{x:2,y:1}}).setOrigin(.5).setDepth(30);
   this.npcs.push(n);
  }
  makeAnims(){
-  const donnyRows = {down:0, right:2, left:2, up:3}; // v17: use Donny LEFT row for both side directions; flip for right.
+  const donnyRows = {down:0, right:2, left:2, up:3};
   ["down","right","left","up"].forEach((d,r)=>{
-    const dr = donnyRows[d];
+    const dr=donnyRows[d];
     this.anims.create({key:`donny_idle_${d}`,frames:this.anims.generateFrameNumbers("donny_idle",{start:dr*8,end:dr*8+3}),frameRate:4,repeat:-1});
     this.anims.create({key:`donny_walk_${d}`,frames:this.anims.generateFrameNumbers("donny_walk",{start:dr*8,end:dr*8+7}),frameRate:9,repeat:-1});
     this.anims.create({key:`donny_run_${d}`,frames:this.anims.generateFrameNumbers("donny_run",{start:dr*8,end:dr*8+7}),frameRate:12,repeat:-1});
-    this.anims.create({key:`blk_idle_${d}`,frames:this.anims.generateFrameNumbers("blk_idle",{start:r*4,end:r*4+3}),frameRate:4,repeat:-1});
   });
+
+  const npcKeys = ["blacklight_kid","neon_vendor","blacklight_bouncer","blacklight_runner","kira_volt"];
+  ["down","right","left","up"].forEach((d,r)=>{
+    npcKeys.forEach(k=>{
+      const textureKey = `${k}_idle`;
+      if(this.textures.exists(textureKey)){
+        this.anims.create({key:`${k}_idle_${d}`,frames:this.anims.generateFrameNumbers(textureKey,{start:r*4,end:r*4+3}),frameRate:4,repeat:-1});
+      }
+    });
+  });
+
+  if(this.textures.exists("vendor_stall")){
+    this.anims.create({key:"vendor_stall_idle",frames:this.anims.generateFrameNumbers("vendor_stall",{start:0,end:3}),frameRate:4,repeat:-1});
+  }
  }
+
  blocked(x,y){
   if(COLLISION_MODE==="off") return false;
   if(x<4||y<4||x>this.mapW-4||y>this.mapH-4) return true;
@@ -304,8 +341,8 @@ class GameScene extends Phaser.Scene {
     }
     showDialogue(near.npc.name, near.npc.line, [{label:"Ask about signal",onClick:()=>{objectiveText.textContent=near.npc.mission;localStorage.setItem("cf_objective",near.npc.mission);showDialogue(near.npc.name,near.npc.mission,[{label:"Close",onClick:closeDialogue}]);}},{label:"Leave",onClick:closeDialogue}]);return;}
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v21&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v21&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v22&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v22&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
