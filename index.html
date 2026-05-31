@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight District A1 v20</title>
+<title>Cosmic Feedback - Blacklight District A1 v21</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -93,7 +93,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 
 <div class="stick" id="stick"><div class="nub" id="nub"></div></div>
 <div class="buttons"><div class="btn r" data-btn="r">R<br>BST</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
-<div class="version">Blacklight District A1 v20</div>
+<div class="version">Blacklight District A1 v21</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -219,17 +219,17 @@ class GameScene extends Phaser.Scene {
   this.applyCover();
   try{const src=this.textures.get("mask").getSourceImage();this.maskCanvas=document.createElement("canvas");this.maskCanvas.width=src.width;this.maskCanvas.height=src.height;this.maskCtx=this.maskCanvas.getContext("2d",{willReadFrequently:true});this.maskCtx.drawImage(src,0,0);this.maskReady=true;}catch(e){this.maskReady=false;}
   this.makeAnims();
-  this.player=this.physics.add.sprite(this.mapW*mapCfg.spawn[0],this.mapH*mapCfg.spawn[1],"donny_idle",0).setDepth(20).setScale(0.58);
+  this.player=this.physics.add.sprite(this.mapW*mapCfg.spawn[0],this.mapH*mapCfg.spawn[1],"donny_idle",0).setDepth(20).setScale(0.68);
   this.player.body.setSize(28,34).setOffset(50,78); this.player.dir="down"; this.player.play("donny_idle_down");
   this.cameras.main.startFollow(this.player,true,.12,.12);
   this.npcs=[];
   if(AREA==="a1") {
     // v20: place reusable Neon Vendor Stall prop beside the vendor.
-    this.vendorStall=this.add.sprite(this.mapW*.325,this.mapH*.585,"vendor_stall",0).setDepth(19).setScale(0.78);
+    this.vendorStall=this.add.sprite(this.mapW*.415,this.mapH*.610,"vendor_stall",0).setDepth(19).setScale(0.72);
     this.vendorStall.play("vendor_stall_idle");
 
     this.addNpc("KIRA VOLT", .72,.36, "The club hears everything.", "Find the hidden signal relay.");
-    this.addNpc("NEON VENDOR", .37,.54, "Water, batteries, noodles, glow junk. Buying or selling?", "Buy or sell supplies.", "vendor");
+    this.addNpc("NEON VENDOR", .455,.585, "Water, batteries, noodles, glow junk. Buying or selling?", "Buy or sell supplies.", "vendor");
     this.addNpc("BLACKLIGHT RUNNER", .58,.72, "Concord patrol rolled through an hour ago.", "Get the passphrase from the runner.");
     this.addNpc("CLUB BOUNCER", .82,.56, "Passphrase first. Door second.", "Bring the passphrase to the club door.");
     this.exitZone=new Phaser.Geom.Rectangle(this.mapW*.03,this.mapH*.65,this.mapW*.16,this.mapH*.25);
@@ -304,8 +304,8 @@ class GameScene extends Phaser.Scene {
     }
     showDialogue(near.npc.name, near.npc.line, [{label:"Ask about signal",onClick:()=>{objectiveText.textContent=near.npc.mission;localStorage.setItem("cf_objective",near.npc.mission);showDialogue(near.npc.name,near.npc.mission,[{label:"Close",onClick:closeDialogue}]);}},{label:"Leave",onClick:closeDialogue}]);return;}
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v20&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v20&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v21&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v21&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
