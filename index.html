@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight District A1 v60</title>
+<title>Cosmic Feedback - Blacklight District A1 v62</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -164,7 +164,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 
 <div class="stick" id="stick"><div class="nub" id="nub"></div></div>
 <div class="buttons"><div class="btn r" data-btn="r">R<br>BST</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
-<div class="version">Blacklight District / Club v60</div>
+<div class="version">Blacklight District / Club v62</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -524,9 +524,9 @@ preload(){
   this.load.spritesheet("blacklight_runner_idle", NPC_ASSETS.blacklight_runner.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("kira_volt_idle", NPC_ASSETS.kira_volt.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("vendor_stall", PROPS.vendorStall, {frameWidth:256,frameHeight:256});
-  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=59");
-  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=59");
-  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=59");
+  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=62");
+  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=62");
+  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=62");
  }
  create(){
   window.__cfScene=this;
@@ -546,10 +546,10 @@ preload(){
   this.cameras.main.setBounds(0,0,this.mapW,this.mapH);
 
   // v60: create Donny FIRST, before marker/anims/mask/NPC code can stop create().
-  this.player=this.physics.add.sprite(this.mapW*mapCfg.spawn[0],this.mapH*mapCfg.spawn[1],"donny_idle_down",0).setDepth(DEPTH.CHARACTER_BASE+1000).setScale(0.76);
+  this.player=this.physics.add.sprite(this.mapW*mapCfg.spawn[0],this.mapH*mapCfg.spawn[1],"donny_idle_down",0).setDepth(DEPTH.CHARACTER_BASE+3000).setScale(0.70);
   this.player.body.setSize(30,40).setOffset(49,76);
   this.player.dir="down";
-  this.donnyDebugDot=this.add.rectangle(this.player.x,this.player.y+32,18,6,0xff00ff,.85).setDepth(DEPTH.CHARACTER_BASE+999);
+  this.donnyDebugDot=null;
   this.cameras.main.startFollow(this.player,false,1,1,0,0);
   this.cameras.main.centerOn(this.player.x,this.player.y);
   this.cameraFollowLock = true;
@@ -570,11 +570,7 @@ preload(){
     console.error("makeAnims failed", e);
     showToast("ANIM SAFE MODE\nPlayer still loaded");
   }
-  this.player=this.physics.add.sprite(this.mapW*mapCfg.spawn[0],this.mapH*mapCfg.spawn[1],"donny_idle_down",0).setDepth(DEPTH.CHARACTER_BASE).setScale(0.76);
-  this.player.body.setSize(30,40).setOffset(49,76); this.player.dir="down"; this.safePlay(this.player,"donny_idle_down");
-  this.donnyDebugDot=this.add.rectangle(this.player.x,this.player.y+32,18,6,0xff00ff,.85).setDepth(DEPTH.CHARACTER_BASE+999);
-  this.cameras.main.startFollow(this.player,true,1,1);
-  this.cameras.main.centerOn(this.player.x,this.player.y);
+  this.safePlay(this.player,"donny_idle_down");
   this.npcs=[];
   if(AREA==="a1") {
     // v20: place reusable Neon Vendor Stall prop beside the vendor.
@@ -672,13 +668,13 @@ preload(){
     for(const n of this.npcs){
       const nx=n.x, ny=n.y+18;
       const dx=Math.abs(px-nx), dy=Math.abs(py-ny);
-      if(dx<10 && dy<12) return true;
+      if(dx<10 && dy<10) return true;
     }
   }
 
   if(this.vendorStall){
     const sx=this.vendorStall.x, sy=this.vendorStall.y+34;
-    if(Math.abs(px-sx)<34 && Math.abs(py-sy)<16) return true;
+    if(Math.abs(px-sx)<32 && Math.abs(py-sy)<14) return true;
   }
 
   return false;
@@ -731,14 +727,11 @@ tryMove(dx,dy){
   else hideHint();
   if(input.usePressed){input.usePressed=false;this.handleUse();}
   this.lockCameraToPlayer();
-  // v48: grounded foot-depth sorting. Uses sprite feet, not body center,
-  // so Donny does not appear to float over walls/furniture as often.
-  // v56: force street objects below Donny. This removes the visual hover/overlap issue.
+  // v62: Donny is always above street NPCs and props in this working build.
   this.npcs.forEach(n=>n.setDepth(DEPTH.CHARACTER_BASE + 100));
   if(this.vendorStall) this.vendorStall.setDepth(DEPTH.CHARACTER_BASE + 90);
   if(this.clubDoorMarker) this.clubDoorMarker.setDepth(DEPTH.CHARACTER_BASE + 80);
-  this.player.setDepth(DEPTH.CHARACTER_BASE + 1000);
-  if(this.donnyDebugDot){ this.donnyDebugDot.setPosition(this.player.x,this.player.y+32); this.donnyDebugDot.setDepth(DEPTH.CHARACTER_BASE+999); }
+  this.player.setDepth(DEPTH.CHARACTER_BASE + 3000);
   this.children.bringToTop(this.player);
   coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.player.x)}, ${Math.round(this.player.y)} <span class="tag">JOY:</span> ${input.x.toFixed(1)},${input.y.toFixed(1)} <span class="tag">USE:</span> ${input.usePressed?1:0} <span class="tag">DYN:</span> ${this.dynamicBlocked(this.player.x,this.player.y)?1:0} <span class="tag">CAM:</span> ${Math.round(this.cameras.main.scrollX)},${Math.round(this.cameras.main.scrollY)} <span class="tag">COL:</span> ${COLLISION_MODE} ${this.maskReady?"READY":"NO MASK"}`;
  }
@@ -782,7 +775,7 @@ tryMove(dx,dy){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v60&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v62&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -799,16 +792,16 @@ tryMove(dx,dy){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v60&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v62&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v60&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v60&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v60&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v62&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v62&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v62&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
@@ -887,9 +880,11 @@ function setupControls(){
         const dir=Math.abs(vx)>Math.abs(vy)?(vx>0?"right":"left"):(vy>0?"down":"up");
         lastDir=dir;
         sc.player.dir=dir;
-        sc.player.setFlipX(false);
-        const key=`donny_${input.r?"run":"walk"}_${dir}`;
+        const animDir = dir==="right" ? "left" : dir;
+        const key=`donny_${input.r?"run":"walk"}_${animDir}`;
         if(sc.anims && sc.anims.exists(key)) sc.player.play(key,true);
+        sc.player.setFlipX(dir==="right");
+        if(typeof sc.lockCameraToPlayer === "function") sc.lockCameraToPlayer();
       }
     }
     requestAnimationFrame(directMoveTick);
