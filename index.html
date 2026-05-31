@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
 <title>Cosmic Feedback - Blacklight District A1 v24</title>
+<title>Cosmic Feedback - Blacklight District A1 v23</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -94,6 +95,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 <div class="stick" id="stick"><div class="nub" id="nub"></div></div>
 <div class="buttons"><div class="btn r" data-btn="r">R<br>BST</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
 <div class="version">Blacklight District A1 v24</div>
+<div class="version">Blacklight District A1 v23</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -352,6 +354,8 @@ class GameScene extends Phaser.Scene {
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
     if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v24&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
     else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v24&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v23&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v23&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
