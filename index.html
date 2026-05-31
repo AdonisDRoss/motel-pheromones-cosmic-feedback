@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight District A1 v49</title>
+<title>Cosmic Feedback - Blacklight District A1 v50</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -164,7 +164,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 
 <div class="stick" id="stick"><div class="nub" id="nub"></div></div>
 <div class="buttons"><div class="btn r" data-btn="r">R<br>BST</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
-<div class="version">Blacklight District / Club v49</div>
+<div class="version">Blacklight District / Club v50</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -517,45 +517,60 @@ loadMaskAsync(){
     showToast("NO MASK FOUND\nCollision disabled");
     if(coordLine) coordLine.innerHTML = `<span class="tag">NO MASK:</span> collision off`;
   };
-  img.src=mapCfg.mask + (mapCfg.mask.includes("?") ? "&" : "?") + "v=49";
+  img.src=mapCfg.mask + (mapCfg.mask.includes("?") ? "&" : "?") + "v=50";
 }
 
 
 startAreaMusic(){
   if(!this.sound) return;
+
   const musicKey =
     AREA === "club" && this.cache.audio.exists("club_interior_theme")
       ? "club_interior_theme"
       : (this.cache.audio.exists("blacklight_theme") ? "blacklight_theme" : null);
 
   if(!musicKey){
-    showToast("MUSIC FILE NOT FOUND\nCheck assets/audio/music/blacklight/");
+    showToast("MUSIC FILE NOT FOUND\nassets/audio/music/blacklight/");
     return;
   }
 
-  if(currentMusic && currentMusic.key === musicKey && currentMusic.isPlaying) return;
-  if(currentMusic) currentMusic.stop();
+  if(currentMusic && currentMusic.key !== musicKey){
+    currentMusic.stop();
+    currentMusic = null;
+  }
 
-  currentMusic = this.sound.add(musicKey, { loop:true, volume:getMusicVolume() });
+  if(!currentMusic){
+    currentMusic = this.sound.add(musicKey, { loop:true, volume:getMusicVolume() });
+  }
 
   const playNow = () => {
-    if(this.sound.context && this.sound.context.state === "suspended"){
-      this.sound.context.resume().then(() => {
-        if(currentMusic && !currentMusic.isPlaying) currentMusic.play();
-      }).catch(()=>{});
-    } else if(currentMusic && !currentMusic.isPlaying) {
-      currentMusic.play();
+    try{
+      const ctx = this.sound.context;
+      if(ctx && ctx.state === "suspended"){
+        ctx.resume().then(()=>{
+          if(currentMusic && !currentMusic.isPlaying) currentMusic.play();
+        }).catch(()=>{});
+      } else if(currentMusic && !currentMusic.isPlaying){
+        currentMusic.play();
+      }
+    } catch(e){
+      console.warn("music start failed", e);
     }
   };
 
   playNow();
 
-  // iOS/Safari needs a user touch before audio can start.
-  this.input.once("pointerdown", playNow);
-  window.addEventListener("pointerdown", playNow, { once:true });
-  window.addEventListener("touchstart", playNow, { once:true });
-}
+  // iPhone/Safari: any user action should unlock music.
+  this.input.on("pointerdown", playNow);
+  window.addEventListener("pointerdown", playNow, { passive:true });
+  window.addEventListener("touchstart", playNow, { passive:true });
+  document.querySelectorAll(".btn,.stick").forEach(el=>{
+    el.addEventListener("pointerdown", playNow, { passive:true });
+    el.addEventListener("touchstart", playNow, { passive:true });
+  });
 
+  showToast("MUSIC READY\nTap screen if silent");
+}
 preload(){
   this.load.on("loaderror", file => {
     FAILED_ASSETS.add(file.key); console.error("LOAD ERROR:", file.key, file.src);
@@ -578,9 +593,9 @@ preload(){
   this.load.spritesheet("blacklight_runner_idle", NPC_ASSETS.blacklight_runner.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("kira_volt_idle", NPC_ASSETS.kira_volt.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("vendor_stall", PROPS.vendorStall, {frameWidth:256,frameHeight:256});
-  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=49");
-  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=49");
-  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=49");
+  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=50");
+  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=50");
+  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=50");
  }
  create(){
   forceControlsLive();
@@ -626,7 +641,10 @@ preload(){
     this.addNpc("BLACKLIGHT RUNNER", .84,.56, "Concord patrol rolled through an hour ago.", "Get the passphrase from the runner.", "talk", "blacklight_runner");
     this.addNpc("CLUB BOUNCER", .745,.445, "Passphrase first. Door second.", "Bring the passphrase to the club door.", "talk", "blacklight_bouncer");
     this.exitZone=new Phaser.Geom.Rectangle(this.mapW*.03,this.mapH*.65,this.mapW*.16,this.mapH*.25);
-    this.clubDoorZone=new Phaser.Geom.Rectangle(this.mapW*.700,this.mapH*.385,this.mapW*.12,this.mapH*.13);
+    this.clubDoorZone=new Phaser.Geom.Rectangle(this.mapW*.795,this.mapH*.245,this.mapW*.095,this.mapH*.15);
+    this.clubDoorMarker=this.add.sprite(this.mapW*.835,this.mapH*.315,"door_marker",0).setDepth(DEPTH.CHARACTER_BASE + this.mapH + 250).setScale(.62);
+    if(this.anims.exists("door_marker_idle")) this.clubDoorMarker.play("door_marker_idle");
+    this.clubDoorMarker.setVisible(hasFlag("club_access") || hasFlag("talked_bouncer"));
   } else if(AREA==="club") {
     this.addNpc("KIRA VOLT", .18,.28, "Signal board is live. The club is hiding more than music.", "Recover the Signal Relay Fragment.", "talk", "kira_volt");
     this.addNpc("BLACKLIGHT DJ", .19,.35, "Keep the beat low. Concord scanners hate bass drift.", "Talk to Kira at the booth.", "talk", "blacklight_kid");
@@ -638,7 +656,7 @@ preload(){
   }
   this.keys=this.input.keyboard.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT,E,X,SPACE,ESC,P");
   this.input.keyboard.on("keydown-E",()=>this.handleUse()); this.input.keyboard.on("keydown-X",()=>this.handleUse());
-  showToast(AREA==="a1" ? "BLACKLIGHT DISTRICT A1\nMission chain active" : "WESTGATE CONNECTOR");
+  showToast(AREA==="a1" ? "BLACKLIGHT DISTRICT A1\nDoor marker appears after bouncer" : (AREA==="club" ? "BLACKLIGHT CLUB" : "WESTGATE CONNECTOR"));
   if(AREA==="a1" || AREA==="club") this.startAreaMusic();
 
   localStorage.setItem("cf_checkpoint", AREA==="club" ? "blacklight_club" : (AREA==="a1" ? "blacklight_a1" : "westgate_connector"));
@@ -766,9 +784,9 @@ preload(){
         showDialogue("CLUB BOUNCER", "Charm checks out. Passphrase is still missing.", [{label:"Close",onClick:closeDialogue}]);
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
-          {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v49&area=club&collision=mask";}},
-          {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); closeDialogue();}}
+          {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v50&area=club&collision=mask";}},
+          {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
       return;
@@ -784,16 +802,16 @@ preload(){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v49&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v50&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v49&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v49&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v49&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v50&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v50&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v50&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
