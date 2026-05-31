@@ -1,595 +1,167 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-  <title>Cosmic Feedback - Westgate Blacklight Connector v15</title>
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
-  <style>
-    html,body{
-      margin:0;padding:0;width:100%;height:100%;min-height:100%;
-      background:#05070b;color:#d8f7ff;overflow:hidden!important;
-      font-family:system-ui,-apple-system,Segoe UI,sans-serif;
-      touch-action:none;overscroll-behavior:none;
-      position:fixed;inset:0;
-    }
-    body{position:fixed;inset:0;overflow:hidden!important;}
-    #game{
-      position:fixed;left:0;top:0;width:100vw;height:100vh;
-      width:100dvw;height:100dvh;background:#05070b;overflow:hidden;
-    }
-    #game canvas{
-      position:absolute!important;left:0!important;top:0!important;
-      width:100vw!important;height:100vh!important;
-      width:100dvw!important;height:100dvh!important;
-      display:block!important;
-    }
-    .hud{
-      position:fixed;left:calc(env(safe-area-inset-left) + 6px);top:calc(env(safe-area-inset-top) + 5px);
-      z-index:20;width:138px;max-width:25vw;padding:4px 6px;
-      border:1px solid rgba(124,217,255,.38);background:rgba(4,10,18,.48);
-      box-shadow:0 0 6px rgba(102,33,255,.14);backdrop-filter:blur(2px);font:7px/1.1 monospace;
-      pointer-events:none;text-shadow:0 0 3px #0ff;
-    }
-    .hud .title{font-weight:700;color:#9eefff;letter-spacing:.6px;margin-bottom:1px;}
-    .bar{height:4px;background:rgba(0,0,0,.42);margin:1px 0 2px;border:1px solid rgba(255,255,255,.10);}
-    .fill.hp{height:100%;width:100%;background:#39e886;}
-    .fill.sta{height:100%;width:100%;background:#8d5cff;}
-    .fill.water{height:100%;width:80%;background:#26c9ff;}
-    .tag{color:#b9bdd7}
-    #hint{
-      position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 8px);transform:translateX(-50%);
-      z-index:22;padding:6px 9px;border:1px solid rgba(160,210,255,.50);background:rgba(0,0,0,.62);
-      color:#e8fbff;font:10px monospace;display:none;white-space:nowrap;max-width:70vw;overflow:hidden;text-overflow:ellipsis;
-    }
-    #dialogue{
-      position:fixed;left:calc(env(safe-area-inset-left) + 12px);right:calc(env(safe-area-inset-right) + 12px);
-      bottom:calc(env(safe-area-inset-bottom) + 118px);transform:none;
-      z-index:60;max-width:720px;padding:8px 10px;border:1px solid rgba(124,217,255,.58);
-      background:rgba(2,5,12,.86);box-shadow:0 0 14px rgba(115,32,255,.22);display:none;
-      color:#e8fbff;font:12px/1.25 system-ui,-apple-system,Segoe UI,sans-serif;
-      pointer-events:auto;
-    }
-    #dialogue .name{font-weight:800;color:#9eefff;letter-spacing:.5px;margin-bottom:4px;}
-    #dialogue .choices{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
-    #dialogue button{background:#122033;color:#e8fbff;border:1px solid #4a79a8;border-radius:6px;padding:7px 9px;font-size:12px;font-weight:650;touch-action:manipulation;}
-    .stick{
-      position:fixed;left:calc(env(safe-area-inset-left) + 20px);bottom:calc(env(safe-area-inset-bottom) + 30px);
-      width:116px;height:116px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.05);z-index:25;touch-action:none;
-    }
-    .nub{position:absolute;width:48px;height:48px;border-radius:50%;left:34px;top:34px;background:rgba(255,255,255,.28);border:1px solid rgba(255,255,255,.35);}
-    .buttons{position:fixed;right:calc(env(safe-area-inset-right) + 18px);bottom:calc(env(safe-area-inset-bottom) + 22px);z-index:25;touch-action:none;}
-    .btn{position:absolute;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-      color:white;font:9px/1.05 monospace;border:2px solid rgba(255,255,255,.18);background:rgba(60,90,120,.38);user-select:none;}
-    .a{right:0;bottom:28px;background:rgba(55,150,75,.40)} .b{right:58px;bottom:0;background:rgba(150,55,70,.40)}
-    .x{right:58px;bottom:64px;background:rgba(60,120,170,.40)} .y{right:116px;bottom:28px;background:rgba(150,140,60,.40)}
-    .r{right:0;bottom:92px;background:rgba(120,70,180,.48)}
-    .version{position:fixed;right:calc(env(safe-area-inset-right) + 12px);bottom:calc(env(safe-area-inset-bottom) + 8px);z-index:15;color:#9eefff;background:rgba(0,0,0,.45);border:1px solid rgba(124,217,255,.3);padding:4px 8px;font:10px monospace;}
-  
-    /* v12 mobile layout overrides */
-    #dialogue{
-      left:calc(env(safe-area-inset-left) + 10px)!important;
-      right:auto!important;
-      bottom:calc(env(safe-area-inset-bottom) + 96px)!important;
-      width:min(560px,62vw)!important;
-      max-width:62vw!important;
-      padding:6px 8px!important;
-      font-size:11px!important;
-      line-height:1.18!important;
-      z-index:70!important;
-    }
-    #dialogue .name{font-size:13px!important;margin-bottom:3px!important;}
-    #dialogue .choices{gap:5px!important;margin-top:6px!important;}
-    #dialogue button{padding:5px 7px!important;font-size:11px!important;border-radius:5px!important;}
-    .buttons{z-index:25!important;}
-    #hint{bottom:calc(env(safe-area-inset-bottom) + 7px)!important;font-size:9px!important;padding:4px 7px!important;}
-    .version{font-size:9px!important;padding:3px 6px!important;}
-
-  
-    /* v13: force full viewport canvas; HUD/controller remain fixed relative to screen */
-    html, body, #game {
-      width:100vw!important; height:100vh!important;
-      width:100dvw!important; height:100dvh!important;
-      max-width:100vw!important; max-height:100vh!important;
-      overflow:hidden!important;
-    }
-    #game canvas {
-      width:100vw!important; height:100vh!important;
-      width:100dvw!important; height:100dvh!important;
-    }
-
-  
-    #objectiveHud{
-      position:fixed;
-      left:calc(env(safe-area-inset-left) + 6px);
-      top:calc(env(safe-area-inset-top) + 72px);
-      z-index:21;
-      width:190px;
-      max-width:30vw;
-      padding:5px 7px;
-      border:1px solid rgba(190,95,255,.38);
-      background:rgba(12,5,22,.50);
-      color:#f1eaff;
-      font:8px/1.2 monospace;
-      pointer-events:none;
-      text-shadow:0 0 4px #8a5cff;
-    }
-    #objectiveHud .objTitle{
-      color:#d9b8ff;
-      font-weight:800;
-      letter-spacing:.6px;
-      margin-bottom:3px;
-    }
-    #objectiveText{color:#ffffff;}
-    #toast{
-      position:fixed;
-      left:50%;
-      top:calc(env(safe-area-inset-top) + 8px);
-      transform:translateX(-50%);
-      z-index:80;
-      display:none;
-      max-width:70vw;
-      padding:7px 10px;
-      border:1px solid rgba(124,217,255,.55);
-      background:rgba(2,5,12,.82);
-      color:#e8fbff;
-      font:11px/1.2 monospace;
-      text-align:center;
-      box-shadow:0 0 14px rgba(115,32,255,.20);
-      pointer-events:none;
-    }
-
-  
-    @media (max-width: 760px) and (orientation: landscape){
-      #objectiveHud{top:calc(env(safe-area-inset-top) + 60px);width:150px;max-width:26vw;font-size:7px;padding:4px 6px;}
-      #toast{font-size:10px;padding:5px 8px;}
-    }
-
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>Cosmic Feedback - Blacklight District A1 v16</title>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+<style>
+html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
+#game{position:fixed;left:0;top:0;width:100dvw;height:100dvh;background:#05070b;overflow:hidden;}
+#game canvas{position:absolute!important;left:0!important;top:0!important;width:100dvw!important;height:100dvh!important;display:block!important;}
+.hud{position:fixed;left:calc(env(safe-area-inset-left) + 6px);top:calc(env(safe-area-inset-top) + 5px);z-index:20;width:138px;max-width:25vw;padding:4px 6px;border:1px solid rgba(124,217,255,.38);background:rgba(4,10,18,.48);box-shadow:0 0 6px rgba(102,33,255,.14);backdrop-filter:blur(2px);font:7px/1.1 monospace;pointer-events:none;text-shadow:0 0 3px #0ff;}
+.hud .title{font-weight:700;color:#9eefff;letter-spacing:.6px;margin-bottom:1px;}
+.bar{height:4px;background:rgba(0,0,0,.42);margin:1px 0 2px;border:1px solid rgba(255,255,255,.10);}
+.fill.hp{height:100%;width:100%;background:#39e886;} .fill.sta{height:100%;width:100%;background:#8d5cff;} .fill.water{height:100%;width:80%;background:#26c9ff;}
+.tag{color:#b9bdd7}
+#objectiveHud{position:fixed;left:calc(env(safe-area-inset-left) + 6px);top:calc(env(safe-area-inset-top) + 72px);z-index:21;width:160px;max-width:28vw;padding:4px 6px;border:1px solid rgba(190,95,255,.38);background:rgba(12,5,22,.50);color:#f1eaff;font:7px/1.2 monospace;pointer-events:none;text-shadow:0 0 4px #8a5cff;}
+#objectiveHud .objTitle{color:#d9b8ff;font-weight:800;letter-spacing:.6px;margin-bottom:3px;}
+#hint{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 7px);transform:translateX(-50%);z-index:22;padding:4px 7px;border:1px solid rgba(160,210,255,.50);background:rgba(0,0,0,.62);color:#e8fbff;font:9px monospace;display:none;white-space:nowrap;max-width:70vw;overflow:hidden;text-overflow:ellipsis;}
+#dialogue{position:fixed;left:calc(env(safe-area-inset-left) + 10px);bottom:calc(env(safe-area-inset-bottom) + 96px);z-index:70;width:min(560px,62vw);max-width:62vw;padding:6px 8px;border:1px solid rgba(124,217,255,.58);background:rgba(2,5,12,.86);box-shadow:0 0 14px rgba(115,32,255,.22);display:none;color:#e8fbff;font:11px/1.18 system-ui,-apple-system,Segoe UI,sans-serif;pointer-events:auto;}
+#dialogue .name{font-size:13px;font-weight:800;color:#9eefff;letter-spacing:.5px;margin-bottom:3px;}
+#dialogue .choices{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;}
+#dialogue button{background:#122033;color:#e8fbff;border:1px solid #4a79a8;border-radius:5px;padding:5px 7px;font-size:11px;font-weight:650;touch-action:manipulation;}
+.stick{position:fixed;left:calc(env(safe-area-inset-left) + 20px);bottom:calc(env(safe-area-inset-bottom) + 30px);width:116px;height:116px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.05);z-index:25;touch-action:none;}
+.nub{position:absolute;width:48px;height:48px;border-radius:50%;left:34px;top:34px;background:rgba(255,255,255,.28);border:1px solid rgba(255,255,255,.35);}
+.buttons{position:fixed;right:calc(env(safe-area-inset-right) + 18px);bottom:calc(env(safe-area-inset-bottom) + 22px);z-index:25;touch-action:none;}
+.btn{position:absolute;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font:9px/1.05 monospace;border:2px solid rgba(255,255,255,.18);background:rgba(60,90,120,.38);user-select:none;}
+.a{right:0;bottom:28px;background:rgba(55,150,75,.40)} .b{right:58px;bottom:0;background:rgba(150,55,70,.40)} .x{right:58px;bottom:64px;background:rgba(60,120,170,.40)} .y{right:116px;bottom:28px;background:rgba(150,140,60,.40)} .r{right:0;bottom:92px;background:rgba(120,70,180,.48)}
+.version{position:fixed;right:calc(env(safe-area-inset-right) + 12px);bottom:calc(env(safe-area-inset-bottom) + 8px);z-index:15;color:#9eefff;background:rgba(0,0,0,.45);border:1px solid rgba(124,217,255,.3);padding:3px 6px;font:9px monospace;}
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 8px);transform:translateX(-50%);z-index:80;display:none;max-width:70vw;padding:7px 10px;border:1px solid rgba(124,217,255,.55);background:rgba(2,5,12,.82);color:#e8fbff;font:11px/1.2 monospace;text-align:center;box-shadow:0 0 14px rgba(115,32,255,.20);pointer-events:none;}
+</style>
 </head>
 <body>
 <div id="game"></div>
-
-<div class="hud" id="statsHud">
-  <div class="title">DONNY</div>
-  <div><span class="tag">MODE:</span> <span id="mode">ON FOOT</span> &nbsp; <span class="tag">ZONE:</span> WESTGATE</div>
-  <div><span class="tag">HP</span></div><div class="bar"><div class="fill hp" id="hpFill"></div></div>
-  <div><span class="tag">STA</span></div><div class="bar"><div class="fill sta" id="staFill"></div></div>
-  <div><span class="tag">WATER</span></div><div class="bar"><div class="fill water" id="waterFill"></div></div>
-  <div id="coordLine"><span class="tag">XY:</span> --</div>
-</div>
-
-<div id="objectiveHud">
-  <div class="objTitle">OBJECTIVE</div>
-  <div id="objectiveText">Talk to Kade "Static"</div>
-</div>
-<div id="toast"></div>
-
-<div id="hint"></div>
-<div id="dialogue">
-  <div class="name" id="dlgName"></div>
-  <div id="dlgText"></div>
-  <div class="choices" id="dlgChoices"></div>
-</div>
-
+<div class="hud"><div class="title">DONNY</div><div><span class="tag">MODE:</span> <span id="mode">ON FOOT</span> <span class="tag">ZONE:</span> A1</div><div><span class="tag">HP</span></div><div class="bar"><div class="fill hp"></div></div><div><span class="tag">STA</span></div><div class="bar"><div class="fill sta"></div></div><div><span class="tag">WATER</span></div><div class="bar"><div class="fill water"></div></div><div id="coordLine"><span class="tag">XY:</span> --</div></div>
+<div id="objectiveHud"><div class="objTitle">OBJECTIVE</div><div id="objectiveText">Find Kira Volt</div></div>
+<div id="toast"></div><div id="hint"></div>
+<div id="dialogue"><div class="name" id="dlgName"></div><div id="dlgText"></div><div class="choices" id="dlgChoices"></div></div>
 <div class="stick" id="stick"><div class="nub" id="nub"></div></div>
-<div class="buttons">
-  <div class="btn r" data-btn="r">R<br>BST</div>
-  <div class="btn x" data-btn="x">X<br>USE</div>
-  <div class="btn a" data-btn="a">A<br>GAS</div>
-  <div class="btn b" data-btn="b">B<br>BRK</div>
-  <div class="btn y" data-btn="y">Y<br>LTS</div>
-</div>
-<div class="version">Westgate Blacklight Connector v15</div>
-
+<div class="buttons"><div class="btn r" data-btn="r">R<br>BST</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
+<div class="version">Blacklight District A1 v16</div>
 <script>
 (() => {
-  const qs = new URLSearchParams(location.search);
-  const COLLISION_MODE = qs.get("collision") || "off"; // off | mask | road
-  const CALIBRATE = qs.get("calibrate") === "1";
-
-  const MAP_BASE = "assets/maps/dust9/glasswell/outer_ring/west_blacklight/layers/GLASSWELL_WESTGATE_BLACKLIGHT_CONNECTOR_base.png";
-  const MAP_MASK = "assets/maps/dust9/glasswell/outer_ring/west_blacklight/masks/GLASSWELL_WESTGATE_BLACKLIGHT_CONNECTOR_collision_mask.png";
-
-  const DONNY = {
-    idle: "assets/sprites/player/donny/donny_idle_4dir.png",
-    walk: "assets/sprites/player/donny/donny_walk_4dir.png",
-    run:  "assets/sprites/player/donny/donny_run_4dir.png"
-  };
-
-  const BLACKLIGHT_KID = {
-    idle: "assets/sprites/npcs/blacklight_kid/blacklight_kid_idle_4dir_128.png",
-    walk: "assets/sprites/npcs/blacklight_kid/blacklight_kid_walk_4dir_128.png"
-  };
-
-  const hint = document.getElementById("hint");
-  const toast = document.getElementById("toast");
-  const objectiveText = document.getElementById("objectiveText");
-  const dlg = document.getElementById("dialogue");
-  const dlgName = document.getElementById("dlgName");
-  const dlgText = document.getElementById("dlgText");
-  const dlgChoices = document.getElementById("dlgChoices");
-  const modeEl = document.getElementById("mode");
-  const coordLine = document.getElementById("coordLine");
-
-  let input = {x:0,y:0,a:false,b:false,xbtn:false,r:false,ybtn:false, usePressed:false};
-  let dialogueOpen = false;
-
-  function showHint(t){ hint.textContent=t; hint.style.display="block"; }
-  function hideHint(){ hint.style.display="none"; }
-
-  const Mission = {
-    TALK_TO_KADE: "talk_to_kade",
-    ENTER_BLACKLIGHT: "enter_blacklight",
-    COMPLETE: "complete"
-  };
-
-  function getMission(){
-    return localStorage.getItem("cf_westgate_objective") || Mission.TALK_TO_KADE;
+const qs = new URLSearchParams(location.search);
+const AREA = qs.get("area") || "a1";
+const COLLISION_MODE = qs.get("collision") || "mask";
+const MAPS = {
+  a1: {
+    key:"blacklight_a1",
+    zone:"BLACKLIGHT A1",
+    base:"assets/maps/dust9/glasswell/blacklight_district/a1/layers/GLASSWELL_BLACKLIGHT_A1_base.png",
+    mask:"assets/maps/dust9/glasswell/blacklight_district/a1/masks/GLASSWELL_BLACKLIGHT_A1_collision_mask.png",
+    spawn:[0.18,0.72],
+    objective:"Find Kira Volt",
+    exitText:"Return to Westgate Connector"
+  },
+  westgate: {
+    key:"westgate",
+    zone:"WESTGATE",
+    base:"assets/maps/dust9/glasswell/outer_ring/west_blacklight/layers/GLASSWELL_WESTGATE_BLACKLIGHT_CONNECTOR_base.png",
+    mask:"assets/maps/dust9/glasswell/outer_ring/west_blacklight/masks/GLASSWELL_WESTGATE_BLACKLIGHT_CONNECTOR_collision_mask.png",
+    spawn:[0.50,0.50],
+    objective:"Enter Blacklight District",
+    exitText:"Enter Blacklight District"
   }
-
-  function setMission(mission){
-    localStorage.setItem("cf_westgate_checkpoint", "westgate_blacklight_connector");
-    localStorage.setItem("cf_westgate_objective", mission);
-    updateObjectiveHud();
+};
+const mapCfg = MAPS[AREA] || MAPS.a1;
+const DONNY = {
+  idle:"assets/sprites/player/donny/donny_idle_4dir.png",
+  walk:"assets/sprites/player/donny/donny_walk_4dir.png",
+  run:"assets/sprites/player/donny/donny_run_4dir.png"
+};
+const BLK = {
+  idle:"assets/sprites/npcs/blacklight_kid/blacklight_kid_idle_4dir_128.png",
+  walk:"assets/sprites/npcs/blacklight_kid/blacklight_kid_walk_4dir_128.png"
+};
+const hint=document.getElementById("hint"), toast=document.getElementById("toast"), objectiveText=document.getElementById("objectiveText"), dlg=document.getElementById("dialogue"), dlgName=document.getElementById("dlgName"), dlgText=document.getElementById("dlgText"), dlgChoices=document.getElementById("dlgChoices"), coordLine=document.getElementById("coordLine");
+let input={x:0,y:0,r:false,usePressed:false}, dialogueOpen=false;
+function showHint(t){hint.textContent=t;hint.style.display="block";} function hideHint(){hint.style.display="none";}
+function showToast(t){toast.innerHTML=t.replace(/\n/g,"<br>");toast.style.display="block";clearTimeout(showToast._t);showToast._t=setTimeout(()=>toast.style.display="none",2600);}
+function closeDialogue(){dlg.style.display="none";dialogueOpen=false;document.querySelector(".buttons").style.opacity="1";document.querySelector(".buttons").style.pointerEvents="auto";}
+function showDialogue(name,text,choices){dialogueOpen=true;dlg.style.display="block";document.querySelector(".buttons").style.opacity=".28";document.querySelector(".buttons").style.pointerEvents="none";dlgName.textContent=name;dlgText.textContent=text;dlgChoices.innerHTML="";choices.forEach(c=>{const b=document.createElement("button");b.textContent=c.label;b.onclick=c.onClick;dlgChoices.appendChild(b);});}
+class GameScene extends Phaser.Scene {
+ preload(){
+  this.load.image("map", mapCfg.base); this.load.image("mask", mapCfg.mask);
+  this.load.spritesheet("donny_idle", DONNY.idle, {frameWidth:128,frameHeight:128});
+  this.load.spritesheet("donny_walk", DONNY.walk, {frameWidth:128,frameHeight:128});
+  this.load.spritesheet("donny_run", DONNY.run, {frameWidth:128,frameHeight:128});
+  this.load.spritesheet("blk_idle", BLK.idle, {frameWidth:128,frameHeight:128});
+ }
+ create(){
+  objectiveText.textContent = mapCfg.objective;
+  this.map=this.add.image(0,0,"map").setOrigin(0,0); this.mapW=this.map.width; this.mapH=this.map.height;
+  this.physics.world.setBounds(0,0,this.mapW,this.mapH);
+  this.cameras.main.setBounds(0,0,this.mapW,this.mapH);
+  this.applyCover=()=>{const vw=this.scale.width||innerWidth, vh=this.scale.height||innerHeight; this.cameras.main.setZoom(Phaser.Math.Clamp(Math.max(vw/this.mapW,vh/this.mapH),.7,3.2));this.cameras.main.setDeadzone(80,60);};
+  this.applyCover();
+  try{const src=this.textures.get("mask").getSourceImage();this.maskCanvas=document.createElement("canvas");this.maskCanvas.width=src.width;this.maskCanvas.height=src.height;this.maskCtx=this.maskCanvas.getContext("2d",{willReadFrequently:true});this.maskCtx.drawImage(src,0,0);this.maskReady=true;}catch(e){this.maskReady=false;}
+  this.makeAnims();
+  this.player=this.physics.add.sprite(this.mapW*mapCfg.spawn[0],this.mapH*mapCfg.spawn[1],"donny_idle",0).setDepth(20).setScale(0.45);
+  this.player.body.setSize(28,34).setOffset(50,78); this.player.dir="down"; this.player.play("donny_idle_down");
+  this.cameras.main.startFollow(this.player,true,.12,.12);
+  this.npcs=[];
+  if(AREA==="a1") {
+    this.addNpc("KIRA VOLT", .72,.36, "The club hears everything.", "Find the hidden signal relay.");
+    this.addNpc("ECHO", .35,.53, "Got credits, roadman?", "Street music covers cleaner noise.");
+    this.addNpc("NEON", .58,.72, "Concord patrol rolled through an hour ago.", "Keep your head down.");
+    this.exitZone=new Phaser.Geom.Rectangle(this.mapW*.03,this.mapH*.65,this.mapW*.16,this.mapH*.25);
+  } else {
+    this.addNpc('KADE "STATIC"', .40,.34, "You looking for the club?", "Blacklight opens for signal.");
+    this.exitZone=new Phaser.Geom.Rectangle(this.mapW*.55,this.mapH*.30,this.mapW*.18,this.mapH*.18);
   }
-
-  function updateObjectiveHud(){
-    const mission = getMission();
-    if(mission === Mission.TALK_TO_KADE) objectiveText.textContent = 'Talk to Kade "Static"';
-    else if(mission === Mission.ENTER_BLACKLIGHT) objectiveText.textContent = "Enter Blacklight District";
-    else objectiveText.textContent = "Blacklight District A1 coming next";
+  this.keys=this.input.keyboard.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT,E,X,SPACE");
+  this.input.keyboard.on("keydown-E",()=>this.handleUse()); this.input.keyboard.on("keydown-X",()=>this.handleUse());
+  showToast(AREA==="a1" ? "BLACKLIGHT DISTRICT A1\nCheckpoint saved" : "WESTGATE CONNECTOR");
+  localStorage.setItem("cf_checkpoint", AREA==="a1" ? "blacklight_a1" : "westgate_connector");
+ }
+ addNpc(name,xn,yn,line,mission){
+  const n=this.physics.add.sprite(this.mapW*xn,this.mapH*yn,"blk_idle",0).setDepth(21).setScale(.42);
+  n.body.setSize(28,36).setOffset(50,76); n.body.immovable=true; n.play("blk_idle_down");
+  n.npc={name,line,mission};
+  this.add.text(n.x,n.y-34,name,{fontFamily:"monospace",fontSize:"7px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.55)",padding:{x:2,y:1}}).setOrigin(.5).setDepth(30);
+  this.npcs.push(n);
+ }
+ makeAnims(){
+  ["down","right","left","up"].forEach((d,r)=>{this.anims.create({key:`donny_idle_${d}`,frames:this.anims.generateFrameNumbers("donny_idle",{start:r*8,end:r*8+3}),frameRate:4,repeat:-1});this.anims.create({key:`donny_walk_${d}`,frames:this.anims.generateFrameNumbers("donny_walk",{start:r*8,end:r*8+7}),frameRate:9,repeat:-1});this.anims.create({key:`donny_run_${d}`,frames:this.anims.generateFrameNumbers("donny_run",{start:r*8,end:r*8+7}),frameRate:12,repeat:-1});this.anims.create({key:`blk_idle_${d}`,frames:this.anims.generateFrameNumbers("blk_idle",{start:r*4,end:r*4+3}),frameRate:4,repeat:-1});});
+ }
+ blocked(x,y){
+  if(COLLISION_MODE==="off") return false;
+  if(x<4||y<4||x>this.mapW-4||y>this.mapH-4) return true;
+  if(!this.maskReady) return false;
+  const mx=Phaser.Math.Clamp(Math.floor(x/this.mapW*this.maskCanvas.width),0,this.maskCanvas.width-1);
+  const my=Phaser.Math.Clamp(Math.floor(y/this.mapH*this.maskCanvas.height),0,this.maskCanvas.height-1);
+  let black=0; for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){const p=this.maskCtx.getImageData(Phaser.Math.Clamp(mx+ox,0,this.maskCanvas.width-1),Phaser.Math.Clamp(my+oy,0,this.maskCanvas.height-1),1,1).data; if((p[0]+p[1]+p[2])/3<128) black++;}
+  return black>=5;
+ }
+ tryMove(dx,dy){const nx=this.player.x+dx,ny=this.player.y+dy;if(!this.blocked(nx,ny+20))this.player.setPosition(nx,ny);else{if(!this.blocked(this.player.x+dx,this.player.y+20))this.player.x+=dx;if(!this.blocked(this.player.x,this.player.y+dy+20))this.player.y+=dy;}}
+ update(_,dt){
+  if(dialogueOpen)return; this.applyCover();
+  let vx=0,vy=0; if(this.keys.LEFT.isDown||this.keys.A.isDown)vx--; if(this.keys.RIGHT.isDown||this.keys.D.isDown)vx++; if(this.keys.UP.isDown||this.keys.W.isDown)vy--; if(this.keys.DOWN.isDown||this.keys.S.isDown)vy++; vx+=input.x;vy+=input.y;
+  const len=Math.hypot(vx,vy), moving=len>.15; if(moving){vx/=len;vy/=len;}
+  const running=input.r||this.keys.SPACE.isDown, speed=running?130:90;
+  if(moving){this.tryMove(vx*speed*dt/1000,vy*speed*dt/1000);this.player.dir=Math.abs(vx)>Math.abs(vy)?(vx>0?"right":"left"):(vy>0?"down":"up");this.player.play(`donny_${running?"run":"walk"}_${this.player.dir}`,true);} else this.player.play(`donny_idle_${this.player.dir}`,true);
+  let near=null; for(const n of this.npcs) if(Phaser.Math.Distance.Between(this.player.x,this.player.y,n.x,n.y)<42) near=n;
+  if(near) showHint(`X / E: Talk to ${near.npc.name}`); else if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)) showHint(`X / E: ${mapCfg.exitText}`); else hideHint();
+  if(input.usePressed){input.usePressed=false;this.handleUse();}
+  const cam=this.cameras.main, viewW=cam.width/cam.zoom, viewH=cam.height/cam.zoom; cam.scrollX=Phaser.Math.Clamp(cam.scrollX,0,Math.max(0,this.mapW-viewW));cam.scrollY=Phaser.Math.Clamp(cam.scrollY,0,Math.max(0,this.mapH-viewH));
+  coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.player.x)}, ${Math.round(this.player.y)} <span class="tag">COL:</span> ${COLLISION_MODE} ${this.maskReady?"READY":"NO MASK"}`;
+ }
+ handleUse(){
+  let near=null; for(const n of this.npcs) if(Phaser.Math.Distance.Between(this.player.x,this.player.y,n.x,n.y)<48) near=n;
+  if(near){showDialogue(near.npc.name, near.npc.line, [{label:"Ask about signal",onClick:()=>{objectiveText.textContent=near.npc.mission;localStorage.setItem("cf_objective",near.npc.mission);showDialogue(near.npc.name,near.npc.mission,[{label:"Close",onClick:closeDialogue}]);}},{label:"Leave",onClick:closeDialogue}]);return;}
+  if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
+    if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v16&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v16&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
-
-  function showToast(text){
-    toast.innerHTML = text.replace(/\n/g, "<br>");
-    toast.style.display = "block";
-    clearTimeout(showToast._t);
-    showToast._t = setTimeout(()=>toast.style.display="none", 2600);
-  }
-
-  function completeTalkObjective(){
-    if(getMission() === Mission.TALK_TO_KADE){
-      setMission(Mission.ENTER_BLACKLIGHT);
-      showToast('OBJECTIVE COMPLETE\nTalk to Kade "Static"\n\nNEW OBJECTIVE\nEnter Blacklight District');
-    }
-  }
-
-  function completeEnterObjective(){
-    setMission(Mission.COMPLETE);
-    localStorage.setItem("cf_westgate_last_transition", "BLACKLIGHT_DISTRICT_A1_COMING_NEXT");
-    showToast("CHECKPOINT SAVED\nBLACKLIGHT_DISTRICT_A1_COMING_NEXT");
-  }
-
-  function closeDialogue(){
-    dlg.style.display="none"; dialogueOpen=false;
-    document.querySelector(".buttons").style.opacity = "1";
-    document.querySelector(".buttons").style.pointerEvents = "auto";
-  }
-
-  function showDialogue(name, text, choices){
-    dialogueOpen = true;
-    dlg.style.display = "block";
-    document.querySelector(".buttons").style.opacity = "0.28";
-    document.querySelector(".buttons").style.pointerEvents = "none";
-    dlgName.textContent = name;
-    dlgText.textContent = text;
-    dlgChoices.innerHTML = "";
-    for(const c of choices){
-      const b = document.createElement("button");
-      b.textContent = c.label;
-      b.onclick = c.onClick;
-      dlgChoices.appendChild(b);
-    }
-  }
-
-  class GameScene extends Phaser.Scene {
-    constructor(){ super("GameScene"); }
-
-    preload(){
-      this.load.image("westgate_base", MAP_BASE);
-      this.load.image("westgate_mask", MAP_MASK);
-
-      this.load.spritesheet("donny_idle", DONNY.idle, { frameWidth:128, frameHeight:128 });
-      this.load.spritesheet("donny_walk", DONNY.walk, { frameWidth:128, frameHeight:128 });
-      this.load.spritesheet("donny_run", DONNY.run, { frameWidth:128, frameHeight:128 });
-
-      this.load.spritesheet("blacklight_kid_idle", BLACKLIGHT_KID.idle, { frameWidth:128, frameHeight:128 });
-      this.load.spritesheet("blacklight_kid_walk", BLACKLIGHT_KID.walk, { frameWidth:128, frameHeight:128 });
-    }
-
-    create(){
-      this.map = this.add.image(0,0,"westgate_base").setOrigin(0,0);
-      this.mapW = this.map.width; this.mapH = this.map.height;
-      this.physics.world.setBounds(0,0,this.mapW,this.mapH);
-
-      this.cameras.main.setBounds(0,0,this.mapW,this.mapH);
-      // v13: COVER camera mode.
-      // Fill the entire browser viewport with the real map image.
-      // This removes the right-side black void while HUD/controller stay fixed as DOM overlays.
-      this.applyCoverCameraZoom = () => {
-        const vw = this.scale.width || (window.visualViewport ? window.visualViewport.width : window.innerWidth);
-        const vh = this.scale.height || (window.visualViewport ? window.visualViewport.height : window.innerHeight);
-        const coverZoom = Math.max(vw / this.mapW, vh / this.mapH);
-        const desiredZoom = Phaser.Math.Clamp(coverZoom, 0.70, 1.65);
-        this.cameras.main.setZoom(desiredZoom);
-        this.cameras.main.roundPixels = true;
-        this.cameras.main.setDeadzone(80, 60);
-      };
-      this.applyCoverCameraZoom();
-
-      this.maskReady = false;
-      if (this.textures.exists("westgate_mask")) {
-        try {
-          const src = this.textures.get("westgate_mask").getSourceImage();
-          this.maskCanvas = document.createElement("canvas");
-          this.maskCanvas.width = src.width; this.maskCanvas.height = src.height;
-          const ctx = this.maskCanvas.getContext("2d", { willReadFrequently:true });
-          ctx.drawImage(src,0,0);
-          this.maskCtx = ctx;
-          this.maskReady = true;
-        } catch(e) { console.warn("Mask canvas failed", e); }
-      }
-
-      this.makeAnims();
-
-      const spawnX = parseFloat(qs.get("spawnX")) || this.mapW * 0.315;
-      const spawnY = parseFloat(qs.get("spawnY")) || this.mapH * 0.610;
-      this.player = this.physics.add.sprite(spawnX, spawnY, "donny_idle", 0);
-      this.player.setDepth(20).setScale(0.58);
-      this.player.body.setSize(28,34).setOffset(50,78);
-      this.player.dir = "down";
-      this.player.play("donny_idle_down");
-
-      // Blacklight Kid lookout placement near the circled upper-left market / approach area.
-      const npcX = parseFloat(qs.get("npcX")) || this.mapW * 0.405;
-      const npcY = parseFloat(qs.get("npcY")) || this.mapH * 0.345;
-      this.npc = this.physics.add.sprite(npcX, npcY, "blacklight_kid_idle", 0);
-      this.npc.setDepth(21).setScale(0.62);
-      this.npc.body.setSize(28,36).setOffset(50,76);
-      this.npc.body.immovable = true;
-      this.npc.play("blk_idle_down");
-      this.add.text(npcX, npcY-48, 'KADE "STATIC"', {fontFamily:"monospace",fontSize:"10px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.55)",padding:{x:3,y:2}}).setOrigin(.5).setDepth(30);
-
-      this.enterZone = new Phaser.Geom.Rectangle(this.mapW*0.585-55, this.mapH*0.365-45, 110, 90);
-      this.enterDebug = this.add.graphics().setDepth(18);
-      if(CALIBRATE){
-        this.enterDebug.lineStyle(2,0x00ffff,.75).strokeRectShape(this.enterZone);
-      }
-
-      this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
-      this.cameras.main.setLerp(0.12, 0.12);
-      this.cameras.main.setDeadzone(80, 60);
-
-      this.keys = this.input.keyboard.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT,E,X,SPACE");
-      this.input.keyboard.on("keydown-E", () => this.handleUse());
-      this.input.keyboard.on("keydown-X", () => this.handleUse());
-      this.input.on("pointerdown", (p) => {
-        if(CALIBRATE){
-          const wp = p.positionToCamera(this.cameras.main);
-          this.player.setPosition(wp.x, wp.y);
-          console.log("CALIBRATE XY", Math.round(wp.x), Math.round(wp.y));
-        }
-      });
-
-      this.missionShown = false;
-      updateObjectiveHud();
-      this.time.delayedCall(500, () => {
-        showHint(COLLISION_MODE==="mask" ? "MASK COLLISION ACTIVE. Reach the lookout." : "COLLISION OFF. Add &collision=mask to test the real mask.");
-        this.time.delayedCall(3500, hideHint);
-      });
-    }
-
-    makeAnims(){
-      const dirs = ["down","right","left","up"];
-      dirs.forEach((d, r) => {
-        this.anims.create({ key:`donny_idle_${d}`, frames:this.anims.generateFrameNumbers("donny_idle",{start:r*8,end:r*8+3}), frameRate:4, repeat:-1 });
-        this.anims.create({ key:`donny_walk_${d}`, frames:this.anims.generateFrameNumbers("donny_walk",{start:r*8,end:r*8+7}), frameRate:9, repeat:-1 });
-        this.anims.create({ key:`donny_run_${d}`, frames:this.anims.generateFrameNumbers("donny_run",{start:r*8,end:r*8+7}), frameRate:12, repeat:-1 });
-      });
-
-      ["down","right","left","up"].forEach((d,r)=>{
-        this.anims.create({ key:`blk_idle_${d}`, frames:this.anims.generateFrameNumbers("blacklight_kid_idle",{start:r*4,end:r*4+3}), frameRate:4, repeat:-1 });
-        this.anims.create({ key:`blk_walk_${d}`, frames:this.anims.generateFrameNumbers("blacklight_kid_walk",{start:r*8,end:r*8+7}), frameRate:8, repeat:-1 });
-      });
-    }
-
-    blocked(x,y){
-      // v14 collision rules:
-      // default: off for safe testing
-      // ?collision=mask uses the real black/white PNG mask
-      // ?collision=road stays permissive while tuning
-      if(COLLISION_MODE === "off") return false;
-
-      // Always keep player inside actual map bounds.
-      if(x < 6 || y < 6 || x > this.mapW-6 || y > this.mapH-6) return true;
-
-      if(COLLISION_MODE === "road"){
-        return false;
-      }
-
-      if(COLLISION_MODE === "mask"){
-        if(!this.maskReady) return false;
-
-        const mx = Phaser.Math.Clamp(Math.floor(x / this.mapW * this.maskCanvas.width), 0, this.maskCanvas.width - 1);
-        const my = Phaser.Math.Clamp(Math.floor(y / this.mapH * this.maskCanvas.height), 0, this.maskCanvas.height - 1);
-
-        // Sample a tiny 3x3 foot area. If the majority is black, block.
-        // This prevents one stray black pixel from snagging Donny.
-        let black = 0, total = 0;
-        for(let oy=-1; oy<=1; oy++){
-          for(let ox=-1; ox<=1; ox++){
-            const sx = Phaser.Math.Clamp(mx+ox, 0, this.maskCanvas.width-1);
-            const sy = Phaser.Math.Clamp(my+oy, 0, this.maskCanvas.height-1);
-            const p = this.maskCtx.getImageData(sx, sy, 1, 1).data;
-            const bright = (p[0]+p[1]+p[2])/3;
-            if(bright < 128) black++;
-            total++;
-          }
-        }
-        return black >= 5;
-      }
-
-      return false;
-    }
-
-    tryMove(dx,dy){
-      const nx = this.player.x + dx;
-      const ny = this.player.y + dy;
-      const footY = ny + 24;
-      if(!this.blocked(nx, footY)){
-        this.player.setPosition(nx, ny);
-      } else {
-        // slide along one axis if possible
-        if(!this.blocked(this.player.x + dx, this.player.y + 24)) this.player.x += dx;
-        if(!this.blocked(this.player.x, this.player.y + dy + 24)) this.player.y += dy;
-      }
-    }
-
-    update(_, dt){
-      const dts = dt/1000;
-      if(dialogueOpen){ this.player.setVelocity(0,0); return; }
-
-      let vx = 0, vy = 0;
-      if(this.keys.LEFT.isDown || this.keys.A.isDown) vx -= 1;
-      if(this.keys.RIGHT.isDown || this.keys.D.isDown) vx += 1;
-      if(this.keys.UP.isDown || this.keys.W.isDown) vy -= 1;
-      if(this.keys.DOWN.isDown || this.keys.S.isDown) vy += 1;
-      vx += input.x; vy += input.y;
-
-      const len = Math.hypot(vx,vy);
-      let moving = len > 0.15;
-      if(moving){ vx/=len; vy/=len; }
-
-      const running = input.r || this.keys.SPACE.isDown;
-      const speed = running ? 190 : 125;
-
-      if(moving){
-        this.tryMove(vx*speed*dts, vy*speed*dts);
-        if(Math.abs(vx) > Math.abs(vy)) this.player.dir = vx > 0 ? "right" : "left";
-        else this.player.dir = vy > 0 ? "down" : "up";
-        this.player.play(`donny_${running?"run":"walk"}_${this.player.dir}`, true);
-      } else {
-        this.player.play(`donny_idle_${this.player.dir}`, true);
-      }
-
-      const nearNpc = Phaser.Math.Distance.Between(this.player.x,this.player.y,this.npc.x,this.npc.y) < 62;
-      const inEnter = Phaser.Geom.Rectangle.Contains(this.enterZone, this.player.x, this.player.y);
-
-      if(nearNpc) showHint('X / E: Talk to Kade "Static"');
-      else if(inEnter) showHint("X / E: Enter Blacklight District");
-      else hideHint();
-
-      if(input.usePressed){
-        input.usePressed = false;
-        this.handleUse();
-      }
-
-      // v13 keep camera in cover mode after Safari bar/orientation changes.
-      if (this.applyCoverCameraZoom) this.applyCoverCameraZoom();
-
-      // v13 manual camera clamp: never show outside the real map image.
-      const cam = this.cameras.main;
-      const viewW = cam.width / cam.zoom;
-      const viewH = cam.height / cam.zoom;
-      cam.scrollX = Phaser.Math.Clamp(cam.scrollX, 0, Math.max(0, this.mapW - viewW));
-      cam.scrollY = Phaser.Math.Clamp(cam.scrollY, 0, Math.max(0, this.mapH - viewH));
-
-      coordLine.innerHTML = `<span class="tag">XY:</span> ${Math.round(this.player.x)}, ${Math.round(this.player.y)} <span class="tag">COL:</span> ${COLLISION_MODE}${COLLISION_MODE==="mask" ? " " + (this.maskReady ? "READY" : "NO MASK") : ""}`;
-    }
-
-    handleUse(){
-      const nearNpc = Phaser.Math.Distance.Between(this.player.x,this.player.y,this.npc.x,this.npc.y) < 70;
-      const inEnter = Phaser.Geom.Rectangle.Contains(this.enterZone, this.player.x, this.player.y);
-
-      if(nearNpc){
-        showDialogue('KADE "STATIC"', "You looking for the club?", [
-          {label:"Yeah.", onClick:()=>{ completeTalkObjective(); showDialogue('KADE "STATIC"', "Then keep your hands where the door can see them. Blacklight opens for signal.", [{label:"Close", onClick:closeDialogue}]); }},
-          {label:"Passing through.", onClick:()=>{ completeTalkObjective(); showDialogue('KADE "STATIC"', "Nobody passes through Glasswell. They get counted, taxed, hunted, or hidden.", [{label:"Close", onClick:closeDialogue}]); }},
-          {label:"District?", onClick:()=>{ completeTalkObjective(); showDialogue('KADE "STATIC"', "Static runs the wire. Kids run the rooftops. Club runs itself.", [{label:"Close", onClick:closeDialogue}]); }},
-          {label:"Leave.", onClick:closeDialogue}
-        ]);
-        return;
-      }
-
-      if(inEnter){
-        showDialogue("BLACKLIGHT DISTRICT", "Enter Blacklight District?", [
-          {label:"YES", onClick:()=>{ completeEnterObjective(); showDialogue("TRANSITION STUB", "BLACKLIGHT_DISTRICT_A1_COMING_NEXT", [{label:"Close", onClick:closeDialogue}]); }},
-          {label:"NO", onClick:closeDialogue}
-        ]);
-      }
-    }
-  }
-
-  function setupControls(){
-    const stick = document.getElementById("stick"), nub = document.getElementById("nub");
-    let active = false, base = null;
-    const center = () => { nub.style.left="34px"; nub.style.top="34px"; input.x=0; input.y=0; };
-    stick.addEventListener("pointerdown", e => { active=true; stick.setPointerCapture(e.pointerId); const r=stick.getBoundingClientRect(); base={x:r.left+r.width/2,y:r.top+r.height/2}; });
-    stick.addEventListener("pointermove", e => {
-      if(!active) return;
-      const dx=e.clientX-base.x, dy=e.clientY-base.y;
-      const dist=Math.min(42, Math.hypot(dx,dy)); const ang=Math.atan2(dy,dx);
-      const nx=Math.cos(ang)*dist, ny=Math.sin(ang)*dist;
-      nub.style.left=(34+nx)+"px"; nub.style.top=(34+ny)+"px";
-      input.x = nx/42; input.y = ny/42;
-    });
-    stick.addEventListener("pointerup", e => { active=false; center(); });
-    stick.addEventListener("pointercancel", e => { active=false; center(); });
-
-    document.querySelectorAll(".btn").forEach(btn=>{
-      const name = btn.dataset.btn;
-      const set = v => {
-        if(name === "x" && v) input.usePressed = true;
-        if(name === "a") input.a = v;
-        if(name === "b") input.b = v;
-        if(name === "r") input.r = v;
-        if(name === "y") input.ybtn = v;
-      };
-      btn.addEventListener("pointerdown", e=>{e.preventDefault(); set(true);});
-      btn.addEventListener("pointerup", e=>{e.preventDefault(); set(false);});
-      btn.addEventListener("pointercancel", e=>{e.preventDefault(); set(false);});
-    });
-  }
-
-  setupControls();
-
-  function viewportW(){ return Math.max(320, Math.floor(window.visualViewport ? window.visualViewport.width : window.innerWidth)); }
-  function viewportH(){ return Math.max(240, Math.floor(window.visualViewport ? window.visualViewport.height : window.innerHeight)); }
-
-  const config = {
-    type: Phaser.AUTO,
-    parent: "game",
-    backgroundColor: "#05070b",
-    scale: {
-      mode: Phaser.Scale.RESIZE,
-      autoCenter: Phaser.Scale.NO_CENTER,
-      width: viewportW(),
-      height: viewportH()
-    },
-    physics: { default:"arcade", arcade:{ debug:false } },
-    scene: [GameScene],
-    render: { pixelArt:false, antialias:true }
-  };
-  const game = new Phaser.Game(config);
-
-  function forceResize(){
-    const w = viewportW(), h = viewportH();
-    const gameDiv = document.getElementById("game");
-    gameDiv.style.width = w + "px";
-    gameDiv.style.height = h + "px";
-    if(game && game.scale) game.scale.resize(w, h);
-    const canvas = document.querySelector("#game canvas");
-    if(canvas){
-      canvas.style.width = w + "px";
-      canvas.style.height = h + "px";
-    }
-  }
-  window.addEventListener("resize", forceResize);
-  window.addEventListener("orientationchange", () => setTimeout(forceResize, 250));
-  if(window.visualViewport) window.visualViewport.addEventListener("resize", forceResize);
-  setTimeout(forceResize, 100);
-  setTimeout(forceResize, 600);
+ }
+}
+function setupControls(){const stick=document.getElementById("stick"),nub=document.getElementById("nub");let active=false,base=null;function center(){nub.style.left="34px";nub.style.top="34px";input.x=0;input.y=0;}stick.addEventListener("pointerdown",e=>{active=true;stick.setPointerCapture(e.pointerId);const r=stick.getBoundingClientRect();base={x:r.left+r.width/2,y:r.top+r.height/2};});stick.addEventListener("pointermove",e=>{if(!active)return;const dx=e.clientX-base.x,dy=e.clientY-base.y,dist=Math.min(42,Math.hypot(dx,dy)),ang=Math.atan2(dy,dx),nx=Math.cos(ang)*dist,ny=Math.sin(ang)*dist;nub.style.left=(34+nx)+"px";nub.style.top=(34+ny)+"px";input.x=nx/42;input.y=ny/42;});stick.addEventListener("pointerup",()=>{active=false;center();});stick.addEventListener("pointercancel",()=>{active=false;center();});document.querySelectorAll(".btn").forEach(btn=>{const name=btn.dataset.btn;btn.addEventListener("pointerdown",e=>{e.preventDefault();if(name==="x")input.usePressed=true;if(name==="r")input.r=true;});btn.addEventListener("pointerup",e=>{e.preventDefault();if(name==="r")input.r=false;});});}
+setupControls();
+function viewportW(){return Math.max(320,Math.floor(window.visualViewport?window.visualViewport.width:innerWidth));} function viewportH(){return Math.max(240,Math.floor(window.visualViewport?window.visualViewport.height:innerHeight));}
+const game=new Phaser.Game({type:Phaser.AUTO,parent:"game",backgroundColor:"#05070b",scale:{mode:Phaser.Scale.RESIZE,autoCenter:Phaser.Scale.NO_CENTER,width:viewportW(),height:viewportH()},physics:{default:"arcade",arcade:{debug:false}},scene:[GameScene],render:{pixelArt:false,antialias:true}});
+function forceResize(){const w=viewportW(),h=viewportH();document.getElementById("game").style.width=w+"px";document.getElementById("game").style.height=h+"px";if(game&&game.scale)game.scale.resize(w,h);}
+addEventListener("resize",forceResize);addEventListener("orientationchange",()=>setTimeout(forceResize,250));if(visualViewport)visualViewport.addEventListener("resize",forceResize);setTimeout(forceResize,100);
 })();
 </script>
 </body>
