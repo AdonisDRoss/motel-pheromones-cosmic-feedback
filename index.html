@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight District A1 v25</title>
+<title>Cosmic Feedback - Blacklight District A1 v26</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -93,7 +93,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 
 <div class="stick" id="stick"><div class="nub" id="nub"></div></div>
 <div class="buttons"><div class="btn r" data-btn="r">R<br>BST</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
-<div class="version">Blacklight District A1 v25</div>
+<div class="version">Blacklight District A1 v26</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -273,25 +273,32 @@ class GameScene extends Phaser.Scene {
   this.applyCover();
   try{const src=this.textures.get("mask").getSourceImage();this.maskCanvas=document.createElement("canvas");this.maskCanvas.width=src.width;this.maskCanvas.height=src.height;this.maskCtx=this.maskCanvas.getContext("2d",{willReadFrequently:true});this.maskCtx.drawImage(src,0,0);this.maskReady=true;}catch(e){this.maskReady=false;}
   this.makeAnims();
-  this.player=this.physics.add.sprite(this.mapW*mapCfg.spawn[0],this.mapH*mapCfg.spawn[1],"donny_idle",0).setDepth(20).setScale(0.68);
-  this.player.body.setSize(28,34).setOffset(50,78); this.player.dir="down"; this.player.play("donny_idle_down");
+  this.player=this.physics.add.sprite(this.mapW*mapCfg.spawn[0],this.mapH*mapCfg.spawn[1],"donny_idle",0).setDepth(this.player.y).setScale(0.68);
+  this.player.body.setSize(30,38).setOffset(49,76); this.player.dir="down"; this.player.play("donny_idle_down");
   this.cameras.main.startFollow(this.player,true,.12,.12);
   this.npcs=[];
   if(AREA==="a1") {
     // v20: place reusable Neon Vendor Stall prop beside the vendor.
     this.vendorStall=this.add.sprite(this.mapW*.635,this.mapH*.405,"vendor_stall",0).setDepth(19).setScale(0.62);
-    this.vendorStall.play("vendor_stall_idle");
+    this.vendorStall.play("vendor_stall_idle"); this.vendorStall.setDepth(this.vendorStall.y-10);
 
     this.addNpc("KIRA VOLT", .72,.36, "The club hears everything.", "Find the hidden signal relay.", "talk", "kira_volt");
     this.addNpc("NEON VENDOR", .595,.445, "Water, batteries, noodles, glow junk. Buying or selling?", "Buy or sell supplies.", "vendor", "neon_vendor");
-    this.addNpc("BLACKLIGHT RUNNER", .58,.72, "Concord patrol rolled through an hour ago.", "Get the passphrase from the runner.", "talk", "blacklight_runner");
-    this.addNpc("CLUB BOUNCER", .82,.56, "Passphrase first. Door second.", "Bring the passphrase to the club door.", "talk", "blacklight_bouncer");
+    this.addNpc("BLACKLIGHT RUNNER", .865,.565, "Concord patrol rolled through an hour ago.", "Get the passphrase from the runner.", "talk", "blacklight_runner");
+    this.addNpc("CLUB BOUNCER", .382,.318, "Passphrase first. Door second.", "Bring the passphrase to the club door.", "talk", "blacklight_bouncer");
     this.exitZone=new Phaser.Geom.Rectangle(this.mapW*.03,this.mapH*.65,this.mapW*.16,this.mapH*.25);
-    this.clubDoorZone=new Phaser.Geom.Rectangle(this.mapW*.34,this.mapH*.25,this.mapW*.10,this.mapH*.13);
+    this.clubDoorZone=new Phaser.Geom.Rectangle(this.mapW*.33,this.mapH*.25,this.mapW*.13,this.mapH*.16);
   } else {
     this.addNpc('KADE "STATIC"', .40,.34, "You looking for the club?", "Blacklight opens for signal.", "talk", "blacklight_kid");
     this.exitZone=new Phaser.Geom.Rectangle(this.mapW*.55,this.mapH*.30,this.mapW*.18,this.mapH*.18);
   }
+  // v26: NPCs are solid. Donny cannot walk through them.
+  this.npcs.forEach(n=>{
+    n.body.immovable = true;
+    n.body.moves = false;
+  });
+  this.physics.add.collider(this.player, this.npcs);
+
   this.keys=this.input.keyboard.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT,E,X,SPACE");
   this.input.keyboard.on("keydown-E",()=>this.handleUse()); this.input.keyboard.on("keydown-X",()=>this.handleUse());
   showToast(AREA==="a1" ? "BLACKLIGHT DISTRICT A1\nMission chain active" : "WESTGATE CONNECTOR");
@@ -299,10 +306,10 @@ class GameScene extends Phaser.Scene {
  }
  addNpc(name,xn,yn,line,mission,kind="talk",assetKey="blacklight_kid"){
   const texKey = this.textures.exists(`${assetKey}_idle`) ? `${assetKey}_idle` : "blacklight_kid_idle";
-  const n=this.physics.add.sprite(this.mapW*xn,this.mapH*yn,texKey,0).setDepth(21).setScale(.82);
-  n.body.setSize(28,36).setOffset(50,76); n.body.immovable=true; n.play(this.anims.exists(`${assetKey}_idle_down`) ? `${assetKey}_idle_down` : "blacklight_kid_idle_down");
+  const n=this.physics.add.sprite(this.mapW*xn,this.mapH*yn,texKey,0).setScale(.82); n.setDepth(n.y);
+  n.body.setSize(30,38).setOffset(49,75); n.body.immovable=true; n.play(this.anims.exists(`${assetKey}_idle_down`) ? `${assetKey}_idle_down` : "blacklight_kid_idle_down");
   n.npc={name,line,mission,kind,assetKey};
-  this.add.text(n.x,n.y-48,name,{fontFamily:"monospace",fontSize:"7px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.55)",padding:{x:2,y:1}}).setOrigin(.5).setDepth(30);
+  this.add.text(n.x,n.y-48,name,{fontFamily:"monospace",fontSize:"7px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.55)",padding:{x:2,y:1}}).setOrigin(.5).setDepth(999);
   this.npcs.push(n);
  }
  makeAnims(){
@@ -366,6 +373,9 @@ class GameScene extends Phaser.Scene {
   else hideHint();
   if(input.usePressed){input.usePressed=false;this.handleUse();}
   const cam=this.cameras.main, viewW=cam.width/cam.zoom, viewH=cam.height/cam.zoom; cam.scrollX=Phaser.Math.Clamp(cam.scrollX,0,Math.max(0,this.mapW-viewW));cam.scrollY=Phaser.Math.Clamp(cam.scrollY,0,Math.max(0,this.mapH-viewH));
+  // v26: y-sort all characters so NPCs are not always above Donny.
+  this.player.setDepth(this.player.y);
+  this.npcs.forEach(n=>n.setDepth(n.y));
   coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.player.x)}, ${Math.round(this.player.y)} <span class="tag">COL:</span> ${COLLISION_MODE} ${this.maskReady?"READY":"NO MASK"}`;
  }
  handleUse(){
@@ -416,8 +426,8 @@ class GameScene extends Phaser.Scene {
 
     showDialogue(near.npc.name, near.npc.line, [{label:"Ask about signal",onClick:()=>{setObjective(near.npc.mission);showDialogue(near.npc.name,near.npc.mission,[{label:"Close",onClick:closeDialogue}]);}},{label:"Leave",onClick:closeDialogue}]);return;}
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v25&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v25&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v26&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v26&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
