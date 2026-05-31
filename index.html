@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight District A1 v65</title>
+<title>Cosmic Feedback - Blacklight District A1 v66</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -164,7 +164,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 
 <div class="stick" id="stick"><div class="nub" id="nub"></div></div>
 <div class="buttons"><div class="btn r" data-btn="r">R<br>BST</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
-<div class="version">Blacklight District / Club v65</div>
+<div class="version">Blacklight District / Club v66</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -411,6 +411,21 @@ class GameScene extends Phaser.Scene {
  
 
 
+loadMaskAsync(){
+  this.maskReady=false;
+  const img=new Image();
+  img.crossOrigin="anonymous";
+  img.onload=()=>{
+    const c=document.createElement("canvas");
+    c.width=img.naturalWidth||img.width; c.height=img.naturalHeight||img.height;
+    const ctx=c.getContext("2d",{willReadFrequently:true});
+    ctx.drawImage(img,0,0);
+    this.maskCanvas=c; this.maskCtx=ctx; this.maskReady=true;
+    showToast("COLLISION MASK READY");
+  };
+  img.onerror=()=>{this.maskReady=false; showToast("MASK LOAD FAILED");};
+  img.src=mapCfg.mask+"?v=66";
+}
 createFallbackMap(){
   if(this.textures.exists("map") && !FAILED_ASSETS.has("map")) return;
   const w=1448, h=1086;
@@ -524,9 +539,9 @@ preload(){
   this.load.spritesheet("blacklight_runner_idle", NPC_ASSETS.blacklight_runner.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("kira_volt_idle", NPC_ASSETS.kira_volt.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("vendor_stall", PROPS.vendorStall, {frameWidth:256,frameHeight:256});
-  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=65");
-  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=65");
-  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=65");
+  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=66");
+  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=66");
+  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=66");
  }
  create(){
   window.__cfScene=this;
@@ -685,11 +700,11 @@ blockedAll(x,y){
 }
 tryMove(dx,dy){
   const nx=this.player.x+dx, ny=this.player.y+dy;
-  if(!this.blockedAll(nx,ny+20)){
+  if(!this.blockedAll(nx,ny+34)){
     this.player.setPosition(nx,ny);
   } else {
-    if(!this.blockedAll(this.player.x+dx,this.player.y+20)) this.player.x+=dx;
-    if(!this.blockedAll(this.player.x,this.player.y+dy+20)) this.player.y+=dy;
+    if(!this.blockedAll(this.player.x+dx,this.player.y+34)) this.player.x+=dx;
+    if(!this.blockedAll(this.player.x,this.player.y+dy+34)) this.player.y+=dy;
   }
 }
  lockCameraToPlayer(){
@@ -712,9 +727,10 @@ tryMove(dx,dy){
   if(moving){
     this.tryMove(vx*speed*dt/1000,vy*speed*dt/1000);
     this.player.dir=Math.abs(vx)>Math.abs(vy)?(vx>0?"right":"left"):(vy>0?"down":"up");
-    const animDir = this.player.dir==="right" ? "left" : this.player.dir;
+    const sideMove = (this.player.dir==="left" || this.player.dir==="right");
+    const animDir = sideMove ? this.player.dir : this.player.dir;
     this.safePlay(this.player,`donny_${running?"run":"walk"}_${animDir}`);
-    this.player.setFlipX(this.player.dir==="right");
+    this.player.setFlipX(sideMove);
   } else {
     this.player.setFlipX(false);
     this.safePlay(this.player,`donny_idle_${this.player.dir}`);
@@ -732,7 +748,7 @@ tryMove(dx,dy){
   if(this.clubDoorMarker) this.clubDoorMarker.setDepth(DEPTH.CHARACTER_BASE + 80);
   this.player.setDepth(DEPTH.CHARACTER_BASE + 3000);
   this.children.bringToTop(this.player);
-  coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.player.x)}, ${Math.round(this.player.y)} <span class="tag">JOY:</span> ${input.x.toFixed(1)},${input.y.toFixed(1)} <span class="tag">USE:</span> ${input.usePressed?1:0} <span class="tag">DYN:</span> ${this.dynamicBlocked(this.player.x,this.player.y)?1:0} <span class="tag">CAM:</span> ${Math.round(this.cameras.main.scrollX)},${Math.round(this.cameras.main.scrollY)} <span class="tag">COL:</span> ${COLLISION_MODE} ${this.maskReady?"READY":"NO MASK"}`;
+  coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.player.x)}, ${Math.round(this.player.y)} <span class="tag">JOY:</span> ${input.x.toFixed(1)},${input.y.toFixed(1)} <span class="tag">USE:</span> ${input.usePressed?1:0} <span class="tag">DYN:</span> ${this.dynamicBlocked(this.player.x,this.player.y)?1:0} <span class="tag">CAM:</span> ${Math.round(this.cameras.main.scrollX)},${Math.round(this.cameras.main.scrollY)} <span class="tag">COL:</span> ${COLLISION_MODE} ${this.maskReady?"MASK READY":"NO MASK"}`;
  }
  handleUse(){
   let near=null; for(const n of this.npcs) if(Phaser.Math.Distance.Between(this.player.x,this.player.y,n.x,n.y)<48) near=n;
@@ -774,7 +790,7 @@ tryMove(dx,dy){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v65&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v66&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -791,16 +807,16 @@ tryMove(dx,dy){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v65&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v66&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v65&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v65&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v65&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v66&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v66&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v66&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
@@ -879,10 +895,11 @@ function setupControls(){
         const dir=Math.abs(vx)>Math.abs(vy)?(vx>0?"right":"left"):(vy>0?"down":"up");
         lastDir=dir;
         sc.player.dir=dir;
-        const animDir = dir==="right" ? "left" : dir;
+        const sideMove = (dir==="left" || dir==="right");
+        const animDir = sideMove ? dir : dir;
         const key=`donny_${input.r?"run":"walk"}_${animDir}`;
         if(sc.anims && sc.anims.exists(key)) sc.player.play(key,true);
-        sc.player.setFlipX(dir==="right");
+        sc.player.setFlipX(sideMove);
 
       }
     }
