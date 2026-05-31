@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight District A1 v51</title>
+<title>Cosmic Feedback - Blacklight District A1 v52</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -164,7 +164,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 
 <div class="stick" id="stick"><div class="nub" id="nub"></div></div>
 <div class="buttons"><div class="btn r" data-btn="r">R<br>BST</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
-<div class="version">Blacklight District / Club v51</div>
+<div class="version">Blacklight District / Club v52</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -517,7 +517,7 @@ loadMaskAsync(){
     showToast("NO MASK FOUND\nCollision disabled");
     if(coordLine) coordLine.innerHTML = `<span class="tag">NO MASK:</span> collision off`;
   };
-  img.src=mapCfg.mask + (mapCfg.mask.includes("?") ? "&" : "?") + "v=51";
+  img.src=mapCfg.mask + (mapCfg.mask.includes("?") ? "&" : "?") + "v=52";
 }
 
 
@@ -596,9 +596,9 @@ preload(){
   this.load.spritesheet("blacklight_runner_idle", NPC_ASSETS.blacklight_runner.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("kira_volt_idle", NPC_ASSETS.kira_volt.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("vendor_stall", PROPS.vendorStall, {frameWidth:256,frameHeight:256});
-  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=51");
-  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=51");
-  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=51");
+  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=52");
+  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=52");
+  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=52");
  }
  create(){
   window.__cfScene=this;
@@ -722,7 +722,7 @@ preload(){
   if(Phaser.Input.Keyboard.JustDown(this.keys.ESC)) { unlockControls(); forceControlsLive(); }
   if(Phaser.Input.Keyboard.JustDown(this.keys.P)) { pauseOpen ? closePauseMenu() : openPauseMenu(); }
   if(Phaser.Input.Keyboard.JustDown(this.keys.M)) { this.startAreaMusic(); }
-  if(dialogueOpen||shopOpen||pauseOpen)return; forceControlsLive(); this.applyCover();
+  if(dialogueOpen||shopOpen||pauseOpen)return; this.applyCover();
   let vx=0,vy=0; if(this.keys.LEFT.isDown||this.keys.A.isDown)vx--; if(this.keys.RIGHT.isDown||this.keys.D.isDown)vx++; if(this.keys.UP.isDown||this.keys.W.isDown)vy--; if(this.keys.DOWN.isDown||this.keys.S.isDown)vy++; vx+=input.x;vy+=input.y;
   const len=Math.hypot(vx,vy), moving=len>.15; if(moving){vx/=len;vy/=len;}
   const running=input.r||this.keys.SPACE.isDown, speed=running?190:125;
@@ -748,7 +748,7 @@ preload(){
   this.player.setDepth(DEPTH.CHARACTER_BASE + playerFeet);
   this.npcs.forEach(n=>n.setDepth(DEPTH.CHARACTER_BASE + n.y + 28));
   if(this.vendorStall) this.vendorStall.setDepth(DEPTH.CHARACTER_BASE + this.vendorStall.y + (this.vendorStall.depthBaseOffset || 58));
-  coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.player.x)}, ${Math.round(this.player.y)} <span class="tag">COL:</span> ${COLLISION_MODE} ${this.maskReady?"READY":"NO MASK"}`;
+  coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.player.x)}, ${Math.round(this.player.y)} <span class="tag">JOY:</span> ${input.x.toFixed(1)},${input.y.toFixed(1)} <span class="tag">COL:</span> ${COLLISION_MODE} ${this.maskReady?"READY":"NO MASK"}`;
  }
  handleUse(){
   let near=null; for(const n of this.npcs) if(Phaser.Math.Distance.Between(this.player.x,this.player.y,n.x,n.y)<48) near=n;
@@ -790,7 +790,7 @@ preload(){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v51&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v52&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -807,19 +807,20 @@ preload(){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v51&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v52&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v51&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v51&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v51&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v52&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v52&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v52&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
+
 
 function hardStartMusic(){
   try{
@@ -828,33 +829,39 @@ function hardStartMusic(){
     }
   }catch(e){}
 }
+
 function setupControls(){
   const stick=document.getElementById("stick");
   const nub=document.getElementById("nub");
   const buttons=document.querySelector(".buttons");
-  if(buttons){ buttons.style.pointerEvents="auto"; buttons.style.opacity="1"; }
-  if(stick){ stick.style.pointerEvents="auto"; }
 
-  let active=false;
-  let activeId=null;
+  if(buttons){
+    buttons.style.pointerEvents="auto";
+    buttons.style.opacity="1";
+  }
+  if(stick){
+    stick.style.pointerEvents="auto";
+    stick.style.touchAction="none";
+  }
+
+  let dragging=false;
 
   function resetStick(){
-    active=false;
-    activeId=null;
+    dragging=false;
     input.x=0;
     input.y=0;
     if(nub) nub.style.transform="translate(0px,0px)";
   }
 
-  function applyStick(clientX, clientY){
+  function moveStick(clientX, clientY){
     if(!stick || !nub) return;
     const r=stick.getBoundingClientRect();
     const cx=r.left+r.width/2;
     const cy=r.top+r.height/2;
     let dx=clientX-cx;
     let dy=clientY-cy;
-    const max=Math.max(32, r.width*.33);
-    const len=Math.hypot(dx,dy)||1;
+    const max=42;
+    const len=Math.hypot(dx,dy);
     if(len>max){
       dx=dx/len*max;
       dy=dy/len*max;
@@ -864,56 +871,59 @@ function setupControls(){
     nub.style.transform=`translate(${dx}px,${dy}px)`;
   }
 
-  if(stick){
-    stick.addEventListener("pointerdown", e=>{
-      e.preventDefault();
-      e.stopPropagation();
-      hardStartMusic();
-      active=true;
-      activeId=e.pointerId;
-      try{ stick.setPointerCapture(e.pointerId); }catch(_){}
-      applyStick(e.clientX,e.clientY);
-    }, {passive:false});
-
-    stick.addEventListener("pointermove", e=>{
-      if(!active || (activeId!==null && e.pointerId!==activeId)) return;
-      e.preventDefault();
-      e.stopPropagation();
-      applyStick(e.clientX,e.clientY);
-    }, {passive:false});
-
-    stick.addEventListener("pointerup", e=>{
-      e.preventDefault();
-      e.stopPropagation();
-      resetStick();
-    }, {passive:false});
-
-    stick.addEventListener("pointercancel", resetStick, {passive:false});
+  function point(e){
+    if(e.touches && e.touches.length) return {x:e.touches[0].clientX, y:e.touches[0].clientY};
+    return {x:e.clientX, y:e.clientY};
   }
 
-  window.addEventListener("pointerup", resetStick, {passive:false});
-  window.addEventListener("blur", resetStick);
+  if(stick){
+    ["pointerdown","touchstart","mousedown"].forEach(type=>{
+      stick.addEventListener(type,e=>{
+        e.preventDefault();
+        e.stopPropagation();
+        hardStartMusic();
+        dragging=true;
+        const p=point(e);
+        moveStick(p.x,p.y);
+      }, {passive:false});
+    });
+
+    ["pointermove","touchmove","mousemove"].forEach(type=>{
+      window.addEventListener(type,e=>{
+        if(!dragging) return;
+        e.preventDefault();
+        const p=point(e);
+        moveStick(p.x,p.y);
+      }, {passive:false});
+    });
+
+    ["pointerup","touchend","mouseup","touchcancel","pointercancel"].forEach(type=>{
+      window.addEventListener(type,e=>resetStick(), {passive:false});
+    });
+  }
 
   document.querySelectorAll(".btn").forEach(btn=>{
     btn.style.pointerEvents="auto";
-    btn.addEventListener("pointerdown", e=>{
+    btn.style.touchAction="none";
+
+    function down(e){
       e.preventDefault();
       e.stopPropagation();
       hardStartMusic();
       const name=btn.dataset.btn;
       if(name==="x") input.usePressed=true;
       if(name==="r") input.r=true;
-    }, {passive:false});
-    btn.addEventListener("pointerup", e=>{
+    }
+
+    function up(e){
       e.preventDefault();
       e.stopPropagation();
       const name=btn.dataset.btn;
       if(name==="r") input.r=false;
-    }, {passive:false});
-    btn.addEventListener("pointercancel", e=>{
-      const name=btn.dataset.btn;
-      if(name==="r") input.r=false;
-    }, {passive:false});
+    }
+
+    ["pointerdown","touchstart","mousedown"].forEach(type=>btn.addEventListener(type,down,{passive:false}));
+    ["pointerup","touchend","mouseup","touchcancel","pointercancel"].forEach(type=>btn.addEventListener(type,up,{passive:false}));
   });
 }
 
