@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight District A1 v45</title>
+<title>Cosmic Feedback - Blacklight District A1 v46</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -164,7 +164,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 
 <div class="stick" id="stick"><div class="nub" id="nub"></div></div>
 <div class="buttons"><div class="btn r" data-btn="r">R<br>BST</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
-<div class="version">Blacklight District / Club v45</div>
+<div class="version">Blacklight District / Club v46</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -351,9 +351,72 @@ function refreshMission(){
   setObjective(currentMissionText());
 }
 
+function forceControlsLive(){
+  pauseOpen=false;
+  if(pauseMenu) pauseMenu.style.display="none";
+  const buttons=document.querySelector(".buttons");
+  if(buttons){ buttons.style.opacity="1"; buttons.style.pointerEvents="auto"; }
+  const stick=document.getElementById("stick");
+  if(stick){ stick.style.pointerEvents="auto"; }
+}
+function unlockControls(){
+  dialogueOpen=false;
+  shopOpen=false;
+  pauseOpen=false;
+  if(dlg) dlg.style.display="none";
+  if(shop) shop.style.display="none";
+  if(pauseMenu) pauseMenu.style.display="none";
+  const buttons=document.querySelector(".buttons");
+  if(buttons){ buttons.style.opacity="1"; buttons.style.pointerEvents="auto"; }
+}
+function getMusicVolume(){
+  const saved = localStorage.getItem("cf_music_volume");
+  return saved === null ? 0.60 : Math.max(0, Math.min(1, parseFloat(saved)));
+}
+function setMusicVolume(v){
+  v = Math.max(0, Math.min(1, v));
+  localStorage.setItem("cf_music_volume", String(v));
+  if(currentMusic) currentMusic.setVolume(v);
+  if(musicVolume) musicVolume.value = Math.round(v*100);
+  if(volumeReadout) volumeReadout.textContent = Math.round(v*100) + "%";
+}
+function openPauseMenu(){
+  pauseOpen = true;
+  if(pauseMenu) pauseMenu.style.display = "block";
+  setMusicVolume(getMusicVolume());
+  const buttons=document.querySelector(".buttons");
+  if(buttons){ buttons.style.opacity=".28"; buttons.style.pointerEvents="none"; }
+}
+function closePauseMenu(){
+  pauseOpen = false;
+  if(pauseMenu) pauseMenu.style.display = "none";
+  const buttons=document.querySelector(".buttons");
+  if(buttons){ buttons.style.opacity="1"; buttons.style.pointerEvents="auto"; }
+}
+if(musicVolume) musicVolume.addEventListener("input", e=>setMusicVolume(Number(e.target.value)/100));
+if(resumeBtn) resumeBtn.onclick = closePauseMenu;
+if(muteBtn) muteBtn.onclick = ()=>setMusicVolume(getMusicVolume()>0 ? 0 : .60);
+
+
 
 class GameScene extends Phaser.Scene {
  
+
+
+createFallbackMap(){
+  if(this.textures.exists("map") && !FAILED_ASSETS.has("map")) return;
+  const w=1448, h=1086;
+  const c=document.createElement("canvas");
+  c.width=w; c.height=h;
+  const ctx=c.getContext("2d");
+  ctx.fillStyle="#101827"; ctx.fillRect(0,0,w,h);
+  ctx.strokeStyle="#5de7ff"; ctx.lineWidth=8; ctx.strokeRect(90,90,w-180,h-180);
+  ctx.fillStyle="#1b2230"; ctx.fillRect(160,160,w-320,h-320);
+  ctx.fillStyle="#9eefff"; ctx.font="42px monospace"; ctx.fillText("MAP PATH FAILED",120,150);
+  ctx.font="22px monospace"; ctx.fillText(mapCfg.base,120,190);
+  if(this.textures.exists("map")) this.textures.remove("map");
+  this.textures.addCanvas("map",c);
+}
 
 createFallbackSheet(key, frameW=128, frameH=128, cols=8, rows=4, color="#2bd7ff"){
   if(this.textures.exists(key) && !FAILED_ASSETS.has(key)) return;
@@ -384,9 +447,15 @@ createFallbackSheet(key, frameW=128, frameH=128, cols=8, rows=4, color="#2bd7ff"
   this.textures.addCanvas(key,c);
 }
 ensureFallbackTextures(){
-  this.createFallbackSheet("donny_idle",128,128,8,4,"#ff8a2b");
+  this.createFallbackSheet("donny_idle_down",128,128,8,1,"#ff8a2b");
+  this.createFallbackSheet("donny_idle_left",128,128,8,1,"#ff8a2b");
+  this.createFallbackSheet("donny_idle_right",128,128,8,1,"#ff8a2b");
+  this.createFallbackSheet("donny_idle_up",128,128,8,1,"#ff8a2b");
   this.createFallbackSheet("donny_walk",128,128,8,4,"#ff8a2b");
-  this.createFallbackSheet("donny_run",128,128,8,4,"#ff8a2b");
+  this.createFallbackSheet("donny_run_down",128,128,8,1,"#ff8a2b");
+  this.createFallbackSheet("donny_run_left",128,128,8,1,"#ff8a2b");
+  this.createFallbackSheet("donny_run_right",128,128,8,1,"#ff8a2b");
+  this.createFallbackSheet("donny_run_up",128,128,8,1,"#ff8a2b");
   ["blacklight_kid_idle","neon_vendor_idle","blacklight_bouncer_idle","blacklight_runner_idle","kira_volt_idle"].forEach(k=>this.createFallbackSheet(k,128,128,4,4,"#70eaff"));
   if(!this.textures.exists("vendor_stall") || FAILED_ASSETS.has("vendor_stall")){
     const c=document.createElement("canvas"); c.width=1024; c.height=256; const ctx=c.getContext("2d");
@@ -440,7 +509,7 @@ loadMaskAsync(){
     showToast("NO MASK FOUND\nCollision disabled");
     if(coordLine) coordLine.innerHTML = `<span class="tag">NO MASK:</span> collision off`;
   };
-  img.src=mapCfg.mask + (mapCfg.mask.includes("?") ? "&" : "?") + "v=45";
+  img.src=mapCfg.mask + (mapCfg.mask.includes("?") ? "&" : "?") + "v=46";
 }
 
 preload(){
@@ -472,6 +541,7 @@ preload(){
  create(){
   forceControlsLive();
   this.ensureFallbackTextures();
+  this.createFallbackMap();
   objectiveText.textContent = mapCfg.objective;
   if(AREA==="a1") refreshMission();
   if(false && (FAILED_ASSETS.has("map") || !this.textures.exists("map"))){
@@ -496,7 +566,7 @@ preload(){
   if(AREA==="a1") {
     // v20: place reusable Neon Vendor Stall prop beside the vendor.
     this.vendorStall=this.add.sprite(this.mapW*.635,this.mapH*.405,"vendor_stall",0).setDepth(19).setScale(0.62);
-    if(this.anims.exists("vendor_stall_idle")) if(this.anims.exists("vendor_stall_idle")) this.vendorStall.play("vendor_stall_idle");
+    if(this.anims.exists("vendor_stall_idle")) this.vendorStall.play("vendor_stall_idle");
 
     this.addNpc("KIRA VOLT", .735,.410, "The club hears everything.", "Find the hidden signal relay.", "talk", "kira_volt");
     this.addNpc("NEON VENDOR", .595,.445, "Water, batteries, noodles, glow junk. Buying or selling?", "Buy or sell supplies.", "vendor", "neon_vendor");
@@ -557,16 +627,16 @@ preload(){
       const textureKey = `${k}_idle`;
       if(this.textures.exists(textureKey)){
         // v25: hold a single clean idle frame so NPCs do not cycle through bad generated frames.
-        if(this.anims.exists(`${k}_idle_${d}`)) this.anims.remove(`${k}_idle_${d}`); if(this.anims.exists(`${k}_idle_${d}`)) this.anims.remove(`${k}_idle_${d}`); this.anims.create({key:`${k}_idle_${d}`,frames:[{key:textureKey, frame:r*4}],frameRate:1,repeat:-1});
+        if(this.anims.exists(`${k}_idle_${d}`)) this.anims.remove(`${k}_idle_${d}`); this.anims.create({key:`${k}_idle_${d}`,frames:[{key:textureKey, frame:r*4}],frameRate:1,repeat:-1});
       }
     });
   });
 
   if(this.textures.exists("vendor_stall")){
-    if(this.anims.exists("vendor_stall_idle")) this.anims.remove("vendor_stall_idle"); if(this.anims.exists("vendor_stall_idle")) this.anims.remove("vendor_stall_idle"); this.anims.create({key:"vendor_stall_idle",frames:this.anims.generateFrameNumbers("vendor_stall",{start:0,end:3}),frameRate:4,repeat:-1});
+    if(this.anims.exists("vendor_stall_idle")) this.anims.remove("vendor_stall_idle"); this.anims.create({key:"vendor_stall_idle",frames:this.anims.generateFrameNumbers("vendor_stall",{start:0,end:3}),frameRate:4,repeat:-1});
   }
   if(this.textures.exists("door_marker")){
-    if(this.anims.exists("door_marker_idle")) this.anims.remove("door_marker_idle"); if(this.anims.exists("door_marker_idle")) this.anims.remove("door_marker_idle"); this.anims.create({key:"door_marker_idle",frames:this.anims.generateFrameNumbers("door_marker",{start:0,end:7}),frameRate:8,repeat:-1});
+    if(this.anims.exists("door_marker_idle")) this.anims.remove("door_marker_idle"); this.anims.create({key:"door_marker_idle",frames:this.anims.generateFrameNumbers("door_marker",{start:0,end:7}),frameRate:8,repeat:-1});
   }
  }
 
@@ -648,7 +718,7 @@ preload(){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v45&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v46&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); closeDialogue();}}
         ]);
       }
@@ -665,16 +735,16 @@ preload(){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v45&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v46&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v45&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v45&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v45&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v46&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v46&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v46&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
