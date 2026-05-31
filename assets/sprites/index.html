@@ -1,0 +1,439 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <title>Cosmic Feedback - Westgate Blacklight Connector v11</title>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+  <style>
+    html,body{
+      margin:0;padding:0;width:100%;height:100%;min-height:100%;
+      background:#05070b;color:#d8f7ff;overflow:hidden;
+      font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+      touch-action:none;overscroll-behavior:none;
+    }
+    body{position:fixed;inset:0;}
+    #game{
+      position:fixed;left:0;top:0;width:100vw;height:100vh;
+      width:100dvw;height:100dvh;background:#05070b;overflow:hidden;
+    }
+    #game canvas{
+      position:absolute!important;left:0!important;top:0!important;
+      width:100vw!important;height:100vh!important;
+      width:100dvw!important;height:100dvh!important;
+      display:block!important;
+    }
+    .hud{
+      position:fixed;left:calc(env(safe-area-inset-left) + 8px);top:calc(env(safe-area-inset-top) + 6px);
+      z-index:20;width:168px;max-width:30vw;padding:5px 7px;
+      border:1px solid rgba(124,217,255,.42);background:rgba(4,10,18,.54);
+      box-shadow:0 0 8px rgba(102,33,255,.18);backdrop-filter:blur(2px);font:8px/1.15 monospace;
+      pointer-events:none;text-shadow:0 0 4px #0ff;
+    }
+    .hud .title{font-weight:700;color:#9eefff;letter-spacing:.7px;margin-bottom:2px;}
+    .bar{height:5px;background:rgba(0,0,0,.45);margin:2px 0 3px;border:1px solid rgba(255,255,255,.12);}
+    .fill.hp{height:100%;width:100%;background:#39e886;}
+    .fill.sta{height:100%;width:100%;background:#8d5cff;}
+    .fill.water{height:100%;width:80%;background:#26c9ff;}
+    .tag{color:#b9bdd7}
+    #hint{
+      position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 8px);transform:translateX(-50%);
+      z-index:22;padding:6px 9px;border:1px solid rgba(160,210,255,.50);background:rgba(0,0,0,.62);
+      color:#e8fbff;font:10px monospace;display:none;white-space:nowrap;max-width:70vw;overflow:hidden;text-overflow:ellipsis;
+    }
+    #dialogue{
+      position:fixed;left:calc(env(safe-area-inset-left) + 12px);right:calc(env(safe-area-inset-right) + 12px);
+      bottom:calc(env(safe-area-inset-bottom) + 118px);transform:none;
+      z-index:60;max-width:720px;padding:8px 10px;border:1px solid rgba(124,217,255,.58);
+      background:rgba(2,5,12,.86);box-shadow:0 0 14px rgba(115,32,255,.22);display:none;
+      color:#e8fbff;font:12px/1.25 system-ui,-apple-system,Segoe UI,sans-serif;
+      pointer-events:auto;
+    }
+    #dialogue .name{font-weight:800;color:#9eefff;letter-spacing:.5px;margin-bottom:4px;}
+    #dialogue .choices{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+    #dialogue button{background:#122033;color:#e8fbff;border:1px solid #4a79a8;border-radius:6px;padding:7px 9px;font-size:12px;font-weight:650;touch-action:manipulation;}
+    .stick{
+      position:fixed;left:calc(env(safe-area-inset-left) + 20px);bottom:calc(env(safe-area-inset-bottom) + 30px);
+      width:116px;height:116px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.05);z-index:25;touch-action:none;
+    }
+    .nub{position:absolute;width:48px;height:48px;border-radius:50%;left:34px;top:34px;background:rgba(255,255,255,.28);border:1px solid rgba(255,255,255,.35);}
+    .buttons{position:fixed;right:calc(env(safe-area-inset-right) + 18px);bottom:calc(env(safe-area-inset-bottom) + 22px);z-index:25;touch-action:none;}
+    .btn{position:absolute;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      color:white;font:9px/1.05 monospace;border:2px solid rgba(255,255,255,.18);background:rgba(60,90,120,.38);user-select:none;}
+    .a{right:0;bottom:28px;background:rgba(55,150,75,.40)} .b{right:58px;bottom:0;background:rgba(150,55,70,.40)}
+    .x{right:58px;bottom:64px;background:rgba(60,120,170,.40)} .y{right:116px;bottom:28px;background:rgba(150,140,60,.40)}
+    .r{right:0;bottom:92px;background:rgba(120,70,180,.48)}
+    .version{position:fixed;right:calc(env(safe-area-inset-right) + 12px);bottom:calc(env(safe-area-inset-bottom) + 8px);z-index:15;color:#9eefff;background:rgba(0,0,0,.45);border:1px solid rgba(124,217,255,.3);padding:4px 8px;font:10px monospace;}
+  </style>
+</head>
+<body>
+<div id="game"></div>
+
+<div class="hud" id="statsHud">
+  <div class="title">DONNY</div>
+  <div><span class="tag">MODE:</span> <span id="mode">ON FOOT</span> &nbsp; <span class="tag">ZONE:</span> WESTGATE</div>
+  <div><span class="tag">HP</span></div><div class="bar"><div class="fill hp" id="hpFill"></div></div>
+  <div><span class="tag">STA</span></div><div class="bar"><div class="fill sta" id="staFill"></div></div>
+  <div><span class="tag">WATER</span></div><div class="bar"><div class="fill water" id="waterFill"></div></div>
+  <div id="coordLine"><span class="tag">XY:</span> --</div>
+</div>
+
+<div id="hint"></div>
+<div id="dialogue">
+  <div class="name" id="dlgName"></div>
+  <div id="dlgText"></div>
+  <div class="choices" id="dlgChoices"></div>
+</div>
+
+<div class="stick" id="stick"><div class="nub" id="nub"></div></div>
+<div class="buttons">
+  <div class="btn r" data-btn="r">R<br>BST</div>
+  <div class="btn x" data-btn="x">X<br>USE</div>
+  <div class="btn a" data-btn="a">A<br>GAS</div>
+  <div class="btn b" data-btn="b">B<br>BRK</div>
+  <div class="btn y" data-btn="y">Y<br>LTS</div>
+</div>
+<div class="version">Westgate Blacklight Connector v11</div>
+
+<script>
+(() => {
+  const qs = new URLSearchParams(location.search);
+  const COLLISION_MODE = qs.get("collision") || "off"; // off | mask | road
+  const CALIBRATE = qs.get("calibrate") === "1";
+
+  const MAP_BASE = "assets/maps/dust9/glasswell/outer_ring/west_blacklight/layers/GLASSWELL_WESTGATE_BLACKLIGHT_CONNECTOR_base.png";
+  const MAP_MASK = "assets/maps/dust9/glasswell/outer_ring/west_blacklight/masks/GLASSWELL_WESTGATE_BLACKLIGHT_CONNECTOR_collision_mask.png";
+
+  const DONNY = {
+    idle: "assets/sprites/player/donny/donny_idle_4dir.png",
+    walk: "assets/sprites/player/donny/donny_walk_4dir.png",
+    run:  "assets/sprites/player/donny/donny_run_4dir.png"
+  };
+
+  const BLACKLIGHT_KID = {
+    idle: "assets/sprites/npcs/blacklight_kid/blacklight_kid_idle_4dir_128.png",
+    walk: "assets/sprites/npcs/blacklight_kid/blacklight_kid_walk_4dir_128.png"
+  };
+
+  const hint = document.getElementById("hint");
+  const dlg = document.getElementById("dialogue");
+  const dlgName = document.getElementById("dlgName");
+  const dlgText = document.getElementById("dlgText");
+  const dlgChoices = document.getElementById("dlgChoices");
+  const modeEl = document.getElementById("mode");
+  const coordLine = document.getElementById("coordLine");
+
+  let input = {x:0,y:0,a:false,b:false,xbtn:false,r:false,ybtn:false, usePressed:false};
+  let dialogueOpen = false;
+
+  function showHint(t){ hint.textContent=t; hint.style.display="block"; }
+  function hideHint(){ hint.style.display="none"; }
+  function closeDialogue(){
+    dlg.style.display="none"; dialogueOpen=false;
+    document.querySelector(".buttons").style.opacity = "1";
+    document.querySelector(".buttons").style.pointerEvents = "auto";
+  }
+
+  function showDialogue(name, text, choices){
+    dialogueOpen = true;
+    dlg.style.display = "block";
+    document.querySelector(".buttons").style.opacity = "0.28";
+    document.querySelector(".buttons").style.pointerEvents = "none";
+    dlgName.textContent = name;
+    dlgText.textContent = text;
+    dlgChoices.innerHTML = "";
+    for(const c of choices){
+      const b = document.createElement("button");
+      b.textContent = c.label;
+      b.onclick = c.onClick;
+      dlgChoices.appendChild(b);
+    }
+  }
+
+  class GameScene extends Phaser.Scene {
+    constructor(){ super("GameScene"); }
+
+    preload(){
+      this.load.image("westgate_base", MAP_BASE);
+      this.load.image("westgate_mask", MAP_MASK);
+
+      this.load.spritesheet("donny_idle", DONNY.idle, { frameWidth:128, frameHeight:128 });
+      this.load.spritesheet("donny_walk", DONNY.walk, { frameWidth:128, frameHeight:128 });
+      this.load.spritesheet("donny_run", DONNY.run, { frameWidth:128, frameHeight:128 });
+
+      this.load.spritesheet("blacklight_kid_idle", BLACKLIGHT_KID.idle, { frameWidth:128, frameHeight:128 });
+      this.load.spritesheet("blacklight_kid_walk", BLACKLIGHT_KID.walk, { frameWidth:128, frameHeight:128 });
+    }
+
+    create(){
+      this.map = this.add.image(0,0,"westgate_base").setOrigin(0,0);
+      this.mapW = this.map.width; this.mapH = this.map.height;
+      this.physics.world.setBounds(0,0,this.mapW,this.mapH);
+
+      this.cameras.main.setBounds(0,0,this.mapW,this.mapH);
+      // v10: prevent right-side black void by fitting/clamping camera inside the real map.
+      const vw = this.scale.width || window.innerWidth;
+      const vh = this.scale.height || window.innerHeight;
+      const fitZoomX = vw / this.mapW;
+      const fitZoomY = vh / this.mapH;
+      let desiredZoom = 0.82;
+      // If the viewport is wider than the visible map at 0.82, zoom out enough to fill width.
+      // This keeps HUD/controller fixed because they are DOM overlays, not camera objects.
+      desiredZoom = Math.max(desiredZoom, fitZoomX);
+      desiredZoom = Math.min(desiredZoom, 1.08);
+      this.cameras.main.setZoom(desiredZoom);
+      this.cameras.main.roundPixels = true;
+      this.cameras.main.setDeadzone(80, 60);
+
+      this.maskReady = false;
+      if (this.textures.exists("westgate_mask")) {
+        try {
+          const src = this.textures.get("westgate_mask").getSourceImage();
+          this.maskCanvas = document.createElement("canvas");
+          this.maskCanvas.width = src.width; this.maskCanvas.height = src.height;
+          const ctx = this.maskCanvas.getContext("2d", { willReadFrequently:true });
+          ctx.drawImage(src,0,0);
+          this.maskCtx = ctx;
+          this.maskReady = true;
+        } catch(e) { console.warn("Mask canvas failed", e); }
+      }
+
+      this.makeAnims();
+
+      const spawnX = parseFloat(qs.get("spawnX")) || this.mapW * 0.315;
+      const spawnY = parseFloat(qs.get("spawnY")) || this.mapH * 0.610;
+      this.player = this.physics.add.sprite(spawnX, spawnY, "donny_idle", 0);
+      this.player.setDepth(20).setScale(0.58);
+      this.player.body.setSize(28,34).setOffset(50,78);
+      this.player.dir = "down";
+      this.player.play("donny_idle_down");
+
+      // Blacklight Kid lookout placement near the circled upper-left market / approach area.
+      const npcX = parseFloat(qs.get("npcX")) || this.mapW * 0.405;
+      const npcY = parseFloat(qs.get("npcY")) || this.mapH * 0.345;
+      this.npc = this.physics.add.sprite(npcX, npcY, "blacklight_kid_idle", 0);
+      this.npc.setDepth(21).setScale(0.62);
+      this.npc.body.setSize(28,36).setOffset(50,76);
+      this.npc.body.immovable = true;
+      this.npc.play("blk_idle_down");
+      this.add.text(npcX, npcY-48, 'KADE "STATIC"', {fontFamily:"monospace",fontSize:"10px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.55)",padding:{x:3,y:2}}).setOrigin(.5).setDepth(30);
+
+      this.enterZone = new Phaser.Geom.Rectangle(this.mapW*0.585-55, this.mapH*0.365-45, 110, 90);
+      this.enterDebug = this.add.graphics().setDepth(18);
+      if(CALIBRATE){
+        this.enterDebug.lineStyle(2,0x00ffff,.75).strokeRectShape(this.enterZone);
+      }
+
+      this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+      this.cameras.main.setLerp(0.12, 0.12);
+      this.cameras.main.setDeadzone(80, 60);
+
+      this.keys = this.input.keyboard.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT,E,X,SPACE");
+      this.input.keyboard.on("keydown-E", () => this.handleUse());
+      this.input.keyboard.on("keydown-X", () => this.handleUse());
+      this.input.on("pointerdown", (p) => {
+        if(CALIBRATE){
+          const wp = p.positionToCamera(this.cameras.main);
+          this.player.setPosition(wp.x, wp.y);
+          console.log("CALIBRATE XY", Math.round(wp.x), Math.round(wp.y));
+        }
+      });
+
+      this.missionShown = false;
+      this.time.delayedCall(500, () => {
+        showHint("MISSION UPDATED: Reach the Blacklight connector. Find the lookout. Enter the club district.");
+        this.time.delayedCall(3500, hideHint);
+      });
+    }
+
+    makeAnims(){
+      const dirs = ["down","right","left","up"];
+      dirs.forEach((d, r) => {
+        this.anims.create({ key:`donny_idle_${d}`, frames:this.anims.generateFrameNumbers("donny_idle",{start:r*8,end:r*8+3}), frameRate:4, repeat:-1 });
+        this.anims.create({ key:`donny_walk_${d}`, frames:this.anims.generateFrameNumbers("donny_walk",{start:r*8,end:r*8+7}), frameRate:9, repeat:-1 });
+        this.anims.create({ key:`donny_run_${d}`, frames:this.anims.generateFrameNumbers("donny_run",{start:r*8,end:r*8+7}), frameRate:12, repeat:-1 });
+      });
+
+      ["down","right","left","up"].forEach((d,r)=>{
+        this.anims.create({ key:`blk_idle_${d}`, frames:this.anims.generateFrameNumbers("blacklight_kid_idle",{start:r*4,end:r*4+3}), frameRate:4, repeat:-1 });
+        this.anims.create({ key:`blk_walk_${d}`, frames:this.anims.generateFrameNumbers("blacklight_kid_walk",{start:r*8,end:r*8+7}), frameRate:8, repeat:-1 });
+      });
+    }
+
+    blocked(x,y){
+      if(COLLISION_MODE === "off") return false;
+      if(x < 6 || y < 6 || x > this.mapW-6 || y > this.mapH-6) return true;
+
+      if(COLLISION_MODE === "road"){
+        // Temporary broad road-zone collision: permissive near roads/market connector.
+        return false;
+      }
+
+      if(COLLISION_MODE === "mask" && this.maskReady){
+        const mx = Math.floor(x / this.mapW * this.maskCanvas.width);
+        const my = Math.floor(y / this.mapH * this.maskCanvas.height);
+        const p = this.maskCtx.getImageData(mx,my,1,1).data;
+        const bright = (p[0]+p[1]+p[2])/3;
+        return bright < 128;
+      }
+      return false;
+    }
+
+    tryMove(dx,dy){
+      const nx = this.player.x + dx;
+      const ny = this.player.y + dy;
+      const footY = ny + 24;
+      if(!this.blocked(nx, footY)){
+        this.player.setPosition(nx, ny);
+      } else {
+        // slide along one axis if possible
+        if(!this.blocked(this.player.x + dx, this.player.y + 24)) this.player.x += dx;
+        if(!this.blocked(this.player.x, this.player.y + dy + 24)) this.player.y += dy;
+      }
+    }
+
+    update(_, dt){
+      const dts = dt/1000;
+      if(dialogueOpen){ this.player.setVelocity(0,0); return; }
+
+      let vx = 0, vy = 0;
+      if(this.keys.LEFT.isDown || this.keys.A.isDown) vx -= 1;
+      if(this.keys.RIGHT.isDown || this.keys.D.isDown) vx += 1;
+      if(this.keys.UP.isDown || this.keys.W.isDown) vy -= 1;
+      if(this.keys.DOWN.isDown || this.keys.S.isDown) vy += 1;
+      vx += input.x; vy += input.y;
+
+      const len = Math.hypot(vx,vy);
+      let moving = len > 0.15;
+      if(moving){ vx/=len; vy/=len; }
+
+      const running = input.r || this.keys.SPACE.isDown;
+      const speed = running ? 190 : 125;
+
+      if(moving){
+        this.tryMove(vx*speed*dts, vy*speed*dts);
+        if(Math.abs(vx) > Math.abs(vy)) this.player.dir = vx > 0 ? "right" : "left";
+        else this.player.dir = vy > 0 ? "down" : "up";
+        this.player.play(`donny_${running?"run":"walk"}_${this.player.dir}`, true);
+      } else {
+        this.player.play(`donny_idle_${this.player.dir}`, true);
+      }
+
+      const nearNpc = Phaser.Math.Distance.Between(this.player.x,this.player.y,this.npc.x,this.npc.y) < 62;
+      const inEnter = Phaser.Geom.Rectangle.Contains(this.enterZone, this.player.x, this.player.y);
+
+      if(nearNpc) showHint('X / E: Talk to Kade "Static"');
+      else if(inEnter) showHint("X / E: Enter Blacklight District");
+      else hideHint();
+
+      if(input.usePressed){
+        input.usePressed = false;
+        this.handleUse();
+      }
+
+      // v10 manual camera clamp: never show outside the real map image.
+      const cam = this.cameras.main;
+      const viewW = cam.width / cam.zoom;
+      const viewH = cam.height / cam.zoom;
+      cam.scrollX = Phaser.Math.Clamp(cam.scrollX, 0, Math.max(0, this.mapW - viewW));
+      cam.scrollY = Phaser.Math.Clamp(cam.scrollY, 0, Math.max(0, this.mapH - viewH));
+
+      coordLine.innerHTML = `<span class="tag">XY:</span> ${Math.round(this.player.x)}, ${Math.round(this.player.y)} <span class="tag">COL:</span> ${COLLISION_MODE}`;
+    }
+
+    handleUse(){
+      const nearNpc = Phaser.Math.Distance.Between(this.player.x,this.player.y,this.npc.x,this.npc.y) < 70;
+      const inEnter = Phaser.Geom.Rectangle.Contains(this.enterZone, this.player.x, this.player.y);
+
+      if(nearNpc){
+        showDialogue('KADE "STATIC"', "You looking for the club?", [
+          {label:"Yeah.", onClick:()=>showDialogue('KADE "STATIC"', "Then keep your hands where the door can see them. Blacklight doesn’t open for noise. It opens for signal.", [{label:"Close", onClick:closeDialogue}])},
+          {label:"Just passing through.", onClick:()=>showDialogue('KADE "STATIC"', "Nobody passes through Glasswell. They get counted, taxed, hunted, or hidden.", [{label:"Close", onClick:closeDialogue}])},
+          {label:"Who runs this district?", onClick:()=>showDialogue('KADE "STATIC"', "Static runs the wire. Kids run the rooftops. Club runs itself.", [{label:"Close", onClick:closeDialogue}])},
+          {label:"Leave.", onClick:closeDialogue}
+        ]);
+        return;
+      }
+
+      if(inEnter){
+        showDialogue("BLACKLIGHT DISTRICT", "Enter Blacklight District?", [
+          {label:"YES", onClick:()=>showDialogue("TRANSITION STUB", "BLACKLIGHT_CLUB_DISTRICT_COMING_NEXT", [{label:"Close", onClick:closeDialogue}])},
+          {label:"NO", onClick:closeDialogue}
+        ]);
+      }
+    }
+  }
+
+  function setupControls(){
+    const stick = document.getElementById("stick"), nub = document.getElementById("nub");
+    let active = false, base = null;
+    const center = () => { nub.style.left="34px"; nub.style.top="34px"; input.x=0; input.y=0; };
+    stick.addEventListener("pointerdown", e => { active=true; stick.setPointerCapture(e.pointerId); const r=stick.getBoundingClientRect(); base={x:r.left+r.width/2,y:r.top+r.height/2}; });
+    stick.addEventListener("pointermove", e => {
+      if(!active) return;
+      const dx=e.clientX-base.x, dy=e.clientY-base.y;
+      const dist=Math.min(42, Math.hypot(dx,dy)); const ang=Math.atan2(dy,dx);
+      const nx=Math.cos(ang)*dist, ny=Math.sin(ang)*dist;
+      nub.style.left=(34+nx)+"px"; nub.style.top=(34+ny)+"px";
+      input.x = nx/42; input.y = ny/42;
+    });
+    stick.addEventListener("pointerup", e => { active=false; center(); });
+    stick.addEventListener("pointercancel", e => { active=false; center(); });
+
+    document.querySelectorAll(".btn").forEach(btn=>{
+      const name = btn.dataset.btn;
+      const set = v => {
+        if(name === "x" && v) input.usePressed = true;
+        if(name === "a") input.a = v;
+        if(name === "b") input.b = v;
+        if(name === "r") input.r = v;
+        if(name === "y") input.ybtn = v;
+      };
+      btn.addEventListener("pointerdown", e=>{e.preventDefault(); set(true);});
+      btn.addEventListener("pointerup", e=>{e.preventDefault(); set(false);});
+      btn.addEventListener("pointercancel", e=>{e.preventDefault(); set(false);});
+    });
+  }
+
+  setupControls();
+
+  function viewportW(){ return Math.max(320, Math.floor(window.visualViewport ? window.visualViewport.width : window.innerWidth)); }
+  function viewportH(){ return Math.max(240, Math.floor(window.visualViewport ? window.visualViewport.height : window.innerHeight)); }
+
+  const config = {
+    type: Phaser.AUTO,
+    parent: "game",
+    backgroundColor: "#05070b",
+    scale: {
+      mode: Phaser.Scale.RESIZE,
+      autoCenter: Phaser.Scale.NO_CENTER,
+      width: viewportW(),
+      height: viewportH()
+    },
+    physics: { default:"arcade", arcade:{ debug:false } },
+    scene: [GameScene],
+    render: { pixelArt:false, antialias:true }
+  };
+  const game = new Phaser.Game(config);
+
+  function forceResize(){
+    const w = viewportW(), h = viewportH();
+    const gameDiv = document.getElementById("game");
+    gameDiv.style.width = w + "px";
+    gameDiv.style.height = h + "px";
+    if(game && game.scale) game.scale.resize(w, h);
+    const canvas = document.querySelector("#game canvas");
+    if(canvas){
+      canvas.style.width = w + "px";
+      canvas.style.height = h + "px";
+    }
+  }
+  window.addEventListener("resize", forceResize);
+  window.addEventListener("orientationchange", () => setTimeout(forceResize, 250));
+  if(window.visualViewport) window.visualViewport.addEventListener("resize", forceResize);
+  setTimeout(forceResize, 100);
+  setTimeout(forceResize, 600);
+})();
+</script>
+</body>
+</html>
