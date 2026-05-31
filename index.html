@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight District A1 v36</title>
+<title>Cosmic Feedback - Blacklight District A1 v37</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -164,7 +164,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 
 <div class="stick" id="stick"><div class="nub" id="nub"></div></div>
 <div class="buttons"><div class="btn r" data-btn="r">R<br>BST</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
-<div class="version">Blacklight District / Club v36</div>
+<div class="version">Blacklight District / Club v37</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -183,7 +183,7 @@ const MAPS = {
   club: {
     key:"blacklight_club",
     zone:"BLACKLIGHT CLUB",
-    base:"assets/maps/dust9/glasswell/blacklight_club/interior/layers/GLASSWELL_BLACKLIGHT_CLUB_INTERIOR_base.png",
+    base:"assets/maps/dust9/glasswell/blacklight_club/interior/layers/GLASSWELL_BLACKLIGHT_CLUB_INTERIOR_base.jpeg",
     mask:"assets/maps/dust9/glasswell/blacklight_club/interior/masks/GLASSWELL_BLACKLIGHT_CLUB_INTERIOR_collision_mask.png",
     spawn:[0.50,0.86],
     objective:"Find Kira at the DJ booth",
@@ -346,6 +346,11 @@ function refreshMission(){
 
 class GameScene extends Phaser.Scene {
  preload(){
+  this.load.on("loaderror", file => {
+    console.error("LOAD ERROR:", file.key, file.src);
+    showToast("LOAD ERROR\n" + file.key);
+    if(coordLine) coordLine.innerHTML = `<span class="tag">LOAD ERROR:</span> ${file.key}`;
+  });
   this.load.image("map", mapCfg.base); this.load.image("mask", mapCfg.mask);
   this.load.spritesheet("donny_idle", DONNY.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("donny_walk", DONNY.walk, {frameWidth:128,frameHeight:128});
@@ -364,7 +369,13 @@ class GameScene extends Phaser.Scene {
  create(){
   objectiveText.textContent = mapCfg.objective;
   if(AREA==="a1") refreshMission();
-  this.map=this.add.image(0,0,"map").setOrigin(0,0).setScale(WORLD_SCALE); this.mapW=this.map.width * WORLD_SCALE; this.mapH=this.map.height * WORLD_SCALE;
+  if(!this.textures.exists("map")){
+    this.mapW=1448; this.mapH=1086;
+    this.add.rectangle(0,0,this.mapW,this.mapH,0x111827).setOrigin(0,0);
+    this.add.text(40,40,"MAP FAILED TO LOAD\nCheck club base path in GitHub assets.",{fontFamily:"monospace",fontSize:"22px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.7)",padding:{x:12,y:10}}).setDepth(999);
+  } else {
+    this.map=this.add.image(0,0,"map").setOrigin(0,0).setScale(WORLD_SCALE); this.mapW=this.map.width * WORLD_SCALE; this.mapH=this.map.height * WORLD_SCALE;
+  }
   this.physics.world.setBounds(0,0,this.mapW,this.mapH);
   this.cameras.main.setBounds(0,0,this.mapW,this.mapH);
   this.applyCover=()=>{const vw=this.scale.width||innerWidth, vh=this.scale.height||innerHeight; const cover=Math.max(vw/this.mapW,vh/this.mapH); const z = AREA==="a1" ? 1.25 : (AREA==="club" ? Phaser.Math.Clamp(cover*1.15,.65,1.55) : Phaser.Math.Clamp(cover,.7,3.2)); this.cameras.main.setZoom(z); this.cameras.main.setDeadzone(70,50);};
@@ -525,7 +536,7 @@ class GameScene extends Phaser.Scene {
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v36&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v37&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); closeDialogue();}}
         ]);
       }
@@ -542,16 +553,16 @@ class GameScene extends Phaser.Scene {
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v36&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v37&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v36&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v36&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v36&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v37&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v37&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v37&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
