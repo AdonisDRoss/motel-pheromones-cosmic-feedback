@@ -3,8 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight District A1 v18</title>
-<title>Cosmic Feedback - Blacklight District A1 v17</title>
+<title>Cosmic Feedback - Blacklight District A1 v20</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -29,6 +28,42 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 .a{right:0;bottom:28px;background:rgba(55,150,75,.40)} .b{right:58px;bottom:0;background:rgba(150,55,70,.40)} .x{right:58px;bottom:64px;background:rgba(60,120,170,.40)} .y{right:116px;bottom:28px;background:rgba(150,140,60,.40)} .r{right:0;bottom:92px;background:rgba(120,70,180,.48)}
 .version{position:fixed;right:calc(env(safe-area-inset-right) + 12px);bottom:calc(env(safe-area-inset-bottom) + 8px);z-index:15;color:#9eefff;background:rgba(0,0,0,.45);border:1px solid rgba(124,217,255,.3);padding:3px 6px;font:9px monospace;}
 #toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 8px);transform:translateX(-50%);z-index:80;display:none;max-width:70vw;padding:7px 10px;border:1px solid rgba(124,217,255,.55);background:rgba(2,5,12,.82);color:#e8fbff;font:11px/1.2 monospace;text-align:center;box-shadow:0 0 14px rgba(115,32,255,.20);pointer-events:none;}
+
+#shop{
+  position:fixed;
+  left:calc(env(safe-area-inset-left) + 10px);
+  right:calc(env(safe-area-inset-right) + 10px);
+  top:calc(env(safe-area-inset-top) + 38px);
+  bottom:calc(env(safe-area-inset-bottom) + 86px);
+  z-index:90;
+  display:none;
+  border:1px solid rgba(124,217,255,.62);
+  background:rgba(2,5,12,.91);
+  color:#e8fbff;
+  box-shadow:0 0 18px rgba(115,32,255,.25);
+  font:11px/1.2 monospace;
+  overflow:hidden;
+  pointer-events:auto;
+}
+#shopHeader{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:7px 9px;border-bottom:1px solid rgba(124,217,255,.32);
+  color:#9eefff;font-weight:800;letter-spacing:.5px;
+}
+#shopBody{display:flex;gap:8px;padding:8px;height:calc(100% - 48px);box-sizing:border-box;}
+.shopPanel{flex:1;min-width:0;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.035);overflow:auto;padding:6px;}
+.shopPanel h4{margin:0 0 5px 0;color:#d9b8ff;font-size:10px;}
+.shopItem{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:5px;border-bottom:1px solid rgba(255,255,255,.08);}
+.shopItem span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.shopItem button,#shopClose{background:#122033;color:#e8fbff;border:1px solid #4a79a8;border-radius:5px;padding:4px 6px;font-size:10px;font-weight:700;}
+#shopLog{color:#bdefff;font-size:9px;margin-top:5px;min-height:22px;}
+@media (max-width:760px) and (orientation:landscape){
+  #shop{top:30px;bottom:74px;font-size:10px;}
+  #shopBody{padding:6px;gap:6px;}
+  .shopItem{padding:4px;}
+  .shopItem button,#shopClose{font-size:9px;padding:3px 5px;}
+}
+
 </style>
 </head>
 <body>
@@ -37,9 +72,28 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 <div id="objectiveHud"><div class="objTitle">OBJECTIVE</div><div id="objectiveText">Find Kira Volt</div></div>
 <div id="toast"></div><div id="hint"></div>
 <div id="dialogue"><div class="name" id="dlgName"></div><div id="dlgText"></div><div class="choices" id="dlgChoices"></div></div>
+
+<div id="shop">
+  <div id="shopHeader">
+    <div>NEON VENDOR // BUY / SELL</div>
+    <div><span id="creditLine">Credits: 0</span> <button id="shopClose">CLOSE</button></div>
+  </div>
+  <div id="shopBody">
+    <div class="shopPanel">
+      <h4>BUY</h4>
+      <div id="shopBuyList"></div>
+    </div>
+    <div class="shopPanel">
+      <h4>SELL</h4>
+      <div id="shopSellList"></div>
+      <div id="shopLog"></div>
+    </div>
+  </div>
+</div>
+
 <div class="stick" id="stick"><div class="nub" id="nub"></div></div>
 <div class="buttons"><div class="btn r" data-btn="r">R<br>BST</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
-<div class="version">Blacklight District A1 v17</div>
+<div class="version">Blacklight District A1 v20</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -76,12 +130,77 @@ const BLK = {
   idle:"assets/sprites/npcs/blacklight_kid/blacklight_kid_idle_4dir_128.png",
   walk:"assets/sprites/npcs/blacklight_kid/blacklight_kid_walk_4dir_128.png"
 };
-const hint=document.getElementById("hint"), toast=document.getElementById("toast"), objectiveText=document.getElementById("objectiveText"), dlg=document.getElementById("dialogue"), dlgName=document.getElementById("dlgName"), dlgText=document.getElementById("dlgText"), dlgChoices=document.getElementById("dlgChoices"), coordLine=document.getElementById("coordLine");
-let input={x:0,y:0,r:false,usePressed:false}, dialogueOpen=false;
+const PROPS = {
+  vendorStall:"assets/props/blacklight/neon_vendor_stall_idle_256.png"
+};
+const hint=document.getElementById("hint"), toast=document.getElementById("toast"), objectiveText=document.getElementById("objectiveText"), dlg=document.getElementById("dialogue"), dlgName=document.getElementById("dlgName"), dlgText=document.getElementById("dlgText"), dlgChoices=document.getElementById("dlgChoices"), coordLine=document.getElementById("coordLine"), shop=document.getElementById("shop"), shopBuyList=document.getElementById("shopBuyList"), shopSellList=document.getElementById("shopSellList"), creditLine=document.getElementById("creditLine"), shopLog=document.getElementById("shopLog");
+let input={x:0,y:0,r:false,usePressed:false}, dialogueOpen=false, shopOpen=false;
 function showHint(t){hint.textContent=t;hint.style.display="block";} function hideHint(){hint.style.display="none";}
 function showToast(t){toast.innerHTML=t.replace(/\n/g,"<br>");toast.style.display="block";clearTimeout(showToast._t);showToast._t=setTimeout(()=>toast.style.display="none",2600);}
-function closeDialogue(){dlg.style.display="none";dialogueOpen=false;document.querySelector(".buttons").style.opacity="1";document.querySelector(".buttons").style.pointerEvents="auto";}
+function closeDialogue(){dlg.style.display="none";dialogueOpen=false;if(!shopOpen){document.querySelector(".buttons").style.opacity="1";document.querySelector(".buttons").style.pointerEvents="auto";}}
 function showDialogue(name,text,choices){dialogueOpen=true;dlg.style.display="block";document.querySelector(".buttons").style.opacity=".28";document.querySelector(".buttons").style.pointerEvents="none";dlgName.textContent=name;dlgText.textContent=text;dlgChoices.innerHTML="";choices.forEach(c=>{const b=document.createElement("button");b.textContent=c.label;b.onclick=c.onClick;dlgChoices.appendChild(b);});}
+const ShopState = {
+  items:[
+    {id:"water_pouch", name:"Water Pouch", buy:8, sell:3},
+    {id:"battery_cell", name:"Battery Cell", buy:12, sell:5},
+    {id:"cheap_noodles", name:"Cheap Noodles", buy:5, sell:2},
+    {id:"glow_tab", name:"Glow Tab", buy:9, sell:4},
+    {id:"signal_charm", name:"Hacked Signal Charm", buy:18, sell:8},
+    {id:"wristband", name:"Bootleg Wristband", buy:14, sell:6},
+    {id:"scrap_cable", name:"Scrap Cable", buy:6, sell:2}
+  ],
+  load(){
+    this.credits = parseInt(localStorage.getItem("cf_credits") || "50", 10);
+    try { this.inv = JSON.parse(localStorage.getItem("cf_inventory") || "{}"); } catch(e){ this.inv = {}; }
+  },
+  save(){
+    localStorage.setItem("cf_credits", String(this.credits));
+    localStorage.setItem("cf_inventory", JSON.stringify(this.inv));
+  },
+  qty(id){ return this.inv[id] || 0; },
+  buy(id){
+    const it = this.items.find(x=>x.id===id); if(!it) return;
+    if(this.credits < it.buy){ shopLog.textContent = "Not enough credits."; return; }
+    this.credits -= it.buy; this.inv[id] = this.qty(id)+1; this.save(); renderShop(); shopLog.textContent = "Bought: " + it.name;
+  },
+  sell(id){
+    const it = this.items.find(x=>x.id===id); if(!it) return;
+    if(this.qty(id) <= 0){ shopLog.textContent = "You do not have that."; return; }
+    this.inv[id] = this.qty(id)-1; this.credits += it.sell; this.save(); renderShop(); shopLog.textContent = "Sold: " + it.name;
+  }
+};
+function renderShop(){
+  ShopState.load();
+  creditLine.textContent = "Credits: " + ShopState.credits;
+  shopBuyList.innerHTML = ""; shopSellList.innerHTML = "";
+  ShopState.items.forEach(it=>{
+    const buy = document.createElement("div");
+    buy.className = "shopItem";
+    buy.innerHTML = `<span>${it.name} // ${it.buy}cr</span>`;
+    const bb = document.createElement("button"); bb.textContent = "BUY"; bb.onclick = ()=>ShopState.buy(it.id); buy.appendChild(bb);
+    shopBuyList.appendChild(buy);
+
+    const sell = document.createElement("div");
+    sell.className = "shopItem";
+    sell.innerHTML = `<span>${it.name} x${ShopState.qty(it.id)} // ${it.sell}cr</span>`;
+    const sb = document.createElement("button"); sb.textContent = "SELL"; sb.onclick = ()=>ShopState.sell(it.id); sell.appendChild(sb);
+    shopSellList.appendChild(sell);
+  });
+}
+function openShop(){
+  closeDialogue();
+  shopOpen = true; shop.style.display = "block";
+  document.querySelector(".buttons").style.opacity=".28";
+  document.querySelector(".buttons").style.pointerEvents="none";
+  renderShop(); shopLog.textContent = "Junk, snacks, batteries. No refunds.";
+}
+function closeShop(){
+  shopOpen = false; shop.style.display = "none";
+  document.querySelector(".buttons").style.opacity="1";
+  document.querySelector(".buttons").style.pointerEvents="auto";
+}
+document.getElementById("shopClose").onclick = closeShop;
+
 class GameScene extends Phaser.Scene {
  preload(){
   this.load.image("map", mapCfg.base); this.load.image("mask", mapCfg.mask);
@@ -89,6 +208,7 @@ class GameScene extends Phaser.Scene {
   this.load.spritesheet("donny_walk", DONNY.walk, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("donny_run", DONNY.run, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("blk_idle", BLK.idle, {frameWidth:128,frameHeight:128});
+  this.load.spritesheet("vendor_stall", PROPS.vendorStall, {frameWidth:256,frameHeight:256});
  }
  create(){
   objectiveText.textContent = mapCfg.objective;
@@ -104,9 +224,14 @@ class GameScene extends Phaser.Scene {
   this.cameras.main.startFollow(this.player,true,.12,.12);
   this.npcs=[];
   if(AREA==="a1") {
+    // v20: place reusable Neon Vendor Stall prop beside the vendor.
+    this.vendorStall=this.add.sprite(this.mapW*.325,this.mapH*.585,"vendor_stall",0).setDepth(19).setScale(0.78);
+    this.vendorStall.play("vendor_stall_idle");
+
     this.addNpc("KIRA VOLT", .72,.36, "The club hears everything.", "Find the hidden signal relay.");
-    this.addNpc("ECHO", .35,.53, "Got credits, roadman?", "Street music covers cleaner noise.");
-    this.addNpc("NEON", .58,.72, "Concord patrol rolled through an hour ago.", "Keep your head down.");
+    this.addNpc("NEON VENDOR", .37,.54, "Water, batteries, noodles, glow junk. Buying or selling?", "Buy or sell supplies.", "vendor");
+    this.addNpc("BLACKLIGHT RUNNER", .58,.72, "Concord patrol rolled through an hour ago.", "Get the passphrase from the runner.");
+    this.addNpc("CLUB BOUNCER", .82,.56, "Passphrase first. Door second.", "Bring the passphrase to the club door.");
     this.exitZone=new Phaser.Geom.Rectangle(this.mapW*.03,this.mapH*.65,this.mapW*.16,this.mapH*.25);
   } else {
     this.addNpc('KADE "STATIC"', .40,.34, "You looking for the club?", "Blacklight opens for signal.");
@@ -117,11 +242,11 @@ class GameScene extends Phaser.Scene {
   showToast(AREA==="a1" ? "BLACKLIGHT DISTRICT A1\nCheckpoint saved" : "WESTGATE CONNECTOR");
   localStorage.setItem("cf_checkpoint", AREA==="a1" ? "blacklight_a1" : "westgate_connector");
  }
- addNpc(name,xn,yn,line,mission){
-  const n=this.physics.add.sprite(this.mapW*xn,this.mapH*yn,"blk_idle",0).setDepth(21).setScale(.58);
+ addNpc(name,xn,yn,line,mission,kind="talk"){
+  const n=this.physics.add.sprite(this.mapW*xn,this.mapH*yn,"blk_idle",0).setDepth(21).setScale(.78);
   n.body.setSize(28,36).setOffset(50,76); n.body.immovable=true; n.play("blk_idle_down");
-  n.npc={name,line,mission};
-  this.add.text(n.x,n.y-34,name,{fontFamily:"monospace",fontSize:"7px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.55)",padding:{x:2,y:1}}).setOrigin(.5).setDepth(30);
+  n.npc={name,line,mission,kind};
+  this.add.text(n.x,n.y-48,name,{fontFamily:"monospace",fontSize:"7px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.55)",padding:{x:2,y:1}}).setOrigin(.5).setDepth(30);
   this.npcs.push(n);
  }
  makeAnims(){
@@ -145,7 +270,7 @@ class GameScene extends Phaser.Scene {
  }
  tryMove(dx,dy){const nx=this.player.x+dx,ny=this.player.y+dy;if(!this.blocked(nx,ny+20))this.player.setPosition(nx,ny);else{if(!this.blocked(this.player.x+dx,this.player.y+20))this.player.x+=dx;if(!this.blocked(this.player.x,this.player.y+dy+20))this.player.y+=dy;}}
  update(_,dt){
-  if(dialogueOpen)return; this.applyCover();
+  if(dialogueOpen||shopOpen)return; this.applyCover();
   let vx=0,vy=0; if(this.keys.LEFT.isDown||this.keys.A.isDown)vx--; if(this.keys.RIGHT.isDown||this.keys.D.isDown)vx++; if(this.keys.UP.isDown||this.keys.W.isDown)vy--; if(this.keys.DOWN.isDown||this.keys.S.isDown)vy++; vx+=input.x;vy+=input.y;
   const len=Math.hypot(vx,vy), moving=len>.15; if(moving){vx/=len;vy/=len;}
   const running=input.r||this.keys.SPACE.isDown, speed=running?190:125;
@@ -168,10 +293,19 @@ class GameScene extends Phaser.Scene {
  }
  handleUse(){
   let near=null; for(const n of this.npcs) if(Phaser.Math.Distance.Between(this.player.x,this.player.y,n.x,n.y)<48) near=n;
-  if(near){showDialogue(near.npc.name, near.npc.line, [{label:"Ask about signal",onClick:()=>{objectiveText.textContent=near.npc.mission;localStorage.setItem("cf_objective",near.npc.mission);showDialogue(near.npc.name,near.npc.mission,[{label:"Close",onClick:closeDialogue}]);}},{label:"Leave",onClick:closeDialogue}]);return;}
+  if(near){
+    if(near.npc.kind==="vendor"){
+      showDialogue(near.npc.name, near.npc.line, [
+        {label:"BUY / SELL", onClick:openShop},
+        {label:"Ask", onClick:()=>{objectiveText.textContent=near.npc.mission;localStorage.setItem("cf_objective",near.npc.mission);showDialogue(near.npc.name, "Credits spend fast. Water spends faster.", [{label:"Close",onClick:closeDialogue}]);}},
+        {label:"Leave", onClick:closeDialogue}
+      ]);
+      return;
+    }
+    showDialogue(near.npc.name, near.npc.line, [{label:"Ask about signal",onClick:()=>{objectiveText.textContent=near.npc.mission;localStorage.setItem("cf_objective",near.npc.mission);showDialogue(near.npc.name,near.npc.mission,[{label:"Close",onClick:closeDialogue}]);}},{label:"Leave",onClick:closeDialogue}]);return;}
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v17&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v17&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v20&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v20&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
