@@ -1,450 +1,369 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
-<meta charset="utf-8">
-<title>Cosmic Feedback — Westgate Blacklight Connector v07</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<style>
-html,body{margin:0;padding:0;width:100%;height:100%;background:#050505;overflow:hidden;touch-action:none;font-family:monospace}
-canvas{image-rendering:pixelated;image-rendering:crisp-edges}
-#rotateGate{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;text-align:center;background:#050505;color:#e8dfc8;padding:24px;box-sizing:border-box;font:18px monospace}
-#rotateGate strong{color:#9befff;font-size:24px;display:block;margin-bottom:12px}
-#buildTag{position:fixed;right:10px;bottom:8px;z-index:9000;color:#9befff;font:12px monospace;background:rgba(0,0,0,.60);padding:6px 8px;border:1px solid rgba(155,239,255,.35)}
-#touchControls{position:fixed;inset:0;z-index:8000;pointer-events:none;touch-action:none}
-#joy{position:absolute;left:38px;bottom:46px;width:148px;height:148px;border-radius:50%;border:3px solid rgba(255,255,255,.28);background:rgba(20,20,20,.35);pointer-events:auto;touch-action:none}
-#knob{position:absolute;left:50%;top:50%;width:54px;height:54px;margin-left:-27px;margin-top:-27px;border-radius:50%;border:2px solid rgba(255,255,255,.45);background:rgba(255,255,255,.20)}
-.btn{position:absolute;width:78px;height:78px;border-radius:50%;border:3px solid rgba(255,255,255,.30);display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;font:12px monospace;line-height:1.05;pointer-events:auto;touch-action:none;user-select:none}
-.btn:active{filter:brightness(1.4)}
-#gas{right:42px;bottom:74px;background:rgba(42,125,50,.45)}
-#brake{right:126px;bottom:32px;background:rgba(138,32,32,.45)}
-#use{right:126px;bottom:118px;background:rgba(36,91,154,.45)}
-#lights{right:210px;bottom:74px;background:rgba(141,122,33,.45)}
-#boost{right:42px;bottom:160px;background:rgba(123,54,199,.45)}
-@media (orientation:portrait){#rotateGate{display:flex}#touchControls{display:none}}
-</style>
-<script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <title>Cosmic Feedback - Westgate Blacklight Connector v08</title>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+  <style>
+    html,body{margin:0;padding:0;background:#05070b;color:#d8f7ff;overflow:hidden;font-family:system-ui,-apple-system,Segoe UI,sans-serif;}
+    #game{position:fixed;inset:0;background:#05070b;}
+    .hud{
+      position:fixed;left:calc(env(safe-area-inset-left) + 10px);top:calc(env(safe-area-inset-top) + 8px);
+      z-index:20;width:245px;max-width:38vw;padding:8px 10px;
+      border:1px solid rgba(124,217,255,.45);background:rgba(4,10,18,.62);
+      box-shadow:0 0 10px rgba(102,33,255,.22);backdrop-filter:blur(2px);font:11px/1.2 monospace;
+      pointer-events:none;text-shadow:0 0 5px #0ff;
+    }
+    .hud .title{font-weight:700;color:#9eefff;letter-spacing:.8px;margin-bottom:4px;}
+    .bar{height:8px;background:rgba(0,0,0,.45);margin:3px 0 5px;border:1px solid rgba(255,255,255,.15);}
+    .fill.hp{height:100%;width:100%;background:#39e886;}
+    .fill.sta{height:100%;width:100%;background:#8d5cff;}
+    .fill.water{height:100%;width:80%;background:#26c9ff;}
+    .tag{color:#b9bdd7}
+    #hint{
+      position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 12px);transform:translateX(-50%);
+      z-index:22;padding:8px 12px;border:1px solid rgba(160,210,255,.55);background:rgba(0,0,0,.70);
+      color:#e8fbff;font:12px monospace;display:none;white-space:nowrap;
+    }
+    #dialogue{
+      position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 50px);transform:translateX(-50%);
+      z-index:30;width:min(760px,92vw);padding:14px 16px;border:1px solid rgba(124,217,255,.6);
+      background:rgba(2,5,12,.88);box-shadow:0 0 18px rgba(115,32,255,.25);display:none;
+      color:#e8fbff;font:14px/1.35 system-ui,-apple-system,Segoe UI,sans-serif;
+    }
+    #dialogue .name{font-weight:800;color:#9eefff;letter-spacing:.5px;margin-bottom:6px;}
+    #dialogue .choices{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+    #dialogue button{background:#122033;color:#e8fbff;border:1px solid #4a79a8;border-radius:6px;padding:8px 10px;font-weight:650;}
+    .stick{
+      position:fixed;left:calc(env(safe-area-inset-left) + 20px);bottom:calc(env(safe-area-inset-bottom) + 30px);
+      width:116px;height:116px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.05);z-index:25;touch-action:none;
+    }
+    .nub{position:absolute;width:48px;height:48px;border-radius:50%;left:34px;top:34px;background:rgba(255,255,255,.28);border:1px solid rgba(255,255,255,.35);}
+    .buttons{position:fixed;right:calc(env(safe-area-inset-right) + 22px);bottom:calc(env(safe-area-inset-bottom) + 26px);z-index:25;touch-action:none;}
+    .btn{position:absolute;width:62px;height:62px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      color:white;font:10px/1.05 monospace;border:2px solid rgba(255,255,255,.18);background:rgba(60,90,120,.45);user-select:none;}
+    .a{right:0;bottom:34px;background:rgba(55,150,75,.45)} .b{right:70px;bottom:0;background:rgba(150,55,70,.45)}
+    .x{right:70px;bottom:76px;background:rgba(60,120,170,.45)} .y{right:140px;bottom:34px;background:rgba(150,140,60,.45)}
+    .r{right:0;bottom:110px;background:rgba(120,70,180,.55)}
+    .version{position:fixed;right:calc(env(safe-area-inset-right) + 12px);bottom:calc(env(safe-area-inset-bottom) + 8px);z-index:15;color:#9eefff;background:rgba(0,0,0,.45);border:1px solid rgba(124,217,255,.3);padding:4px 8px;font:10px monospace;}
+  </style>
 </head>
 <body>
-<div id="rotateGate"><div><strong>TURN PHONE SIDEWAYS</strong>Cosmic Feedback is landscape-only.<br><br>Rotate your phone for the correct map, camera, and controls.</div></div>
-<div id="touchControls">
-  <div id="joy"><div id="knob"></div></div>
-  <div id="gas" class="btn" data-btn="gas">A<br>GAS</div>
-  <div id="brake" class="btn" data-btn="brake">B<br>BRK</div>
-  <div id="use" class="btn" data-btn="use">X<br>USE</div>
-  <div id="lights" class="btn" data-btn="lights">Y<br>LTS</div>
-  <div id="boost" class="btn" data-btn="boost">R<br>BST</div>
+<div id="game"></div>
+
+<div class="hud" id="statsHud">
+  <div class="title">DONNY</div>
+  <div><span class="tag">MODE:</span> <span id="mode">ON FOOT</span> &nbsp; <span class="tag">ZONE:</span> WESTGATE</div>
+  <div><span class="tag">HP</span></div><div class="bar"><div class="fill hp" id="hpFill"></div></div>
+  <div><span class="tag">STA</span></div><div class="bar"><div class="fill sta" id="staFill"></div></div>
+  <div><span class="tag">WATER</span></div><div class="bar"><div class="fill water" id="waterFill"></div></div>
+  <div id="coordLine"><span class="tag">XY:</span> --</div>
 </div>
-<div id="buildTag">Westgate Blacklight Connector v07</div>
+
+<div id="hint"></div>
+<div id="dialogue">
+  <div class="name" id="dlgName"></div>
+  <div id="dlgText"></div>
+  <div class="choices" id="dlgChoices"></div>
+</div>
+
+<div class="stick" id="stick"><div class="nub" id="nub"></div></div>
+<div class="buttons">
+  <div class="btn r" data-btn="r">R<br>BST</div>
+  <div class="btn x" data-btn="x">X<br>USE</div>
+  <div class="btn a" data-btn="a">A<br>GAS</div>
+  <div class="btn b" data-btn="b">B<br>BRK</div>
+  <div class="btn y" data-btn="y">Y<br>LTS</div>
+</div>
+<div class="version">Westgate Blacklight Connector v08</div>
 
 <script>
-"use strict";
+(() => {
+  const qs = new URLSearchParams(location.search);
+  const COLLISION_MODE = qs.get("collision") || "off"; // off | mask | road
+  const CALIBRATE = qs.get("calibrate") === "1";
 
-window.CFInput = {
-  joyX:0, joyY:0,
-  buttons:{gas:false,brake:false,use:false,lights:false,boost:false},
-  press:{use:false,lights:false}
-};
+  const MAP_BASE = "assets/maps/dust9/glasswell/outer_ring/west_blacklight/layers/GLASSWELL_WESTGATE_BLACKLIGHT_CONNECTOR_base.png";
+  const MAP_MASK = "assets/maps/dust9/glasswell/outer_ring/west_blacklight/masks/GLASSWELL_WESTGATE_BLACKLIGHT_CONNECTOR_collision_mask.png";
 
-(function setupDomControls(){
-  const joy=document.getElementById("joy");
-  const knob=document.getElementById("knob");
-  let activeId=null;
-  function setJoyFromEvent(e){
-    const r=joy.getBoundingClientRect();
-    const cx=r.left+r.width/2, cy=r.top+r.height/2;
-    const dx=e.clientX-cx, dy=e.clientY-cy;
-    const max=r.width/2-30;
-    const dist=Math.min(Math.hypot(dx,dy),max);
-    const a=Math.atan2(dy,dx);
-    const kx=Math.cos(a)*dist, ky=Math.sin(a)*dist;
-    knob.style.transform=`translate(${kx}px,${ky}px)`;
-    window.CFInput.joyX=Math.max(-1,Math.min(1,dx/max));
-    window.CFInput.joyY=Math.max(-1,Math.min(1,dy/max));
-  }
-  function resetJoy(){
-    activeId=null;
-    knob.style.transform="translate(0,0)";
-    window.CFInput.joyX=0;
-    window.CFInput.joyY=0;
-  }
-  joy.addEventListener("pointerdown",e=>{e.preventDefault();activeId=e.pointerId;joy.setPointerCapture(e.pointerId);setJoyFromEvent(e);});
-  joy.addEventListener("pointermove",e=>{if(e.pointerId===activeId){e.preventDefault();setJoyFromEvent(e);}});
-  joy.addEventListener("pointerup",e=>{if(e.pointerId===activeId){e.preventDefault();resetJoy();}});
-  joy.addEventListener("pointercancel",resetJoy);
+  const DONNY = {
+    idle: "assets/sprites/player/donny/donny_idle_4dir.png",
+    walk: "assets/sprites/player/donny/donny_walk_4dir.png",
+    run:  "assets/sprites/player/donny/donny_run_4dir.png"
+  };
 
-  document.querySelectorAll(".btn").forEach(el=>{
-    const b=el.dataset.btn;
-    const down=e=>{e.preventDefault();window.CFInput.buttons[b]=true;if(b==="use")window.CFInput.press.use=true;if(b==="lights")window.CFInput.press.lights=true;el.style.opacity=".72";};
-    const up=e=>{e.preventDefault();window.CFInput.buttons[b]=false;el.style.opacity="1";};
-    el.addEventListener("pointerdown",down);
-    el.addEventListener("pointerup",up);
-    el.addEventListener("pointercancel",up);
-    el.addEventListener("pointerleave",up);
-  });
-})();
+  const BLACKLIGHT_KID = {
+    idle: "assets/sprites/npcs/blacklight_kid/blacklight_kid_idle_4dir_128.png",
+    walk: "assets/sprites/npcs/blacklight_kid/blacklight_kid_walk_4dir_128.png"
+  };
 
-const GAME_W=960, GAME_H=540;
-const MAP_BASE_PATH="assets/maps/dust9/glasswell/outer_ring/west_blacklight/layers/GLASSWELL_WESTGATE_BLACKLIGHT_CONNECTOR_base.png";
-const MAP_MASK_PATH="assets/maps/dust9/glasswell/outer_ring/west_blacklight/masks/GLASSWELL_WESTGATE_BLACKLIGHT_CONNECTOR_collision_mask.png";
-const DONNY_SHEETS={
-  idle:"assets/sprites/player/donny/donny_idle_4dir.png",
-  walk:"assets/sprites/player/donny/donny_walk_4dir.png",
-  run:"assets/sprites/player/donny/donny_run_4dir.png",
-  jump:"assets/sprites/player/donny/donny_jump_4dir.png",
-  slide:"assets/sprites/player/donny/donny_slide_4dir.png",
-  crawl:"assets/sprites/player/donny/donny_crawl_4dir.png",
-  punch:"assets/sprites/player/donny/donny_punch_4dir.png",
-  kick:"assets/sprites/player/donny/donny_kick_4dir.png",
-  shoot:"assets/sprites/player/donny/donny_shoot_4dir.png",
-  hurt:"assets/sprites/player/donny/donny_hurt_4dir.png",
-  sleep:"assets/sprites/player/donny/donny_sleep_4dir.png"
-};
-const DISTORTION_PATH="assets/vehicles/special/aurelix_distortion/distortion_topdown.png";
+  const hint = document.getElementById("hint");
+  const dlg = document.getElementById("dialogue");
+  const dlgName = document.getElementById("dlgName");
+  const dlgText = document.getElementById("dlgText");
+  const dlgChoices = document.getElementById("dlgChoices");
+  const modeEl = document.getElementById("mode");
+  const coordLine = document.getElementById("coordLine");
 
-const DONNY={hpMax:100,hp:100,walkSpeed:220,rep:0};
-const CAR={fuelMax:180,fuel:180,speed:0,maxSpeed:520,accel:470,reverseSpeed:210,drag:.985,turnSpeed:3.0,condition:"Parked",headlightsOn:true};
-const CAR_VISUAL_OFFSET=Math.PI/2;
-const ZOOM={foot:.76,carSlow:.70,carFast:.58};
-const COLLISION_MODE=(new URLSearchParams(location.search).get("collision")||"off").toLowerCase();
+  let input = {x:0,y:0,a:false,b:false,xbtn:false,r:false,ybtn:false, usePressed:false};
+  let dialogueOpen = false;
 
-function qNum(name,fallback){
-  const n=Number(new URLSearchParams(location.search).get(name));
-  return Number.isFinite(n)?n:fallback;
-}
+  function showHint(t){ hint.textContent=t; hint.style.display="block"; }
+  function hideHint(){ hint.style.display="none"; }
+  function closeDialogue(){ dlg.style.display="none"; dialogueOpen=false; }
 
-class MainScene extends Phaser.Scene{
-  constructor(){
-    super("MainScene");
-    this.failed=new Set();
-    this.mapW=1536;
-    this.mapH=1536;
-    this.maskCtx=null;
-    this.maskCanvas=null;
-  }
-
-  preload(){
-    this.load.image("map_base",MAP_BASE_PATH);
-    this.load.image("map_mask",MAP_MASK_PATH);
-    for(const [key,path] of Object.entries(DONNY_SHEETS)){
-      this.load.spritesheet("donny_"+key,path,{frameWidth:128,frameHeight:128});
+  function showDialogue(name, text, choices){
+    dialogueOpen = true;
+    dlg.style.display = "block";
+    dlgName.textContent = name;
+    dlgText.textContent = text;
+    dlgChoices.innerHTML = "";
+    for(const c of choices){
+      const b = document.createElement("button");
+      b.textContent = c.label;
+      b.onclick = c.onClick;
+      dlgChoices.appendChild(b);
     }
-    this.load.image("distortion_asset",DISTORTION_PATH);
-    this.load.on("loaderror",file=>{
-      console.warn("LOAD ERROR",file.key,file.src||file.url||"");
-      this.failed.add(file.key);
-    });
   }
 
-  create(){
-    this.makeFallbacks();
-    this.makeDonnyAnims();
+  class GameScene extends Phaser.Scene {
+    constructor(){ super("GameScene"); }
 
-    if(!this.failed.has("map_base") && this.textures.exists("map_base")){
-      const img=this.textures.get("map_base").getSourceImage();
-      this.mapW=img.width||1536;
-      this.mapH=img.height||1536;
-      this.add.image(0,0,"map_base").setOrigin(0,0).setDepth(0);
-    }else{
-      this.showMissingMapError();
+    preload(){
+      this.load.image("westgate_base", MAP_BASE);
+      this.load.image("westgate_mask", MAP_MASK);
+
+      this.load.spritesheet("donny_idle", DONNY.idle, { frameWidth:128, frameHeight:128 });
+      this.load.spritesheet("donny_walk", DONNY.walk, { frameWidth:128, frameHeight:128 });
+      this.load.spritesheet("donny_run", DONNY.run, { frameWidth:128, frameHeight:128 });
+
+      this.load.spritesheet("blacklight_kid_idle", BLACKLIGHT_KID.idle, { frameWidth:128, frameHeight:128 });
+      this.load.spritesheet("blacklight_kid_walk", BLACKLIGHT_KID.walk, { frameWidth:128, frameHeight:128 });
     }
 
-    this.physics.world.setBounds(0,0,this.mapW,this.mapH);
-    this.cameras.main.setBounds(0,0,this.mapW,this.mapH);
-    this.setupMask();
+    create(){
+      this.map = this.add.image(0,0,"westgate_base").setOrigin(0,0);
+      this.mapW = this.map.width; this.mapH = this.map.height;
+      this.physics.world.setBounds(0,0,this.mapW,this.mapH);
 
-    this.keys=this.input.keyboard.addKeys({
-      up:"W,UP",down:"S,DOWN",left:"A,LEFT",right:"D,RIGHT",
-      interact:"E",brake:"SPACE",boost:"SHIFT",lights:"H",debug:"F3"
-    });
+      this.cameras.main.setBounds(0,0,this.mapW,this.mapH);
+      this.cameras.main.setZoom(Math.min(0.72, Math.max(0.52, window.innerHeight / 980)));
 
-    // Tuned to the uploaded Westgate/Blacklight map: start near lower ENTER road area.
-    // v07 default: spawn on the left road area Donny circled in the screenshot.
-    // URL params still override this.
-    const spawnX=qNum("spawnX",Math.round(this.mapW*0.315));
-    const spawnY=qNum("spawnY",Math.round(this.mapH*0.610));
-    const carX=qNum("carX",Math.round(this.mapW*0.245));
-    const carY=qNum("carY",Math.round(this.mapH*0.610));
+      this.maskReady = false;
+      if (this.textures.exists("westgate_mask")) {
+        try {
+          const src = this.textures.get("westgate_mask").getSourceImage();
+          this.maskCanvas = document.createElement("canvas");
+          this.maskCanvas.width = src.width; this.maskCanvas.height = src.height;
+          const ctx = this.maskCanvas.getContext("2d", { willReadFrequently:true });
+          ctx.drawImage(src,0,0);
+          this.maskCtx = ctx;
+          this.maskReady = true;
+        } catch(e) { console.warn("Mask canvas failed", e); }
+      }
 
-    const carTex=(!this.failed.has("distortion_asset")&&this.textures.exists("distortion_asset"))?"distortion_asset":"car_fallback";
-    this.car=this.physics.add.sprite(carX,carY,carTex).setDepth(850);
-    this.car.setScale(carTex==="distortion_asset"?.42:1);
-    this.carHeading=0;
-    this.car.rotation=this.carHeading+CAR_VISUAL_OFFSET;
+      this.makeAnims();
 
-    this.hasDonnySheet=!this.failed.has("donny_walk")&&this.textures.exists("donny_walk");
-    this.player=this.physics.add.sprite(spawnX,spawnY,this.hasDonnySheet?"donny_walk":"donny_down").setDepth(900).setCollideWorldBounds(true);
-    this.player.setScale(this.hasDonnySheet?0.72:1.25);
-    if(this.hasDonnySheet){
-      this.player.setFrame(0);
-      this.player.body.setSize(34,26);
-      this.player.body.setOffset(47,90);
-    }
+      const spawnX = parseFloat(qs.get("spawnX")) || this.mapW * 0.315;
+      const spawnY = parseFloat(qs.get("spawnY")) || this.mapH * 0.610;
+      this.player = this.physics.add.sprite(spawnX, spawnY, "donny_idle", 0);
+      this.player.setDepth(20).setScale(0.58);
+      this.player.body.setSize(28,34).setOffset(50,78);
+      this.player.dir = "down";
+      this.player.play("donny_idle_down");
 
-    this.playerLabel=this.label("DONNY",this.player.x,this.player.y-68,1000,"#9befff");
-    this.carLabel=this.label("DISTORTION",this.car.x,this.car.y-78,1000,"#e0c7ff");
-    this.locator=this.add.graphics().setDepth(899);
-    this.headlightLayer=this.add.graphics().setDepth(840).setBlendMode(Phaser.BlendModes.ADD);
+      // Blacklight Kid lookout placement near the circled upper-left market / approach area.
+      const npcX = parseFloat(qs.get("npcX")) || this.mapW * 0.405;
+      const npcY = parseFloat(qs.get("npcY")) || this.mapH * 0.345;
+      this.npc = this.physics.add.sprite(npcX, npcY, "blacklight_kid_idle", 0);
+      this.npc.setDepth(21).setScale(0.62);
+      this.npc.body.setSize(28,36).setOffset(50,76);
+      this.npc.body.immovable = true;
+      this.npc.play("blk_idle_down");
+      this.add.text(npcX, npcY-48, 'KADE "STATIC"', {fontFamily:"monospace",fontSize:"10px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.55)",padding:{x:3,y:2}}).setOrigin(.5).setDepth(30);
 
-    this.inCar=false;
-    this.spawnSafe={x:spawnX,y:spawnY,r:210};
-    this.carSafe={x:carX,y:carY,r:190};
-    this.collisionGraceUntil=this.time.now+1400;
-    this.makeHud();
-    this.makePrompt();
-    this.makeDebug();
+      this.enterZone = new Phaser.Geom.Rectangle(this.mapW*0.585-55, this.mapH*0.365-45, 110, 90);
+      this.enterDebug = this.add.graphics().setDepth(18);
+      if(CALIBRATE){
+        this.enterDebug.lineStyle(2,0x00ffff,.75).strokeRectShape(this.enterZone);
+      }
 
-    this.input.keyboard.on("keydown-F3",()=>this.debugText.setVisible(!this.debugText.visible));
-    if((new URLSearchParams(location.search).get("calibrate")||"0")==="1"){
-      this.debugText.setVisible(true);
-      this.input.on("pointerdown",p=>{
-        if(this.inCar)return;
-        const wp=this.cameras.main.getWorldPoint(p.x,p.y);
-        this.player.setPosition(Phaser.Math.Clamp(wp.x,48,this.mapW-48),Phaser.Math.Clamp(wp.y,48,this.mapH-48));
-        this.spawnSafe={x:this.player.x,y:this.player.y,r:220};
-        this.flash("Spawn test: "+Math.round(this.player.x)+","+Math.round(this.player.y),1800);
+      this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+
+      this.keys = this.input.keyboard.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT,E,X,SPACE");
+      this.input.keyboard.on("keydown-E", () => this.handleUse());
+      this.input.keyboard.on("keydown-X", () => this.handleUse());
+      this.input.on("pointerdown", (p) => {
+        if(CALIBRATE){
+          const wp = p.positionToCamera(this.cameras.main);
+          this.player.setPosition(wp.x, wp.y);
+          console.log("CALIBRATE XY", Math.round(wp.x), Math.round(wp.y));
+        }
+      });
+
+      this.missionShown = false;
+      this.time.delayedCall(500, () => {
+        showHint("MISSION UPDATED: Reach the Blacklight connector. Find the lookout. Enter the club district.");
+        this.time.delayedCall(3500, hideHint);
       });
     }
-    if(this.failed.has("map_mask"))this.flash("Collision off by default. Upload aligned mask, then test ?collision=mask.",3600);
 
-    this.updateCamera();
-  }
+    makeAnims(){
+      const dirs = ["down","right","left","up"];
+      dirs.forEach((d, r) => {
+        this.anims.create({ key:`donny_idle_${d}`, frames:this.anims.generateFrameNumbers("donny_idle",{start:r*8,end:r*8+3}), frameRate:4, repeat:-1 });
+        this.anims.create({ key:`donny_walk_${d}`, frames:this.anims.generateFrameNumbers("donny_walk",{start:r*8,end:r*8+7}), frameRate:9, repeat:-1 });
+        this.anims.create({ key:`donny_run_${d}`, frames:this.anims.generateFrameNumbers("donny_run",{start:r*8,end:r*8+7}), frameRate:12, repeat:-1 });
+      });
 
-  makeFallbacks(){
-    const g=this.add.graphics();
-    const mk=(key,up)=>{
-      g.clear();
-      g.fillStyle(0,0.30).fillEllipse(24,58,30,9);
-      g.fillStyle(0x16263a,1).fillRect(16,40,8,22).fillRect(26,40,8,22);
-      g.fillStyle(0x202020,1).fillRoundedRect(11,20,28,30,6);
-      g.fillStyle(0xb98158,1).fillCircle(25,13,10);
-      g.fillStyle(0x111111,1);
-      if(up)g.fillRect(16,4,18,11);else{g.fillRect(14,3,22,7);g.fillCircle(21,13,2);g.fillCircle(29,13,2);}
-      g.fillStyle(0xcfcfcf,1).fillRect(23,21,5,26);
-      g.generateTexture(key,52,68);
-    };
-    mk("donny_down",false);mk("donny_up",true);mk("donny_side",false);
+      ["down","right","left","up"].forEach((d,r)=>{
+        this.anims.create({ key:`blk_idle_${d}`, frames:this.anims.generateFrameNumbers("blacklight_kid_idle",{start:r*4,end:r*4+3}), frameRate:4, repeat:-1 });
+        this.anims.create({ key:`blk_walk_${d}`, frames:this.anims.generateFrameNumbers("blacklight_kid_walk",{start:r*8,end:r*8+7}), frameRate:8, repeat:-1 });
+      });
+    }
 
-    g.clear();
-    g.fillStyle(0x222222,1).fillRoundedRect(0,0,90,46,10);
-    g.fillStyle(0x8b2cff,1).fillRect(10,6,18,5).fillRect(10,35,18,5);
-    g.fillStyle(0x89d8ff,1).fillRoundedRect(42,8,26,30,6);
-    g.lineStyle(3,0xcccccc,1).strokeRoundedRect(0,0,90,46,10);
-    g.generateTexture("car_fallback",90,46);
-    g.destroy();
-  }
+    blocked(x,y){
+      if(COLLISION_MODE === "off") return false;
+      if(x < 6 || y < 6 || x > this.mapW-6 || y > this.mapH-6) return true;
 
-  makeDonnyAnims(){
-    // Real repo Donny sheets: 128x128, 8 columns x 4 rows.
-    // Row order from manifest: down, right, left, up.
-    const rowMap={down:[0,7],right:[8,15],left:[16,23],up:[24,31]};
-    const sheets=["idle","walk","run","jump","slide","crawl","punch","kick","shoot","hurt","sleep"];
-    for(const sheet of sheets){
-      const tex="donny_"+sheet;
-      if(!this.textures.exists(tex))continue;
-      for(const [dir,range] of Object.entries(rowMap)){
-        const key=`donny_${sheet}_${dir}`;
-        if(!this.anims.exists(key)){
-          this.anims.create({
-            key,
-            frames:this.anims.generateFrameNumbers(tex,{start:range[0],end:range[1]}),
-            frameRate:(sheet==="idle"?5:8),
-            repeat:(["punch","kick","shoot","hurt"].includes(sheet)?0:-1)
-          });
-        }
+      if(COLLISION_MODE === "road"){
+        // Temporary broad road-zone collision: permissive near roads/market connector.
+        return false;
+      }
+
+      if(COLLISION_MODE === "mask" && this.maskReady){
+        const mx = Math.floor(x / this.mapW * this.maskCanvas.width);
+        const my = Math.floor(y / this.mapH * this.maskCanvas.height);
+        const p = this.maskCtx.getImageData(mx,my,1,1).data;
+        const bright = (p[0]+p[1]+p[2])/3;
+        return bright < 128;
+      }
+      return false;
+    }
+
+    tryMove(dx,dy){
+      const nx = this.player.x + dx;
+      const ny = this.player.y + dy;
+      const footY = ny + 24;
+      if(!this.blocked(nx, footY)){
+        this.player.setPosition(nx, ny);
+      } else {
+        // slide along one axis if possible
+        if(!this.blocked(this.player.x + dx, this.player.y + 24)) this.player.x += dx;
+        if(!this.blocked(this.player.x, this.player.y + dy + 24)) this.player.y += dy;
+      }
+    }
+
+    update(_, dt){
+      const dts = dt/1000;
+      if(dialogueOpen){ this.player.setVelocity(0,0); return; }
+
+      let vx = 0, vy = 0;
+      if(this.keys.LEFT.isDown || this.keys.A.isDown) vx -= 1;
+      if(this.keys.RIGHT.isDown || this.keys.D.isDown) vx += 1;
+      if(this.keys.UP.isDown || this.keys.W.isDown) vy -= 1;
+      if(this.keys.DOWN.isDown || this.keys.S.isDown) vy += 1;
+      vx += input.x; vy += input.y;
+
+      const len = Math.hypot(vx,vy);
+      let moving = len > 0.15;
+      if(moving){ vx/=len; vy/=len; }
+
+      const running = input.r || this.keys.SPACE.isDown;
+      const speed = running ? 190 : 125;
+
+      if(moving){
+        this.tryMove(vx*speed*dts, vy*speed*dts);
+        if(Math.abs(vx) > Math.abs(vy)) this.player.dir = vx > 0 ? "right" : "left";
+        else this.player.dir = vy > 0 ? "down" : "up";
+        this.player.play(`donny_${running?"run":"walk"}_${this.player.dir}`, true);
+      } else {
+        this.player.play(`donny_idle_${this.player.dir}`, true);
+      }
+
+      const nearNpc = Phaser.Math.Distance.Between(this.player.x,this.player.y,this.npc.x,this.npc.y) < 62;
+      const inEnter = Phaser.Geom.Rectangle.Contains(this.enterZone, this.player.x, this.player.y);
+
+      if(nearNpc) showHint('X / E: Talk to Kade "Static"');
+      else if(inEnter) showHint("X / E: Enter Blacklight District");
+      else hideHint();
+
+      if(input.usePressed){
+        input.usePressed = false;
+        this.handleUse();
+      }
+
+      coordLine.innerHTML = `<span class="tag">XY:</span> ${Math.round(this.player.x)}, ${Math.round(this.player.y)} <span class="tag">COL:</span> ${COLLISION_MODE}`;
+    }
+
+    handleUse(){
+      const nearNpc = Phaser.Math.Distance.Between(this.player.x,this.player.y,this.npc.x,this.npc.y) < 70;
+      const inEnter = Phaser.Geom.Rectangle.Contains(this.enterZone, this.player.x, this.player.y);
+
+      if(nearNpc){
+        showDialogue('KADE "STATIC"', "You looking for the club?", [
+          {label:"Yeah.", onClick:()=>showDialogue('KADE "STATIC"', "Then keep your hands where the door can see them. Blacklight doesn’t open for noise. It opens for signal.", [{label:"Close", onClick:closeDialogue}])},
+          {label:"Just passing through.", onClick:()=>showDialogue('KADE "STATIC"', "Nobody passes through Glasswell. They get counted, taxed, hunted, or hidden.", [{label:"Close", onClick:closeDialogue}])},
+          {label:"Who runs this district?", onClick:()=>showDialogue('KADE "STATIC"', "Static runs the wire. Kids run the rooftops. Club runs itself.", [{label:"Close", onClick:closeDialogue}])},
+          {label:"Leave.", onClick:closeDialogue}
+        ]);
+        return;
+      }
+
+      if(inEnter){
+        showDialogue("BLACKLIGHT DISTRICT", "Enter Blacklight District?", [
+          {label:"YES", onClick:()=>showDialogue("TRANSITION STUB", "BLACKLIGHT_CLUB_DISTRICT_COMING_NEXT", [{label:"Close", onClick:closeDialogue}])},
+          {label:"NO", onClick:closeDialogue}
+        ]);
       }
     }
   }
 
-  setupMask(){
-    if(this.failed.has("map_mask")||!this.textures.exists("map_mask"))return;
-    try{
-      const img=this.textures.get("map_mask").getSourceImage();
-      const c=document.createElement("canvas");
-      c.width=img.width;c.height=img.height;
-      const ctx=c.getContext("2d",{willReadFrequently:true});
-      ctx.drawImage(img,0,0);
-      this.maskCanvas=c;this.maskCtx=ctx;
-    }catch(e){console.warn(e);this.maskCanvas=null;this.maskCtx=null;}
+  function setupControls(){
+    const stick = document.getElementById("stick"), nub = document.getElementById("nub");
+    let active = false, base = null;
+    const center = () => { nub.style.left="34px"; nub.style.top="34px"; input.x=0; input.y=0; };
+    stick.addEventListener("pointerdown", e => { active=true; stick.setPointerCapture(e.pointerId); const r=stick.getBoundingClientRect(); base={x:r.left+r.width/2,y:r.top+r.height/2}; });
+    stick.addEventListener("pointermove", e => {
+      if(!active) return;
+      const dx=e.clientX-base.x, dy=e.clientY-base.y;
+      const dist=Math.min(42, Math.hypot(dx,dy)); const ang=Math.atan2(dy,dx);
+      const nx=Math.cos(ang)*dist, ny=Math.sin(ang)*dist;
+      nub.style.left=(34+nx)+"px"; nub.style.top=(34+ny)+"px";
+      input.x = nx/42; input.y = ny/42;
+    });
+    stick.addEventListener("pointerup", e => { active=false; center(); });
+    stick.addEventListener("pointercancel", e => { active=false; center(); });
+
+    document.querySelectorAll(".btn").forEach(btn=>{
+      const name = btn.dataset.btn;
+      const set = v => {
+        if(name === "x" && v) input.usePressed = true;
+        if(name === "a") input.a = v;
+        if(name === "b") input.b = v;
+        if(name === "r") input.r = v;
+        if(name === "y") input.ybtn = v;
+      };
+      btn.addEventListener("pointerdown", e=>{e.preventDefault(); set(true);});
+      btn.addEventListener("pointerup", e=>{e.preventDefault(); set(false);});
+      btn.addEventListener("pointercancel", e=>{e.preventDefault(); set(false);});
+    });
   }
 
-  showMissingMapError(){
-    this.add.text(40,40,"MAP BASE DID NOT LOAD\n\n"+MAP_BASE_PATH+"\n\nCheck exact GitHub path and filename.",{
-      fontFamily:"monospace",fontSize:"24px",color:"#ff7777",backgroundColor:"rgba(0,0,0,.75)",padding:{x:12,y:10},wordWrap:{width:850}
-    }).setDepth(10);
-  }
+  setupControls();
 
-  label(t,x,y,d,c){
-    return this.add.text(x,y,t,{fontFamily:"monospace",fontSize:"13px",color:c,backgroundColor:"rgba(0,0,0,.75)",padding:{x:5,y:2}}).setOrigin(.5).setDepth(d);
-  }
-
-  makeHud(){
-    this.hud=this.add.container(12,54).setScrollFactor(0).setDepth(7000);
-    const bg=this.add.rectangle(0,0,390,76,0x000000,.52).setOrigin(0).setStrokeStyle(2,0xa66cff,.55);
-    this.hTitle=this.add.text(10,6,"WESTGATE / BLACKLIGHT",{fontFamily:"monospace",fontSize:"11px",color:"#9befff"});
-    this.hMode=this.add.text(10,24,"",{fontFamily:"monospace",fontSize:"10px",color:"#fff"});
-    this.hHp=this.add.text(10,42,"",{fontFamily:"monospace",fontSize:"10px",color:"#fff"});
-    this.hpBar=this.add.rectangle(72,49,150,8,0x3fc46b,1).setOrigin(0,.5);
-    this.hFuel=this.add.text(10,58,"",{fontFamily:"monospace",fontSize:"10px",color:"#fff"});
-    this.fuelBar=this.add.rectangle(72,65,150,8,0x9b6cff,1).setOrigin(0,.5);
-    this.hud.add([bg,this.hTitle,this.hMode,this.hHp,this.hpBar,this.hFuel,this.fuelBar]);
-  }
-
-  makePrompt(){
-    this.prompt=this.add.text(18,GAME_H-112,"",{
-      fontFamily:"monospace",fontSize:"15px",color:"#fff1b8",backgroundColor:"rgba(0,0,0,.76)",padding:{x:8,y:5},wordWrap:{width:560}
-    }).setScrollFactor(0).setDepth(7100).setVisible(false);
-  }
-
-  makeDebug(){
-    this.debugText=this.add.text(GAME_W-455,82,"",{
-      fontFamily:"monospace",fontSize:"11px",color:"#9befff",backgroundColor:"rgba(0,0,0,.72)",padding:{x:8,y:6},wordWrap:{width:430}
-    }).setScrollFactor(0).setDepth(7200).setVisible(false);
-  }
-
-  readMobile(){
-    const i=window.CFInput;
-    const out={joyX:i.joyX,joyY:i.joyY,gas:i.buttons.gas,brake:i.buttons.brake,use:i.buttons.use,usePressed:i.press.use,boost:i.buttons.boost,lightsPressed:i.press.lights};
-    i.press.use=false;i.press.lights=false;
-    return out;
-  }
-
-  update(time,delta){
-    const m=this.readMobile();
-    const usePressed=Phaser.Input.Keyboard.JustDown(this.keys.interact)||m.usePressed;
-    const lightsPressed=Phaser.Input.Keyboard.JustDown(this.keys.lights)||m.lightsPressed;
-    if(lightsPressed)CAR.headlightsOn=!CAR.headlightsOn;
-    if(usePressed)this.handleUse();
-    if(this.inCar)this.updateCar(delta,m);else this.updatePlayer(delta,m);
-    this.updateCamera();this.updateLabels();this.drawLocator();this.drawHeadlights();this.checkPrompts();this.updateHud();this.updateDebug();
-  }
-
-  inSafeStartZone(x,y){
-    const s=this.spawnSafe, c=this.carSafe;
-    if(s && Phaser.Math.Distance.Between(x,y,s.x,s.y)<=s.r)return true;
-    if(c && Phaser.Math.Distance.Between(x,y,c.x,c.y)<=c.r)return true;
-    if(this.time && this.time.now < this.collisionGraceUntil)return true;
-    return false;
-  }
-
-  fallbackRoadCollision(x,y){
-    // Used only until the uploaded black/white mask exists in GitHub.
-    // v04 intentionally widens road zones so Donny cannot spawn trapped.
-    const nx=x/this.mapW, ny=y/this.mapH;
-    const zones=[
-      [0.34,0.00,0.78,1.00],  // wide main north/south street
-      [0.00,0.55,1.00,0.96],  // wide lower road / ENTER approach
-      [0.00,0.40,0.42,1.00],  // west market road
-      [0.68,0.38,1.00,0.92],  // east connector road
-      [0.18,0.22,0.54,0.72],  // left market/sidewalk connector
-      [0.54,0.18,0.84,0.70]   // right road shoulder / club approach
-    ];
-    return zones.some(z=>nx>=z[0]&&nx<=z[2]&&ny>=z[1]&&ny<=z[3]);
-  }
-
-  canMoveTo(x,y,radius=18){
-    // v07: collision is OFF by default while we line up the uploaded base/mask.
-    // Use ?collision=mask to test the real black/white mask once it is confirmed uploaded/aligned.
-    // Use ?collision=road to test the temporary road-zone collision.
-    if(this.inSafeStartZone(x,y))return true;
-    if(COLLISION_MODE==="off")return true;
-    if(COLLISION_MODE==="road")return this.fallbackRoadCollision(x,y);
-    if(!this.maskCtx||!this.maskCanvas)return true;
-
-    const sx=Math.round((x/this.mapW)*this.maskCanvas.width), sy=Math.round((y/this.mapH)*this.maskCanvas.height);
-    const points=[[sx,sy],[sx-radius,sy],[sx+radius,sy],[sx,sy-radius],[sx,sy+radius]];
-    for(const [px,py] of points){
-      if(px<0||py<0||px>=this.maskCanvas.width||py>=this.maskCanvas.height)return false;
-      const d=this.maskCtx.getImageData(px,py,1,1).data;
-      if((d[0]+d[1]+d[2])/3<128)return false;
-    }
-    return true;
-  }
-
-  moveWithCollision(actor,nx,ny,radius){
-    // If the actor's current location is blocked, allow movement so it can escape instead of being frozen.
-    const currentOk=this.canMoveTo(actor.x,actor.y,radius);
-    const nextOk=this.canMoveTo(nx,ny,radius);
-    if(nextOk || !currentOk){
-      actor.setPosition(
-        Phaser.Math.Clamp(nx,48,this.mapW-48),
-        Phaser.Math.Clamp(ny,48,this.mapH-48)
-      );
-      return true;
-    }
-    return false;
-  }
-
-  updatePlayer(delta,m){
-    const left=this.keys.left.isDown||m.joyX<-.22, right=this.keys.right.isDown||m.joyX>.22, up=this.keys.up.isDown||m.joyY<-.22, down=this.keys.down.isDown||m.joyY>.22;
-    let vx=(right?1:0)-(left?1:0), vy=(down?1:0)-(up?1:0), mag=Math.hypot(vx,vy);
-    if(mag>0){
-      vx/=mag;vy/=mag;
-      const dt=delta/1000,nx=this.player.x+vx*DONNY.walkSpeed*dt,ny=this.player.y+vy*DONNY.walkSpeed*dt;
-      this.moveWithCollision(this.player,nx,ny,15);
-      if(this.hasDonnySheet){
-        if(Math.abs(vx)>Math.abs(vy)){this.lastDir=vx<0?"left":"right";this.player.anims.play(vx<0?"donny_walk_left":"donny_walk_right",true);}
-        else{this.lastDir=vy<0?"up":"down";this.player.anims.play(vy<0?"donny_walk_up":"donny_walk_down",true);}
-      }
-      else{if(Math.abs(vx)>Math.abs(vy)){this.player.setTexture("donny_side");this.player.setFlipX(vx<0);}else{this.player.setTexture(vy<0?"donny_up":"donny_down");this.player.setFlipX(false);}}
-    }else if(this.hasDonnySheet){
-      const idleKey=this.lastDir?`donny_idle_${this.lastDir}`:"donny_idle_down";
-      if(this.anims.exists(idleKey))this.player.anims.play(idleKey,true);
-      else this.player.anims.stop();
-    }
-  }
-
-  updateCar(delta,m){
-    const dt=delta/1000;
-    const gas=this.keys.up.isDown||m.gas||m.joyY<-.45, brake=this.keys.down.isDown||this.keys.brake.isDown||m.brake||m.joyY>.45;
-    const left=this.keys.left.isDown||m.joyX<-.35, right=this.keys.right.isDown||m.joyX>.35;
-    const boost=(this.keys.boost.isDown||m.boost)&&CAR.fuel>0&&Math.abs(CAR.speed)>80;
-    if(gas&&CAR.fuel>0){CAR.speed+=CAR.accel*dt*(boost?1.6:1);CAR.fuel=Math.max(0,CAR.fuel-dt*(boost?1.35:.55));CAR.condition=boost?"Boosting":"Driving";}
-    else if(brake){CAR.speed-=CAR.accel*dt*.76;CAR.condition="Braking";}
-    else{CAR.speed*=Math.pow(CAR.drag,delta/16.6667);if(Math.abs(CAR.speed)<4)CAR.speed=0;CAR.condition="Coasting";}
-    CAR.speed=Phaser.Math.Clamp(CAR.speed,-CAR.reverseSpeed,boost?720:CAR.maxSpeed);
-    if(Math.abs(CAR.speed)>10){const steer=(right?1:0)-(left?1:0),reverse=CAR.speed<0?-1:1,ratio=Phaser.Math.Clamp(Math.abs(CAR.speed)/CAR.maxSpeed,.18,1);this.carHeading+=steer*reverse*CAR.turnSpeed*dt*ratio;}
-    const nx=this.car.x+Math.cos(this.carHeading)*CAR.speed*dt, ny=this.car.y+Math.sin(this.carHeading)*CAR.speed*dt;
-    if(!this.moveWithCollision(this.car,nx,ny,28)){CAR.speed*=-.18;CAR.condition="Blocked";}
-    this.car.rotation=this.carHeading+CAR_VISUAL_OFFSET;
-  }
-
-  handleUse(){
-    if(this.inCar){this.exitCar();return;}
-    if(Phaser.Math.Distance.Between(this.player.x,this.player.y,this.car.x,this.car.y)<115)this.enterCar();
-  }
-  enterCar(){this.inCar=true;CAR.condition="Driving";this.player.setVisible(false);CAR.speed=0;this.flash("Entered Distortion.",1200);}
-  exitCar(){const side=this.carHeading+Math.PI/2;this.player.setPosition(this.car.x+Math.cos(side)*78,this.car.y+Math.sin(side)*78);this.player.setVisible(true);this.inCar=false;CAR.speed=0;CAR.condition="Parked";this.flash("Exited Distortion.",1200);}
-
-  updateCamera(){
-    const cam=this.cameras.main,a=this.inCar?this.car:this.player,ratio=Phaser.Math.Clamp(Math.abs(CAR.speed)/CAR.maxSpeed,0,1);
-    cam.setZoom(this.inCar?Phaser.Math.Linear(ZOOM.carSlow,ZOOM.carFast,ratio):ZOOM.foot);
-    const vw=cam.width/cam.zoom,vh=cam.height/cam.zoom;
-    cam.scrollX=Phaser.Math.Clamp(a.x-vw/2,0,Math.max(0,this.mapW-vw));
-    cam.scrollY=Phaser.Math.Clamp(a.y-vh/2,0,Math.max(0,this.mapH-vh));
-  }
-
-  updateLabels(){
-    this.playerLabel.setPosition(this.player.x,this.player.y-72).setVisible(!this.inCar);
-    this.carLabel.setPosition(this.car.x,this.car.y-80).setVisible(this.inCar||Phaser.Math.Distance.Between(this.player.x,this.player.y,this.car.x,this.car.y)<200);
-  }
-  drawLocator(){this.locator.clear();const a=this.inCar?this.car:this.player;this.locator.lineStyle(4,0x9befff,.85).strokeCircle(a.x,a.y,this.inCar?55:42);}
-  drawHeadlights(){this.headlightLayer.clear();if(!this.inCar||!CAR.headlightsOn)return;const a=this.carHeading,fx=this.car.x+Math.cos(a)*52,fy=this.car.y+Math.sin(a)*52,len=280,width=90,ex=fx+Math.cos(a)*len,ey=fy+Math.sin(a)*len,sx=Math.cos(a+Math.PI/2),sy=Math.sin(a+Math.PI/2);this.headlightLayer.fillStyle(0x9befff,.035).fillTriangle(fx,fy,ex+sx*width,ey+sy*width,ex-sx*width,ey-sy*width);}
-  checkPrompts(){if(this.tempPrompt)return;let msg="";if(!this.inCar&&Phaser.Math.Distance.Between(this.player.x,this.player.y,this.car.x,this.car.y)<115)msg="Press E / X to enter Distortion";else if(this.inCar)msg="E / X exits vehicle";this.prompt.setText(msg).setVisible(!!msg);}
-  flash(text,ms){this.tempPrompt=true;this.prompt.setText(text).setVisible(true);this.time.delayedCall(ms,()=>{this.tempPrompt=false;this.prompt.setVisible(false);});}
-  updateHud(){this.hMode.setText("Mode: "+(this.inCar?"Driving Distortion":"On foot")+"   real map");this.hHp.setText("HP: "+DONNY.hp+"/"+DONNY.hpMax);this.hpBar.width=150*(DONNY.hp/DONNY.hpMax);this.hFuel.setText("Fuel: "+Math.round(CAR.fuel/CAR.fuelMax*100)+"% "+CAR.condition);this.fuelBar.width=150*(CAR.fuel/CAR.fuelMax);}
-  updateDebug(){if(!this.debugText.visible)return;const a=this.inCar?this.car:this.player;this.debugText.setText("WESTGATE BLACKLIGHT CONNECTOR v07\nBASE "+MAP_BASE_PATH+"\nMASK "+MAP_MASK_PATH+"\nMAP "+this.mapW+"x"+this.mapH+"\nACTIVE "+Math.round(a.x)+","+Math.round(a.y)+"\nDONNY "+(this.hasDonnySheet?"staging sheet":"fallback")+"\nMASK "+(this.maskCtx?"loaded":"missing/disabled")+"\nFAILED "+(this.failed.size?Array.from(this.failed).join(", "):"none"));}
-}
-
-new Phaser.Game({
-  type:Phaser.AUTO,
-  width:GAME_W,
-  height:GAME_H,
-  backgroundColor:"#050505",
-  pixelArt:true,
-  scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},
-  physics:{default:"arcade",arcade:{debug:false}},
-  scene:[MainScene]
-});
+  const config = {
+    type: Phaser.AUTO,
+    parent: "game",
+    backgroundColor: "#05070b",
+    scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH, width: window.innerWidth, height: window.innerHeight },
+    physics: { default:"arcade", arcade:{ debug:false } },
+    scene: [GameScene],
+    render: { pixelArt:false, antialias:true }
+  };
+  new Phaser.Game(config);
+})();
 </script>
 </body>
 </html>
