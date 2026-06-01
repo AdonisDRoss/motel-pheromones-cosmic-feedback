@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Off-Ramp v87</title>
+<title>Cosmic Feedback - Blacklight Highway Off-Ramp v88</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -190,15 +190,15 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 </div>
 
 <div class="stick" id="stick"><div class="nub" id="nub"></div></div>
-<div class="buttons"><div class="btn r" data-btn="r">R<br>BST</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
+<div class="buttons"><div class="btn r" data-btn="r">R<br>HB</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
 
 <div id="vehicleControls">
-  <button class="vbtn gas" id="driveGas">R<br>BOOST</button>
+  <button class="vbtn gas" id="driveGas">R<br>HB</button>
   <button class="vbtn brake" id="driveBrake">BRAKE<br>STOP</button>
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Off-Ramp / XYAB Car v87</div>
+<div class="version">Highway Off-Ramp / GTA1 Tank Car v88</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -586,9 +586,9 @@ preload(){
   this.load.spritesheet("blacklight_runner_idle", NPC_ASSETS.blacklight_runner.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("kira_volt_idle", NPC_ASSETS.kira_volt.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("vendor_stall", PROPS.vendorStall, {frameWidth:256,frameHeight:256});
-  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=87");
-  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=87");
-  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=87");
+  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=88");
+  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=88");
+  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=88");
  }
  create(){
   window.__cfScene=this;
@@ -782,6 +782,7 @@ tryMove(dx,dy){
   this.vehicleSpeed=0;
   this.vehicleVelocityX=0;
   this.vehicleVelocityY=0;
+  this.vehicleHeading=this.vehicle.angle-90;
   this.vehicleVelocityX=0;
   this.vehicleVelocityY=0;
   this.vehicleMaxSpeed=9.5;
@@ -853,11 +854,12 @@ enterVehicle(){
   this.player.setVisible(false);
   this.player.body.enable=false;
   this.vehicleSpeed=0;
+  this.vehicleHeading=this.vehicle.angle-90;
   this.cameras.main.startFollow(this.vehicle,true,0.12,0.12,0,0);
   this.ensureEngineAudio();
   this.setEngineVolume(true);
   setObjective("Drive the ramp or exit the car");
-  showToast("DRIVING\nJoystick steer • A accelerate • B brake • R boost");
+  showToast("DRIVING\nGTA1 tank controls: steer left/right, A gas, B brake, R handbrake");
 }
 exitVehicle(){
   if(!this.vehicle || !this.vehicleMode) return;
@@ -888,7 +890,7 @@ updateVehicle(dt){
 
   if(this.vehicleLabel){
     this.vehicleLabel.setPosition(this.vehicle.x,this.vehicle.y-58);
-    this.vehicleLabel.setText("DRIVING\\nXYAB: A GAS • B BRAKE • R BOOST • X EXIT");
+    this.vehicleLabel.setText("DRIVING\\nGTA1: A GAS • B BRAKE/REV • R HANDBRAKE");
   }
 
   if(this.highwayWestgateExit){
@@ -954,7 +956,7 @@ if(this.vehicle){
     const vd=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.vehicle.x,this.vehicle.y);
     if(vd<95) objectiveText.textContent="X / E: Enter Donny's car";
   }
-coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.vehicle.x)},${Math.round(this.vehicle.y)} <span class="tag">CAR:</span> XYAB CAR <span class="tag">JOY:</span> ${input.x.toFixed(1)},${input.y.toFixed(1)}`;
+coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.vehicle.x)},${Math.round(this.vehicle.y)} <span class="tag">CAR:</span> GTA1 TANK <span class="tag">SPD:</span> ${this.vehicleSpeed.toFixed(1)}`;
       return;
     }
   }
@@ -1049,7 +1051,7 @@ handleUse(){
   if(AREA==="highway" && this.highwayWestgateExit){
     const d=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.highwayWestgateExit.x,this.highwayWestgateExit.y);
     if(d < this.highwayWestgateExit.r){
-      location.href=location.pathname+"?v=westgate-v87&area=westgate&collision=mask";
+      location.href=location.pathname+"?v=westgate-v88&area=westgate&collision=mask";
       return;
     }
     showToast("Follow the marked ramp exit to Westgate.");
@@ -1095,7 +1097,7 @@ handleUse(){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v87&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v88&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -1112,16 +1114,16 @@ handleUse(){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v87&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v88&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v87&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v87&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v87&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v88&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v88&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v88&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
@@ -1196,48 +1198,50 @@ function setupControls(){
       const len=Math.hypot(vx,vy);
       if(len>.12){
         if(sc.vehicleMode && sc.vehicle){
-          // v87: XYAB car controls using the same button layer as Donny.
-          // joystick = steering direction, A = accelerate, B = brake/reverse, R = boost.
-          const accel = input.a ? (input.r ? 0.46 : 0.32) : 0.08;
-          const maxSpeed = input.r ? 11.5 : 8.0;
-          if(!sc.vehicleVelocityX) sc.vehicleVelocityX=0;
-          if(!sc.vehicleVelocityY) sc.vehicleVelocityY=0;
+          // v88: GTA1-style tank driving.
+          // Stick left/right rotates the nose. A accelerates. B brakes/reverses. R is handbrake.
+          const steer = Math.abs(vx) > 0.10 ? vx : 0;
+          const gas = input.a === true;
+          const brake = input.b === true;
+          const handbrake = input.r === true;
 
-          // Always allow slow crawl with joystick; A gives real acceleration.
-          sc.vehicleVelocityX += vx * accel;
-          sc.vehicleVelocityY += vy * accel;
+          if(sc.vehicleHeading === undefined) sc.vehicleHeading = sc.vehicle.angle - 90;
+          if(sc.vehicleSpeed === undefined) sc.vehicleSpeed = 0;
 
-          if(input.b){
-            sc.vehicleVelocityX *= 0.82;
-            sc.vehicleVelocityY *= 0.82;
+          const speedAbs = Math.abs(sc.vehicleSpeed);
+          const turnRate = handbrake ? 7.4 : Phaser.Math.Clamp(2.0 + speedAbs * 0.32, 2.0, 5.8);
+          sc.vehicleHeading += steer * turnRate;
+
+          if(gas) sc.vehicleSpeed += 0.18;
+          if(brake) sc.vehicleSpeed -= (sc.vehicleSpeed > 0.35 ? 0.34 : 0.14);
+
+          const maxForward = 7.2;
+          const maxReverse = -2.4;
+          sc.vehicleSpeed = Phaser.Math.Clamp(sc.vehicleSpeed, maxReverse, maxForward);
+
+          // Ice-like momentum. Handbrake bleeds speed and allows sharp 90-degree turns.
+          if(handbrake) sc.vehicleSpeed *= 0.88;
+          else if(!gas && !brake) sc.vehicleSpeed *= 0.985;
+
+          const rad = Phaser.Math.DegToRad(sc.vehicleHeading);
+          sc.vehicle.x += Math.cos(rad) * sc.vehicleSpeed;
+          sc.vehicle.y += Math.sin(rad) * sc.vehicleSpeed;
+
+          // Simple highway lane magnet at high speed.
+          if(Math.abs(sc.vehicleSpeed) > 5.2 && AREA === "highway"){
+            const laneX = sc.mapW * 0.78;
+            sc.vehicle.x += (laneX - sc.vehicle.x) * 0.012;
           }
 
-          const vlen=Math.hypot(sc.vehicleVelocityX, sc.vehicleVelocityY);
-          if(vlen>maxSpeed){
-            sc.vehicleVelocityX = sc.vehicleVelocityX/vlen*maxSpeed;
-            sc.vehicleVelocityY = sc.vehicleVelocityY/vlen*maxSpeed;
-          }
-
-          // Friction when not accelerating.
-          if(!input.a){
-            sc.vehicleVelocityX *= 0.94;
-            sc.vehicleVelocityY *= 0.94;
-          }
-
-          sc.vehicle.x += sc.vehicleVelocityX;
-          sc.vehicle.y += sc.vehicleVelocityY;
           sc.vehicle.x = Phaser.Math.Clamp(sc.vehicle.x,12,sc.mapW-12);
           sc.vehicle.y = Phaser.Math.Clamp(sc.vehicle.y,12,sc.mapH-12);
+          sc.vehicle.angle = sc.vehicleHeading + 90;
 
-          const curSpeed=Math.hypot(sc.vehicleVelocityX, sc.vehicleVelocityY);
-          if(curSpeed>.12){
-            sc.vehicle.angle = Phaser.Math.RadToDeg(Math.atan2(sc.vehicleVelocityY, sc.vehicleVelocityX)) + 90;
-          }
-          sc.vehicleSpeed = curSpeed;
+          const curSpeed=Math.abs(sc.vehicleSpeed);
           if(sc.vehicleLabel) sc.vehicleLabel.setPosition(sc.vehicle.x, sc.vehicle.y-58);
           if(sc.cameras && sc.cameras.main) sc.cameras.main.centerOn(sc.vehicle.x, sc.vehicle.y);
           if(typeof sc.setEngineVolume === "function") sc.setEngineVolume(curSpeed>.2);
-          if(coordLine) coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(sc.vehicle.x)},${Math.round(sc.vehicle.y)} <span class="tag">CAR:</span> XYAB <span class="tag">A:</span>${input.a?1:0} <span class="tag">B:</span>${input.b?1:0} <span class="tag">R:</span>${input.r?1:0} <span class="tag">SPD:</span>${curSpeed.toFixed(1)}`;
+          if(coordLine) coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(sc.vehicle.x)},${Math.round(sc.vehicle.y)} <span class="tag">CAR:</span> GTA1 <span class="tag">GAS:</span>${gas?1:0} <span class="tag">BRK:</span>${brake?1:0} <span class="tag">HB:</span>${handbrake?1:0} <span class="tag">SPD:</span>${sc.vehicleSpeed.toFixed(1)}`;
         } else if(sc.player){
           const speed=input.r ? 4.1 : 2.75; // pixels per frame, direct fallback
           sc.tryMove(vx*speed, vy*speed);
