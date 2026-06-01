@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v100</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v101</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -198,13 +198,14 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Loop / North-South Transitions v100</div>
+<div class="version">Highway Loop / Stay In Car v101</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
 const AREA = qs.get("area") || "highway_loop";
 const LOOP_CHUNK = Math.max(0, parseInt(qs.get("chunk") || "0", 10) || 0);
 const LOOP_ENTRY = qs.get("entry") || "south";
+const START_IN_CAR = qs.get("vehicle") === "car";
 const COLLISION_MODE = qs.get("collision") || "mask";
 const MAPS = {
   a1: {
@@ -657,9 +658,9 @@ preload(){
   this.load.spritesheet("blacklight_runner_idle", NPC_ASSETS.blacklight_runner.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("kira_volt_idle", NPC_ASSETS.kira_volt.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("vendor_stall", PROPS.vendorStall, {frameWidth:256,frameHeight:256});
-  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=100");
-  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=100");
-  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=100");
+  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=101");
+  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=101");
+  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=101");
  }
  create(){
   window.__cfScene=this;
@@ -756,6 +757,22 @@ preload(){
   }
 
   this.createHighwayVehicle();
+  if(AREA==="highway_loop" && START_IN_CAR && this.vehicle){
+    this.time.delayedCall(40, ()=>{
+      this.enterVehicle();
+      const qSpeed=parseFloat(qs.get("speed") || "0");
+      const qAngle=parseFloat(qs.get("angle") || "");
+      if(!Number.isNaN(qAngle)){
+        this.vehicle.angle=qAngle;
+        this.vehicleHeading=qAngle-90;
+      }
+      if(!Number.isNaN(qSpeed)) this.vehicleSpeed=Math.max(0, Math.min(qSpeed, 260));
+      this.player.setPosition(this.vehicle.x,this.vehicle.y);
+      this.player.setVisible(false);
+      if(this.player.body) this.player.body.enable=false;
+      showToast("STILL IN CAR");
+    });
+  }
   this.npcs=[];
   if(AREA==="a1") {
     // v20: place reusable Neon Vendor Stall prop beside the vendor.
@@ -977,7 +994,7 @@ enterVehicle(){
   this.cameras.main.startFollow(this.vehicle,true,0.12,0.12,0,0);
   this.ensureEngineAudio();
   this.setEngineVolume(false);
-  setObjective("Drive north edge for next screen / south edge for previous");
+  setObjective("Drive north/south edges; car persists across screens");
   showToast("IN CAR\nA gas • B brake/reverse • stick steers • X exit");
 }
 exitVehicle(){
@@ -1092,13 +1109,16 @@ goHighwayLoop(step){
   const n=HIGHWAY_LOOP.length;
   const next=((loopChunk()+step)%n+n)%n;
   const entry = step>0 ? "south" : "north";
-  location.href=location.pathname+`?v=westgate-v100&area=highway_loop&chunk=${next}&entry=${entry}&collision=off&t=${Date.now()}`;
+  const inCar = this.vehicleMode ? "&vehicle=car" : "";
+  const spd = this.vehicleMode ? `&speed=${Math.round(this.vehicleSpeed||0)}` : "";
+  const ang = this.vehicleMode ? `&angle=${Math.round(this.vehicle.angle||0)}` : "";
+  location.href=location.pathname+`?v=westgate-v101&area=highway_loop&chunk=${next}&entry=${entry}${inCar}${spd}${ang}&collision=off&t=${Date.now()}`;
 }
 checkHighwayLoopTransitions(){
   if(AREA!=="highway_loop" || !this.vehicle || !this.vehicleMode) return;
 
   // v100: continuous north/south highway screens.
-  // North edge = next screen. South edge = previous screen. No button prompt.
+  // North edge = next screen, stay in car. South edge = previous screen, stay in car. No button prompt.
   const edgePad = 28;
   if(this.vehicle.y <= edgePad){
     this.goHighwayLoop(1);
@@ -1112,7 +1132,7 @@ checkHighwayLoopTransitions(){
   if(this.loopOfframpZone && Phaser.Math.Distance.Between(this.vehicle.x,this.vehicle.y,this.loopOfframpZone.x,this.loopOfframpZone.y)<this.loopOfframpZone.r){
     setObjective("Off-ramp: "+this.loopOfframpZone.exit+" / X to enter later");
   } else {
-    setObjective("Drive north edge for next screen / south edge for previous screen");
+    setObjective("Drive north/south edges; car persists across screens screen");
   }
 }
 
@@ -1234,8 +1254,8 @@ handleUse(){
     const d=Phaser.Math.Distance.Between((this.vehicleMode?this.vehicle.x:this.player.x),(this.vehicleMode?this.vehicle.y:this.player.y),this.loopOfframpZone.x,this.loopOfframpZone.y);
     if(d<this.loopOfframpZone.r){
       const chunk=HIGHWAY_LOOP[loopChunk()];
-      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v100&area=westgate&collision=mask";
-      else location.href=location.pathname+"?v=westgate-v100&area=a1&collision=mask";
+      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v101&area=westgate&collision=mask";
+      else location.href=location.pathname+"?v=westgate-v101&area=a1&collision=mask";
       return;
     }
   }
@@ -1276,7 +1296,7 @@ handleUse(){
   if(AREA==="highway" && this.highwayWestgateExit){
     const d=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.highwayWestgateExit.x,this.highwayWestgateExit.y);
     if(d < this.highwayWestgateExit.r){
-      location.href=location.pathname+"?v=westgate-v100&area=westgate&collision=mask";
+      location.href=location.pathname+"?v=westgate-v101&area=westgate&collision=mask";
       return;
     }
     showToast("Follow the marked ramp exit to Westgate.");
@@ -1322,7 +1342,7 @@ handleUse(){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v100&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v101&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -1339,16 +1359,16 @@ handleUse(){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v100&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v101&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v100&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v100&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v100&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v101&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v101&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v101&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
