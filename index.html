@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v92</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v93</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -198,7 +198,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Loop / GTA1 Vector Car v92</div>
+<div class="version">Highway Loop / Driveable Road Zones v93</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -650,9 +650,9 @@ preload(){
   this.load.spritesheet("blacklight_runner_idle", NPC_ASSETS.blacklight_runner.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("kira_volt_idle", NPC_ASSETS.kira_volt.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("vendor_stall", PROPS.vendorStall, {frameWidth:256,frameHeight:256});
-  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=92");
-  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=92");
-  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=92");
+  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=93");
+  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=93");
+  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=93");
  }
  create(){
   window.__cfScene=this;
@@ -1007,6 +1007,54 @@ exitVehicle(){
   setObjective("Follow the ramp back to Westgate");
   showToast("ON FOOT");
 }
+
+isHighwayRoadPoint(x,y){
+  if(!(AREA==="highway" || AREA==="highway_loop")) return true;
+
+  const nx=x/this.mapW;
+  const ny=y/this.mapH;
+  const chunk=(AREA==="highway_loop") ? HIGHWAY_LOOP[loopChunk()] : {type:"offramp"};
+
+  // Wide approximate drive zones. No collision mask needed.
+  // Road = normal speed. Outside = slow/soft boundary.
+  if(chunk.type==="straight" || chunk.type==="return"){
+    // vertical main road band
+    return nx>0.34 && nx<0.66;
+  }
+
+  if(chunk.type==="turn"){
+    // broad corner/curve zone: quarter-ring approximation plus main road bands
+    const vertical = nx>0.34 && nx<0.66 && ny>0.18;
+    const horizontal = ny>0.34 && ny<0.66 && nx<0.82;
+    const cx=0.50, cy=0.50;
+    const d=Math.hypot(nx-cx,ny-cy);
+    const curve = d>0.18 && d<0.45;
+    return vertical || horizontal || curve;
+  }
+
+  // off-ramp / highway_offramp: main lane + right-side ramp lane.
+  const main = nx>0.34 && nx<0.66;
+  const ramp = nx>0.55 && nx<0.92 && ny>0.25 && ny<0.70;
+  const merge = Math.abs((ny-0.58) - (0.85-nx)*0.55) < 0.15 && nx>0.50;
+  return main || ramp || merge;
+}
+
+applyHighwaySoftRoadPhysics(){
+  if(!(AREA==="highway" || AREA==="highway_loop") || !this.vehicle) return;
+
+  const onRoad=this.isHighwayRoadPoint(this.vehicle.x,this.vehicle.y);
+  this.vehicleOnRoad=onRoad;
+
+  if(!onRoad){
+    // Soft off-road: do not stop the car; reduce speed and nudge back toward road center.
+    this.carVelX *= 0.955;
+    this.carVelY *= 0.955;
+    const targetX=this.mapW*0.50;
+    this.vehicle.x += (targetX-this.vehicle.x)*0.010;
+    if(this.vehicleLabel) this.vehicleLabel.setText("OFF ROAD\\\\nSLOWDOWN");
+  }
+}
+
 updateVehicle(dt){
   if(!this.vehicle || !this.vehicleMode) return;
 
@@ -1065,8 +1113,8 @@ updateVehicle(dt){
   lateralY *= (1 - grip);
 
   // Road/off-road: highway keeps decent grip; dirt edge feels looser.
-  const onRoad = (this.vehicle.x > this.mapW*0.18 && this.vehicle.x < this.mapW*0.88);
-  const roadDrag = onRoad ? 0.992 : 0.965;
+  const onRoad = this.isHighwayRoadPoint(this.vehicle.x,this.vehicle.y);
+  const roadDrag = onRoad ? 0.992 : 0.945;
   const drag = Math.pow(roadDrag, sec*60);
 
   this.carVelX=(faceX*forwardSpeed + lateralX)*drag;
@@ -1103,6 +1151,8 @@ updateVehicle(dt){
     car.damage = Math.max(0, car.damage - 4);
   }
 
+  this.applyHighwaySoftRoadPhysics();
+
   // Lane magnet: only when fast and aligned with the highway lane.
   const sp=Math.hypot(this.carVelX,this.carVelY);
   if((AREA==="highway" || AREA==="highway_loop") && sp > 260 && onRoad && !handbrake){
@@ -1130,7 +1180,7 @@ updateVehicle(dt){
     }
   }
 
-  coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.vehicle.x)},${Math.round(this.vehicle.y)} <span class="tag">GTA1:</span> VECTOR <span class="tag">A:</span>${gas?1:0} <span class="tag">B:</span>${brake?1:0} <span class="tag">HB:</span>${handbrake?1:0} <span class="tag">SPD:</span>${Math.round(sp)} <span class="tag">DMG:</span>${Math.round(car.damage)}`;
+  coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.vehicle.x)},${Math.round(this.vehicle.y)} <span class="tag">GTA1:</span> VECTOR <span class="tag">ROAD:</span>${this.vehicleOnRoad?1:0} <span class="tag">A:</span>${gas?1:0} <span class="tag">B:</span>${brake?1:0} <span class="tag">HB:</span>${handbrake?1:0} <span class="tag">SPD:</span>${Math.round(sp)} <span class="tag">DMG:</span>${Math.round(car.damage)}`;
 }
 fixClubNpcFloorDepth(){
   // v73: club/A1 sprites are baked over a flat image, so force characters above floor.
@@ -1270,8 +1320,8 @@ handleUse(){
     const d=Phaser.Math.Distance.Between((this.vehicleMode?this.vehicle.x:this.player.x),(this.vehicleMode?this.vehicle.y:this.player.y),this.loopOfframpZone.x,this.loopOfframpZone.y);
     if(d<this.loopOfframpZone.r){
       const chunk=HIGHWAY_LOOP[loopChunk()];
-      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v92&area=westgate&collision=mask";
-      else location.href=location.pathname+"?v=westgate-v92&area=a1&collision=mask";
+      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v93&area=westgate&collision=mask";
+      else location.href=location.pathname+"?v=westgate-v93&area=a1&collision=mask";
       return;
     }
   }
@@ -1312,7 +1362,7 @@ handleUse(){
   if(AREA==="highway" && this.highwayWestgateExit){
     const d=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.highwayWestgateExit.x,this.highwayWestgateExit.y);
     if(d < this.highwayWestgateExit.r){
-      location.href=location.pathname+"?v=westgate-v92&area=westgate&collision=mask";
+      location.href=location.pathname+"?v=westgate-v93&area=westgate&collision=mask";
       return;
     }
     showToast("Follow the marked ramp exit to Westgate.");
@@ -1358,7 +1408,7 @@ handleUse(){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v92&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v93&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -1375,16 +1425,16 @@ handleUse(){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v92&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v93&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v92&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v92&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v92&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v93&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v93&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v93&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
