@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Off-Ramp v89</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v92</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -190,19 +190,20 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 </div>
 
 <div class="stick" id="stick"><div class="nub" id="nub"></div></div>
-<div class="buttons"><div class="btn r" data-btn="r">R<br>HB</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
+<div class="buttons"><div class="btn r" data-btn="r">R<br>BST</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
 
 <div id="vehicleControls">
-  <button class="vbtn gas" id="driveGas">R<br>HB</button>
+  <button class="vbtn gas" id="driveGas">R<br>BOOST</button>
   <button class="vbtn brake" id="driveBrake">BRAKE<br>STOP</button>
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Off-Ramp / True Tank Car v89</div>
+<div class="version">Highway Loop / GTA1 Vector Car v92</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
-const AREA = qs.get("area") || "a1";
+const AREA = qs.get("area") || "highway_loop";
+const LOOP_CHUNK = Math.max(0, parseInt(qs.get("chunk") || "0", 10) || 0);
 const COLLISION_MODE = qs.get("collision") || "mask";
 const MAPS = {
   a1: {
@@ -242,8 +243,71 @@ const MAPS = {
     exitText:"Enter Blacklight District"
   }
 };
-const mapCfg = MAPS[AREA] || MAPS.a1;
-const WORLD_SCALE = AREA === "a1" ? 3.0 : (AREA === "club" ? 1.0 : (AREA === "highway" ? 1.25 : 1.0));
+
+const HIGHWAY_TILE_PATHS = {
+  ramp:"assets/maps/dust9/glasswell/road_kit/highway_roads/highway_off_or_on_ramp.png",
+  straight1:"assets/maps/dust9/glasswell/road_kit/highway_roads/highway_straight_01.png",
+  straight2:"assets/maps/dust9/glasswell/road_kit/highway_roads/highway_straight_02.png",
+  curve:"assets/maps/dust9/glasswell/road_kit/highway_roads/highway_curve_01.png"
+};
+
+const HIGHWAY_LOOP = [
+  {id:"OFFRAMP_WESTGATE_BLACKLIGHT", type:"offramp", tile:"ramp", exit:"Westgate / Blacklight"},
+  {id:"STRAIGHT_01", type:"straight", tile:"straight1"},
+  {id:"STRAIGHT_02", type:"straight", tile:"straight2"},
+  {id:"STRAIGHT_03", type:"straight", tile:"straight1"},
+  {id:"TURN_01", type:"turn", tile:"curve"},
+
+  {id:"STRAIGHT_04", type:"straight", tile:"straight2"},
+  {id:"STRAIGHT_05", type:"straight", tile:"straight1"},
+  {id:"STRAIGHT_06", type:"straight", tile:"straight2"},
+  {id:"OFFRAMP_GLASSWELL_NORTH", type:"offramp", tile:"ramp", exit:"Glasswell North / Civic Gate"},
+
+  {id:"STRAIGHT_07", type:"straight", tile:"straight1"},
+  {id:"STRAIGHT_08", type:"straight", tile:"straight2"},
+  {id:"STRAIGHT_09", type:"straight", tile:"straight1"},
+  {id:"TURN_02", type:"turn", tile:"curve"},
+
+  {id:"STRAIGHT_10", type:"straight", tile:"straight2"},
+  {id:"STRAIGHT_11", type:"straight", tile:"straight1"},
+  {id:"STRAIGHT_12", type:"straight", tile:"straight2"},
+  {id:"OFFRAMP_GLASSWELL_EAST", type:"offramp", tile:"ramp", exit:"Glasswell East / Admin-Ration"},
+
+  {id:"STRAIGHT_13", type:"straight", tile:"straight1"},
+  {id:"STRAIGHT_14", type:"straight", tile:"straight2"},
+  {id:"STRAIGHT_15", type:"straight", tile:"straight1"},
+  {id:"TURN_03", type:"turn", tile:"curve"},
+
+  {id:"STRAIGHT_16", type:"straight", tile:"straight2"},
+  {id:"STRAIGHT_17", type:"straight", tile:"straight1"},
+  {id:"STRAIGHT_18", type:"straight", tile:"straight2"},
+  {id:"OFFRAMP_GLASSWELL_SOUTH", type:"offramp", tile:"ramp", exit:"Glasswell South / Transit-Industrial"},
+
+  {id:"STRAIGHT_19", type:"straight", tile:"straight1"},
+  {id:"STRAIGHT_20", type:"straight", tile:"straight2"},
+  {id:"STRAIGHT_21", type:"straight", tile:"straight1"},
+  {id:"RETURN_TO_WESTGATE_OFFRAMP", type:"return", tile:"straight2"}
+];
+
+function loopChunk(){
+  const n = HIGHWAY_LOOP.length;
+  return ((LOOP_CHUNK % n) + n) % n;
+}
+function highwayLoopConfig(){
+  const c = HIGHWAY_LOOP[loopChunk()];
+  return {
+    key:"highway_loop_" + loopChunk(),
+    zone:c.id,
+    base:HIGHWAY_TILE_PATHS[c.tile],
+    mask:"assets/maps/dust9/glasswell/road_kit/highway_roads/highway_loop_open_collision_mask.png",
+    spawn:[0.50,0.72],
+    objective:`Highway Loop ${loopChunk()+1}/${HIGHWAY_LOOP.length}: ${c.id}`,
+    exitText:"Continue Highway Loop"
+  };
+}
+
+let mapCfg = (AREA==="highway_loop") ? highwayLoopConfig() : (MAPS[AREA] || MAPS.a1);
+const WORLD_SCALE = AREA === "a1" ? 3.0 : (AREA === "club" ? 1.0 : ((AREA === "highway" || AREA==="highway_loop") ? 1.25 : 1.0));
 const DEPTH = {
   MAP: 0,
   GROUND_MARKER: 5,
@@ -586,9 +650,9 @@ preload(){
   this.load.spritesheet("blacklight_runner_idle", NPC_ASSETS.blacklight_runner.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("kira_volt_idle", NPC_ASSETS.kira_volt.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("vendor_stall", PROPS.vendorStall, {frameWidth:256,frameHeight:256});
-  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=89");
-  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=89");
-  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=89");
+  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=92");
+  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=92");
+  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=92");
  }
  create(){
   window.__cfScene=this;
@@ -601,7 +665,7 @@ preload(){
     this.mapW=1448; this.mapH=1086;
     this.add.rectangle(0,0,this.mapW,this.mapH,0x111827).setOrigin(0,0);
     this.add.text(40,40,"MAP FAILED TO LOAD\nCheck map path in GitHub assets.",{fontFamily:"monospace",fontSize:"22px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.7)",padding:{x:12,y:10}}).setDepth(999);
-  } else {
+  } else if(AREA==="westgate") {
     this.map=this.add.image(0,0,"map").setOrigin(0,0).setScale(WORLD_SCALE).setDepth(DEPTH.MAP); this.mapW=this.map.width * WORLD_SCALE; this.mapH=this.map.height * WORLD_SCALE;
   }
   this.physics.world.setBounds(0,0,this.mapW,this.mapH);
@@ -648,6 +712,40 @@ preload(){
     this.add.text(x,y-52,"WESTGATE EXIT",{fontFamily:"monospace",fontSize:"11px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.55)",padding:{x:4,y:2}}).setOrigin(.5).setDepth(DEPTH.LABEL);
   }
 
+
+  if(AREA==="highway_loop"){
+    const chunk=HIGHWAY_LOOP[loopChunk()];
+    const prevX=this.mapW*.50, prevY=this.mapH*.92;
+    const nextX=this.mapW*.50, nextY=this.mapH*.08;
+    this.loopNextZone={x:nextX,y:nextY,r:90,dir:1};
+    this.loopPrevZone={x:prevX,y:prevY,r:90,dir:-1};
+
+    const drawMarker=(x,y,label,color=0x9eefff)=>{
+      const g=this.add.graphics().setDepth(DEPTH.GROUND_MARKER);
+      g.lineStyle(6,color,.95);
+      g.strokeCircle(x,y,34);
+      g.beginPath();
+      g.moveTo(x-22,y); g.lineTo(x+22,y);
+      g.moveTo(x+8,y-14); g.lineTo(x+22,y); g.lineTo(x+8,y+14);
+      g.strokePath();
+      this.add.text(x,y-52,label,{fontFamily:"monospace",fontSize:"11px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.55)",padding:{x:4,y:2}}).setOrigin(.5).setDepth(DEPTH.LABEL);
+    };
+    drawMarker(nextX,nextY,"NEXT LOOP CHUNK");
+    drawMarker(prevX,prevY,"PREV LOOP CHUNK",0xb9a0ff);
+
+    if(chunk.type==="offramp"){
+      this.loopOfframpZone={x:this.mapW*.82,y:this.mapH*.44,r:95,exit:chunk.exit};
+      const g=this.add.graphics().setDepth(DEPTH.GROUND_MARKER);
+      g.lineStyle(6,0x50ffcc,.95);
+      g.strokeCircle(this.loopOfframpZone.x,this.loopOfframpZone.y,40);
+      g.beginPath();
+      g.moveTo(this.loopOfframpZone.x-24,this.loopOfframpZone.y-24); g.lineTo(this.loopOfframpZone.x+24,this.loopOfframpZone.y+24);
+      g.moveTo(this.loopOfframpZone.x+24,this.loopOfframpZone.y-24); g.lineTo(this.loopOfframpZone.x-24,this.loopOfframpZone.y+24);
+      g.strokePath();
+      this.add.text(this.loopOfframpZone.x,this.loopOfframpZone.y-58,chunk.exit,{fontFamily:"monospace",fontSize:"10px",color:"#50ffcc",backgroundColor:"rgba(0,0,0,.60)",padding:{x:4,y:2},align:"center"}).setOrigin(.5).setDepth(DEPTH.LABEL);
+    }
+  }
+
   this.createHighwayVehicle();
   this.npcs=[];
   if(AREA==="a1") {
@@ -681,10 +779,10 @@ preload(){
   this.time.delayedCall(700, ()=>{ this.lockCameraToPlayer(); this.cameras.main.centerOn(this.player.x,this.player.y); });
   this.keys=this.input.keyboard.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT,E,X,SPACE,ESC,P,M,C,U");
   this.input.keyboard.on("keydown-E",()=>this.handleUse()); this.input.keyboard.on("keydown-X",()=>this.handleUse());
-  showToast(AREA==="a1" ? "BLACKLIGHT DISTRICT A1\nCamera locked to Donny" : (AREA==="club" ? "BLACKLIGHT CLUB" : (AREA==="highway" ? "HIGHWAY OFF-RAMP\nWestgate exit marked" : "WESTGATE CONNECTOR")));
+  showToast(AREA==="a1" ? "BLACKLIGHT DISTRICT A1\nCamera locked to Donny" : (AREA==="club" ? "BLACKLIGHT CLUB" : (AREA==="highway_loop" ? ("HIGHWAY LOOP\n"+HIGHWAY_LOOP[loopChunk()].id) : (AREA==="highway" ? "HIGHWAY OFF-RAMP\nWestgate exit marked" : "WESTGATE CONNECTOR"))));
   if(AREA==="a1" || AREA==="club" || AREA==="highway") this.startAreaMusic();
 
-  localStorage.setItem("cf_checkpoint", AREA==="club" ? "blacklight_club" : (AREA==="a1" ? "blacklight_a1" : (AREA==="highway" ? "highway_offramp" : "westgate_connector")));
+  localStorage.setItem("cf_checkpoint", AREA==="club" ? "blacklight_club" : (AREA==="a1" ? "blacklight_a1" : (AREA==="highway_loop" ? "highway_loop_"+loopChunk() : (AREA==="highway" ? "highway_offramp" : "westgate_connector"))));
  }
  addNpc(name,xn,yn,line,mission,kind="talk",assetKey="blacklight_kid"){
   const texKey = this.textures.exists(`${assetKey}_idle`) ? `${assetKey}_idle` : (this.textures.exists("blacklight_kid_idle") ? "blacklight_kid_idle" : "__DEFAULT");
@@ -731,7 +829,7 @@ preload(){
  }
  blocked(x,y){
   if(COLLISION_MODE==="off") return false;
-  if(AREA==="highway") return false;
+  if(AREA==="highway" || AREA==="highway_loop") return false;
   if(x<4||y<4||x>this.mapW-4||y>this.mapH-4) return true;
   if(!this.maskReady) return false;
   const mx=Phaser.Math.Clamp(Math.floor(x/this.mapW*this.maskCanvas.width),0,this.maskCanvas.width-1);
@@ -761,9 +859,9 @@ tryMove(dx,dy){
   }
 }
  createHighwayVehicle(){
-  if(AREA!=="highway") return;
+  if(AREA!=="highway" && AREA!=="highway_loop") return;
   // v75: Donny's car/van placed on the off-ramp shoulder, clear of the Westgate exit marker.
-  this.vehicle = this.physics.add.image(this.mapW*0.78, this.mapH*0.58, "donny_car")
+  this.vehicle = this.physics.add.image(this.mapW*0.50, this.mapH*0.72, "donny_car")
     .setDepth(DEPTH.CHARACTER_BASE + 2600)
     .setScale(0.082)
     .setAngle(0)
@@ -780,12 +878,7 @@ tryMove(dx,dy){
   this.carCruise=false;
   this.autoDrive=false;
   this.vehicleSpeed=0;
-  this.vehicleVelocityX=0;
-  this.vehicleVelocityY=0;
-  this.vehicleHeading=this.vehicle.angle-90;
-  this.vehicleVelocityX=0;
-  this.vehicleVelocityY=0;
-  this.vehicleMaxSpeed=9.5;
+  this.vehicleMaxSpeed=10.0;
   this.vehicleTurnRate=2.7;
   this.vehicleFriction=0.94;
   this.vehicleLabel=this.add.text(this.vehicle.x,this.vehicle.y-58,"DONNY'S CAR\nTAP CAR TO ENTER",{
@@ -845,40 +938,199 @@ mobileUsePressed(){
   return input.xbtn === true || input.usePressed === true;
 }
 enterVehicle(){
-  if(!this.vehicle) return;
+  if(!this.vehicle || this.vehicleMode) return;
   this.vehicleMode=true;
+  this.vehicleUseLockUntil=this.time ? this.time.now+350 : performance.now()+350;
+
+  // Donny is inside the car.
   this.player.setVisible(false);
   if(this.player.body) this.player.body.enable=false;
-  this.vehicleSpeed=0;
-  this.vehicleHeading=this.vehicle.angle-90;
-  this.cameras.main.startFollow(this.vehicle,true,0.12,0.12,0,0);
+
+  if(vehicleControls) vehicleControls.style.display="none";
+  const normalBtns=document.querySelector(".buttons");
+  if(normalBtns){ normalBtns.style.display="block"; normalBtns.style.opacity="1"; normalBtns.style.pointerEvents="auto"; }
+
+  input.a=false; input.b=false; input.r=false; input.xbtn=false; input.usePressed=false;
+
+  // v92 GTA1-style vector physics state.
+  this.car = {
+    mass: 1.25,
+    accel: 420,
+    reverseAccel: 230,
+    maxVel: 420,
+    maxReverse: 150,
+    braking: 620,
+    grip: 0.085,
+    turnSpeed: 155,
+    handbrakeGrip: 0.025,
+    handbrakeTurn: 245,
+    wallBounce: -0.22,
+    damage: 100,
+    z: 0,
+    vz: 0,
+    airborne: false
+  };
+
+  // Source car art points left, so visual angle = facing + 180.
+  this.carFacing = -68;          // nose direction
+  this.carVelX = 0;              // movement vector X
+  this.carVelY = 0;              // movement vector Y
+  this.vehicleSpeed = 0;
+  this.vehicle.angle = this.carFacing + 180;
+
+  this.cameras.main.startFollow(this.vehicle,true,0.10,0.10,0,0);
   this.ensureEngineAudio();
-  this.setEngineVolume(true);
-  setObjective("Drive: A gas, B brake/reverse, stick left/right steers, R handbrake");
-  showToast("IN CAR\nA gas • B brake/reverse • stick left/right steers • X exit");
+  this.setEngineVolume(false);
+  setObjective("Drive the highway loop");
+  showToast("IN CAR\nGTA1 VECTOR PHYSICS\nA gas • B brake/reverse • stick steers • R handbrake • X exit");
 }
 exitVehicle(){
-  if(!this.vehicle) return;
+  if(!this.vehicle || !this.vehicleMode) return;
   this.vehicleMode=false;
+
   input.a=false; input.b=false; input.r=false; input.xbtn=false; input.usePressed=false;
   this.vehicleSpeed=0;
   this.setEngineVolume(false);
-  const a=Phaser.Math.DegToRad(this.vehicle.angle-90);
-  const sideX=Math.cos(a+Math.PI/2)*48;
-  const sideY=Math.sin(a+Math.PI/2)*48;
+
+  const a=Phaser.Math.DegToRad((this.vehicleHeading ?? (this.vehicle.angle-180)));
+  const sideX=Math.cos(a+Math.PI/2)*46;
+  const sideY=Math.sin(a+Math.PI/2)*46;
   this.player.setPosition(this.vehicle.x+sideX,this.vehicle.y+sideY);
   if(this.player.body) this.player.body.enable=true;
   this.player.setVisible(true);
+
+  const normalBtns=document.querySelector(".buttons");
+  if(normalBtns){ normalBtns.style.display="block"; normalBtns.style.opacity="1"; normalBtns.style.pointerEvents="auto"; }
+  if(vehicleControls) vehicleControls.style.display="none";
+
   this.cameras.main.startFollow(this.player,true,0.12,0.12,0,0);
   setObjective("Follow the ramp back to Westgate");
   showToast("ON FOOT");
 }
 updateVehicle(dt){
   if(!this.vehicle || !this.vehicleMode) return;
+
+  const sec=Math.max(0.010, Math.min(0.040, (dt||16)/1000));
+  const car=this.car || {
+    mass:1.25, accel:420, reverseAccel:230, maxVel:420, maxReverse:150,
+    braking:620, grip:0.085, turnSpeed:155, handbrakeGrip:0.025,
+    handbrakeTurn:245, wallBounce:-0.22, damage:100, z:0, vz:0, airborne:false
+  };
+
+  const steer=Math.abs(input.x)>0.10 ? input.x : 0;
+  const gas=input.a===true;
+  const brake=input.b===true;
+  const handbrake=input.r===true;
+
+  if(this.carFacing === undefined) this.carFacing = this.vehicle.angle - 180;
+  if(this.carVelX === undefined) this.carVelX = 0;
+  if(this.carVelY === undefined) this.carVelY = 0;
+
+  const speed=Math.hypot(this.carVelX,this.carVelY);
+  const turn = (handbrake ? car.handbrakeTurn : car.turnSpeed) * (0.35 + Math.min(speed/car.maxVel, 1.0));
+  this.carFacing += steer * turn * sec;
+
+  const faceRad=Phaser.Math.DegToRad(this.carFacing);
+  const faceX=Math.cos(faceRad), faceY=Math.sin(faceRad);
+
+  // Forward thrust applies force along the car's nose, not screen direction.
+  if(gas && speed < car.maxVel){
+    this.carVelX += faceX * car.accel * sec;
+    this.carVelY += faceY * car.accel * sec;
+  }
+
+  // Brake first counters forward motion, then reverses slowly.
+  if(brake){
+    const forwardSpeed=this.carVelX*faceX + this.carVelY*faceY;
+    if(forwardSpeed > 15){
+      this.carVelX -= faceX * car.braking * sec;
+      this.carVelY -= faceY * car.braking * sec;
+    } else {
+      this.carVelX -= faceX * car.reverseAccel * sec;
+      this.carVelY -= faceY * car.reverseAccel * sec;
+    }
+  }
+
+  // Cap forward and reverse velocity based on facing direction.
+  let forwardSpeed=this.carVelX*faceX + this.carVelY*faceY;
+  let lateralX=this.carVelX - faceX*forwardSpeed;
+  let lateralY=this.carVelY - faceY*forwardSpeed;
+
+  forwardSpeed=Phaser.Math.Clamp(forwardSpeed, -car.maxReverse, car.maxVel);
+
+  // Grip interpolation: movement vector slowly aligns with visual facing.
+  // Low grip means more sideways slide.
+  const grip=handbrake ? car.handbrakeGrip : car.grip;
+  lateralX *= (1 - grip);
+  lateralY *= (1 - grip);
+
+  // Road/off-road: highway keeps decent grip; dirt edge feels looser.
+  const onRoad = (this.vehicle.x > this.mapW*0.18 && this.vehicle.x < this.mapW*0.88);
+  const roadDrag = onRoad ? 0.992 : 0.965;
+  const drag = Math.pow(roadDrag, sec*60);
+
+  this.carVelX=(faceX*forwardSpeed + lateralX)*drag;
+  this.carVelY=(faceY*forwardSpeed + lateralY)*drag;
+
+  // Handbrake: bleed speed, keep rotation responsive.
+  if(handbrake){
+    this.carVelX *= Math.pow(0.94, sec*60);
+    this.carVelY *= Math.pow(0.94, sec*60);
+  }
+
+  if(Math.hypot(this.carVelX,this.carVelY)<2){
+    this.carVelX=0; this.carVelY=0;
+  }
+
+  // Pseudo-Z placeholder for future ramps. Kept stable for now.
+  car.vz -= 900 * sec;
+  car.z += car.vz * sec;
+  if(car.z <= 0){ car.z=0; car.vz=0; car.airborne=false; }
+
+  const oldX=this.vehicle.x, oldY=this.vehicle.y;
+  this.vehicle.x += this.carVelX * sec;
+  this.vehicle.y += this.carVelY * sec;
+
+  // Wall/bounds collision: bounce vector and damage placeholder.
+  let hit=false;
+  if(this.vehicle.x<12){this.vehicle.x=12; hit=true;}
+  if(this.vehicle.x>this.mapW-12){this.vehicle.x=this.mapW-12; hit=true;}
+  if(this.vehicle.y<12){this.vehicle.y=12; hit=true;}
+  if(this.vehicle.y>this.mapH-12){this.vehicle.y=this.mapH-12; hit=true;}
+  if(hit){
+    this.carVelX *= car.wallBounce;
+    this.carVelY *= car.wallBounce;
+    car.damage = Math.max(0, car.damage - 4);
+  }
+
+  // Lane magnet: only when fast and aligned with the highway lane.
+  const sp=Math.hypot(this.carVelX,this.carVelY);
+  if((AREA==="highway" || AREA==="highway_loop") && sp > 260 && onRoad && !handbrake){
+    const laneX=this.mapW*0.50;
+    this.vehicle.x += (laneX-this.vehicle.x)*0.006;
+  }
+
+  // Visual angle is decoupled from movement vector.
+  this.vehicle.angle=this.carFacing + 180;
+  this.vehicle.setY(this.vehicle.y - car.z*0.05);
+
+  this.vehicleSpeed=sp;
   if(this.vehicleLabel){
     this.vehicleLabel.setPosition(this.vehicle.x,this.vehicle.y-58);
     this.vehicleLabel.setText("DRIVING\\nA GAS • B BRAKE/REV • R HANDBRAKE • X EXIT");
   }
+
+  this.setEngineVolume(sp>5);
+  this.checkHighwayLoopTransitions();
+
+  if(this.highwayWestgateExit){
+    const d=Phaser.Math.Distance.Between(this.vehicle.x,this.vehicle.y,this.highwayWestgateExit.x,this.highwayWestgateExit.y);
+    if(d < this.highwayWestgateExit.r+20){
+      setObjective("Near Westgate Exit");
+    }
+  }
+
+  coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.vehicle.x)},${Math.round(this.vehicle.y)} <span class="tag">GTA1:</span> VECTOR <span class="tag">A:</span>${gas?1:0} <span class="tag">B:</span>${brake?1:0} <span class="tag">HB:</span>${handbrake?1:0} <span class="tag">SPD:</span>${Math.round(sp)} <span class="tag">DMG:</span>${Math.round(car.damage)}`;
 }
 fixClubNpcFloorDepth(){
   // v73: club/A1 sprites are baked over a flat image, so force characters above floor.
@@ -936,7 +1188,7 @@ if(this.vehicle){
     const vd=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.vehicle.x,this.vehicle.y);
     if(vd<95) objectiveText.textContent="X / E: Enter Donny's car";
   }
-coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.vehicle.x)},${Math.round(this.vehicle.y)} <span class="tag">CAR:</span> GTA1 TANK <span class="tag">SPD:</span> ${this.vehicleSpeed.toFixed(1)}`;
+coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.vehicle.x)},${Math.round(this.vehicle.y)} <span class="tag">CAR:</span> SAME STICK <span class="tag">JOY:</span> ${input.x.toFixed(1)},${input.y.toFixed(1)}`;
       return;
     }
   }
@@ -977,6 +1229,9 @@ if(Phaser.Input.Keyboard.JustDown(this.keys.ESC)) { unlockControls(); forceContr
   this.children.bringToTop(this.player);
   this.fixClubNpcFloorDepth();
   
+  if(AREA==="highway_loop"){
+    objectiveText.textContent = HIGHWAY_LOOP[loopChunk()].type==="offramp" ? ("Off-ramp: "+(HIGHWAY_LOOP[loopChunk()].exit||HIGHWAY_LOOP[loopChunk()].id)) : ("Drive to NEXT LOOP CHUNK");
+  }
   if(AREA==="highway" && this.highwayWestgateExit){
     const hd=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.highwayWestgateExit.x,this.highwayWestgateExit.y);
     if(hd < this.highwayWestgateExit.r){
@@ -995,10 +1250,30 @@ coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.player.x)}, 
   showToast("DONNY MOVED TO SAFE SPOT");
 }
 handleUse(){
-  // v89 direct enter/exit.
-  if(AREA==="highway" && this.vehicle){
-    if(this.vehicleMode){ this.exitVehicle(); return; }
-    this.enterVehicle(); return;
+  // v92 vehicle enter/exit first.
+  if((AREA==="highway" || AREA==="highway_loop") && this.vehicle){
+    const now=this.time ? this.time.now : performance.now();
+    if(this.vehicleUseLockUntil && now < this.vehicleUseLockUntil) return;
+    if(this.vehicleMode){ this.vehicleUseLockUntil=now+350; this.exitVehicle(); return; }
+    this.vehicleUseLockUntil=now+350; this.enterVehicle(); return;
+  }
+
+  // v91 vehicle enter/exit first, before off-ramp transitions.
+  if((AREA==="highway" || AREA==="highway_loop") && this.vehicle){
+    const now=this.time ? this.time.now : performance.now();
+    if(this.vehicleUseLockUntil && now < this.vehicleUseLockUntil) return;
+    if(this.vehicleMode){ this.vehicleUseLockUntil=now+350; this.exitVehicle(); return; }
+    this.vehicleUseLockUntil=now+350; this.enterVehicle(); return;
+  }
+
+  if(AREA==="highway_loop" && this.loopOfframpZone){
+    const d=Phaser.Math.Distance.Between((this.vehicleMode?this.vehicle.x:this.player.x),(this.vehicleMode?this.vehicle.y:this.player.y),this.loopOfframpZone.x,this.loopOfframpZone.y);
+    if(d<this.loopOfframpZone.r){
+      const chunk=HIGHWAY_LOOP[loopChunk()];
+      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v92&area=westgate&collision=mask";
+      else location.href=location.pathname+"?v=westgate-v92&area=a1&collision=mask";
+      return;
+    }
   }
 
   // v84 highway direct use.
@@ -1037,7 +1312,7 @@ handleUse(){
   if(AREA==="highway" && this.highwayWestgateExit){
     const d=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.highwayWestgateExit.x,this.highwayWestgateExit.y);
     if(d < this.highwayWestgateExit.r){
-      location.href=location.pathname+"?v=westgate-v89&area=westgate&collision=mask";
+      location.href=location.pathname+"?v=westgate-v92&area=westgate&collision=mask";
       return;
     }
     showToast("Follow the marked ramp exit to Westgate.");
@@ -1083,7 +1358,7 @@ handleUse(){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v89&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v92&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -1100,16 +1375,16 @@ handleUse(){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v89&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v92&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v89&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v89&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v89&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v92&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v92&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v92&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
@@ -1184,9 +1459,8 @@ function setupControls(){
       const len=Math.hypot(vx,vy);
       if(len>.12){
         if(sc.vehicleMode && sc.vehicle){
-          // v89: joystick only directs/steers the car. It does not push the car.
-          sc.carSteerInput = Math.abs(vx) > 0.10 ? vx : 0;
-          if(coordLine) coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(sc.vehicle.x)},${Math.round(sc.vehicle.y)} <span class="tag">CAR:</span> TANK <span class="tag">STEER:</span>${sc.carSteerInput.toFixed(1)} <span class="tag">A:</span>${input.a?1:0} <span class="tag">B:</span>${input.b?1:0} <span class="tag">SPD:</span>${(sc.vehicleSpeed||0).toFixed(1)}`;
+          // v92: joystick directs steering only. updateVehicle owns vector physics.
+          if(coordLine) coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(sc.vehicle.x)},${Math.round(sc.vehicle.y)} <span class="tag">CAR:</span> STEER ONLY <span class="tag">JOY:</span> ${input.x.toFixed(1)},${input.y.toFixed(1)} <span class="tag">SPD:</span>${Math.round(sc.vehicleSpeed||0)}`;
         } else if(sc.player){
           const speed=input.r ? 4.1 : 2.75; // pixels per frame, direct fallback
           sc.tryMove(vx*speed, vy*speed);
@@ -1202,57 +1476,6 @@ function setupControls(){
       }
     }
     requestAnimationFrame(directMoveTick);
-
-  function carPhysicsTick(){
-    const sc=window.__cfScene;
-    if(sc && sc.vehicleMode && sc.vehicle && !dialogueOpen && !shopOpen && !pauseOpen){
-      const steer = sc.carSteerInput || 0;
-      const gas = input.a === true;
-      const brake = input.b === true;
-      const handbrake = input.r === true;
-
-      if(sc.vehicleHeading === undefined) sc.vehicleHeading = sc.vehicle.angle - 90;
-      if(sc.vehicleSpeed === undefined) sc.vehicleSpeed = 0;
-
-      const speedAbs=Math.abs(sc.vehicleSpeed);
-      const turnRate = handbrake ? 5.8 : Phaser.Math.Clamp(1.35 + speedAbs*0.22, 1.35, 4.0);
-      sc.vehicleHeading += steer * turnRate;
-
-      if(gas) sc.vehicleSpeed += 0.14;
-      if(brake) sc.vehicleSpeed -= (sc.vehicleSpeed > 0.20 ? 0.24 : 0.10);
-
-      sc.vehicleSpeed = Phaser.Math.Clamp(sc.vehicleSpeed, -2.0, 6.2);
-
-      if(handbrake) sc.vehicleSpeed *= 0.90;
-      else if(!gas && !brake) sc.vehicleSpeed *= 0.992;
-
-      if(Math.abs(sc.vehicleSpeed) < 0.025) sc.vehicleSpeed = 0;
-
-      const rad=Phaser.Math.DegToRad(sc.vehicleHeading);
-      sc.vehicle.x += Math.cos(rad)*sc.vehicleSpeed;
-      sc.vehicle.y += Math.sin(rad)*sc.vehicleSpeed;
-
-      // Highway lane magnet only at higher forward speed.
-      if(AREA==="highway" && sc.vehicleSpeed > 4.8){
-        const laneX=sc.mapW*0.78;
-        sc.vehicle.x += (laneX-sc.vehicle.x)*0.008;
-      }
-
-      sc.vehicle.x=Phaser.Math.Clamp(sc.vehicle.x,12,sc.mapW-12);
-      sc.vehicle.y=Phaser.Math.Clamp(sc.vehicle.y,12,sc.mapH-12);
-      sc.vehicle.angle=sc.vehicleHeading+90;
-      if(sc.vehicleLabel) sc.vehicleLabel.setPosition(sc.vehicle.x,sc.vehicle.y-58);
-      if(sc.cameras && sc.cameras.main) sc.cameras.main.centerOn(sc.vehicle.x,sc.vehicle.y);
-      if(typeof sc.setEngineVolume==="function") sc.setEngineVolume(Math.abs(sc.vehicleSpeed)>0.05);
-
-      if(coordLine){
-        coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(sc.vehicle.x)},${Math.round(sc.vehicle.y)} <span class="tag">CAR:</span> TRUE TANK <span class="tag">STEER:</span>${steer.toFixed(1)} <span class="tag">A:</span>${gas?1:0} <span class="tag">B:</span>${brake?1:0} <span class="tag">HB:</span>${handbrake?1:0} <span class="tag">SPD:</span>${sc.vehicleSpeed.toFixed(1)}`;
-      }
-    }
-    requestAnimationFrame(carPhysicsTick);
-  }
-  requestAnimationFrame(carPhysicsTick);
-
   }
   requestAnimationFrame(directMoveTick);
 
@@ -1300,8 +1523,8 @@ function setupControls(){
       btn.classList.add("down");
       if(name==="x"){ input.xbtn=true; input.usePressed=true; useNow(); }
       if(name==="r") input.r=true;
-      if(name==="a"){ input.a=true; showToast(window.__cfScene?.vehicleMode ? "GAS" : "GAS / action slot ready"); }
-      if(name==="b"){ input.b=true; showToast(window.__cfScene?.vehicleMode ? "BRAKE" : "BRK / action slot ready"); }
+      if(name==="a"){ input.a=true; if(window.__cfScene?.vehicleMode && window.__cfScene.vehicleSpeed<0.9) window.__cfScene.vehicleSpeed=0.9; showToast(window.__cfScene?.vehicleMode ? "GAS ON" : "GAS / action slot ready"); }
+      if(name==="b"){ input.b=true; showToast(window.__cfScene?.vehicleMode ? "BRAKE ON" : "BRK / action slot ready"); }
       if(name==="y") showToast("LTS / action slot ready");
     }
     function up(e){
