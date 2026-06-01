@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v94</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v95</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -198,7 +198,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Loop / No-Mask Road v94</div>
+<div class="version">Highway Loop / Map Create Fix v95</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -656,9 +656,9 @@ preload(){
   this.load.spritesheet("blacklight_runner_idle", NPC_ASSETS.blacklight_runner.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("kira_volt_idle", NPC_ASSETS.kira_volt.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("vendor_stall", PROPS.vendorStall, {frameWidth:256,frameHeight:256});
-  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=94");
-  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=94");
-  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=94");
+  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=95");
+  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=95");
+  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=95");
  }
  create(){
   window.__cfScene=this;
@@ -667,13 +667,15 @@ preload(){
   this.createFallbackMap();
   objectiveText.textContent = mapCfg.objective;
   if(AREA==="a1") refreshMission();
-  if(false && (FAILED_ASSETS.has("map") || !this.textures.exists("map"))){
-    this.mapW=1448; this.mapH=1086;
-    this.add.rectangle(0,0,this.mapW,this.mapH,0x111827).setOrigin(0,0);
-    this.add.text(40,40,"MAP FAILED TO LOAD\nCheck map path in GitHub assets.",{fontFamily:"monospace",fontSize:"22px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.7)",padding:{x:12,y:10}}).setDepth(999);
-  } else if(AREA==="westgate") {
-    this.map=this.add.image(0,0,"map").setOrigin(0,0).setScale(WORLD_SCALE).setDepth(DEPTH.MAP); this.mapW=this.map.width * WORLD_SCALE; this.mapH=this.map.height * WORLD_SCALE;
+  // v95: always create a map for every area.
+  // v94 only created this.map for westgate, which left highway_loop mapW/mapH undefined and caused black screen.
+  if(FAILED_ASSETS.has("map") || !this.textures.exists("map")){
+    this.createFallbackMap();
   }
+  this.map=this.add.image(0,0,"map").setOrigin(0,0).setScale(WORLD_SCALE).setDepth(DEPTH.MAP);
+  const srcImg=this.textures.get("map").getSourceImage();
+  this.mapW=(srcImg.width || this.map.width || 1024) * WORLD_SCALE;
+  this.mapH=(srcImg.height || this.map.height || 1024) * WORLD_SCALE;
   this.physics.world.setBounds(0,0,this.mapW,this.mapH);
   this.cameras.main.setBounds(0,0,this.mapW,this.mapH);
   this.cameras.main.roundPixels=true;
@@ -1326,8 +1328,8 @@ handleUse(){
     const d=Phaser.Math.Distance.Between((this.vehicleMode?this.vehicle.x:this.player.x),(this.vehicleMode?this.vehicle.y:this.player.y),this.loopOfframpZone.x,this.loopOfframpZone.y);
     if(d<this.loopOfframpZone.r){
       const chunk=HIGHWAY_LOOP[loopChunk()];
-      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v94&area=westgate&collision=mask";
-      else location.href=location.pathname+"?v=westgate-v94&area=a1&collision=mask";
+      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v95&area=westgate&collision=mask";
+      else location.href=location.pathname+"?v=westgate-v95&area=a1&collision=mask";
       return;
     }
   }
@@ -1368,7 +1370,7 @@ handleUse(){
   if(AREA==="highway" && this.highwayWestgateExit){
     const d=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.highwayWestgateExit.x,this.highwayWestgateExit.y);
     if(d < this.highwayWestgateExit.r){
-      location.href=location.pathname+"?v=westgate-v94&area=westgate&collision=mask";
+      location.href=location.pathname+"?v=westgate-v95&area=westgate&collision=mask";
       return;
     }
     showToast("Follow the marked ramp exit to Westgate.");
@@ -1414,7 +1416,7 @@ handleUse(){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v94&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v95&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -1431,16 +1433,16 @@ handleUse(){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v94&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v95&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v94&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v94&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v94&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v95&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v95&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v95&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
