@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v106</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v107</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -198,7 +198,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Loop / EMS Patrol Traffic v106</div>
+<div class="version">Highway Loop / Lane Snap Horns v107</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -510,6 +510,31 @@ function getMusicVolume(){
   const saved = localStorage.getItem("cf_music_volume");
   return saved === null ? 0.60 : Math.max(0, Math.min(1, parseFloat(saved)));
 }
+
+function makeBeepSound(freq=360, duration=0.18, type="square", volume=0.12){
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!window.__cfAudioCtx) window.__cfAudioCtx=new AC();
+    const ctx=window.__cfAudioCtx;
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.type=type;
+    osc.frequency.value=freq;
+    gain.gain.value=volume;
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+duration);
+    osc.stop(ctx.currentTime+duration);
+  }catch(e){}
+}
+function playTrafficHorn(){
+  makeBeepSound(260,0.16,"sawtooth",0.10);
+}
+function playEmsSiren(){
+  makeBeepSound(720,0.10,"sine",0.08);
+  setTimeout(()=>makeBeepSound(960,0.12,"sine",0.08),110);
+}
+
 function setMusicVolume(v){
   v = Math.max(0, Math.min(1, v));
   localStorage.setItem("cf_music_volume", String(v));
@@ -681,9 +706,9 @@ preload(){
   this.load.spritesheet("blacklight_runner_idle", NPC_ASSETS.blacklight_runner.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("kira_volt_idle", NPC_ASSETS.kira_volt.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("vendor_stall", PROPS.vendorStall, {frameWidth:256,frameHeight:256});
-  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=106");
-  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=106");
-  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=106");
+  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=107");
+  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=107");
+  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=107");
  }
  create(){
   window.__cfScene=this;
@@ -943,21 +968,20 @@ spawnTraffic(){
   this.trafficCars=[];
   if(!this.trafficTextureKeys || !this.trafficTextureKeys.length) return;
 
-  // v106: left-side traffic goes north, right-side traffic goes south.
-  // Centers retuned onto asphalt lanes.
+  // v107: lane centers from Donny's marked screenshot.
+  // Left of center divider = southbound. Right of center divider = northbound.
+  // No drift. Cars stay centered in these four lanes.
   const lanes=[
-    {x:this.mapW*.145, dir:-1, speed:2.10, side:"left-north"},
-    {x:this.mapW*.225, dir:-1, speed:2.40, side:"left-north"},
-    {x:this.mapW*.545, dir: 1, speed:2.00, side:"right-south"},
-    {x:this.mapW*.625, dir: 1, speed:1.85, side:"right-south"}
+    {x:this.mapW*.215, dir: 1, speed:2.05, side:"left-outer-south"},  // ↓
+    {x:this.mapW*.365, dir: 1, speed:2.25, side:"left-inner-south"},  // ↓
+    {x:this.mapW*.680, dir:-1, speed:2.25, side:"right-inner-north"},  // ↑
+    {x:this.mapW*.815, dir:-1, speed:2.05, side:"right-outer-north"}   // ↑
   ];
 
   const civicKeys=(this.emsTrafficTextureKeys && this.emsTrafficTextureKeys.length) ? this.emsTrafficTextureKeys : this.trafficTextureKeys;
 
   for(let i=0;i<12;i++){
     const lane=lanes[i%lanes.length];
-
-    // Put several white EMS/Civic Patrol cars on the road, plus civilian traffic.
     const isPatrol = (i===1 || i===5 || i===9);
     const isEMS = (i===3 || i===10);
     const list = (isPatrol || isEMS) ? civicKeys : this.trafficTextureKeys;
@@ -970,10 +994,12 @@ spawnTraffic(){
       .setScale((isPatrol || isEMS) ? 0.86 : 0.82);
 
     car.trafficLane=lane;
-    car.trafficSpeed=lane.speed + ((i%3)*0.18);
+    car.trafficSpeed=lane.speed + ((i%3)*0.16);
     car.trafficRadius=(isPatrol || isEMS) ? 58 : 54;
     car.kind=isEMS ? "EMS" : (isPatrol ? "Civic Patrol" : "Civilian");
     car.angle=lane.dir<0 ? 0 : 180;
+    car.hornCooldown=600 + i*190;
+    car.sirenCooldown=300 + i*260;
 
     const label = isEMS ? "EMS Response" : (isPatrol ? "Civic Patrol" : TRAFFIC_NAMES[i%TRAFFIC_NAMES.length]);
     car.nameLabel=this.add.text(car.x,car.y-72,label,{
@@ -996,16 +1022,28 @@ updateTraffic(dt){
     if(car.y < -120) car.y=this.mapH+120;
     if(car.y > this.mapH+120) car.y=-120;
 
-    // Lock to lane center. Minimal sway only.
-    car.x = car.trafficLane.x + Math.sin((performance.now()/1600)+(car.y*.003))*0.25;
+    // v107: no lane drift. Cars stay exactly in lanes.
+    car.x = car.trafficLane.x;
 
     if(car.nameLabel){
       car.nameLabel.setPosition(car.x,car.y-72);
       car.nameLabel.setVisible(true);
     }
 
-    // v105: real-ish traffic collision with Donny's car.
-    // Stops/deflects the player car instead of passing through.
+    // Random horns for civilian/patrol traffic; sirens for EMS.
+    car.hornCooldown -= (dt||16);
+    car.sirenCooldown -= (dt||16);
+    const nearPlayer = this.vehicle ? Phaser.Math.Distance.Between(this.vehicle.x,this.vehicle.y,car.x,car.y) < 420 : false;
+
+    if(car.kind==="EMS" && nearPlayer && car.sirenCooldown<=0){
+      playEmsSiren();
+      car.sirenCooldown=1600+Math.random()*1200;
+    } else if(car.kind!=="EMS" && nearPlayer && car.hornCooldown<=0){
+      playTrafficHorn();
+      car.hornCooldown=2300+Math.random()*2600;
+    }
+
+    // Traffic collision with Donny's car.
     if(this.vehicleMode && this.vehicle){
       const d=Phaser.Math.Distance.Between(this.vehicle.x,this.vehicle.y,car.x,car.y);
       const hitR=(car.trafficRadius||54)+42;
@@ -1014,29 +1052,24 @@ updateTraffic(dt){
         const ny=(this.vehicle.y-car.y)/(d||1);
         const overlap=hitR-d;
 
-        // Separate bodies.
-        this.vehicle.x += nx*(overlap*.65);
-        this.vehicle.y += ny*(overlap*.65);
-        car.x -= nx*(overlap*.18);
-        car.y -= ny*(overlap*.18);
+        this.vehicle.x += nx*(overlap*.70);
+        this.vehicle.y += ny*(overlap*.70);
 
-        // Knock speed down hard.
         if(this.vehicleSpeed!==undefined) this.vehicleSpeed *= -0.22;
-
-        // If vector physics variables exist, bounce them too.
         if(this.carVelX!==undefined) this.carVelX = (this.carVelX||0)*-0.22 + nx*55;
         if(this.carVelY!==undefined) this.carVelY = (this.carVelY||0)*-0.22 + ny*55;
 
-        showHint("traffic collision");
+        if(car.kind==="EMS") playEmsSiren(); else playTrafficHorn();
+        showHint(car.kind==="EMS" ? "EMS collision" : "traffic collision");
       }
     }
 
-    // Traffic avoids stacking with other traffic in same lane.
+    // Traffic avoids stacking in the same lane.
     for(const other of this.trafficCars){
       if(other===car || other.trafficLane!==car.trafficLane) continue;
       const gap=(car.trafficLane.dir<0) ? (other.y-car.y) : (car.y-other.y);
-      if(gap>0 && gap<82){
-        car.y -= car.trafficLane.dir * (82-gap)*0.04;
+      if(gap>0 && gap<90){
+        car.y -= car.trafficLane.dir * (90-gap)*0.045;
       }
     }
   }
@@ -1216,6 +1249,22 @@ updateVehicle(dt){
   this.vehicle.x=Phaser.Math.Clamp(this.vehicle.x,12,this.mapW-12);
   this.vehicle.y=Phaser.Math.Clamp(this.vehicle.y,12,this.mapH-12);
 
+  // v107 GTA-style lane snap for Donny's car on straight highway.
+  if((AREA==="highway" || AREA==="highway_loop") && this.vehicleMode && this.vehicle){
+    const highwayLanes=[this.mapW*.215,this.mapW*.365,this.mapW*.680,this.mapW*.815];
+    let nearest=highwayLanes[0], best=Math.abs(this.vehicle.x-highwayLanes[0]);
+    for(const lx of highwayLanes){
+      const d=Math.abs(this.vehicle.x-lx);
+      if(d<best){ best=d; nearest=lx; }
+    }
+    const movingFast=Math.abs(this.vehicleSpeed||0)>2.2;
+    const verticalish=Math.abs(input.y)>Math.abs(input.x)*0.65 || Math.abs(input.y)>0.25;
+    if(movingFast && verticalish && best<85 && !input.r){
+      this.vehicle.x += (nearest-this.vehicle.x)*0.035;
+    }
+  }
+
+
   // topdown car art orientation; keep stable and smooth.
   this.vehicle.angle=this.vehicleHeading + 180;
 
@@ -1270,7 +1319,7 @@ goHighwayLoop(step){
   const inCar = this.vehicleMode ? "&vehicle=car" : "";
   const spd = this.vehicleMode ? `&speed=${Math.round(this.vehicleSpeed||0)}` : "";
   const ang = this.vehicleMode ? `&angle=${Math.round(this.vehicle.angle||0)}` : "";
-  location.href=location.pathname+`?v=westgate-v106&area=highway_loop&chunk=${next}&entry=${entry}${inCar}${spd}${ang}&collision=off&t=${Date.now()}`;
+  location.href=location.pathname+`?v=westgate-v107&area=highway_loop&chunk=${next}&entry=${entry}${inCar}${spd}${ang}&collision=off&t=${Date.now()}`;
 }
 checkHighwayLoopTransitions(){
   if(AREA!=="highway_loop" || !this.vehicle || !this.vehicleMode) return;
@@ -1413,8 +1462,8 @@ handleUse(){
     const d=Phaser.Math.Distance.Between((this.vehicleMode?this.vehicle.x:this.player.x),(this.vehicleMode?this.vehicle.y:this.player.y),this.loopOfframpZone.x,this.loopOfframpZone.y);
     if(d<this.loopOfframpZone.r){
       const chunk=HIGHWAY_LOOP[loopChunk()];
-      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v106&area=westgate&collision=mask";
-      else location.href=location.pathname+"?v=westgate-v106&area=a1&collision=mask";
+      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v107&area=westgate&collision=mask";
+      else location.href=location.pathname+"?v=westgate-v107&area=a1&collision=mask";
       return;
     }
   }
@@ -1455,7 +1504,7 @@ handleUse(){
   if(AREA==="highway" && this.highwayWestgateExit){
     const d=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.highwayWestgateExit.x,this.highwayWestgateExit.y);
     if(d < this.highwayWestgateExit.r){
-      location.href=location.pathname+"?v=westgate-v106&area=westgate&collision=mask";
+      location.href=location.pathname+"?v=westgate-v107&area=westgate&collision=mask";
       return;
     }
     showToast("Follow the marked ramp exit to Westgate.");
@@ -1501,7 +1550,7 @@ handleUse(){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v106&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v107&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -1518,16 +1567,16 @@ handleUse(){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v106&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v107&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v106&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v106&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v106&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v107&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v107&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v107&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
