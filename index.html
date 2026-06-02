@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v112b</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v112c</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -242,7 +242,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Loop / Carjack Priority Fix v112b</div>
+<div class="version">Highway Loop / Road Follow Persist v112c</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -875,12 +875,12 @@ preload(){
     this.time.delayedCall(40, ()=>{
       this.enterVehicle();
       const qSpeed=parseFloat(qs.get("speed") || "0");
-      const qAngle=parseFloat(qs.get("angle") || "");
+      const qAngle=parseFloat(qs.get("heading") || qs.get("angle") || "");
       if(!Number.isNaN(qAngle)){
-        this.vehicle.angle=qAngle;
-        this.vehicleHeading=qAngle-90;
+        this.vehicleHeading=qAngle;
+        this.vehicle.angle=qAngle+180;
       }
-      if(!Number.isNaN(qSpeed)) this.vehicleSpeed=Math.max(0, Math.min(qSpeed, 260));
+      if(!Number.isNaN(qSpeed)) this.vehicleSpeed=Math.max(20, Math.min(qSpeed, 260));
       this.player.setPosition(this.vehicle.x,this.vehicle.y);
       this.player.setVisible(false);
       if(this.player.body) this.player.body.enable=false;
@@ -1151,6 +1151,54 @@ nearestJackableTrafficCar(){
   return bestD<96 ? best : null;
 }
 
+
+vehiclePersistKey(car){
+  if(!car) return "donny_car";
+  if(car.texture && car.texture.key) return car.texture.key;
+  return "donny_car";
+}
+
+nearestLaneIndexForX(x){
+  const lanes=[this.mapW*.215,this.mapW*.365,this.mapW*.680,this.mapW*.815];
+  let idx=0, best=Math.abs(x-lanes[0]);
+  for(let i=1;i<lanes.length;i++){
+    const d=Math.abs(x-lanes[i]);
+    if(d<best){best=d;idx=i;}
+  }
+  return idx;
+}
+
+laneXFromIndex(idx){
+  const lanes=[this.mapW*.215,this.mapW*.365,this.mapW*.680,this.mapW*.815];
+  return lanes[Phaser.Math.Clamp(idx||0,0,3)] || lanes[1];
+}
+
+roadAngleForY(y){
+  // v112c simple highway road-follow assist:
+  // bottom ramp curves inward, upper area straightens north/south.
+  const t=Phaser.Math.Clamp(y/this.mapH,0,1);
+  if(t>.72) return -72;     // lower ramp approach, angled up/right
+  if(t<.18) return -88;     // top exits, mostly north
+  return -90;               // straight highway
+}
+
+applyRoadFollowAssist(){
+  if(!this.vehicleMode || !this.vehicle) return;
+  const laneIdx=this.nearestLaneIndexForX(this.vehicle.x);
+  const laneX=this.laneXFromIndex(laneIdx);
+  const onHighway=(AREA==="highway"||AREA==="highway_loop");
+  if(!onHighway) return;
+  const speed=Math.abs(this.vehicleSpeed||0);
+  if(speed<25) return;
+  const targetHeading=this.roadAngleForY(this.vehicle.y);
+  // Pull car back toward the lane and align heading gently.
+  this.vehicle.x += (laneX-this.vehicle.x)*0.045;
+  if(this.vehicleHeading===undefined) this.vehicleHeading=(this.vehicle.angle||0)-180;
+  let diff=Phaser.Math.Angle.ShortestBetween(this.vehicleHeading,targetHeading);
+  this.vehicleHeading += diff*0.045;
+  this.vehicle.angle=this.vehicleHeading+180;
+}
+
 tryCarjack(){
   if(this.vehicleMode) return false;
   const car=this.nearestJackableTrafficCar();
@@ -1198,7 +1246,10 @@ tryCarjack(){
   }
 
   this.cameras.main.startFollow(this.vehicle,true,0.12,0.12,0,0);
-  setMode("IN CAR");
+  if(qs.get && qs.get("stolen")==="1" && this.vehicleLabel){
+          this.vehicleLabel.setText("PERSISTED STOLEN VEHICLE\nX EXIT").setPosition(this.vehicle.x,this.vehicle.y-58).setVisible(true);
+        }
+        setMode("IN CAR");
   setObjective("Drive stolen vehicle");
   showToast("CARJACKED\nDriver pulled out");
   return true;
@@ -1229,7 +1280,12 @@ updateTraffic(dt){
     if(car.y > this.mapH+120) car.y=-120;
 
     // v107: no lane drift. Cars stay exactly in lanes.
+    // v112c traffic road follow: keep AI cars on lane and angle with road.
     car.x = car.trafficLane.x;
+    if(this.roadAngleForY){
+      const roadHeading=this.roadAngleForY(car.y);
+      car.angle=(car.trafficLane.dir<0 ? roadHeading+180 : roadHeading);
+    }
 
     if(car.nameLabel){
       car.nameLabel.setPosition(car.x,car.y-72);
@@ -1294,14 +1350,18 @@ createHighwayVehicle(){
     this.vehicle.body.setSize(26,54);
     this.vehicle.body.immovable = true;
   }
-  // v100 entry edge spawn.
+  // v112c: entry edge spawn preserves same lane/road section.
   if(AREA==="highway_loop"){
+    const laneIdx=Phaser.Math.Clamp(parseInt(qs.get("lane")||"1",10)||1,0,3);
+    const x=this.laneXFromIndex ? this.laneXFromIndex(laneIdx) : this.mapW*0.50;
     if(LOOP_ENTRY==="north"){
-      this.vehicle.setPosition(this.mapW*0.50,this.mapH*0.12);
-      this.vehicle.angle=180;
+      this.vehicle.setPosition(x,this.mapH*0.12);
+      this.vehicleHeading=90;
+      this.vehicle.angle=this.vehicleHeading+180;
     } else {
-      this.vehicle.setPosition(this.mapW*0.50,this.mapH*0.88);
-      this.vehicle.angle=0;
+      this.vehicle.setPosition(x,this.mapH*0.88);
+      this.vehicleHeading=-90;
+      this.vehicle.angle=this.vehicleHeading+180;
     }
   }
   this.vehicleMode=false;
@@ -1553,9 +1613,14 @@ goHighwayLoop(step){
   const next=((loopChunk()+step)%n+n)%n;
   const entry = step>0 ? "south" : "north";
   const inCar = this.vehicleMode ? "&vehicle=car" : "";
-  const spd = this.vehicleMode ? `&speed=${Math.round(this.vehicleSpeed||0)}` : "";
-  const ang = this.vehicleMode ? `&angle=${Math.round(this.vehicle.angle||0)}` : "";
-  location.href=location.pathname+`?v=westgate-v112bb&area=highway_loop&chunk=${next}&entry=${entry}${inCar}${spd}${ang}&collision=off&t=${Date.now()}`;
+  const carKey = this.vehicleMode && this.vehicle ? `&carKey=${encodeURIComponent(this.vehiclePersistKey(this.vehicle))}` : "";
+  const stolen = this.vehicleMode && this.vehicle && this.vehicle.stolen ? "&stolen=1" : "";
+  const spd = this.vehicleMode ? `&speed=${Math.round(Math.abs(this.vehicleSpeed||0))}` : "";
+  const lane = this.vehicle ? this.nearestLaneIndexForX(this.vehicle.x) : 1;
+  const laneParam=`&lane=${lane}`;
+  const heading = this.vehicleHeading!==undefined ? Math.round(this.vehicleHeading) : (step>0?-90:90);
+  const headingParam=`&heading=${heading}`;
+  location.href=location.pathname+`?v=westgate-v112cc&area=highway_loop&chunk=${next}&entry=${entry}${laneParam}${inCar}${carKey}${stolen}${spd}${headingParam}&collision=off&t=${Date.now()}`;
 }
 checkHighwayLoopTransitions(){
   if(AREA!=="highway_loop" || !this.vehicle || !this.vehicleMode) return;
@@ -1603,6 +1668,7 @@ if(this.vehicle){
     if(this.vehicleMode){
       this.updateVehicle(dt);
   if(this.updateCarHud) this.updateCarHud();
+  if(this.applyRoadFollowAssist) this.applyRoadFollowAssist();
   this.updateTraffic(dt);
   this.updatePulledDrivers(dt);
   this.updateCarjackPrompt();
@@ -1708,8 +1774,8 @@ handleUse(){
     const d=Phaser.Math.Distance.Between((this.vehicleMode?this.vehicle.x:this.player.x),(this.vehicleMode?this.vehicle.y:this.player.y),this.loopOfframpZone.x,this.loopOfframpZone.y);
     if(d<this.loopOfframpZone.r){
       const chunk=HIGHWAY_LOOP[loopChunk()];
-      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v112bb&area=westgate&collision=mask";
-      else location.href=location.pathname+"?v=westgate-v112bb&area=a1&collision=mask";
+      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v112cc&area=westgate&collision=mask";
+      else location.href=location.pathname+"?v=westgate-v112cc&area=a1&collision=mask";
       return;
     }
   }
@@ -1750,7 +1816,7 @@ handleUse(){
   if(AREA==="highway" && this.highwayWestgateExit){
     const d=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.highwayWestgateExit.x,this.highwayWestgateExit.y);
     if(d < this.highwayWestgateExit.r){
-      location.href=location.pathname+"?v=westgate-v112bb&area=westgate&collision=mask";
+      location.href=location.pathname+"?v=westgate-v112cc&area=westgate&collision=mask";
       return;
     }
     showToast("Follow the marked ramp exit to Westgate.");
@@ -1796,7 +1862,7 @@ handleUse(){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v112bb&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v112cc&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -1813,16 +1879,16 @@ handleUse(){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112bb&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112cc&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112bb&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112bb&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112bb&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112cc&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112cc&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112cc&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
@@ -1969,6 +2035,7 @@ function setupControls(){
           if(sc.vehicleLabel) sc.vehicleLabel.setPosition(sc.vehicle.x,sc.vehicle.y-58);
           if(sc.cameras && sc.cameras.main) sc.cameras.main.centerOn(sc.vehicle.x,sc.vehicle.y);
           if(sc.updateCarHud) sc.updateCarHud();
+            if(sc.applyRoadFollowAssist) sc.applyRoadFollowAssist();
           if(sc.checkHighwayLoopTransitions) sc.checkHighwayLoopTransitions();
           if(coordLine) coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(sc.vehicle.x)},${Math.round(sc.vehicle.y)} <span class="tag">V110:</span> DIRECT CAR <span class="tag">JOY:</span> ${input.x.toFixed(1)},${input.y.toFixed(1)} <span class="tag">A:</span>${input.a?1:0}`;
         } else if(sc.player){
