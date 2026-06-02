@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v113</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v113c</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -243,7 +243,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Loop / Wanted Civic Patrol v113</div>
+<div class="version">Highway Loop / Force Visible NPCs v113c</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -1228,6 +1228,9 @@ driverForTrafficCar(car,i=0){
 
 spawnPulledDriver(car){
   this.createDriverAnimations();
+  this.spawnVisibleCivilians();
+  // v113c delayed force civilian spawn
+  this.time.delayedCall(600,()=>{ if(!this.visibleCivilians || !this.visibleCivilians.length) this.spawnVisibleCivilians(); });
   if(!this.pulledDrivers) this.pulledDrivers=[];
   const data=car.driverData || this.driverForTrafficCar(car,0);
   const tex=this.textures.exists(data.tex) ? data.tex : (this.textures.exists("donny") ? "donny" : "npc_driver_male_01");
@@ -1460,6 +1463,67 @@ updateTraffic(dt){
 }
 
 
+
+
+spawnVisibleCivilians(){
+  if(!(AREA==="highway" || AREA==="highway_loop")) return;
+  if(this.visibleCivilians && this.visibleCivilians.length) return;
+  this.createDriverAnimations();
+  this.visibleCivilians=[];
+  const pool=[
+    {tex:"npc_driver_male_01", anim:"driver_male_01", label:"Civilian"},
+    {tex:"npc_driver_female_02", anim:"driver_female_02", label:"Civilian"},
+    {tex:"npc_elderly_01", anim:"elderly_01", label:"Elderly"},
+    {tex:"npc_mechanic_01", anim:"mechanic_01", label:"Mechanic"},
+    {tex:"npc_water_carrier_01", anim:"water_carrier_01", label:"Water Carrier"}
+  ];
+  const anchor=this.vehicleMode && this.vehicle ? this.vehicle : this.player;
+  const ax=anchor?.x || this.mapW*.50, ay=anchor?.y || this.mapH*.70;
+  const spots=[[ax-130,ay-90],[ax+130,ay-90],[ax-155,ay+50],[ax+155,ay+50],[ax-90,ay+135],[ax+90,ay+135],[ax-210,ay-10],[ax+210,ay-10]];
+  for(let i=0;i<spots.length;i++){
+    const data=pool[(i+loopChunk())%pool.length];
+    const hasTex=this.textures.exists(data.tex);
+    const x=Phaser.Math.Clamp(spots[i][0],48,this.mapW-48);
+    const y=Phaser.Math.Clamp(spots[i][1],48,this.mapH-48);
+    let spr;
+    if(hasTex){
+      spr=this.add.sprite(x,y,data.tex,0).setDepth(DEPTH.CHARACTER_BASE+180+i).setScale(0.42).setOrigin(.5,.75);
+      try{ spr.play(`${data.anim}_down`); }catch(e){}
+    }else{
+      spr=this.add.rectangle(x,y,18,30,0x9eefff,0.95).setDepth(DEPTH.CHARACTER_BASE+180+i).setOrigin(.5,.75);
+      spr.missingTexture=true;
+    }
+    spr.npcData=data;
+    spr.walkVX=(Math.random()>.5?1:-1)*(0.25+Math.random()*0.18);
+    spr.walkVY=(Math.random()>.5?1:-1)*(0.16+Math.random()*0.14);
+    spr.homeX=x; spr.homeY=y;
+    spr.nameLabel=this.add.text(x,y-52,data.label,{fontFamily:"monospace",fontSize:"8px",color:"#e8fbff",backgroundColor:"rgba(0,0,0,.70)",padding:{x:4,y:2}}).setOrigin(.5).setDepth(DEPTH.LABEL+5);
+    this.visibleCivilians.push(spr);
+  }
+  showToast("NPCS SPAWNED\n"+this.visibleCivilians.length+" civilians");
+}
+
+updateVisibleCivilians(dt){
+  if(!this.visibleCivilians) return;
+  const delta=Math.max(.8,Math.min(2,(dt||16)/16.666));
+  for(const spr of this.visibleCivilians){
+    spr.x += spr.walkVX*delta; spr.y += spr.walkVY*delta;
+    if(Math.abs(spr.x-spr.homeX)>42) spr.walkVX*=-1;
+    if(Math.abs(spr.y-spr.homeY)>36) spr.walkVY*=-1;
+    if(this.vehicleMode && this.vehicle){
+      const d=Phaser.Math.Distance.Between(this.vehicle.x,this.vehicle.y,spr.x,spr.y);
+      if(d<110){ const nx=(spr.x-this.vehicle.x)/(d||1), ny=(spr.y-this.vehicle.y)/(d||1); spr.x+=nx*2.4; spr.y+=ny*2.4; }
+    }
+    if(!spr.missingTexture){
+      const anim=spr.npcData?.anim || "driver_male_01";
+      try{
+        if(Math.abs(spr.walkVX)>Math.abs(spr.walkVY)) spr.play(`${anim}_${spr.walkVX<0?"left":"right"}`,true);
+        else spr.play(`${anim}_${spr.walkVY<0?"up":"down"}`,true);
+      }catch(e){}
+    }
+    if(spr.nameLabel) spr.nameLabel.setPosition(spr.x,spr.y-52);
+  }
+}
 
 initWantedSystem(){
   if(this._wantedReady) return;
@@ -1936,7 +2000,7 @@ goHighwayLoop(step){
   const spd=this.vehicleMode?`&speed=${Math.round(this.vehicleSpeed||0)}`:"";
   const lane=this.vehicle&&this.nearestLaneIndexForX?this.nearestLaneIndexForX(this.vehicle.x,this.vehicle.y):1;
   const heading=this.vehicleHeading!==undefined?Math.round(this.vehicleHeading):(step>0?-90:90);
-  location.replace(location.pathname+`?v=westgate-v113&area=highway_loop&chunk=${next}&entry=${entry}&lane=${lane}${inCar}${carKey}${stolen}${spd}&heading=${heading}&persist=1&collision=off&t=${Date.now()}`);
+  location.replace(location.pathname+`?v=westgate-v113cc&area=highway_loop&chunk=${next}&entry=${entry}&lane=${lane}${inCar}${carKey}${stolen}${spd}&heading=${heading}&persist=1&collision=off&t=${Date.now()}`);
 }
 checkHighwayLoopTransitions(){
   if(AREA!=="highway_loop" || !this.vehicle || !this.vehicleMode) return;
@@ -1988,6 +2052,7 @@ if(this.vehicle){
   this.updateTraffic(dt);
   this.updatePulledDrivers(dt);
   this.updateCarjackPrompt();
+  this.updateVisibleCivilians(dt);
   this.updateWantedSystem(dt);
   this.maybeWantedFromDriving();
   if(this.hideTransitionDebugMarkers) this.hideTransitionDebugMarkers();
@@ -2093,8 +2158,8 @@ handleUse(){
     const d=Phaser.Math.Distance.Between((this.vehicleMode?this.vehicle.x:this.player.x),(this.vehicleMode?this.vehicle.y:this.player.y),this.loopOfframpZone.x,this.loopOfframpZone.y);
     if(d<this.loopOfframpZone.r){
       const chunk=HIGHWAY_LOOP[loopChunk()];
-      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v113&area=westgate&collision=mask";
-      else location.href=location.pathname+"?v=westgate-v113&area=a1&collision=mask";
+      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v113cc&area=westgate&collision=mask";
+      else location.href=location.pathname+"?v=westgate-v113cc&area=a1&collision=mask";
       return;
     }
   }
@@ -2135,7 +2200,7 @@ handleUse(){
   if(AREA==="highway" && this.highwayWestgateExit){
     const d=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.highwayWestgateExit.x,this.highwayWestgateExit.y);
     if(d < this.highwayWestgateExit.r){
-      location.href=location.pathname+"?v=westgate-v113&area=westgate&collision=mask";
+      location.href=location.pathname+"?v=westgate-v113cc&area=westgate&collision=mask";
       return;
     }
     showToast("Follow the marked ramp exit to Westgate.");
@@ -2181,7 +2246,7 @@ handleUse(){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v113&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v113cc&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -2198,16 +2263,16 @@ handleUse(){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v113&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v113cc&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v113&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v113&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v113&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v113cc&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v113cc&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v113cc&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
