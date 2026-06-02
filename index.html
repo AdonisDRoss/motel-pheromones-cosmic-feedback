@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v112d</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v112e</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -242,7 +242,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Loop / Angle + NPC Path Fix v112d</div>
+<div class="version">Highway Loop / Curve Path Persist v112e</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -403,15 +403,44 @@ const VEHICLES = {
 
 
 
-function cfVehicleVisualAngleFromHeading(heading){
-  // Vehicle sprites face UP/NORTH at angle 0.
-  // Heading uses math degrees: 0=east, -90=north, 90=south.
-  return heading + 90;
+
+function cfClamp01(v){ return Math.max(0, Math.min(1, v)); }
+
+function cfRoadCenterX(scene,y,laneIndex){
+  // v112e road guide based on actual curved highway screenshots.
+  // Normalized y. On lower curve, lanes sweep from left to right as they go north.
+  const t=cfClamp01(y/scene.mapH);
+  const straight=[scene.mapW*.215, scene.mapW*.365, scene.mapW*.680, scene.mapW*.815];
+  let x=straight[Phaser.Math.Clamp(laneIndex||0,0,3)];
+
+  // Curve chunks have strong bend in lower half.
+  // Push lane center along a broad S curve so traffic stays on asphalt.
+  const bend = Math.sin((1-t)*Math.PI*0.95);
+  const lowerBoost = cfClamp01((.82-t)/.55);
+  const curve = bend * lowerBoost * scene.mapW*.28;
+
+  // Left lanes bend less, right lanes bend more.
+  const laneFactor=[-.42,-.18,.18,.42][Phaser.Math.Clamp(laneIndex||0,0,3)];
+  x += curve + laneFactor*scene.mapW*.08*lowerBoost;
+
+  return Phaser.Math.Clamp(x, scene.mapW*.08, scene.mapW*.92);
 }
-function cfHeadingForTrafficDir(dir, scene, y){
-  // Northbound lanes move up. Southbound lanes move down.
-  // Curved chunks are assisted back toward lane direction without sideways sprite rotation.
-  return dir < 0 ? -90 : 90;
+
+function cfRoadHeading(scene,y,laneIndex,dir){
+  const y1=Phaser.Math.Clamp(y-18,0,scene.mapH);
+  const y2=Phaser.Math.Clamp(y+18,0,scene.mapH);
+  const x1=cfRoadCenterX(scene,y1,laneIndex);
+  const x2=cfRoadCenterX(scene,y2,laneIndex);
+  // Direction of travel. dir < 0 means north/up.
+  const dx = dir < 0 ? (x1-x2) : (x2-x1);
+  const dy = dir < 0 ? (y1-y2) : (y2-y1);
+  return Phaser.Math.RadToDeg(Math.atan2(dy,dx));
+}
+
+function cfHeadingForTrafficDir(dir, scene, y){ return dir < 0 ? -90 : 90; }
+function cfVehicleVisualAngleFromHeading(heading){
+  // Top-down vehicle PNGs face UP/NORTH at visual angle 0.
+  return heading + 90;
 }
 
 const NPC_DRIVER_ASSETS = {
@@ -1075,6 +1104,7 @@ spawnTraffic(){
     car.trafficRadius=(isPatrol || isEMS) ? 58 : 54;
     car.kind=isEMS ? "EMS" : (isPatrol ? "Civic Patrol" : "Civilian");
     car.driverData=this.driverForTrafficCar(car,i);
+    car.laneIndex = i % 4;
     // v112d initial traffic angle: sprite noses face lane direction, not sideways.
     car.angle=cfVehicleVisualAngleFromHeading(cfHeadingForTrafficDir(lane.dir,this,car.y));
     car.angle=lane.dir<0 ? 0 : 180;
@@ -1172,19 +1202,18 @@ vehiclePersistKey(car){
   return "donny_car";
 }
 
-nearestLaneIndexForX(x){
-  const lanes=[this.mapW*.215,this.mapW*.365,this.mapW*.680,this.mapW*.815];
-  let idx=0, best=Math.abs(x-lanes[0]);
-  for(let i=1;i<lanes.length;i++){
-    const d=Math.abs(x-lanes[i]);
+nearestLaneIndexForX(x,y){
+  const yy = y===undefined ? (this.vehicle?.y || this.mapH*.5) : y;
+  let idx=0, best=Math.abs(x-cfRoadCenterX(this,yy,0));
+  for(let i=1;i<4;i++){
+    const d=Math.abs(x-cfRoadCenterX(this,yy,i));
     if(d<best){best=d;idx=i;}
   }
   return idx;
 }
 
-laneXFromIndex(idx){
-  const lanes=[this.mapW*.215,this.mapW*.365,this.mapW*.680,this.mapW*.815];
-  return lanes[Phaser.Math.Clamp(idx||0,0,3)] || lanes[1];
+laneXFromIndex(idx,y){
+  return cfRoadCenterX(this, y===undefined ? (this.vehicle?.y || this.mapH*.5) : y, idx);
 }
 
 roadAngleForY(y){
@@ -1198,18 +1227,18 @@ roadAngleForY(y){
 
 applyRoadFollowAssist(){
   if(!this.vehicleMode || !this.vehicle) return;
-  const laneIdx=this.nearestLaneIndexForX(this.vehicle.x);
-  const laneX=this.laneXFromIndex(laneIdx);
   const onHighway=(AREA==="highway"||AREA==="highway_loop");
   if(!onHighway) return;
   const speed=Math.abs(this.vehicleSpeed||0);
-  if(speed<25) return;
-  const targetHeading=((this.vehicleSpeed||0)>=0 ? -90 : 90);
-  // Pull car back toward the lane and align heading gently.
-  this.vehicle.x += (laneX-this.vehicle.x)*0.045;
-  if(this.vehicleHeading===undefined) this.vehicleHeading=(this.vehicle.angle||0)-180;
+  if(speed<18) return;
+  const laneIdx=this.nearestLaneIndexForX(this.vehicle.x,this.vehicle.y);
+  const laneX=cfRoadCenterX(this,this.vehicle.y,laneIdx);
+  const dir=(this.vehicleSpeed||0)>=0 ? -1 : 1;
+  const targetHeading=cfRoadHeading(this,this.vehicle.y,laneIdx,dir);
+  this.vehicle.x += (laneX-this.vehicle.x)*0.075;
+  if(this.vehicleHeading===undefined) this.vehicleHeading=(this.vehicle.angle||0)-90;
   let diff=Phaser.Math.Angle.ShortestBetween(this.vehicleHeading,targetHeading);
-  this.vehicleHeading += diff*0.045;
+  this.vehicleHeading += diff*0.075;
   this.vehicle.angle=cfVehicleVisualAngleFromHeading(this.vehicleHeading);
 }
 
@@ -1294,12 +1323,11 @@ updateTraffic(dt){
     if(car.y > this.mapH+120) car.y=-120;
 
     // v107: no lane drift. Cars stay exactly in lanes.
-    // v112c traffic road follow: keep AI cars on lane and angle with road.
-    car.x = car.trafficLane.x;
-    if(this.roadAngleForY){
-      const roadHeading=cfHeadingForTrafficDir(car.trafficLane.dir,this,car.y);
-      car.angle=cfVehicleVisualAngleFromHeading(roadHeading);
-    }
+    // v112e traffic follows curved road guide.
+    const li = car.laneIndex ?? 1;
+    car.x = cfRoadCenterX(this, car.y, li);
+    const roadHeading=cfRoadHeading(this, car.y, li, car.trafficLane.dir);
+    car.angle=cfVehicleVisualAngleFromHeading(roadHeading);
 
     if(car.nameLabel){
       car.nameLabel.setPosition(car.x,car.y-72);
@@ -1367,7 +1395,7 @@ createHighwayVehicle(){
   // v112c: entry edge spawn preserves same lane/road section.
   if(AREA==="highway_loop"){
     const laneIdx=Phaser.Math.Clamp(parseInt(qs.get("lane")||"1",10)||1,0,3);
-    const x=this.laneXFromIndex ? this.laneXFromIndex(laneIdx) : this.mapW*0.50;
+    const spawnY=(LOOP_ENTRY==="north"?this.mapH*0.12:this.mapH*0.88); const x=this.laneXFromIndex ? this.laneXFromIndex(laneIdx,spawnY) : this.mapW*0.50;
     if(LOOP_ENTRY==="north"){
       this.vehicle.setPosition(x,this.mapH*0.12);
       this.vehicleHeading=90;
@@ -1630,11 +1658,11 @@ goHighwayLoop(step){
   const carKey = this.vehicleMode && this.vehicle ? `&carKey=${encodeURIComponent(this.vehiclePersistKey(this.vehicle))}` : "";
   const stolen = this.vehicleMode && this.vehicle && this.vehicle.stolen ? "&stolen=1" : "";
   const spd = this.vehicleMode ? `&speed=${Math.round(Math.abs(this.vehicleSpeed||0))}` : "";
-  const lane = this.vehicle ? this.nearestLaneIndexForX(this.vehicle.x) : 1;
+  const lane = this.vehicle ? this.nearestLaneIndexForX(this.vehicle.x,this.vehicle.y) : 1;
   const laneParam=`&lane=${lane}`;
   const heading = step>0 ? -90 : 90;
   const headingParam=`&heading=${heading}`;
-  location.href=location.pathname+`?v=westgate-v112dd&area=highway_loop&chunk=${next}&entry=${entry}${laneParam}${inCar}${carKey}${stolen}${spd}${headingParam}&collision=off&t=${Date.now()}`;
+  location.href=location.pathname+`?v=westgate-v112ee&area=highway_loop&chunk=${next}&entry=${entry}${laneParam}${inCar}${carKey}${stolen}${spd}${headingParam}&collision=off&t=${Date.now()}`;
 }
 checkHighwayLoopTransitions(){
   if(AREA!=="highway_loop" || !this.vehicle || !this.vehicleMode) return;
@@ -1788,8 +1816,8 @@ handleUse(){
     const d=Phaser.Math.Distance.Between((this.vehicleMode?this.vehicle.x:this.player.x),(this.vehicleMode?this.vehicle.y:this.player.y),this.loopOfframpZone.x,this.loopOfframpZone.y);
     if(d<this.loopOfframpZone.r){
       const chunk=HIGHWAY_LOOP[loopChunk()];
-      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v112dd&area=westgate&collision=mask";
-      else location.href=location.pathname+"?v=westgate-v112dd&area=a1&collision=mask";
+      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v112ee&area=westgate&collision=mask";
+      else location.href=location.pathname+"?v=westgate-v112ee&area=a1&collision=mask";
       return;
     }
   }
@@ -1830,7 +1858,7 @@ handleUse(){
   if(AREA==="highway" && this.highwayWestgateExit){
     const d=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.highwayWestgateExit.x,this.highwayWestgateExit.y);
     if(d < this.highwayWestgateExit.r){
-      location.href=location.pathname+"?v=westgate-v112dd&area=westgate&collision=mask";
+      location.href=location.pathname+"?v=westgate-v112ee&area=westgate&collision=mask";
       return;
     }
     showToast("Follow the marked ramp exit to Westgate.");
@@ -1876,7 +1904,7 @@ handleUse(){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v112dd&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v112ee&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -1893,16 +1921,16 @@ handleUse(){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112dd&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112ee&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112dd&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112dd&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112dd&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112ee&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112ee&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112ee&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
