@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v112g</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v112h</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -242,7 +242,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Loop / Controls + Civilians Fix v112g</div>
+<div class="version">Highway Loop / Tank Controls Persist v112h</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -934,6 +934,30 @@ preload(){
   }
 
   this.createHighwayVehicle();
+
+  // v112h restore active/stolen vehicle immediately after screen transition.
+  const cfPersist=cfLoadVehicleState();
+  if((qs.get("vehicle")==="car" || qs.get("persist")==="1" || cfPersist) && this.vehicle){
+    const carKey=qs.get("carKey") || cfPersist?.carKey || "donny_car";
+    const stolen=(qs.get("stolen")==="1") || !!cfPersist?.stolen;
+    if(carKey && this.textures.exists(carKey)) this.vehicle.setTexture(carKey);
+    this.vehicle.stolen=stolen;
+    this.vehicle.jacked=stolen;
+    this.vehicleMode=true;
+    this.playerVehicle=this.vehicle;
+    const h=parseFloat(qs.get("heading") || cfPersist?.heading || "-90");
+    const s=parseFloat(qs.get("speed") || cfPersist?.speed || "0");
+    this.vehicleHeading=Number.isNaN(h)?-90:h;
+    this.vehicleSpeed=Number.isNaN(s)?0:s;
+    this.vehicle.angle=cfCarVisualAngle(this.vehicleHeading);
+    if(this.player){this.player.setVisible(false);this.player.setPosition(this.vehicle.x,this.vehicle.y);if(this.player.body)this.player.body.enable=false;}
+    if(this.vehicleLabel){
+      this.vehicleLabel.setText(stolen?"STOLEN VEHICLE\nX EXIT":"DONNY'S CAR\nX EXIT").setPosition(this.vehicle.x,this.vehicle.y-58).setVisible(true);
+    }
+    setMode("IN CAR");
+    setObjective(stolen?"Drive stolen vehicle":"Drive Donny's car");
+  }
+
   this.spawnTraffic();
   if(AREA==="highway_loop" && START_IN_CAR && this.vehicle){
     this.time.delayedCall(40, ()=>{
@@ -942,7 +966,7 @@ preload(){
       const qAngle=parseFloat(qs.get("heading") || qs.get("angle") || "");
       if(!Number.isNaN(qAngle)){
         this.vehicleHeading=qAngle;
-        this.vehicle.angle=cfVehicleVisualAngleFromHeading(this.vehicleHeading);
+        this.vehicle.angle=cfCarVisualAngle(this.vehicleHeading);
       }
       if(!Number.isNaN(qSpeed)) this.vehicleSpeed=Math.max(20, Math.min(qSpeed, 260));
       this.player.setPosition(this.vehicle.x,this.vehicle.y);
@@ -1263,7 +1287,7 @@ applyRoadFollowAssist(){
   if(this.vehicleHeading===undefined) this.vehicleHeading=(this.vehicle.angle||0)-90;
   let diff=Phaser.Math.Angle.ShortestBetween(this.vehicleHeading,targetHeading);
   this.vehicleHeading += diff*0.075;
-  this.vehicle.angle=cfVehicleVisualAngleFromHeading(this.vehicleHeading);
+  this.vehicle.angle=cfCarVisualAngle(this.vehicleHeading);
 }
 
 tryCarjack(){
@@ -1351,7 +1375,7 @@ updateTraffic(dt){
     const li = car.laneIndex ?? 1;
     car.x = cfRoadCenterX(this, car.y, li);
     const roadHeading=cfRoadHeading(this, car.y, li, car.trafficLane.dir);
-    car.angle=cfVehicleVisualAngleFromHeading(roadHeading);
+    car.angle=cfCarVisualAngle(roadHeading);
 
     if(car.nameLabel){
       car.nameLabel.setPosition(car.x,car.y-72);
@@ -1423,14 +1447,15 @@ createHighwayVehicle(){
     if(LOOP_ENTRY==="north"){
       this.vehicle.setPosition(x,this.mapH*0.12);
       this.vehicleHeading=90;
-      this.vehicle.angle=cfVehicleVisualAngleFromHeading(this.vehicleHeading);
+      this.vehicle.angle=cfCarVisualAngle(this.vehicleHeading);
     } else {
       this.vehicle.setPosition(x,this.mapH*0.88);
       this.vehicleHeading=-90;
-      this.vehicle.angle=cfVehicleVisualAngleFromHeading(this.vehicleHeading);
+      this.vehicle.angle=cfCarVisualAngle(this.vehicleHeading);
     }
   }
   this.vehicleMode=false;
+  cfClearVehicleState();
   cfClearActiveVehicle();
   this.playerVehicle=this.vehicle;
   this.originalDonnyVehicle=this.vehicle;
@@ -1453,7 +1478,7 @@ createHighwayVehicle(){
     if(!Number.isNaN(savedSpeed)) this.vehicleSpeed=savedSpeed;
     if(!Number.isNaN(savedHeading)){
       this.vehicleHeading=savedHeading;
-      if(typeof cfVehicleVisualAngleFromHeading==="function") this.vehicle.angle=cfVehicleVisualAngleFromHeading(this.vehicleHeading);
+      if(typeof cfVehicleVisualAngleFromHeading==="function") this.vehicle.angle=cfCarVisualAngle(this.vehicleHeading);
     }
     if(this.player){ this.player.setVisible(false); this.player.setPosition(this.vehicle.x,this.vehicle.y); }
     if(this.vehicleLabel){
@@ -1706,16 +1731,14 @@ goHighwayLoop(step){
   const n=HIGHWAY_LOOP.length;
   const next=((loopChunk()+step)%n+n)%n;
   const entry = step>0 ? "south" : "north";
-  if(this.vehicleMode && this.vehicle) cfSaveActiveVehicle(this);
-  const inCar = this.vehicleMode ? "&vehicle=car" : "";
-  const carKey = this.vehicleMode && this.vehicle ? `&carKey=${encodeURIComponent(this.vehiclePersistKey(this.vehicle))}` : "";
-  const stolen = this.vehicleMode && this.vehicle && this.vehicle.stolen ? "&stolen=1" : "";
-  const spd = this.vehicleMode ? `&speed=${Math.round(this.vehicleSpeed||0)}` : "";
-  const lane = this.vehicle ? this.nearestLaneIndexForX(this.vehicle.x,this.vehicle.y) : 1;
-  const laneParam=`&lane=${lane}`;
-  const heading = this.vehicleHeading!==undefined ? Math.round(this.vehicleHeading) : (step>0?-90:90);
-  const headingParam=`&heading=${heading}`;
-  location.href=location.pathname+`?v=westgate-v112gg&area=highway_loop&chunk=${next}&entry=${entry}${laneParam}${inCar}${carKey}${stolen}${spd}${headingParam}&persist=1&collision=off&t=${Date.now()}`;
+  if(this.vehicleMode && this.vehicle) cfSaveVehicleState(this);
+  const inCar=this.vehicleMode?"&vehicle=car":"";
+  const carKey=this.vehicleMode&&this.vehicle?`&carKey=${encodeURIComponent(cfCurrentCarKey(this))}`:"";
+  const stolen=this.vehicleMode&&this.vehicle&&this.vehicle.stolen?"&stolen=1":"";
+  const spd=this.vehicleMode?`&speed=${Math.round(this.vehicleSpeed||0)}`:"";
+  const lane=this.vehicle&&this.nearestLaneIndexForX?this.nearestLaneIndexForX(this.vehicle.x,this.vehicle.y):1;
+  const heading=this.vehicleHeading!==undefined?Math.round(this.vehicleHeading):(step>0?-90:90);
+  location.replace(location.pathname+`?v=westgate-v112hh&area=highway_loop&chunk=${next}&entry=${entry}&lane=${lane}${inCar}${carKey}${stolen}${spd}&heading=${heading}&persist=1&collision=off&t=${Date.now()}`);
 }
 checkHighwayLoopTransitions(){
   if(AREA!=="highway_loop" || !this.vehicle || !this.vehicleMode) return;
@@ -1761,7 +1784,7 @@ if(this.vehicle){
       this.vehicleLabel.setText(vd<190 ? "DONNY'S CAR\nTAP CAR TO ENTER" : "DONNY'S CAR");
     }
     if(this.vehicleMode){
-      this.updateVehicle(dt);
+      /* v112h tank update */ if(!(this.vehicleMode&&cfTankDrive(this,dt))) this.updateVehicle(dt);
   if(this.updateCarHud) this.updateCarHud();
   if(this.applyRoadFollowAssist) this.applyRoadFollowAssist();
   this.updateTraffic(dt);
@@ -1869,8 +1892,8 @@ handleUse(){
     const d=Phaser.Math.Distance.Between((this.vehicleMode?this.vehicle.x:this.player.x),(this.vehicleMode?this.vehicle.y:this.player.y),this.loopOfframpZone.x,this.loopOfframpZone.y);
     if(d<this.loopOfframpZone.r){
       const chunk=HIGHWAY_LOOP[loopChunk()];
-      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v112gg&area=westgate&collision=mask";
-      else location.href=location.pathname+"?v=westgate-v112gg&area=a1&collision=mask";
+      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v112hh&area=westgate&collision=mask";
+      else location.href=location.pathname+"?v=westgate-v112hh&area=a1&collision=mask";
       return;
     }
   }
@@ -1911,7 +1934,7 @@ handleUse(){
   if(AREA==="highway" && this.highwayWestgateExit){
     const d=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.highwayWestgateExit.x,this.highwayWestgateExit.y);
     if(d < this.highwayWestgateExit.r){
-      location.href=location.pathname+"?v=westgate-v112gg&area=westgate&collision=mask";
+      location.href=location.pathname+"?v=westgate-v112hh&area=westgate&collision=mask";
       return;
     }
     showToast("Follow the marked ramp exit to Westgate.");
@@ -1957,7 +1980,7 @@ handleUse(){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v112gg&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v112hh&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -1974,16 +1997,16 @@ handleUse(){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112gg&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112hh&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112gg&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112gg&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112gg&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112hh&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112hh&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112hh&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
@@ -2083,6 +2106,108 @@ function cfSetActionButton(name, down){
   }
 }
 
+
+function cfCarVisualAngle(heading){
+  // top-down vehicle art faces north/up at angle 0
+  return heading + 90;
+}
+function cfCurrentCarKey(scene){
+  try{return (scene.vehicle && scene.vehicle.texture && scene.vehicle.texture.key) || "donny_car";}catch(e){return "donny_car";}
+}
+function cfSaveVehicleState(scene){
+  try{
+    if(!scene || !scene.vehicleMode || !scene.vehicle) return;
+    const lane = scene.nearestLaneIndexForX ? scene.nearestLaneIndexForX(scene.vehicle.x,scene.vehicle.y) : 1;
+    const data={
+      active:true,
+      stolen:!!scene.vehicle.stolen,
+      carKey:cfCurrentCarKey(scene),
+      speed:Math.round(scene.vehicleSpeed||0),
+      heading:Math.round(scene.vehicleHeading ?? ((scene.vehicle.angle||0)-90)),
+      lane:lane,
+      xRatio:scene.vehicle.x/scene.mapW,
+      yRatio:scene.vehicle.y/scene.mapH,
+      t:Date.now()
+    };
+    localStorage.setItem("cf_vehicle_state",JSON.stringify(data));
+    localStorage.setItem("cf_active_vehicle",JSON.stringify(data));
+  }catch(e){}
+}
+function cfLoadVehicleState(){
+  try{return JSON.parse(localStorage.getItem("cf_vehicle_state") || localStorage.getItem("cf_active_vehicle") || "null");}catch(e){return null;}
+}
+function cfClearVehicleState(){
+  try{localStorage.removeItem("cf_vehicle_state");localStorage.removeItem("cf_active_vehicle");}catch(e){}
+}
+function cfLaneX(scene, lane){
+  const xs=[scene.mapW*.215, scene.mapW*.365, scene.mapW*.680, scene.mapW*.815];
+  return xs[Phaser.Math.Clamp(lane||0,0,3)] || xs[1];
+}
+function cfTankDrive(scene, dt){
+  if(!scene || !scene.vehicleMode || !scene.vehicle || pauseOpen || shopOpen || dialogueOpen) return false;
+  const sec=Math.min(.05,(dt||16)/1000);
+  if(scene.vehicleHeading===undefined) scene.vehicleHeading=(scene.vehicle.angle||0)-90;
+  if(scene.vehicleSpeed===undefined) scene.vehicleSpeed=0;
+
+  const steer=Math.abs(input.x)>0.10 ? input.x : 0; // thumb stick turns only
+  const gas=!!input.a || !!input.vgas;
+  const brake=!!input.b || !!input.vbrake;
+  const handbrake=!!input.r;
+
+  const absSpeed=Math.abs(scene.vehicleSpeed);
+  const turnRate=(handbrake?230:125)*(0.35+Math.min(absSpeed/230,1));
+  scene.vehicleHeading += steer*turnRate*sec;
+
+  if(gas) scene.vehicleSpeed += 340*sec;
+  if(brake){
+    if(scene.vehicleSpeed>12) scene.vehicleSpeed -= 520*sec;
+    else scene.vehicleSpeed -= 220*sec;
+  }
+  if(!gas && !brake) scene.vehicleSpeed *= .982;
+  if(handbrake) scene.vehicleSpeed *= .955;
+  scene.vehicleSpeed=Phaser.Math.Clamp(scene.vehicleSpeed,-135,330);
+  if(Math.abs(scene.vehicleSpeed)<1.4) scene.vehicleSpeed=0;
+
+  const rad=Phaser.Math.DegToRad(scene.vehicleHeading);
+  scene.vehicle.x += Math.cos(rad)*scene.vehicleSpeed*sec;
+  scene.vehicle.y += Math.sin(rad)*scene.vehicleSpeed*sec;
+  scene.vehicle.x=Phaser.Math.Clamp(scene.vehicle.x,12,scene.mapW-12);
+  scene.vehicle.y=Phaser.Math.Clamp(scene.vehicle.y,12,scene.mapH-12);
+  scene.vehicle.angle=cfCarVisualAngle(scene.vehicleHeading);
+
+  if(scene.player){scene.player.setPosition(scene.vehicle.x,scene.vehicle.y);scene.player.setVisible(false);}
+  if(scene.vehicleLabel)scene.vehicleLabel.setPosition(scene.vehicle.x,scene.vehicle.y-58);
+  if(scene.cameras&&scene.cameras.main)scene.cameras.main.centerOn(scene.vehicle.x,scene.vehicle.y);
+  if(scene.updateCarHud)scene.updateCarHud();
+  if(scene.checkHighwayLoopTransitions)scene.checkHighwayLoopTransitions();
+
+  if(coordLine) coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(scene.vehicle.x)},${Math.round(scene.vehicle.y)} <span class="tag">CAR:</span> TANK <span class="tag">A:</span>${gas?1:0} <span class="tag">B:</span>${brake?1:0} <span class="tag">STEER:</span>${steer.toFixed(2)} <span class="tag">SPD:</span>${Math.round(scene.vehicleSpeed)}`;
+  return true;
+}
+function cfSetButtonDown(name,down){
+  if(name==="a"){input.a=!!down; input.vgas=!!down;}
+  if(name==="b"){input.b=!!down; input.vbrake=!!down;}
+  if(name==="r"){input.r=!!down;}
+  if(name==="x" && down){input.xbtn=true;input.usePressed=true;input.carjackPressed=true;}
+}
+function cfInstallButtonFix(){
+  document.querySelectorAll(".btn,.vbtn").forEach(btn=>{
+    if(btn.__cf112h) return;
+    btn.__cf112h=true;
+    const raw=(btn.dataset.btn||btn.className||btn.id||btn.textContent||"").toLowerCase();
+    let name="";
+    if(raw.includes("a")||raw.includes("gas")) name="a";
+    if(raw.includes("b")||raw.includes("brake")) name="b";
+    if(raw.includes("r")||raw.includes("hand")||raw.includes("bst")) name="r";
+    if(raw.includes("x")||raw.includes("exit")||raw.includes("use")) name="x";
+    if(!name) return;
+    const down=e=>{e.preventDefault();e.stopPropagation();cfSetButtonDown(name,true);};
+    const up=e=>{e.preventDefault();e.stopPropagation();if(name!=="x")cfSetButtonDown(name,false);};
+    ["pointerdown","touchstart","mousedown"].forEach(t=>btn.addEventListener(t,down,{passive:false}));
+    ["pointerup","pointercancel","pointerleave","touchend","mouseup"].forEach(t=>btn.addEventListener(t,up,{passive:false}));
+  });
+}
+
 function setupControls(){
   const stick=document.getElementById("stick");
   const nub=document.getElementById("nub");
@@ -2143,26 +2268,9 @@ function setupControls(){
       const len=Math.hypot(vx,vy);
       if(len>.12){
         if(sc.vehicleMode && sc.vehicle){
-          // v110: restore immediate stick car movement.
-          const base=input.a ? 5.8 : 3.7;
-          sc.vehicle.x += vx*base;
-          sc.vehicle.y += vy*base;
-          sc.vehicle.x=Phaser.Math.Clamp(sc.vehicle.x,12,sc.mapW-12);
-          sc.vehicle.y=Phaser.Math.Clamp(sc.vehicle.y,12,sc.mapH-12);
-          const targetAngle=Phaser.Math.RadToDeg(Math.atan2(vy,vx))+90;
-          sc.vehicle.angle=Phaser.Math.Angle.RotateTo(
-            Phaser.Math.DegToRad(sc.vehicle.angle||0),
-            Phaser.Math.DegToRad(targetAngle),
-            0.20
-          )*180/Math.PI;
-          sc.vehicleSpeed=base;
+          // v112h: thumb stick steers only. It must not drag/move the car.
           if(sc.player){ sc.player.setPosition(sc.vehicle.x,sc.vehicle.y); sc.player.setVisible(false); }
-          if(sc.vehicleLabel) sc.vehicleLabel.setPosition(sc.vehicle.x,sc.vehicle.y-58);
-          if(sc.cameras && sc.cameras.main) sc.cameras.main.centerOn(sc.vehicle.x,sc.vehicle.y);
-          if(sc.updateCarHud) sc.updateCarHud();
-            if(sc.applyRoadFollowAssist) sc.applyRoadFollowAssist();
-          if(sc.checkHighwayLoopTransitions) sc.checkHighwayLoopTransitions();
-          if(coordLine) coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(sc.vehicle.x)},${Math.round(sc.vehicle.y)} <span class="tag">V110:</span> DIRECT CAR <span class="tag">JOY:</span> ${input.x.toFixed(1)},${input.y.toFixed(1)} <span class="tag">A:</span>${input.a?1:0}`;
+          if(coordLine) coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(sc.vehicle.x)},${Math.round(sc.vehicle.y)} <span class="tag">CAR:</span> STEER ONLY <span class="tag">JOY:</span> ${input.x.toFixed(1)},${input.y.toFixed(1)} <span class="tag">A:</span>${input.a?1:0} <span class="tag">B:</span>${input.b?1:0}`;
         } else if(sc.player){
           const speed=input.r ? 4.1 : 2.75; // pixels per frame, direct fallback
           sc.tryMove(vx*speed, vy*speed);
@@ -2399,28 +2507,7 @@ function installV110MovementFallback(){
 
         // Guaranteed Donny car movement with working toggle/stick.
         if(sc.vehicleMode && sc.vehicle && !dialogueOpen && !shopOpen && !pauseOpen){
-          const vx=input.x||0, vy=input.y||0;
-          const len=Math.hypot(vx,vy);
-          if(len>.12){
-            const base=input.a ? 5.8 : 3.7;
-            sc.vehicle.x += vx*base;
-            sc.vehicle.y += vy*base;
-            sc.vehicle.x=Phaser.Math.Clamp(sc.vehicle.x,12,sc.mapW-12);
-            sc.vehicle.y=Phaser.Math.Clamp(sc.vehicle.y,12,sc.mapH-12);
-            const targetAngle=Phaser.Math.RadToDeg(Math.atan2(vy,vx))+90;
-            sc.vehicle.angle=Phaser.Math.Angle.RotateTo(
-              Phaser.Math.DegToRad(sc.vehicle.angle||0),
-              Phaser.Math.DegToRad(targetAngle),
-              0.20
-            )*180/Math.PI;
-            sc.vehicleSpeed=base;
-            if(sc.player){ sc.player.setPosition(sc.vehicle.x,sc.vehicle.y); sc.player.setVisible(false); }
-            if(sc.vehicleLabel) sc.vehicleLabel.setPosition(sc.vehicle.x,sc.vehicle.y-58);
-            if(sc.cameras && sc.cameras.main) sc.cameras.main.centerOn(sc.vehicle.x,sc.vehicle.y);
-            if(sc.updateCarHud) sc.updateCarHud();
-            if(sc.checkHighwayLoopTransitions) sc.checkHighwayLoopTransitions();
-            if(coordLine) coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(sc.vehicle.x)},${Math.round(sc.vehicle.y)} <span class="tag">V110:</span> CAR MOVE <span class="tag">JOY:</span> ${input.x.toFixed(1)},${input.y.toFixed(1)} <span class="tag">A:</span>${input.a?1:0}`;
-          }
+          cfTankDrive(sc,16);
         } else if(sc.player && !dialogueOpen && !shopOpen && !pauseOpen){
           const vx=input.x||0, vy=input.y||0;
           const len=Math.hypot(vx,vy);
@@ -2439,6 +2526,7 @@ function installV110MovementFallback(){
 }
 
 setupControls();
+cfInstallButtonFix();
 installV110MovementFallback();
 installDedicatedVehicleControls();
 installHardVehicleButtons();
