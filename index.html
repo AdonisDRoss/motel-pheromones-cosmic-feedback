@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v113d</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v113e</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -243,7 +243,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Loop / Asphalt Pathing v113d</div>
+<div class="version">Highway Loop / NPC + Westgate Fix v113e</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -1229,6 +1229,7 @@ driverForTrafficCar(car,i=0){
 spawnPulledDriver(car){
   this.createDriverAnimations();
   this.spawnVisibleCivilians();
+  this.createWestgateReturnTrigger();
   // v113c delayed force civilian spawn
   this.time.delayedCall(600,()=>{ if(!this.visibleCivilians || !this.visibleCivilians.length) this.spawnVisibleCivilians(); });
   if(!this.pulledDrivers) this.pulledDrivers=[];
@@ -1466,54 +1467,106 @@ updateTraffic(dt){
 
 
 spawnVisibleCivilians(){
-  if(!(AREA==="highway"||AREA==="highway_loop"))return;
-  if(this.visibleCivilians&&this.visibleCivilians.length)return;
-  this.createDriverAnimations(); this.visibleCivilians=[];
+  if(!(AREA==="highway" || AREA==="highway_loop")) return;
+  if(this.visibleCivilians && this.visibleCivilians.length) return;
+  this.createDriverAnimations();
+  this.visibleCivilians=[];
   const pool=[
-    {tex:"npc_driver_male_01",anim:"driver_male_01",label:"Civilian"},
-    {tex:"npc_driver_female_02",anim:"driver_female_02",label:"Civilian"},
-    {tex:"npc_elderly_01",anim:"elderly_01",label:"Elderly"},
-    {tex:"npc_mechanic_01",anim:"mechanic_01",label:"Mechanic"},
-    {tex:"npc_water_carrier_01",anim:"water_carrier_01",label:"Water Carrier"}
+    {tex:"npc_driver_male_01", anim:"driver_male_01", label:"Civilian"},
+    {tex:"npc_driver_female_02", anim:"driver_female_02", label:"Civilian"},
+    {tex:"npc_elderly_01", anim:"elderly_01", label:"Elderly"},
+    {tex:"npc_mechanic_01", anim:"mechanic_01", label:"Mechanic"},
+    {tex:"npc_water_carrier_01", anim:"water_carrier_01", label:"Water Carrier"}
   ];
-  for(let i=0;i<8;i++){
-    const data=pool[(i+loopChunk())%pool.length], side=i%2===0?-1:1;
-    const progress=.10+((i*.11+loopChunk()*.07)% .78);
-    const pt=cfShoulderPathPoint(this,side,progress);
+  const anchor=this.vehicleMode && this.vehicle ? this.vehicle : this.player;
+  const ax=anchor?.x || this.mapW*.50;
+  const ay=anchor?.y || this.mapH*.72;
+  const spots=[
+    [ax-120,ay-90],[ax+120,ay-90],
+    [ax-150,ay+35],[ax+150,ay+35],
+    [ax-90,ay+120],[ax+90,ay+120],
+    [ax-205,ay+10],[ax+205,ay+10]
+  ];
+  for(let i=0;i<spots.length;i++){
+    const data=pool[(i+loopChunk())%pool.length];
     const hasTex=this.textures.exists(data.tex);
+    const x=Phaser.Math.Clamp(spots[i][0],52,this.mapW-52);
+    const y=Phaser.Math.Clamp(spots[i][1],52,this.mapH-52);
     let spr;
     if(hasTex){
-      spr=this.add.sprite(pt.x,pt.y,data.tex,0).setDepth(DEPTH.CHARACTER_BASE+180+i).setScale(.42).setOrigin(.5,.75);
-      try{spr.play(`${data.anim}_up`)}catch(e){}
+      spr=this.add.sprite(x,y,data.tex,0).setDepth(DEPTH.CHARACTER_BASE+220+i).setScale(0.44).setOrigin(.5,.75);
+      try{ spr.play(`${data.anim}_down`); }catch(e){}
     }else{
-      spr=this.add.rectangle(pt.x,pt.y,18,30,0x9eefff,.95).setDepth(DEPTH.CHARACTER_BASE+180+i).setOrigin(.5,.75);
+      spr=this.add.rectangle(x,y,20,34,0x9eefff,0.95).setDepth(DEPTH.CHARACTER_BASE+220+i).setOrigin(.5,.75);
       spr.missingTexture=true;
     }
-    spr.npcData=data; spr.pathSide=side; spr.pathProgress=progress;
-    spr.pathSpeed=(.000055+Math.random()*.000035)*(Math.random()>.5?1:-1);
-    spr.nameLabel=this.add.text(pt.x,pt.y-52,data.label,{fontFamily:"monospace",fontSize:"8px",color:"#e8fbff",backgroundColor:"rgba(0,0,0,.70)",padding:{x:4,y:2}}).setOrigin(.5).setDepth(DEPTH.LABEL+5);
+    spr.npcData=data;
+    spr.homeX=x; spr.homeY=y;
+    spr.walkVX=(Math.random()>.5?1:-1)*(0.20+Math.random()*0.16);
+    spr.walkVY=(Math.random()>.5?1:-1)*(0.12+Math.random()*0.12);
+    spr.nameLabel=this.add.text(x,y-54,data.label,{
+      fontFamily:"monospace",fontSize:"8px",color:"#e8fbff",
+      backgroundColor:"rgba(0,0,0,.70)",padding:{x:4,y:2}
+    }).setOrigin(.5).setDepth(DEPTH.LABEL+20);
     this.visibleCivilians.push(spr);
   }
-  showToast("NPCS SPAWNED\nasphalt paths");
+  showToast(`NPCS SPAWNED\n${this.visibleCivilians.length} visible`);
 }
 
 updateVisibleCivilians(dt){
-  if(!this.visibleCivilians)return;
-  const delta=dt||16;
+  if(!this.visibleCivilians) return;
+  const delta=Math.max(.8,Math.min(2,(dt||16)/16.666));
   for(const spr of this.visibleCivilians){
-    const oldX=spr.x,oldY=spr.y;
-    spr.pathProgress+=spr.pathSpeed*delta;
-    if(spr.pathProgress<.04){spr.pathProgress=.04;spr.pathSpeed=Math.abs(spr.pathSpeed)}
-    if(spr.pathProgress>.94){spr.pathProgress=.94;spr.pathSpeed=-Math.abs(spr.pathSpeed)}
-    const pt=cfShoulderPathPoint(this,spr.pathSide||1,spr.pathProgress);
-    spr.x+=(pt.x-spr.x)*.16; spr.y+=(pt.y-spr.y)*.16;
-    if(this.vehicleMode&&this.vehicle){
+    spr.x += spr.walkVX*delta;
+    spr.y += spr.walkVY*delta;
+    if(Math.abs(spr.x-spr.homeX)>46) spr.walkVX*=-1;
+    if(Math.abs(spr.y-spr.homeY)>38) spr.walkVY*=-1;
+    if(this.vehicleMode && this.vehicle){
       const d=Phaser.Math.Distance.Between(this.vehicle.x,this.vehicle.y,spr.x,spr.y);
-      if(d<95){const nx=(spr.x-this.vehicle.x)/(d||1),ny=(spr.y-this.vehicle.y)/(d||1);spr.x+=nx*1.8;spr.y+=ny*1.8}
+      if(d<105){
+        const nx=(spr.x-this.vehicle.x)/(d||1);
+        const ny=(spr.y-this.vehicle.y)/(d||1);
+        spr.x += nx*2.1;
+        spr.y += ny*2.1;
+      }
     }
-    cfSetNpcPathAnim(spr,spr.x-oldX,spr.y-oldY);
-    if(spr.nameLabel)spr.nameLabel.setPosition(spr.x,spr.y-52);
+    if(!spr.missingTexture){
+      const anim=spr.npcData?.anim || "driver_male_01";
+      try{
+        if(Math.abs(spr.walkVX)>Math.abs(spr.walkVY)) spr.play(`${anim}_${spr.walkVX<0?"left":"right"}`,true);
+        else spr.play(`${anim}_${spr.walkVY<0?"up":"down"}`,true);
+      }catch(e){}
+    }
+    if(spr.nameLabel) spr.nameLabel.setPosition(spr.x,spr.y-54);
   }
+}
+
+createWestgateReturnTrigger(){
+  if(this._westgateReturnReady || !(AREA==="highway_loop" || AREA==="highway")) return;
+  this._westgateReturnReady=true;
+  this.westgateReturnZone={x:this.mapW*.50,y:this.mapH*.93,r:120};
+  this.westgateReturnLabel=this.add.text(this.westgateReturnZone.x,this.westgateReturnZone.y-56,"WESTGATE\nX RETURN",{
+    fontFamily:"monospace",fontSize:"9px",color:"#9eefff",
+    backgroundColor:"rgba(0,0,0,.60)",padding:{x:5,y:3},align:"center"
+  }).setOrigin(.5).setDepth(DEPTH.LABEL+30).setVisible(loopChunk()===0);
+}
+updateWestgateReturnTrigger(){
+  if(!this.westgateReturnZone || loopChunk()!==0) return;
+  const target=this.vehicleMode && this.vehicle ? this.vehicle : this.player;
+  if(!target) return;
+  const d=Phaser.Math.Distance.Between(target.x,target.y,this.westgateReturnZone.x,this.westgateReturnZone.y);
+  const near=d<this.westgateReturnZone.r;
+  if(this.westgateReturnLabel) this.westgateReturnLabel.setVisible(near);
+  if(near && input.carjackPressed){
+    input.carjackPressed=false;
+    this.returnToWestgate();
+  }
+}
+returnToWestgate(){
+  try{
+    if(this.vehicleMode && this.vehicle && typeof cfSaveVehicleState==="function") cfSaveVehicleState(this);
+  }catch(e){}
+  location.replace(location.pathname+`?v=westgate-v113ee&area=westgate_blacklight&entry=highway_return&collision=off&t=${Date.now()}`);
 }
 
 initWantedSystem(){
@@ -1991,7 +2044,7 @@ goHighwayLoop(step){
   const spd=this.vehicleMode?`&speed=${Math.round(this.vehicleSpeed||0)}`:"";
   const lane=this.vehicle&&this.nearestLaneIndexForX?this.nearestLaneIndexForX(this.vehicle.x,this.vehicle.y):1;
   const heading=this.vehicleHeading!==undefined?Math.round(this.vehicleHeading):(step>0?-90:90);
-  location.replace(location.pathname+`?v=westgate-v113dd&area=highway_loop&chunk=${next}&entry=${entry}&lane=${lane}${inCar}${carKey}${stolen}${spd}&heading=${heading}&persist=1&collision=off&t=${Date.now()}`);
+  location.replace(location.pathname+`?v=westgate-v113ee&area=highway_loop&chunk=${next}&entry=${entry}&lane=${lane}${inCar}${carKey}${stolen}${spd}&heading=${heading}&persist=1&collision=off&t=${Date.now()}`);
 }
 checkHighwayLoopTransitions(){
   if(AREA!=="highway_loop" || !this.vehicle || !this.vehicleMode) return;
@@ -2044,6 +2097,7 @@ if(this.vehicle){
   this.updatePulledDrivers(dt);
   this.updateCarjackPrompt();
   this.updateVisibleCivilians(dt);
+  this.updateWestgateReturnTrigger();
   this.updateWantedSystem(dt);
   this.maybeWantedFromDriving();
   if(this.hideTransitionDebugMarkers) this.hideTransitionDebugMarkers();
@@ -2149,8 +2203,8 @@ handleUse(){
     const d=Phaser.Math.Distance.Between((this.vehicleMode?this.vehicle.x:this.player.x),(this.vehicleMode?this.vehicle.y:this.player.y),this.loopOfframpZone.x,this.loopOfframpZone.y);
     if(d<this.loopOfframpZone.r){
       const chunk=HIGHWAY_LOOP[loopChunk()];
-      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v113dd&area=westgate&collision=mask";
-      else location.href=location.pathname+"?v=westgate-v113dd&area=a1&collision=mask";
+      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v113ee&area=westgate&collision=mask";
+      else location.href=location.pathname+"?v=westgate-v113ee&area=a1&collision=mask";
       return;
     }
   }
@@ -2191,7 +2245,7 @@ handleUse(){
   if(AREA==="highway" && this.highwayWestgateExit){
     const d=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.highwayWestgateExit.x,this.highwayWestgateExit.y);
     if(d < this.highwayWestgateExit.r){
-      location.href=location.pathname+"?v=westgate-v113dd&area=westgate&collision=mask";
+      location.href=location.pathname+"?v=westgate-v113ee&area=westgate&collision=mask";
       return;
     }
     showToast("Follow the marked ramp exit to Westgate.");
@@ -2237,7 +2291,7 @@ handleUse(){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v113dd&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v113ee&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -2254,16 +2308,16 @@ handleUse(){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v113dd&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v113ee&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v113dd&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v113dd&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v113dd&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v113ee&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v113ee&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v113ee&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
@@ -2518,34 +2572,6 @@ function cfPlayVehicleCrash(scene){
 function cfPlayTireScreech(scene){
   try{
     if(scene?.cache?.audio?.exists("veh_tire")) scene.sound.play("veh_tire",{volume:0.22});
-  }catch(e){}
-}
-
-
-function cfAsphaltCurveX(scene,y,laneIndex=1){
-  const t=Math.max(0,Math.min(1,y/scene.mapH));
-  const base=[scene.mapW*.215,scene.mapW*.365,scene.mapW*.680,scene.mapW*.815][Phaser.Math.Clamp(laneIndex,0,3)];
-  const curveT=Math.max(0,Math.min(1,(.86-t)/.42));
-  const bend=Math.sin(curveT*Math.PI*.5);
-  return Phaser.Math.Clamp(base+bend*scene.mapW*.20,scene.mapW*.08,scene.mapW*.92);
-}
-function cfAsphaltHeading(scene,y,laneIndex=1,dir=-1){
-  const yA=Phaser.Math.Clamp(y,0,scene.mapH);
-  const yB=Phaser.Math.Clamp(y+(dir<0?-28:28),0,scene.mapH);
-  return Phaser.Math.RadToDeg(Math.atan2(yB-yA,cfAsphaltCurveX(scene,yB,laneIndex)-cfAsphaltCurveX(scene,yA,laneIndex)));
-}
-function cfShoulderPathPoint(scene,side,progress){
-  const y=scene.mapH*(.90-progress*.82);
-  const lane=side<0?0:3;
-  const offset=side<0?-scene.mapW*.085:scene.mapW*.085;
-  return {x:Phaser.Math.Clamp(cfAsphaltCurveX(scene,y,lane)+offset,40,scene.mapW-40),y:Phaser.Math.Clamp(y,40,scene.mapH-40)};
-}
-function cfSetNpcPathAnim(spr,dx,dy){
-  if(!spr||spr.missingTexture)return;
-  const anim=spr.npcData?.anim||"driver_male_01";
-  try{
-    if(Math.abs(dx)>Math.abs(dy))spr.play(`${anim}_${dx<0?"left":"right"}`,true);
-    else spr.play(`${anim}_${dy<0?"up":"down"}`,true);
   }catch(e){}
 }
 
