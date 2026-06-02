@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v112h</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v112i</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -242,7 +242,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Loop / Tank Controls Persist v112h</div>
+<div class="version">Highway Loop / Car Angle + Audio v112i</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -465,6 +465,18 @@ function cfVehicleVisualAngleFromHeading(heading){
   // Top-down vehicle PNGs face UP/NORTH at visual angle 0.
   return heading + 90;
 }
+
+
+const VEHICLE_AUDIO = {
+  idle:"assets/audio/vehicles/vehicle_engine_idle_loop.wav",
+  drive:"assets/audio/vehicles/vehicle_engine_drive_loop.wav",
+  boost:"assets/audio/vehicles/vehicle_engine_boost_loop.wav",
+  crash:"assets/audio/vehicles/vehicle_crash_thud.wav",
+  tire:"assets/audio/vehicles/tire_screech.wav",
+  police:"assets/audio/vehicles/police_siren_loop.wav",
+  ambulance:"assets/audio/vehicles/ambulance_siren_loop.wav",
+  civicBlip:"assets/audio/vehicles/civic_patrol_siren_blip.wav"
+};
 
 const NPC_DRIVER_ASSETS = {
   male01:"assets/sprites/npcs/npcs/world/civilians/civilian_driver_male_01.png",
@@ -808,6 +820,16 @@ preload(){
   });
   this.load.image("map", mapCfg.base);
   this.load.image("donny_car", VEHICLES.donnyCar);
+
+  this.load.audio("veh_idle", VEHICLE_AUDIO.idle);
+  this.load.audio("veh_drive", VEHICLE_AUDIO.drive);
+  this.load.audio("veh_boost", VEHICLE_AUDIO.boost);
+  this.load.audio("veh_crash", VEHICLE_AUDIO.crash);
+  this.load.audio("veh_tire", VEHICLE_AUDIO.tire);
+  this.load.audio("veh_police", VEHICLE_AUDIO.police);
+  this.load.audio("veh_ambulance", VEHICLE_AUDIO.ambulance);
+  this.load.audio("veh_civic_blip", VEHICLE_AUDIO.civicBlip);
+
   this.load.image("traffic_sheet_01", TRAFFIC_ASSETS.sheet01);
   this.load.image("traffic_sheet_02", TRAFFIC_ASSETS.sheet02);
   this.load.image("traffic_sheet_03", TRAFFIC_ASSETS.sheet03);
@@ -955,6 +977,7 @@ preload(){
       this.vehicleLabel.setText(stolen?"STOLEN VEHICLE\nX EXIT":"DONNY'S CAR\nX EXIT").setPosition(this.vehicle.x,this.vehicle.y-58).setVisible(true);
     }
     setMode("IN CAR");
+    cfStartVehicleAudio(this);
     setObjective(stolen?"Drive stolen vehicle":"Drive Donny's car");
   }
 
@@ -1412,6 +1435,7 @@ updateTraffic(dt){
         if(this.carVelY!==undefined) this.carVelY = (this.carVelY||0)*-0.22 + ny*55;
 
         if(car.kind==="EMS") playEmsSiren(); else playTrafficHorn();
+        cfPlayVehicleCrash(this);
         showHint(car.kind==="EMS" ? "EMS collision" : "traffic collision");
       }
     }
@@ -1456,6 +1480,7 @@ createHighwayVehicle(){
   }
   this.vehicleMode=false;
   cfClearVehicleState();
+  cfUpdateVehicleAudio(this);
   cfClearActiveVehicle();
   this.playerVehicle=this.vehicle;
   this.originalDonnyVehicle=this.vehicle;
@@ -1738,7 +1763,7 @@ goHighwayLoop(step){
   const spd=this.vehicleMode?`&speed=${Math.round(this.vehicleSpeed||0)}`:"";
   const lane=this.vehicle&&this.nearestLaneIndexForX?this.nearestLaneIndexForX(this.vehicle.x,this.vehicle.y):1;
   const heading=this.vehicleHeading!==undefined?Math.round(this.vehicleHeading):(step>0?-90:90);
-  location.replace(location.pathname+`?v=westgate-v112hh&area=highway_loop&chunk=${next}&entry=${entry}&lane=${lane}${inCar}${carKey}${stolen}${spd}&heading=${heading}&persist=1&collision=off&t=${Date.now()}`);
+  location.replace(location.pathname+`?v=westgate-v112i&area=highway_loop&chunk=${next}&entry=${entry}&lane=${lane}${inCar}${carKey}${stolen}${spd}&heading=${heading}&persist=1&collision=off&t=${Date.now()}`);
 }
 checkHighwayLoopTransitions(){
   if(AREA!=="highway_loop" || !this.vehicle || !this.vehicleMode) return;
@@ -1892,8 +1917,8 @@ handleUse(){
     const d=Phaser.Math.Distance.Between((this.vehicleMode?this.vehicle.x:this.player.x),(this.vehicleMode?this.vehicle.y:this.player.y),this.loopOfframpZone.x,this.loopOfframpZone.y);
     if(d<this.loopOfframpZone.r){
       const chunk=HIGHWAY_LOOP[loopChunk()];
-      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v112hh&area=westgate&collision=mask";
-      else location.href=location.pathname+"?v=westgate-v112hh&area=a1&collision=mask";
+      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v112i&area=westgate&collision=mask";
+      else location.href=location.pathname+"?v=westgate-v112i&area=a1&collision=mask";
       return;
     }
   }
@@ -1934,7 +1959,7 @@ handleUse(){
   if(AREA==="highway" && this.highwayWestgateExit){
     const d=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.highwayWestgateExit.x,this.highwayWestgateExit.y);
     if(d < this.highwayWestgateExit.r){
-      location.href=location.pathname+"?v=westgate-v112hh&area=westgate&collision=mask";
+      location.href=location.pathname+"?v=westgate-v112i&area=westgate&collision=mask";
       return;
     }
     showToast("Follow the marked ramp exit to Westgate.");
@@ -1980,7 +2005,7 @@ handleUse(){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v112hh&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v112i&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -1997,16 +2022,16 @@ handleUse(){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112hh&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112i&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112hh&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112hh&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112hh&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112i&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112i&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112i&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
@@ -2108,8 +2133,9 @@ function cfSetActionButton(name, down){
 
 
 function cfCarVisualAngle(heading){
-  // top-down vehicle art faces north/up at angle 0
-  return heading + 90;
+  // v112i: current car art needed +90 more rotation.
+  // Fixes "left side is the front" behavior.
+  return heading + 180;
 }
 function cfCurrentCarKey(scene){
   try{return (scene.vehicle && scene.vehicle.texture && scene.vehicle.texture.key) || "donny_car";}catch(e){return "donny_car";}
@@ -2180,6 +2206,8 @@ function cfTankDrive(scene, dt){
   if(scene.cameras&&scene.cameras.main)scene.cameras.main.centerOn(scene.vehicle.x,scene.vehicle.y);
   if(scene.updateCarHud)scene.updateCarHud();
   if(scene.checkHighwayLoopTransitions)scene.checkHighwayLoopTransitions();
+  cfUpdateVehicleAudio(scene);
+  if(handbrake && Math.abs(scene.vehicleSpeed)>80 && Math.random()<0.045) cfPlayTireScreech(scene);
 
   if(coordLine) coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(scene.vehicle.x)},${Math.round(scene.vehicle.y)} <span class="tag">CAR:</span> TANK <span class="tag">A:</span>${gas?1:0} <span class="tag">B:</span>${brake?1:0} <span class="tag">STEER:</span>${steer.toFixed(2)} <span class="tag">SPD:</span>${Math.round(scene.vehicleSpeed)}`;
   return true;
@@ -2206,6 +2234,51 @@ function cfInstallButtonFix(){
     ["pointerdown","touchstart","mousedown"].forEach(t=>btn.addEventListener(t,down,{passive:false}));
     ["pointerup","pointercancel","pointerleave","touchend","mouseup"].forEach(t=>btn.addEventListener(t,up,{passive:false}));
   });
+}
+
+
+function cfStartVehicleAudio(scene){
+  try{
+    if(!scene || scene._vehicleAudioReady) return;
+    scene._vehicleAudioReady=true;
+    const make=(key,vol,loop=true)=>{
+      if(!scene.cache.audio.exists(key)) return null;
+      const s=scene.sound.add(key,{loop,volume:vol});
+      return s;
+    };
+    scene.sndIdle=make("veh_idle",0.18,true);
+    scene.sndDrive=make("veh_drive",0.00,true);
+    scene.sndBoost=make("veh_boost",0.00,true);
+    if(scene.sndIdle && !scene.sndIdle.isPlaying) scene.sndIdle.play();
+    if(scene.sndDrive && !scene.sndDrive.isPlaying) scene.sndDrive.play();
+    if(scene.sndBoost && !scene.sndBoost.isPlaying) scene.sndBoost.play();
+  }catch(e){}
+}
+function cfUpdateVehicleAudio(scene){
+  try{
+    if(!scene || !scene.vehicleMode){ 
+      if(scene?.sndDrive) scene.sndDrive.setVolume(0);
+      if(scene?.sndBoost) scene.sndBoost.setVolume(0);
+      if(scene?.sndIdle) scene.sndIdle.setVolume(0.05);
+      return;
+    }
+    cfStartVehicleAudio(scene);
+    const speed=Math.min(1, Math.abs(scene.vehicleSpeed||0)/260);
+    const gas=!!input.a || !!input.vgas;
+    if(scene.sndIdle) scene.sndIdle.setVolume(0.10 + (1-speed)*0.10);
+    if(scene.sndDrive) scene.sndDrive.setVolume(0.05 + speed*0.28);
+    if(scene.sndBoost) scene.sndBoost.setVolume(gas && speed>.35 ? 0.18 : 0.0);
+  }catch(e){}
+}
+function cfPlayVehicleCrash(scene){
+  try{
+    if(scene?.cache?.audio?.exists("veh_crash")) scene.sound.play("veh_crash",{volume:0.35});
+  }catch(e){}
+}
+function cfPlayTireScreech(scene){
+  try{
+    if(scene?.cache?.audio?.exists("veh_tire")) scene.sound.play("veh_tire",{volume:0.22});
+  }catch(e){}
 }
 
 function setupControls(){
