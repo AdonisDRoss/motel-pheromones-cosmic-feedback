@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v1122</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v112b</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -242,7 +242,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Loop / Carjacking v112</div>
+<div class="version">Highway Loop / Carjack Priority Fix v112b</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -1155,21 +1155,52 @@ tryCarjack(){
   if(this.vehicleMode) return false;
   const car=this.nearestJackableTrafficCar();
   if(!car) return false;
-  car.jacked=true; car.stolen=true; car.trafficSpeed=0;
+
+  // v112b: store Donny's original vehicle before switching current vehicle.
+  if(!this.originalDonnyVehicle && this.vehicle) this.originalDonnyVehicle=this.vehicle;
+  const parked=this.originalDonnyVehicle || this.vehicle;
+
+  car.jacked=true;
+  car.stolen=true;
+  car.trafficSpeed=0;
   if(car.nameLabel){ car.nameLabel.destroy(); car.nameLabel=null; }
+
+  // Driver pops out and flees.
   this.spawnPulledDriver(car);
-  if(this.vehicle){
-    this.vehicle.setVisible(true); this.vehicle.setAlpha(.55);
-    if(this.vehicleLabel) this.vehicleLabel.setText("DONNY'S PARKED CAR").setPosition(this.vehicle.x,this.vehicle.y-58);
+
+  // Keep Donny's original car parked, but do not make Donny enter it.
+  if(parked && parked !== car){
+    parked.setVisible(true);
+    parked.setAlpha(.55);
   }
-  this.vehicle=car; this.vehicleMode=true; this.vehicleSpeed=0; this.vehicleHeading=(car.angle||0)-180;
-  if(this.player){ this.player.setVisible(false); this.player.setPosition(car.x,car.y); }
+
+  // Current player vehicle becomes the stolen traffic car.
+  this.vehicle=car;
+  this.playerVehicle=car;
+  this.vehicleMode=true;
+  this.vehicleSpeed=0;
+  this.vehicleHeading=(car.angle||0)-180;
+
+  if(this.player){
+    this.player.setVisible(false);
+    this.player.setPosition(car.x,car.y);
+    if(this.player.body) this.player.body.enable=false;
+  }
+
   if(this.vehicleLabel){
-    this.vehicleLabel.setText("STOLEN VEHICLE\nX EXIT").setPosition(car.x,car.y-58).setVisible(true);
+    this.vehicleLabel.setText("STOLEN VEHICLE\nX EXIT");
+    this.vehicleLabel.setPosition(car.x,car.y-58).setVisible(true);
   }else{
-    this.vehicleLabel=this.add.text(car.x,car.y-58,"STOLEN VEHICLE\nX EXIT",{fontFamily:"monospace",fontSize:"8px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.55)",padding:{x:4,y:2},align:"center"}).setOrigin(.5).setDepth(DEPTH.LABEL);
+    this.vehicleLabel=this.add.text(car.x,car.y-58,"STOLEN VEHICLE\nX EXIT",{
+      fontFamily:"monospace",fontSize:"8px",color:"#9eefff",
+      backgroundColor:"rgba(0,0,0,.55)",padding:{x:4,y:2},align:"center"
+    }).setOrigin(.5).setDepth(DEPTH.LABEL);
   }
-  setMode("IN CAR"); setObjective("Drive stolen vehicle"); showToast("CARJACKED\nDriver pulled out");
+
+  this.cameras.main.startFollow(this.vehicle,true,0.12,0.12,0,0);
+  setMode("IN CAR");
+  setObjective("Drive stolen vehicle");
+  showToast("CARJACKED\nDriver pulled out");
   return true;
 }
 
@@ -1274,6 +1305,8 @@ createHighwayVehicle(){
     }
   }
   this.vehicleMode=false;
+  this.playerVehicle=this.vehicle;
+  this.originalDonnyVehicle=this.vehicle;
   if(vehicleControls) vehicleControls.style.display="none";
   const normalBtns=document.querySelector(".buttons"); if(normalBtns) normalBtns.style.display="block";
   input.a=false; input.b=false; input.vgas=false; input.vbrake=false;
@@ -1367,6 +1400,7 @@ enterVehicle(){
 exitVehicle(){
   if(!this.vehicle || !this.vehicleMode) return;
   this.vehicleMode=false;
+  if(this.vehicle) this.vehicle.setAlpha(1);
   this.vehicleUseLockUntil=this.time ? this.time.now+350 : performance.now()+350;
 
   input.a=false; input.b=false; input.xbtn=false; input.usePressed=false;
@@ -1521,7 +1555,7 @@ goHighwayLoop(step){
   const inCar = this.vehicleMode ? "&vehicle=car" : "";
   const spd = this.vehicleMode ? `&speed=${Math.round(this.vehicleSpeed||0)}` : "";
   const ang = this.vehicleMode ? `&angle=${Math.round(this.vehicle.angle||0)}` : "";
-  location.href=location.pathname+`?v=westgate-v11222&area=highway_loop&chunk=${next}&entry=${entry}${inCar}${spd}${ang}&collision=off&t=${Date.now()}`;
+  location.href=location.pathname+`?v=westgate-v112bb&area=highway_loop&chunk=${next}&entry=${entry}${inCar}${spd}${ang}&collision=off&t=${Date.now()}`;
 }
 checkHighwayLoopTransitions(){
   if(AREA!=="highway_loop" || !this.vehicle || !this.vehicleMode) return;
@@ -1640,6 +1674,12 @@ coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.player.x)}, 
   showToast("DONNY MOVED TO SAFE SPOT");
 }
 handleUse(){
+  // v112b: carjacking has priority over entering Donny's parked car.
+  // If Donny is on foot near traffic and presses X, steal traffic car first.
+  if((AREA==="highway" || AREA==="highway_loop") && !this.vehicleMode && this.tryCarjack && this.tryCarjack()){
+    return;
+  }
+
   // v96 vehicle enter/exit first.
   if((AREA==="highway" || AREA==="highway_loop") && this.vehicle){
     const now=this.time ? this.time.now : performance.now();
@@ -1668,8 +1708,8 @@ handleUse(){
     const d=Phaser.Math.Distance.Between((this.vehicleMode?this.vehicle.x:this.player.x),(this.vehicleMode?this.vehicle.y:this.player.y),this.loopOfframpZone.x,this.loopOfframpZone.y);
     if(d<this.loopOfframpZone.r){
       const chunk=HIGHWAY_LOOP[loopChunk()];
-      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v11222&area=westgate&collision=mask";
-      else location.href=location.pathname+"?v=westgate-v11222&area=a1&collision=mask";
+      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v112bb&area=westgate&collision=mask";
+      else location.href=location.pathname+"?v=westgate-v112bb&area=a1&collision=mask";
       return;
     }
   }
@@ -1710,7 +1750,7 @@ handleUse(){
   if(AREA==="highway" && this.highwayWestgateExit){
     const d=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.highwayWestgateExit.x,this.highwayWestgateExit.y);
     if(d < this.highwayWestgateExit.r){
-      location.href=location.pathname+"?v=westgate-v11222&area=westgate&collision=mask";
+      location.href=location.pathname+"?v=westgate-v112bb&area=westgate&collision=mask";
       return;
     }
     showToast("Follow the marked ramp exit to Westgate.");
@@ -1756,7 +1796,7 @@ handleUse(){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v11222&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v112bb&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -1773,16 +1813,16 @@ handleUse(){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v11222&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112bb&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v11222&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v11222&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v11222&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112bb&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112bb&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v112bb&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
@@ -1991,7 +2031,7 @@ function setupControls(){
       hardStartMusic();
       const name=btn.dataset.btn;
       btn.classList.add("down");
-      if(name==="x"){ input.xbtn=true; input.usePressed=true; input.carjackPressed=true; useNow(); }
+      if(name==="x"){ input.xbtn=true; input.usePressed=true; input.carjackPressed=true; if(window.__cfScene && !window.__cfScene.vehicleMode && window.__cfScene.tryCarjack && window.__cfScene.tryCarjack()){ return; } useNow(); }
       if(name==="r") input.r=true;
       if(name==="a"){ input.a=true; if(window.__cfScene?.vehicleMode && window.__cfScene.vehicleSpeed<0.9) window.__cfScene.vehicleSpeed=0.9; showToast(window.__cfScene?.vehicleMode ? "GAS ON" : "GAS / action slot ready"); }
       if(name==="b"){ input.b=true; showToast(window.__cfScene?.vehicleMode ? "BRAKE" : "BRK / action slot ready"); }
