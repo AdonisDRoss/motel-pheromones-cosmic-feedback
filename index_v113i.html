@@ -3,11 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<<<<<<< main
-<title>Cosmic Feedback - Blacklight Highway Loop v117</title>
-=======
-<title>Cosmic Feedback - Blacklight Highway Loop v115</title>
->>>>>>> origin/main
+<title>Cosmic Feedback - Blacklight Highway Loop v113i</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -247,11 +243,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<<<<<<< main
-<div class="version">Highway Loop / Civic Roadblocks v117</div>
-=======
-<div class="version">Highway Loop / Modular Highway v115</div>
->>>>>>> origin/main
+<div class="version">Highway Loop / Clone Car NPC Fix v113i</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -991,7 +983,6 @@ preload(){
   }
 
   this.spawnTraffic();
-  cfNpcSpawn(this);
   this.forceSpawnTrafficAllChunks();
   this.hideTransitionDebugMarkers();
   if(AREA==="highway_loop" && START_IN_CAR && this.vehicle){
@@ -1040,8 +1031,7 @@ preload(){
   this.time.delayedCall(50, ()=>{ this.lockCameraToPlayer(); this.cameras.main.centerOn(this.player.x,this.player.y); });
   this.time.delayedCall(250, ()=>{ this.lockCameraToPlayer(); this.cameras.main.centerOn(this.player.x,this.player.y); });
   this.time.delayedCall(700, ()=>{ this.lockCameraToPlayer(); this.cameras.main.centerOn(this.player.x,this.player.y); });
-  this.time.addEvent({delay:1000,loop:true,callback:()=>cfNpcSpawn(this)}); // v113j npc manager timer
-   this.keys=this.input.keyboard.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT,E,X,SPACE,ESC,P,M,C,U");
+  this.keys=this.input.keyboard.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT,E,X,SPACE,ESC,P,M,C,U");
   this.input.keyboard.on("keydown-E",()=>this.handleUse()); this.input.keyboard.on("keydown-X",()=>this.handleUse());
   showToast(AREA==="a1" ? "BLACKLIGHT DISTRICT A1\nCamera locked to Donny" : (AREA==="club" ? "BLACKLIGHT CLUB" : (AREA==="highway_loop" ? ("HIGHWAY LOOP\n"+HIGHWAY_LOOP[loopChunk()].id) : (AREA==="highway" ? "HIGHWAY OFF-RAMP\nWestgate exit marked" : "WESTGATE CONNECTOR"))));
   if(AREA==="a1" || AREA==="club" || AREA==="highway") this.startAreaMusic();
@@ -1239,10 +1229,11 @@ driverForTrafficCar(car,i=0){
 spawnPulledDriver(car){
   if(!this.pulledDrivers) this.pulledDrivers=[];
   const label=(car.driverData&&car.driverData.label)||"Driver";
-  const spr=cfNpcMake(this,car.x+42,car.y+28,label,0xffb36b);
-  spr.fleeVX=(car.x<this.mapW*.5?-1:1)*(1.5+Math.random()*0.8);
-  spr.fleeVY=(Math.random()>.5?1:-1)*(0.9+Math.random()*0.6);
+  const spr=this.makeCleanNpcMarker(car.x+42,car.y+28,label,0xffb36b);
+  spr.fleeVX=(car.x<this.mapW*.5? -1:1) * (1.4+Math.random()*0.9);
+  spr.fleeVY=(Math.random()>.5?1:-1) * (0.8+Math.random()*0.8);
   spr.fleeLife=2600;
+  spr.setDepth(DEPTH.CHARACTER_BASE+260);
   this.pulledDrivers.push(spr);
 }
 
@@ -1250,10 +1241,12 @@ updatePulledDrivers(dt){
   if(!this.pulledDrivers) return;
   const delta=Math.max(.8,Math.min(2,(dt||16)/16.666));
   this.pulledDrivers=this.pulledDrivers.filter(spr=>{
-    spr.x+=spr.fleeVX*delta; spr.y+=spr.fleeVY*delta; spr.fleeLife-=(dt||16);
-    if(spr.labelText) spr.labelText.setPosition(spr.x,spr.y-42);
+    spr.x += spr.fleeVX*delta;
+    spr.y += spr.fleeVY*delta;
+    spr.fleeLife -= (dt||16);
+    if(spr.nameLabel) spr.nameLabel.setPosition(spr.x,spr.y-36);
     if(spr.fleeLife<=0 || spr.x<-80 || spr.x>this.mapW+80 || spr.y<-80 || spr.y>this.mapH+80){
-      if(spr.labelText) spr.labelText.destroy();
+      if(spr.nameLabel) spr.nameLabel.destroy();
       spr.destroy();
       return false;
     }
@@ -1325,34 +1318,58 @@ tryCarjack(){
   const car=this.nearestJackableTrafficCar();
   if(!car) return false;
 
-  const texKey=(car.texture&&car.texture.key)||"donny_car";
+  const texKey=(car.texture && car.texture.key) ? car.texture.key : "donny_car";
   const oldX=car.x, oldY=car.y, oldAngle=car.angle||0;
-  if(car.nameLabel){car.nameLabel.destroy(); car.nameLabel=null;}
+
+  if(car.nameLabel){ car.nameLabel.destroy(); car.nameLabel=null; }
   this.spawnPulledDriver(car);
 
-  // Clone to a player-only car. Never use the traffic object as the player vehicle.
+  // v113i: do NOT reuse the traffic object as the player vehicle.
+  // Clone it, then remove the original from traffic AI. This prevents steering from rotating all NPC traffic.
   if(this.trafficCars) this.trafficCars=this.trafficCars.filter(c=>c!==car);
-  try{car.destroy();}catch(e){car.setVisible(false);}
+  try{ car.destroy(); }catch(e){ car.setVisible(false); }
 
-  const pc=this.add.image(oldX,oldY,texKey).setDepth(DEPTH.CHARACTER_BASE+230).setOrigin(.5,.5).setScale(0.90);
-  pc.isPlayerVehicle=true; pc.stolen=true; pc.jacked=true; pc.kind="Stolen Vehicle";
-  pc.angle=oldAngle;
+  const playerCar=this.add.image(oldX,oldY,texKey)
+    .setDepth(DEPTH.CHARACTER_BASE+210)
+    .setOrigin(.5,.5)
+    .setScale(0.90);
+  playerCar.isPlayerVehicle=true;
+  playerCar.stolen=true;
+  playerCar.jacked=true;
+  playerCar.kind="Stolen Vehicle";
+  playerCar.angle=oldAngle;
 
-  if(this.vehicle && this.vehicle!==pc){this.vehicle.setVisible(true); this.vehicle.setAlpha(.55);}
-  this.vehicle=pc; this.playerVehicle=pc; this.vehicleMode=true; this.vehicleSpeed=0;
-  this.vehicleHeading=(oldAngle||0)-180;
-  if(typeof cfCarVisualAngle==="function") pc.angle=cfCarVisualAngle(this.vehicleHeading);
-
-  if(this.player){this.player.setVisible(false); this.player.setPosition(pc.x,pc.y); if(this.player.body)this.player.body.enable=false;}
-  if(this.vehicleLabel){
-    this.vehicleLabel.setText("STOLEN VEHICLE\nX EXIT").setPosition(pc.x,pc.y-58).setVisible(true);
-  }else{
-    this.vehicleLabel=this.add.text(pc.x,pc.y-58,"STOLEN VEHICLE\nX EXIT",{fontFamily:"monospace",fontSize:"8px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.55)",padding:{x:4,y:2},align:"center"}).setOrigin(.5).setDepth(DEPTH.LABEL);
+  const oldVehicle=this.vehicle;
+  if(oldVehicle && oldVehicle!==playerCar){
+    oldVehicle.setVisible(true);
+    oldVehicle.setAlpha(.55);
   }
-  if(this.cameras?.main)this.cameras.main.startFollow(this.vehicle,true,0.12,0.12,0,0);
+
+  this.vehicle=playerCar;
+  this.playerVehicle=playerCar;
+  this.vehicleMode=true;
+  this.vehicleSpeed=0;
+  this.vehicleHeading=(oldAngle||0)-180;
+
+  if(this.player){
+    this.player.setVisible(false);
+    this.player.setPosition(playerCar.x,playerCar.y);
+    if(this.player.body) this.player.body.enable=false;
+  }
+
+  if(this.vehicleLabel){
+    this.vehicleLabel.setText("STOLEN VEHICLE\nX EXIT").setPosition(playerCar.x,playerCar.y-58).setVisible(true);
+  }else{
+    this.vehicleLabel=this.add.text(playerCar.x,playerCar.y-58,"STOLEN VEHICLE\nX EXIT",{
+      fontFamily:"monospace",fontSize:"8px",color:"#9eefff",
+      backgroundColor:"rgba(0,0,0,.55)",padding:{x:4,y:2},align:"center"
+    }).setOrigin(.5).setDepth(DEPTH.LABEL);
+  }
+
+  if(this.cameras?.main) this.cameras.main.startFollow(this.vehicle,true,0.12,0.12,0,0);
   setMode("IN CAR");
-  if(this.addWanted)this.addWanted(2.2,"carjacking");
-  showToast("CARJACKED\nplayer-only car");
+  if(this.addWanted) this.addWanted(2.2,"carjacking");
+  showToast("CARJACKED\ncloned player car");
   return true;
 }
 
@@ -1465,16 +1482,74 @@ makeCleanNpcMarker(x,y,label,color=0x9eefff){
 }
 
 spawnVisibleCivilians(){
-  cfNpcSpawn(this);
+  if(!(AREA==="highway" || AREA==="highway_loop")) return;
+
+  if(this.visibleCivilians && this.visibleCivilians.length){
+    for(const spr of this.visibleCivilians){
+      try{ if(spr.nameLabel) spr.nameLabel.destroy(); spr.destroy(); }catch(e){}
+    }
+  }
+  this.visibleCivilians=[];
+
+  const labels=["Civilian","Mechanic","Water Carrier","Elderly","Civilian","Civilian"];
+  const colors=[0x8bb6ff,0x9a9a9a,0x2f7cff,0xd6c090,0xd08cff,0x88d18a];
+  const c=loopChunk();
+
+  // Fixed per-screen shoulder positions, always inside camera/world.
+  const spots=[
+    [this.mapW*.12,this.mapH*.24],
+    [this.mapW*.88,this.mapH*.26],
+    [this.mapW*.13,this.mapH*.50],
+    [this.mapW*.87,this.mapH*.52],
+    [this.mapW*.16,this.mapH*.77],
+    [this.mapW*.84,this.mapH*.79]
+  ];
+
+  for(let i=0;i<spots.length;i++){
+    const x=Phaser.Math.Clamp(spots[i][0],58,this.mapW-58);
+    const y=Phaser.Math.Clamp(spots[i][1],58,this.mapH-58);
+    const npc=this.makeCleanNpcMarker(x,y,labels[(i+c)%labels.length],colors[(i+c)%colors.length]);
+    npc.setDepth(DEPTH.CHARACTER_BASE+240+i);
+    npc.homeX=x; npc.homeY=y;
+    npc.chunkId=c;
+    this.visibleCivilians.push(npc);
+  }
+
+  this._npcChunkKey=`${AREA}:${loopChunk()}`;
 }
 
 updateVisibleCivilians(dt){
-  cfNpcUpdate(this,dt);
-  cfTrafficKeepStable(this);
+  if(!this.visibleCivilians) return;
+  const delta=Math.max(.8,Math.min(2,(dt||16)/16.666));
+  for(const spr of this.visibleCivilians){
+    spr.x += spr.walkVX*delta;
+    spr.y += spr.walkVY*delta;
+
+    if(Math.abs(spr.x-spr.homeX)>40) spr.walkVX*=-1;
+    if(Math.abs(spr.y-spr.homeY)>32) spr.walkVY*=-1;
+
+    if(this.vehicleMode && this.vehicle){
+      const d=Phaser.Math.Distance.Between(this.vehicle.x,this.vehicle.y,spr.x,spr.y);
+      if(d<100){
+        const nx=(spr.x-this.vehicle.x)/(d||1);
+        const ny=(spr.y-this.vehicle.y)/(d||1);
+        spr.x += nx*2.0;
+        spr.y += ny*2.0;
+      }
+    }
+
+    if(spr.nameLabel) spr.nameLabel.setPosition(spr.x,spr.y-36);
+  }
 }
 
 ensureNpcsForCurrentScreen(){
-  cfNpcSpawn(this);
+  if(!(AREA==="highway" || AREA==="highway_loop")) return;
+  const key=`${AREA}:${loopChunk()}`;
+  if(!this.visibleCivilians || !this.visibleCivilians.length || this._npcChunkKey!==key){
+    this.spawnVisibleCivilians();
+  // v113i npc periodic watchdog
+  this.time.addEvent({delay:1000,loop:true,callback:()=>{ if(this.ensureNpcsForCurrentScreen) this.ensureNpcsForCurrentScreen(); }});
+  }
 }
 createWestgateReturnTrigger(){
   if(this._westgateReturnReady || !(AREA==="highway_loop" || AREA==="highway")) return;
@@ -1501,11 +1576,7 @@ returnToWestgate(){
   try{
     if(this.vehicleMode && this.vehicle && typeof cfSaveVehicleState==="function") cfSaveVehicleState(this);
   }catch(e){}
-<<<<<<< main
-  location.replace(location.pathname+`?v=westgate-v117&area=westgate_blacklight&entry=highway_return&collision=off&t=${Date.now()}`);
-=======
-  location.replace(location.pathname+`?v=westgate-v115&area=westgate_blacklight&entry=highway_return&collision=off&t=${Date.now()}`);
->>>>>>> origin/main
+  location.replace(location.pathname+`?v=westgate-v113i&area=westgate_blacklight&entry=highway_return&collision=off&t=${Date.now()}`);
 }
 
 initWantedSystem(){
@@ -1984,11 +2055,7 @@ goHighwayLoop(step){
   const spd=this.vehicleMode?`&speed=${Math.round(this.vehicleSpeed||0)}`:"";
   const lane=this.vehicle&&this.nearestLaneIndexForX?this.nearestLaneIndexForX(this.vehicle.x,this.vehicle.y):1;
   const heading=this.vehicleHeading!==undefined?Math.round(this.vehicleHeading):(step>0?-90:90);
-<<<<<<< main
-  location.replace(location.pathname+`?v=westgate-v117&area=highway_loop&chunk=${next}&entry=${entry}&lane=${lane}${inCar}${carKey}${stolen}${spd}&heading=${heading}&persist=1&collision=off&t=${Date.now()}`);
-=======
-  location.replace(location.pathname+`?v=westgate-v115&area=highway_loop&chunk=${next}&entry=${entry}&lane=${lane}${inCar}${carKey}${stolen}${spd}&heading=${heading}&persist=1&collision=off&t=${Date.now()}`);
->>>>>>> origin/main
+  location.replace(location.pathname+`?v=westgate-v113i&area=highway_loop&chunk=${next}&entry=${entry}&lane=${lane}${inCar}${carKey}${stolen}${spd}&heading=${heading}&persist=1&collision=off&t=${Date.now()}`);
 }
 checkHighwayLoopTransitions(){
   if(AREA!=="highway_loop" || !this.vehicle || !this.vehicleMode) return;
@@ -2042,6 +2109,7 @@ if(this.vehicle){
   this.updateCarjackPrompt();
   this.ensureNpcsForCurrentScreen();
   this.updateVisibleCivilians(dt);
+  cfHardFixTrafficAngles(this);
   this.updateWestgateReturnTrigger();
   this.updateWantedSystem(dt);
   this.maybeWantedFromDriving();
@@ -2148,13 +2216,8 @@ handleUse(){
     const d=Phaser.Math.Distance.Between((this.vehicleMode?this.vehicle.x:this.player.x),(this.vehicleMode?this.vehicle.y:this.player.y),this.loopOfframpZone.x,this.loopOfframpZone.y);
     if(d<this.loopOfframpZone.r){
       const chunk=HIGHWAY_LOOP[loopChunk()];
-<<<<<<< main
-      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v117&area=westgate&collision=mask";
-      else location.href=location.pathname+"?v=westgate-v117&area=a1&collision=mask";
-=======
-      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v115&area=westgate&collision=mask";
-      else location.href=location.pathname+"?v=westgate-v115&area=a1&collision=mask";
->>>>>>> origin/main
+      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v113i&area=westgate&collision=mask";
+      else location.href=location.pathname+"?v=westgate-v113i&area=a1&collision=mask";
       return;
     }
   }
@@ -2195,11 +2258,7 @@ handleUse(){
   if(AREA==="highway" && this.highwayWestgateExit){
     const d=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.highwayWestgateExit.x,this.highwayWestgateExit.y);
     if(d < this.highwayWestgateExit.r){
-<<<<<<< main
-      location.href=location.pathname+"?v=westgate-v117&area=westgate&collision=mask";
-=======
-      location.href=location.pathname+"?v=westgate-v115&area=westgate&collision=mask";
->>>>>>> origin/main
+      location.href=location.pathname+"?v=westgate-v113i&area=westgate&collision=mask";
       return;
     }
     showToast("Follow the marked ramp exit to Westgate.");
@@ -2245,11 +2304,7 @@ handleUse(){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-<<<<<<< main
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v117&area=club&collision=mask";}},
-=======
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v115&area=club&collision=mask";}},
->>>>>>> origin/main
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v113i&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -2266,26 +2321,16 @@ handleUse(){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-<<<<<<< main
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v117&area=club&collision=mask"},
-=======
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v115&area=club&collision=mask"},
->>>>>>> origin/main
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v113i&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-<<<<<<< main
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v117&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v117&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v117&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-=======
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v115&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v115&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v115&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
->>>>>>> origin/main
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v113i&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v113i&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v113i&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
@@ -2544,94 +2589,17 @@ function cfPlayTireScreech(scene){
 }
 
 
-// v113j: clean independent world NPC manager.
-// This is intentionally separate from old visibleCivilians / spritesheet NPC code.
-function cfNpcMake(scene,x,y,label,color){
-  const c=scene.add.container(x,y).setDepth(DEPTH.CHARACTER_BASE+270);
-  const shadow=scene.add.ellipse(0,12,23,8,0x000000,.38);
-  const legs=scene.add.rectangle(0,8,10,16,0x1f2734,.95).setStrokeStyle(1,0x05070b,.9);
-  const body=scene.add.rectangle(0,-5,14,20,color,.98).setStrokeStyle(1,0x05070b,.9);
-  const head=scene.add.circle(0,-21,7,0xc98b5c,.98).setStrokeStyle(1,0x05070b,.9);
-  c.add([shadow,legs,body,head]);
-  c.homeX=x; c.homeY=y;
-  c.vx=(Math.random()>.5?1:-1)*(0.18+Math.random()*0.12);
-  c.vy=(Math.random()>.5?1:-1)*(0.10+Math.random()*0.10);
-  c.labelText=scene.add.text(x,y-42,label,{
-    fontFamily:"monospace",fontSize:"8px",color:"#e8fbff",
-    backgroundColor:"rgba(0,0,0,.68)",padding:{x:4,y:2}
-  }).setOrigin(.5).setDepth(DEPTH.LABEL+60);
-  c.isWorldNpc=true;
-  return c;
+function cfTrafficVisualAngleFromDir(dir){
+  // Traffic vehicle PNGs are treated as north-facing at angle 0.
+  return dir < 0 ? 0 : 180;
 }
-function cfNpcClear(scene){
-  if(!scene.cfWorldNpcs) scene.cfWorldNpcs=[];
-  for(const n of scene.cfWorldNpcs){
-    try{ if(n.labelText) n.labelText.destroy(); n.destroy(); }catch(e){}
-  }
-  scene.cfWorldNpcs=[];
-}
-function cfNpcLayout(scene){
-  const c=(typeof loopChunk==="function")?loopChunk():0;
-  // Fixed safe shoulder/sidewalk positions per chunk. Never attached to the player car.
-  const base=[
-    [0.13,0.22],[0.86,0.24],
-    [0.14,0.48],[0.85,0.52],
-    [0.16,0.75],[0.82,0.78]
-  ];
-  return base.map((p,i)=>({
-    x:Phaser.Math.Clamp(scene.mapW*p[0] + (((c+i)%3)-1)*18, 54, scene.mapW-54),
-    y:Phaser.Math.Clamp(scene.mapH*p[1] + ((c+i)%2?14:-14), 54, scene.mapH-54)
-  }));
-}
-function cfNpcSpawn(scene){
-  if(!(AREA==="highway" || AREA==="highway_loop")) return;
-  const key=`${AREA}:${loopChunk()}:${scene.mapW}x${scene.mapH}`;
-  if(scene.cfNpcKey===key && scene.cfWorldNpcs && scene.cfWorldNpcs.length) return;
-  cfNpcClear(scene);
-  const labels=["Civilian","Mechanic","Water Carrier","Elderly","Civilian","Civilian"];
-  const colors=[0x8bb6ff,0xa0a0a0,0x2f7cff,0xd8bd7a,0xd08cff,0x88d18a];
-  const pts=cfNpcLayout(scene);
-  for(let i=0;i<pts.length;i++){
-    scene.cfWorldNpcs.push(cfNpcMake(scene,pts[i].x,pts[i].y,labels[(i+loopChunk())%labels.length],colors[(i+loopChunk())%colors.length]));
-  }
-  scene.cfNpcKey=key;
-  showToast(`NPC MANAGER\n${scene.cfWorldNpcs.length} NPCs on chunk ${loopChunk()}`);
-}
-function cfNpcUpdate(scene,dt){
-  if(!(AREA==="highway" || AREA==="highway_loop")) return;
-  if(!scene.cfWorldNpcs || !scene.cfWorldNpcs.length || scene.cfNpcKey!==`${AREA}:${loopChunk()}:${scene.mapW}x${scene.mapH}`){
-    cfNpcSpawn(scene);
-    return;
-  }
-  const delta=Math.max(.8,Math.min(2,(dt||16)/16.666));
-  const car=scene.vehicleMode && scene.vehicle ? scene.vehicle : null;
-  for(const n of scene.cfWorldNpcs){
-    n.x+=n.vx*delta; n.y+=n.vy*delta;
-    if(Math.abs(n.x-n.homeX)>38) n.vx*=-1;
-    if(Math.abs(n.y-n.homeY)>30) n.vy*=-1;
-    if(car){
-      const d=Phaser.Math.Distance.Between(car.x,car.y,n.x,n.y);
-      if(d<95){
-        n.x+=(n.x-car.x)/(d||1)*2.0;
-        n.y+=(n.y-car.y)/(d||1)*2.0;
-      }
-    }
-    if(n.labelText) n.labelText.setPosition(n.x,n.y-42);
-  }
-}
-function cfTrafficKeepStable(scene){
+function cfHardFixTrafficAngles(scene){
   if(!scene || !scene.trafficCars) return;
   for(const car of scene.trafficCars){
-    if(!car || car===scene.vehicle || car.isPlayerVehicle || car.stolen) continue;
-    if(car.trafficLane && typeof cfTrafficVisualAngleFromDir==="function"){
-      car.angle=cfTrafficVisualAngleFromDir(car.trafficLane.dir);
-    }
+    if(!car || car.isPlayerVehicle || car.stolen || car===scene.vehicle) continue;
+    const dir=car.trafficLane?.dir ?? -1;
+    car.angle=cfTrafficVisualAngleFromDir(dir);
   }
-}
-
-
-function cfTrafficVisualAngleFromDir(dir){
-  return dir < 0 ? 0 : 180;
 }
 
 function setupControls(){
@@ -2962,10 +2930,5 @@ function forceResize(){const w=viewportW(),h=viewportH();document.getElementById
 addEventListener("resize",forceResize);addEventListener("orientationchange",()=>setTimeout(forceResize,250));if(visualViewport)visualViewport.addEventListener("resize",forceResize);setTimeout(forceResize,100);
 })();
 </script>
-<<<<<<< main
-<script src="src/highway_clean_v114.js?v=114"></script>
-=======
-<script src="src/highway/HighwayBootstrap.js?v=115"></script>
->>>>>>> origin/main
 </body>
 </html>
