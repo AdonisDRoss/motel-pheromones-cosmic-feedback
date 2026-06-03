@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v96</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v117</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -148,11 +148,45 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 .vbtn.brake{background:rgba(150,55,70,.82);}
 .vbtn.exit{background:rgba(70,120,180,.82);}
 
+
+.pauseMiniRow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0;}
+.pauseHint{font:10px monospace;color:#9eefff;margin-top:8px;line-height:1.25;}
+
+.pauseTabs{display:flex;gap:6px;margin:8px 0;}
+.pauseTab{background:#122033;color:#e8fbff;border:1px solid #4a79a8;border-radius:5px;padding:5px 7px;font:10px monospace;font-weight:800;}
+.pauseTab.active{background:#264a72;color:#fff;}
+.pausePanel{display:none;border:1px solid rgba(124,217,255,.22);background:rgba(255,255,255,.035);padding:8px;max-height:42vh;overflow:auto;}
+.pausePanel.active{display:block;}
+.invItem{display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid rgba(255,255,255,.08);padding:6px 0;font:10px monospace;}
+.invItem button{background:#122033;color:#e8fbff;border:1px solid #4a79a8;border-radius:5px;padding:4px 7px;font:10px monospace;font-weight:800;}
+.equipLine{font:10px monospace;color:#9eefff;margin-top:5px;}
+
+#pauseButton{
+  position:fixed;
+  right:calc(env(safe-area-inset-right) + 12px);
+  top:calc(env(safe-area-inset-top) + 8px);
+  z-index:140;
+  width:48px;
+  height:34px;
+  border-radius:8px;
+  border:2px solid rgba(158,239,255,.65);
+  background:rgba(3,12,24,.78);
+  color:#e8fbff;
+  font:11px monospace;
+  font-weight:900;
+  pointer-events:auto;
+  touch-action:manipulation;
+}
 </style>
 </head>
 <body>
 <div id="game"></div>
-<div class="hud"><div class="title">DONNY</div><div><span class="tag">MODE:</span> <span id="mode">ON FOOT</span> <span class="tag">ZONE:</span> A1</div><div><span class="tag">HP</span></div><div class="bar"><div class="fill hp"></div></div><div><span class="tag">STA</span></div><div class="bar"><div class="fill sta"></div></div><div><span class="tag">WATER</span></div><div class="bar"><div class="fill water"></div></div><div id="coordLine"><span class="tag">XY:</span> --</div></div>
+<button id="pauseButton">PAUSE</button>
+<div class="hud"><div class="title">DONNY</div><div><span class="tag">MODE:</span> <span id="mode">ON FOOT</span> <span class="tag">ZONE:</span> A1</div><div><span class="tag">HP</span></div><div class="bar"><div class="fill hp"></div></div><div><span class="tag">STA</span></div><div class="bar"><div class="fill sta"></div></div><div><span class="tag">WATER</span></div><div class="bar"><div class="fill water"></div></div><div id="carHudBlock" style="display:none;margin-top:3px;">
+<div><span class="tag">SPD</span></div><div class="bar"><div id="speedBar" class="fill" style="height:100%;width:0%;background:#9eefff;"></div></div>
+<div><span class="tag">FUEL</span></div><div class="bar"><div id="fuelBar" class="fill" style="height:100%;width:100%;background:#f6d36b;"></div></div>
+</div><div id="wantedLine"><span class="tag">WANTED:</span> ☆☆☆☆☆</div>
+<div id="coordLine"><span class="tag">XY:</span> --</div></div>
 <div id="objectiveHud"><div class="objTitle">OBJECTIVE</div><div id="objectiveText">Find Kira Volt</div></div>
 <div id="toast"></div><div id="hint"></div>
 <div id="dialogue"><div class="name" id="dlgName"></div><div id="dlgText"></div><div class="choices" id="dlgChoices"></div></div>
@@ -160,16 +194,27 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 
 <div id="pauseMenu">
   <h3>PAUSE</h3>
-  <div class="pauseRow">
-    <label>MUSIC</label>
-    <input id="musicVolume" type="range" min="0" max="100" step="1" value="60">
-    <span id="volumeReadout">60%</span>
+  <div class="pauseTabs">
+    <button class="pauseTab active" id="pauseTabMain">MAIN</button>
+    <button class="pauseTab" id="pauseTabInv">INVENTORY</button>
   </div>
-  <div class="pauseRow">
-    <button class="pauseBtn" id="resumeBtn">RESUME</button>
-    <button class="pauseBtn" id="muteBtn">MUTE</button>
+  <div class="pausePanel active" id="pauseMainPanel">
+    <div class="pauseMiniRow">
+      <label>MUSIC</label>
+      <input id="musicVolume" type="range" min="0" max="100" step="1" value="60">
+      <span id="volumeReadout">60%</span>
+    </div>
+    <div class="pauseMiniRow">
+      <button class="pauseBtn" id="resumeBtn">RESUME</button>
+      <button class="pauseBtn" id="muteBtn">MUTE</button>
+    </div>
+    <div class="pauseHint">Y/LTS toggles pause.</div>
   </div>
-</div>
+  <div class="pausePanel" id="pauseInvPanel">
+    <div id="inventoryList"></div>
+    <div class="equipLine">Equipped: <span id="equippedLine">None</span></div>
+  </div>
+</div></div>
 
 <div id="shop">
   <div id="shopHeader">
@@ -198,12 +243,14 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Loop / Car Enter Fix v96</div>
+<div class="version">Highway Loop / Civic Roadblocks v117</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
 const AREA = qs.get("area") || "highway_loop";
 const LOOP_CHUNK = Math.max(0, parseInt(qs.get("chunk") || "0", 10) || 0);
+const LOOP_ENTRY = qs.get("entry") || "south";
+const START_IN_CAR = qs.get("vehicle") === "car";
 const COLLISION_MODE = qs.get("collision") || "mask";
 const MAPS = {
   a1: {
@@ -300,7 +347,7 @@ function highwayLoopConfig(){
     zone:c.id,
     base:HIGHWAY_TILE_PATHS[c.tile],
     mask:null,
-    spawn:[0.50,0.72],
+    spawn:[0.50,LOOP_ENTRY==="north" ? 0.12 : 0.88],
     objective:`Highway Loop ${loopChunk()+1}/${HIGHWAY_LOOP.length}: ${c.id}`,
     exitText:"Continue Highway Loop"
   };
@@ -354,6 +401,108 @@ const NPC_ASSETS = {
 const VEHICLES = {
   donnyCar:"assets/vehicles/special/aurelix_distortion/distortion_topdown.png"
 };
+
+
+
+
+
+function cfSaveActiveVehicle(scene){
+  try{
+    if(!scene || !scene.vehicleMode || !scene.vehicle) return;
+    const data={
+      active:true,
+      stolen:!!scene.vehicle.stolen,
+      carKey:(scene.vehicle.texture&&scene.vehicle.texture.key)||"donny_car",
+      speed:Math.round(scene.vehicleSpeed||0),
+      heading:Math.round(scene.vehicleHeading ?? ((scene.vehicle.angle||0)-90)),
+      lane: scene.nearestLaneIndexForX ? scene.nearestLaneIndexForX(scene.vehicle.x,scene.vehicle.y) : 1,
+      t:Date.now()
+    };
+    localStorage.setItem("cf_active_vehicle", JSON.stringify(data));
+  }catch(e){}
+}
+function cfLoadActiveVehicle(){
+  try{return JSON.parse(localStorage.getItem("cf_active_vehicle")||"null");}catch(e){return null;}
+}
+function cfClearActiveVehicle(){
+  try{localStorage.removeItem("cf_active_vehicle");}catch(e){}
+}
+
+function cfClamp01(v){ return Math.max(0, Math.min(1, v)); }
+
+function cfRoadCenterX(scene,y,laneIndex){
+  // v112e road guide based on actual curved highway screenshots.
+  // Normalized y. On lower curve, lanes sweep from left to right as they go north.
+  const t=cfClamp01(y/scene.mapH);
+  const straight=[scene.mapW*.215, scene.mapW*.365, scene.mapW*.680, scene.mapW*.815];
+  let x=straight[Phaser.Math.Clamp(laneIndex||0,0,3)];
+
+  // Curve chunks have strong bend in lower half.
+  // Push lane center along a broad S curve so traffic stays on asphalt.
+  const bend = Math.sin((1-t)*Math.PI*0.95);
+  const lowerBoost = cfClamp01((.82-t)/.55);
+  const curve = bend * lowerBoost * scene.mapW*.28;
+
+  // Left lanes bend less, right lanes bend more.
+  const laneFactor=[-.42,-.18,.18,.42][Phaser.Math.Clamp(laneIndex||0,0,3)];
+  x += curve + laneFactor*scene.mapW*.08*lowerBoost;
+
+  return Phaser.Math.Clamp(x, scene.mapW*.08, scene.mapW*.92);
+}
+
+function cfRoadHeading(scene,y,laneIndex,dir){
+  const y1=Phaser.Math.Clamp(y-18,0,scene.mapH);
+  const y2=Phaser.Math.Clamp(y+18,0,scene.mapH);
+  const x1=cfRoadCenterX(scene,y1,laneIndex);
+  const x2=cfRoadCenterX(scene,y2,laneIndex);
+  // Direction of travel. dir < 0 means north/up.
+  const dx = dir < 0 ? (x1-x2) : (x2-x1);
+  const dy = dir < 0 ? (y1-y2) : (y2-y1);
+  return Phaser.Math.RadToDeg(Math.atan2(dy,dx));
+}
+
+function cfHeadingForTrafficDir(dir, scene, y){ return dir < 0 ? -90 : 90; }
+function cfVehicleVisualAngleFromHeading(heading){
+  // Top-down vehicle PNGs face UP/NORTH at visual angle 0.
+  return heading + 90;
+}
+
+
+const VEHICLE_AUDIO = {
+  idle:"assets/audio/vehicles/vehicle_engine_idle_loop.wav",
+  drive:"assets/audio/vehicles/vehicle_engine_drive_loop.wav",
+  boost:"assets/audio/vehicles/vehicle_engine_boost_loop.wav",
+  crash:"assets/audio/vehicles/vehicle_crash_thud.wav",
+  tire:"assets/audio/vehicles/tire_screech.wav",
+  police:"assets/audio/vehicles/police_siren_loop.wav",
+  ambulance:"assets/audio/vehicles/ambulance_siren_loop.wav",
+  civicBlip:"assets/audio/vehicles/civic_patrol_siren_blip.wav"
+};
+
+const NPC_DRIVER_ASSETS = {
+  male01:"assets/sprites/npcs/npcs/world/civilians/civilian_driver_male_01.png",
+  female02:"assets/sprites/npcs/npcs/world/civilians/civilian_driver_female_02.png",
+  elderly01:"assets/sprites/npcs/npcs/world/civilians/elderly_civilian_01.png",
+  mechanic01:"assets/sprites/npcs/npcs/world/civilians/mechanic_01.png",
+  waterCarrier01:"assets/sprites/npcs/npcs/world/civilians/water_carrier_01.png"
+};
+
+const TRAFFIC_ASSETS = {
+  sheet01:"assets/vehicles/traffic/traffic_sheet_01.png",
+  sheet02:"assets/vehicles/traffic/traffic_sheet_02.png",
+  sheet03:"assets/vehicles/traffic/traffic_sheet_03.png",
+  sheet04:"assets/vehicles/traffic/traffic_sheet_04.png",
+  sheet05:"assets/vehicles/traffic/traffic_sheet_05.png",
+  emsCivic:"assets/vehicles/traffic/traffic_ems_civic_patrol_sheet.png"
+};
+const TRAFFIC_NAMES = [
+  "Aurelix Commuter",
+  "Varric Ledger Van",
+  "Dregga Hauler",
+  "Red Concord Patrol",
+  "Sable Kin Tapline"
+];
+
 const AUDIO = {
   blacklightTheme:"assets/audio/music/blacklight/blacklight_a1_theme.mp3",
   blacklightAlt:"assets/audio/music/blacklight/blacklight_a1_alt.mp3",
@@ -363,8 +512,14 @@ const PROPS = {
   vendorStall:"assets/props/blacklight/neon_vendor_stall_idle_256.png",
   doorMarker:"assets/props/blacklight/blacklight_door_marker_idle_128.png"
 };
-const hint=document.getElementById("hint"), toast=document.getElementById("toast"), objectiveText=document.getElementById("objectiveText"), dlg=document.getElementById("dialogue"), dlgName=document.getElementById("dlgName"), dlgText=document.getElementById("dlgText"), dlgChoices=document.getElementById("dlgChoices"), coordLine=document.getElementById("coordLine"), shop=document.getElementById("shop"), shopBuyList=document.getElementById("shopBuyList"), shopSellList=document.getElementById("shopSellList"), creditLine=document.getElementById("creditLine"), shopLog=document.getElementById("shopLog"), pauseMenu=document.getElementById("pauseMenu"), vehicleControls=document.getElementById("vehicleControls"), driveGas=document.getElementById("driveGas"), driveBrake=document.getElementById("driveBrake"), driveExit=document.getElementById("driveExit"), musicVolume=document.getElementById("musicVolume"), volumeReadout=document.getElementById("volumeReadout"), resumeBtn=document.getElementById("resumeBtn"), muteBtn=document.getElementById("muteBtn");
-let input={x:0,y:0,r:false,a:false,b:false,xbtn:false,usePressed:false,vgas:false,vbrake:false}, dialogueOpen=false, shopOpen=false, pauseOpen=false, currentMusic=null; const FAILED_ASSETS=new Set();
+const hint=document.getElementById("hint"), toast=document.getElementById("toast"), objectiveText=document.getElementById("objectiveText"), dlg=document.getElementById("dialogue"), dlgName=document.getElementById("dlgName"), dlgText=document.getElementById("dlgText"), dlgChoices=document.getElementById("dlgChoices"), wantedLine=document.getElementById("wantedLine"), coordLine=document.getElementById("coordLine"), shop=document.getElementById("shop"), shopBuyList=document.getElementById("shopBuyList"), shopSellList=document.getElementById("shopSellList"), creditLine=document.getElementById("creditLine"), shopLog=document.getElementById("shopLog"), pauseButton=document.getElementById("pauseButton"), pauseMenu=document.getElementById("pauseMenu"), vehicleControls=document.getElementById("vehicleControls"), driveGas=document.getElementById("driveGas"), driveBrake=document.getElementById("driveBrake"), driveExit=document.getElementById("driveExit"), musicVolume=document.getElementById("musicVolume"), volumeReadout=document.getElementById("volumeReadout"), resumeBtn=document.getElementById("resumeBtn"), muteBtn=document.getElementById("muteBtn"),
+pauseTabMain=document.getElementById("pauseTabMain"), pauseTabInv=document.getElementById("pauseTabInv"),
+pauseMainPanel=document.getElementById("pauseMainPanel"), pauseInvPanel=document.getElementById("pauseInvPanel"),
+inventoryList=document.getElementById("inventoryList"), equippedLine=document.getElementById("equippedLine");
+let carHudBlock=document.getElementById("carHudBlock");
+let speedBar=document.getElementById("speedBar");
+let fuelBar=document.getElementById("fuelBar");
+let input={x:0,y:0,r:false,a:false,b:false,xbtn:false,usePressed:false,carjackPressed:false,vgas:false,vbrake:false}, dialogueOpen=false, shopOpen=false, pauseOpen=false, currentMusic=null; const FAILED_ASSETS=new Set();
 function showHint(t){hint.textContent=t;hint.style.display="block";} function hideHint(){hint.style.display="none";}
 function showToast(t){toast.innerHTML=t.replace(/\n/g,"<br>");toast.style.display="block";clearTimeout(showToast._t);showToast._t=setTimeout(()=>toast.style.display="none",2600);}
 function closeDialogue(){dlg.style.display="none";dialogueOpen=false;if(!shopOpen){document.querySelector(".buttons").style.opacity="1";document.querySelector(".buttons").style.pointerEvents="auto";}}
@@ -491,6 +646,31 @@ function getMusicVolume(){
   const saved = localStorage.getItem("cf_music_volume");
   return saved === null ? 0.60 : Math.max(0, Math.min(1, parseFloat(saved)));
 }
+
+function makeBeepSound(freq=360, duration=0.18, type="square", volume=0.12){
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!window.__cfAudioCtx) window.__cfAudioCtx=new AC();
+    const ctx=window.__cfAudioCtx;
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.type=type;
+    osc.frequency.value=freq;
+    gain.gain.value=volume;
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+duration);
+    osc.stop(ctx.currentTime+duration);
+  }catch(e){}
+}
+function playTrafficHorn(){
+  makeBeepSound(260,0.16,"sawtooth",0.10);
+}
+function playEmsSiren(){
+  makeBeepSound(720,0.10,"sine",0.08);
+  setTimeout(()=>makeBeepSound(960,0.12,"sine",0.08),110);
+}
+
 function setMusicVolume(v){
   v = Math.max(0, Math.min(1, v));
   localStorage.setItem("cf_music_volume", String(v));
@@ -641,6 +821,28 @@ preload(){
   });
   this.load.image("map", mapCfg.base);
   this.load.image("donny_car", VEHICLES.donnyCar);
+
+  this.load.audio("veh_idle", VEHICLE_AUDIO.idle);
+  this.load.audio("veh_drive", VEHICLE_AUDIO.drive);
+  this.load.audio("veh_boost", VEHICLE_AUDIO.boost);
+  this.load.audio("veh_crash", VEHICLE_AUDIO.crash);
+  this.load.audio("veh_tire", VEHICLE_AUDIO.tire);
+  this.load.audio("veh_police", VEHICLE_AUDIO.police);
+  this.load.audio("veh_ambulance", VEHICLE_AUDIO.ambulance);
+  this.load.audio("veh_civic_blip", VEHICLE_AUDIO.civicBlip);
+
+  this.load.image("traffic_sheet_01", TRAFFIC_ASSETS.sheet01);
+  this.load.image("traffic_sheet_02", TRAFFIC_ASSETS.sheet02);
+  this.load.image("traffic_sheet_03", TRAFFIC_ASSETS.sheet03);
+  this.load.image("traffic_sheet_04", TRAFFIC_ASSETS.sheet04);
+  this.load.image("traffic_sheet_05", TRAFFIC_ASSETS.sheet05);
+  this.load.image("traffic_ems_civic", TRAFFIC_ASSETS.emsCivic);
+
+  this.load.spritesheet("npc_driver_male_01", NPC_DRIVER_ASSETS.male01, {frameWidth:128, frameHeight:128});
+  this.load.spritesheet("npc_driver_female_02", NPC_DRIVER_ASSETS.female02, {frameWidth:128, frameHeight:128});
+  this.load.spritesheet("npc_elderly_01", NPC_DRIVER_ASSETS.elderly01, {frameWidth:128, frameHeight:128});
+  this.load.spritesheet("npc_mechanic_01", NPC_DRIVER_ASSETS.mechanic01, {frameWidth:128, frameHeight:128});
+  this.load.spritesheet("npc_water_carrier_01", NPC_DRIVER_ASSETS.waterCarrier01, {frameWidth:128, frameHeight:128});
   this.load.spritesheet("donny_idle_down", DONNY.idleDown, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("donny_idle_left", DONNY.idleLeft, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("donny_idle_right", DONNY.idleRight, {frameWidth:128,frameHeight:128});
@@ -656,13 +858,13 @@ preload(){
   this.load.spritesheet("blacklight_runner_idle", NPC_ASSETS.blacklight_runner.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("kira_volt_idle", NPC_ASSETS.kira_volt.idle, {frameWidth:128,frameHeight:128});
   this.load.spritesheet("vendor_stall", PROPS.vendorStall, {frameWidth:256,frameHeight:256});
-  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=96");
-  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=96");
-  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=96");
+  this.load.audio("blacklight_theme", AUDIO.blacklightTheme + "?v=111b2");
+  this.load.audio("blacklight_alt", AUDIO.blacklightAlt + "?v=111b2");
+  this.load.audio("club_interior_theme", AUDIO.clubInterior + "?v=111b2");
  }
  create(){
   window.__cfScene=this;
-  forceControlsLive();
+  forceControlsLive(); installActionButtonHoldFix();
   this.ensureFallbackTextures();
   this.createFallbackMap();
   objectiveText.textContent = mapCfg.objective;
@@ -723,8 +925,8 @@ preload(){
 
   if(AREA==="highway_loop"){
     const chunk=HIGHWAY_LOOP[loopChunk()];
-    const prevX=this.mapW*.50, prevY=this.mapH*.92;
-    const nextX=this.mapW*.50, nextY=this.mapH*.08;
+    const prevX=this.mapW*.50, prevY=this.mapH*.96;
+    const nextX=this.mapW*.50, nextY=this.mapH*.04;
     this.loopNextZone={x:nextX,y:nextY,r:90,dir:1};
     this.loopPrevZone={x:prevX,y:prevY,r:90,dir:-1};
 
@@ -738,8 +940,8 @@ preload(){
       g.strokePath();
       this.add.text(x,y-52,label,{fontFamily:"monospace",fontSize:"11px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.55)",padding:{x:4,y:2}}).setOrigin(.5).setDepth(DEPTH.LABEL);
     };
-    drawMarker(nextX,nextY,"NEXT LOOP CHUNK");
-    drawMarker(prevX,prevY,"PREV LOOP CHUNK",0xb9a0ff);
+    drawMarker(nextX,nextY,"");
+    drawMarker(prevX,prevY,"",0xb9a0ff);
 
     if(chunk.type==="offramp"){
       this.loopOfframpZone={x:this.mapW*.82,y:this.mapH*.44,r:95,exit:chunk.exit};
@@ -755,6 +957,51 @@ preload(){
   }
 
   this.createHighwayVehicle();
+
+  // v112h restore active/stolen vehicle immediately after screen transition.
+  const cfPersist=cfLoadVehicleState();
+  if((qs.get("vehicle")==="car" || qs.get("persist")==="1" || cfPersist) && this.vehicle){
+    const carKey=qs.get("carKey") || cfPersist?.carKey || "donny_car";
+    const stolen=(qs.get("stolen")==="1") || !!cfPersist?.stolen;
+    if(carKey && this.textures.exists(carKey)) this.vehicle.setTexture(carKey);
+    this.vehicle.stolen=stolen;
+    this.vehicle.jacked=stolen;
+    this.vehicleMode=true;
+    this.playerVehicle=this.vehicle;
+    const h=parseFloat(qs.get("heading") || cfPersist?.heading || "-90");
+    const s=parseFloat(qs.get("speed") || cfPersist?.speed || "0");
+    this.vehicleHeading=Number.isNaN(h)?-90:h;
+    this.vehicleSpeed=Number.isNaN(s)?0:s;
+    this.vehicle.angle=cfCarVisualAngle(this.vehicleHeading);
+    if(this.player){this.player.setVisible(false);this.player.setPosition(this.vehicle.x,this.vehicle.y);if(this.player.body)this.player.body.enable=false;}
+    if(this.vehicleLabel){
+      this.vehicleLabel.setText(stolen?"STOLEN VEHICLE\nX EXIT":"DONNY'S CAR\nX EXIT").setPosition(this.vehicle.x,this.vehicle.y-58).setVisible(true);
+    }
+    setMode("IN CAR");
+    cfStartVehicleAudio(this);
+    setObjective(stolen?"Drive stolen vehicle":"Drive Donny's car");
+  }
+
+  this.spawnTraffic();
+  cfNpcSpawn(this);
+  this.forceSpawnTrafficAllChunks();
+  this.hideTransitionDebugMarkers();
+  if(AREA==="highway_loop" && START_IN_CAR && this.vehicle){
+    this.time.delayedCall(40, ()=>{
+      this.enterVehicle();
+      const qSpeed=parseFloat(qs.get("speed") || "0");
+      const qAngle=parseFloat(qs.get("heading") || qs.get("angle") || "");
+      if(!Number.isNaN(qAngle)){
+        this.vehicleHeading=qAngle;
+        this.vehicle.angle=cfCarVisualAngle(this.vehicleHeading);
+      }
+      if(!Number.isNaN(qSpeed)) this.vehicleSpeed=Math.max(20, Math.min(qSpeed, 260));
+      this.player.setPosition(this.vehicle.x,this.vehicle.y);
+      this.player.setVisible(false);
+      if(this.player.body) this.player.body.enable=false;
+      showToast("STILL IN CAR");
+    });
+  }
   this.npcs=[];
   if(AREA==="a1") {
     // v20: place reusable Neon Vendor Stall prop beside the vendor.
@@ -785,7 +1032,8 @@ preload(){
   this.time.delayedCall(50, ()=>{ this.lockCameraToPlayer(); this.cameras.main.centerOn(this.player.x,this.player.y); });
   this.time.delayedCall(250, ()=>{ this.lockCameraToPlayer(); this.cameras.main.centerOn(this.player.x,this.player.y); });
   this.time.delayedCall(700, ()=>{ this.lockCameraToPlayer(); this.cameras.main.centerOn(this.player.x,this.player.y); });
-  this.keys=this.input.keyboard.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT,E,X,SPACE,ESC,P,M,C,U");
+  this.time.addEvent({delay:1000,loop:true,callback:()=>cfNpcSpawn(this)}); // v113j npc manager timer
+   this.keys=this.input.keyboard.addKeys("W,A,S,D,UP,DOWN,LEFT,RIGHT,E,X,SPACE,ESC,P,M,C,U");
   this.input.keyboard.on("keydown-E",()=>this.handleUse()); this.input.keyboard.on("keydown-X",()=>this.handleUse());
   showToast(AREA==="a1" ? "BLACKLIGHT DISTRICT A1\nCamera locked to Donny" : (AREA==="club" ? "BLACKLIGHT CLUB" : (AREA==="highway_loop" ? ("HIGHWAY LOOP\n"+HIGHWAY_LOOP[loopChunk()].id) : (AREA==="highway" ? "HIGHWAY OFF-RAMP\nWestgate exit marked" : "WESTGATE CONNECTOR"))));
   if(AREA==="a1" || AREA==="club" || AREA==="highway") this.startAreaMusic();
@@ -866,7 +1114,552 @@ tryMove(dx,dy){
     if(!this.blockedAll(this.player.x,this.player.y+dy+34)) this.player.y+=dy;
   }
 }
- createHighwayVehicle(){
+ 
+createTrafficTextures(){
+  if(this._trafficTexturesReady) return;
+  this._trafficTexturesReady=true;
+  this.trafficTextureKeys=[];
+
+  // Uploaded sheets are 6 columns x 2 rows. Each cell is a separate top-down vehicle.
+  for(let s=1;s<=5;s++){
+    const sheetKey=`traffic_sheet_${String(s).padStart(2,"0")}`;
+    if(!this.textures.exists(sheetKey) || FAILED_ASSETS.has(sheetKey)) continue;
+    const src=this.textures.get(sheetKey).getSourceImage();
+    const cols=6, rows=2;
+    const cellW=Math.floor(src.width/cols);
+    const cellH=Math.floor(src.height/rows);
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        const key=`traffic_${s}_${r}_${c}`;
+        if(this.textures.exists(key)){ this.trafficTextureKeys.push(key); continue; }
+        const canvas=document.createElement("canvas");
+        canvas.width=cellW; canvas.height=cellH;
+        const ctx=canvas.getContext("2d");
+        ctx.drawImage(src, c*cellW, r*cellH, cellW, cellH, 0, 0, cellW, cellH);
+        this.textures.addCanvas(key, canvas);
+        this.trafficTextureKeys.push(key);
+      }
+    }
+  }
+}
+
+spawnTraffic(){
+  if(!(AREA==="highway" || AREA==="highway_loop")) return;
+  this.createTrafficTextures();
+  this.trafficCars=[];
+  if(!this.trafficTextureKeys || !this.trafficTextureKeys.length) return;
+
+  // v107: lane centers from Donny's marked screenshot.
+  // Left of center divider = southbound. Right of center divider = northbound.
+  // No drift. Cars stay centered in these four lanes.
+  const lanes=[
+    {x:this.mapW*.215, dir: 1, speed:2.05, side:"left-outer-south"},  // ↓
+    {x:this.mapW*.365, dir: 1, speed:2.25, side:"left-inner-south"},  // ↓
+    {x:this.mapW*.680, dir:-1, speed:2.25, side:"right-inner-north"},  // ↑
+    {x:this.mapW*.815, dir:-1, speed:2.05, side:"right-outer-north"}   // ↑
+  ];
+
+  const civicKeys=(this.emsTrafficTextureKeys && this.emsTrafficTextureKeys.length) ? this.emsTrafficTextureKeys : this.trafficTextureKeys;
+
+  for(let i=0;i<12;i++){
+    const lane=lanes[i%lanes.length];
+    const isPatrol = (i===1 || i===5 || i===9);
+    const isEMS = (i===3 || i===10);
+    const list = (isPatrol || isEMS) ? civicKeys : this.trafficTextureKeys;
+    const key=list[(loopChunk()*5+i*2)%list.length];
+
+    const y=(this.mapH*(0.05 + ((i*0.097)%0.90)));
+    const car=this.add.image(lane.x,y,key)
+      .setDepth(DEPTH.CHARACTER_BASE+50+i)
+      .setOrigin(.5,.5)
+      .setScale((isPatrol || isEMS) ? 0.86 : 0.82);
+
+    car.trafficLane=lane;
+    car.trafficSpeed=Math.max(2.1, lane.speed + ((i%3)*0.16));
+    car.trafficRadius=(isPatrol || isEMS) ? 58 : 54;
+    car.kind=isEMS ? "EMS" : (isPatrol ? "Civic Patrol" : "Civilian");
+    car.driverData=this.driverForTrafficCar(car,i);
+    car.laneIndex = i % 4;
+    // v112d initial traffic angle: sprite noses face lane direction, not sideways.
+    car.angle=cfVehicleVisualAngleFromHeading(cfHeadingForTrafficDir(lane.dir,this,car.y));
+    car.angle=lane.dir<0 ? 0 : 180;
+    car.hornCooldown=600 + i*190;
+    car.sirenCooldown=300 + i*260;
+
+    const label = isEMS ? "EMS Response" : (isPatrol ? "Civic Patrol" : TRAFFIC_NAMES[i%TRAFFIC_NAMES.length]);
+    car.nameLabel=this.add.text(car.x,car.y-72,label,{
+      fontFamily:"monospace",fontSize:"8px",color:isPatrol?"#9eefff":"#bdefff",
+      backgroundColor:"rgba(0,0,0,.50)",padding:{x:3,y:1}
+    }).setOrigin(.5).setDepth(DEPTH.LABEL);
+
+    this.trafficCars.push(car);
+  }
+}
+
+
+createDriverAnimations(){
+  if(this._driverAnimsReady) return;
+  this._driverAnimsReady=true;
+  const make=(key,prefix)=>{
+    if(!this.textures.exists(key)) return;
+    [["down",0,3],["left",4,7],["right",8,11],["up",12,15]].forEach(([dir,a,b])=>{
+      const animKey=`${prefix}_${dir}`;
+      if(this.anims.exists(animKey)) return;
+      this.anims.create({key:animKey,frames:this.anims.generateFrameNumbers(key,{start:a,end:b}),frameRate:7,repeat:-1});
+    });
+  };
+  make("npc_driver_male_01","driver_male_01");
+  make("npc_driver_female_02","driver_female_02");
+  make("npc_elderly_01","elderly_01");
+  make("npc_mechanic_01","mechanic_01");
+  make("npc_water_carrier_01","water_carrier_01");
+}
+
+driverForTrafficCar(car,i=0){
+  if(car.kind==="EMS") return {tex:"npc_driver_male_01", anim:"driver_male_01", label:"EMS Driver"};
+  if(car.kind==="Civic Patrol") return {tex:"npc_driver_male_01", anim:"driver_male_01", label:"Civic Patrol Driver"};
+  const pool=[
+    {tex:"npc_driver_male_01", anim:"driver_male_01", label:"Civilian Driver"},
+    {tex:"npc_driver_female_02", anim:"driver_female_02", label:"Civilian Driver"},
+    {tex:"npc_elderly_01", anim:"elderly_01", label:"Elderly Driver"},
+    {tex:"npc_mechanic_01", anim:"mechanic_01", label:"Mechanic"},
+    {tex:"npc_water_carrier_01", anim:"water_carrier_01", label:"Water Carrier"}
+  ];
+  return pool[i % pool.length];
+}
+
+spawnPulledDriver(car){
+  if(!this.pulledDrivers) this.pulledDrivers=[];
+  const label=(car.driverData&&car.driverData.label)||"Driver";
+  const spr=cfNpcMake(this,car.x+42,car.y+28,label,0xffb36b);
+  spr.fleeVX=(car.x<this.mapW*.5?-1:1)*(1.5+Math.random()*0.8);
+  spr.fleeVY=(Math.random()>.5?1:-1)*(0.9+Math.random()*0.6);
+  spr.fleeLife=2600;
+  this.pulledDrivers.push(spr);
+}
+
+updatePulledDrivers(dt){
+  if(!this.pulledDrivers) return;
+  const delta=Math.max(.8,Math.min(2,(dt||16)/16.666));
+  this.pulledDrivers=this.pulledDrivers.filter(spr=>{
+    spr.x+=spr.fleeVX*delta; spr.y+=spr.fleeVY*delta; spr.fleeLife-=(dt||16);
+    if(spr.labelText) spr.labelText.setPosition(spr.x,spr.y-42);
+    if(spr.fleeLife<=0 || spr.x<-80 || spr.x>this.mapW+80 || spr.y<-80 || spr.y>this.mapH+80){
+      if(spr.labelText) spr.labelText.destroy();
+      spr.destroy();
+      return false;
+    }
+    return true;
+  });
+}
+
+nearestJackableTrafficCar(){
+  if(!this.trafficCars || !this.trafficCars.length || this.vehicleMode) return null;
+  let best=null, bestD=9999;
+  const px=this.player?.x||0, py=this.player?.y||0;
+  for(const car of this.trafficCars){
+    if(!car || car.stolen || car.jacked || !car.visible) continue;
+    const d=Phaser.Math.Distance.Between(px,py,car.x,car.y);
+    if(d<bestD){ best=car; bestD=d; }
+  }
+  return bestD<96 ? best : null;
+}
+
+
+vehiclePersistKey(car){
+  if(!car) return "donny_car";
+  if(car.texture && car.texture.key) return car.texture.key;
+  return "donny_car";
+}
+
+nearestLaneIndexForX(x,y){
+  const yy = y===undefined ? (this.vehicle?.y || this.mapH*.5) : y;
+  let idx=0, best=Math.abs(x-cfRoadCenterX(this,yy,0));
+  for(let i=1;i<4;i++){
+    const d=Math.abs(x-cfRoadCenterX(this,yy,i));
+    if(d<best){best=d;idx=i;}
+  }
+  return idx;
+}
+
+laneXFromIndex(idx,y){
+  return cfRoadCenterX(this, y===undefined ? (this.vehicle?.y || this.mapH*.5) : y, idx);
+}
+
+roadAngleForY(y){
+  // v112c simple highway road-follow assist:
+  // bottom ramp curves inward, upper area straightens north/south.
+  const t=Phaser.Math.Clamp(y/this.mapH,0,1);
+  if(t>.72) return -72;     // lower ramp approach, angled up/right
+  if(t<.18) return -88;     // top exits, mostly north
+  return -90;               // straight highway
+}
+
+applyRoadFollowAssist(){
+  if(!this.vehicleMode || !this.vehicle) return;
+  const onHighway=(AREA==="highway"||AREA==="highway_loop");
+  if(!onHighway) return;
+  const speed=Math.abs(this.vehicleSpeed||0);
+  if(speed<18) return;
+  const laneIdx=this.nearestLaneIndexForX(this.vehicle.x,this.vehicle.y);
+  const laneX=cfRoadCenterX(this,this.vehicle.y,laneIdx);
+  const dir=(this.vehicleSpeed||0)>=0 ? -1 : 1;
+  const targetHeading=cfRoadHeading(this,this.vehicle.y,laneIdx,dir);
+  this.vehicle.x += (laneX-this.vehicle.x)*0.075;
+  if(this.vehicleHeading===undefined) this.vehicleHeading=(this.vehicle.angle||0)-90;
+  let diff=Phaser.Math.Angle.ShortestBetween(this.vehicleHeading,targetHeading);
+  this.vehicleHeading += diff*0.075;
+  this.vehicle.angle=cfCarVisualAngle(this.vehicleHeading);
+}
+
+tryCarjack(){
+  if(this.vehicleMode) return false;
+  const car=this.nearestJackableTrafficCar();
+  if(!car) return false;
+
+  const texKey=(car.texture&&car.texture.key)||"donny_car";
+  const oldX=car.x, oldY=car.y, oldAngle=car.angle||0;
+  if(car.nameLabel){car.nameLabel.destroy(); car.nameLabel=null;}
+  this.spawnPulledDriver(car);
+
+  // Clone to a player-only car. Never use the traffic object as the player vehicle.
+  if(this.trafficCars) this.trafficCars=this.trafficCars.filter(c=>c!==car);
+  try{car.destroy();}catch(e){car.setVisible(false);}
+
+  const pc=this.add.image(oldX,oldY,texKey).setDepth(DEPTH.CHARACTER_BASE+230).setOrigin(.5,.5).setScale(0.90);
+  pc.isPlayerVehicle=true; pc.stolen=true; pc.jacked=true; pc.kind="Stolen Vehicle";
+  pc.angle=oldAngle;
+
+  if(this.vehicle && this.vehicle!==pc){this.vehicle.setVisible(true); this.vehicle.setAlpha(.55);}
+  this.vehicle=pc; this.playerVehicle=pc; this.vehicleMode=true; this.vehicleSpeed=0;
+  this.vehicleHeading=(oldAngle||0)-180;
+  if(typeof cfCarVisualAngle==="function") pc.angle=cfCarVisualAngle(this.vehicleHeading);
+
+  if(this.player){this.player.setVisible(false); this.player.setPosition(pc.x,pc.y); if(this.player.body)this.player.body.enable=false;}
+  if(this.vehicleLabel){
+    this.vehicleLabel.setText("STOLEN VEHICLE\nX EXIT").setPosition(pc.x,pc.y-58).setVisible(true);
+  }else{
+    this.vehicleLabel=this.add.text(pc.x,pc.y-58,"STOLEN VEHICLE\nX EXIT",{fontFamily:"monospace",fontSize:"8px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.55)",padding:{x:4,y:2},align:"center"}).setOrigin(.5).setDepth(DEPTH.LABEL);
+  }
+  if(this.cameras?.main)this.cameras.main.startFollow(this.vehicle,true,0.12,0.12,0,0);
+  setMode("IN CAR");
+  if(this.addWanted)this.addWanted(2.2,"carjacking");
+  showToast("CARJACKED\nplayer-only car");
+  return true;
+}
+
+updateCarjackPrompt(){
+  if(!this.carjackPrompt){
+    this.carjackPrompt=this.add.text(0,0,"X CARJACK",{fontFamily:"monospace",fontSize:"8px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.55)",padding:{x:4,y:2},align:"center"}).setOrigin(.5).setDepth(DEPTH.LABEL).setVisible(false);
+  }
+  const car=this.nearestJackableTrafficCar();
+  if(car){
+    this.carjackPrompt.setText(`${car.kind||"CAR"}\nX CARJACK`).setPosition(car.x,car.y-62).setVisible(true);
+  }else{
+    this.carjackPrompt.setVisible(false);
+  }
+}
+
+updateTraffic(dt){
+  if(!this.trafficCars || !this.trafficCars.length) return;
+  const delta=Math.max(.8,Math.min(2,(dt||16)/16.666));
+
+  for(const car of this.trafficCars){
+    if(car && (car.stolen || car.isPlayerVehicle || car===this.vehicle)) continue;
+    car.y += car.trafficLane.dir * car.trafficSpeed * delta;
+
+    // Wrap north/south.
+    if(car.y < -120) car.y=this.mapH+120;
+    if(car.y > this.mapH+120) car.y=-120;
+
+    // v107: no lane drift. Cars stay exactly in lanes.
+    // v112e traffic follows curved road guide.
+    const li = car.laneIndex ?? 1;
+    car.x = cfRoadCenterX(this, car.y, li);
+    const roadHeading=cfRoadHeading(this, car.y, li, car.trafficLane.dir);
+    car.angle=cfCarVisualAngle(roadHeading);
+
+    if(car.nameLabel){
+      car.nameLabel.setPosition(car.x,car.y-72);
+      car.nameLabel.setVisible(true);
+    }
+
+    // Random horns for civilian/patrol traffic; sirens for EMS.
+    car.hornCooldown -= (dt||16);
+    car.sirenCooldown -= (dt||16);
+    const nearPlayer = this.vehicle ? Phaser.Math.Distance.Between(this.vehicle.x,this.vehicle.y,car.x,car.y) < 420 : false;
+
+    if(car.kind==="Civic Patrol" && (this.wantedLevel||0)>0 && nearPlayer && car.sirenCooldown<=0){
+      try{ if(this.cache.audio.exists("veh_civic_blip")) this.sound.play("veh_civic_blip",{volume:.22}); }catch(e){}
+      car.sirenCooldown=1800+Math.random()*1400;
+    } else if(car.kind==="EMS" && nearPlayer && car.sirenCooldown<=0){
+      playEmsSiren();
+      car.sirenCooldown=1600+Math.random()*1200;
+    } else if(car.kind!=="EMS" && nearPlayer && car.hornCooldown<=0){
+      playTrafficHorn();
+      car.hornCooldown=2300+Math.random()*2600;
+    }
+
+    // Traffic collision with Donny's car.
+    if(this.vehicleMode && this.vehicle){
+      const d=Phaser.Math.Distance.Between(this.vehicle.x,this.vehicle.y,car.x,car.y);
+      const hitR=(car.trafficRadius||54)+42;
+      if(d<hitR){
+        const nx=(this.vehicle.x-car.x)/(d||1);
+        const ny=(this.vehicle.y-car.y)/(d||1);
+        const overlap=hitR-d;
+
+        this.vehicle.x += nx*(overlap*.70);
+        this.vehicle.y += ny*(overlap*.70);
+
+        if(this.vehicleSpeed!==undefined) this.vehicleSpeed *= -0.22;
+        if(this.carVelX!==undefined) this.carVelX = (this.carVelX||0)*-0.22 + nx*55;
+        if(this.carVelY!==undefined) this.carVelY = (this.carVelY||0)*-0.22 + ny*55;
+
+        if(car.kind==="EMS") playEmsSiren(); else playTrafficHorn();
+        cfPlayVehicleCrash(this);
+        if(car.kind==="Civic Patrol") this.addWanted(1.0,"hit patrol"); else this.addWanted(0.35,"traffic collision");
+        showHint(car.kind==="EMS" ? "EMS collision" : "traffic collision");
+      }
+    }
+
+    // Traffic avoids stacking in the same lane.
+    for(const other of this.trafficCars){
+      if(other===car || other.trafficLane!==car.trafficLane) continue;
+      const gap=(car.trafficLane.dir<0) ? (other.y-car.y) : (car.y-other.y);
+      if(gap>0 && gap<90){
+        car.y -= car.trafficLane.dir * (90-gap)*0.045;
+      }
+    }
+  }
+}
+
+
+
+
+
+makeCleanNpcMarker(x,y,label,color=0x9eefff){
+  const c=this.add.container(x,y).setDepth(DEPTH.CHARACTER_BASE+240);
+  const shadow=this.add.ellipse(0,10,22,8,0x000000,.38);
+  const body=this.add.rectangle(0,0,12,20,color,.95).setStrokeStyle(1,0x101820,.9);
+  const head=this.add.circle(0,-14,6,0xd8a06d,.98).setStrokeStyle(1,0x101820,.9);
+  c.add([shadow,body,head]);
+  c.nameLabel=this.add.text(x,y-36,label,{
+    fontFamily:"monospace",fontSize:"8px",color:"#e8fbff",
+    backgroundColor:"rgba(0,0,0,.70)",padding:{x:4,y:2}
+  }).setOrigin(.5).setDepth(DEPTH.LABEL+30);
+  c.npcLabel=label;
+  c.walkVX=(Math.random()>.5?1:-1)*(0.16+Math.random()*0.14);
+  c.walkVY=(Math.random()>.5?1:-1)*(0.10+Math.random()*0.10);
+  c.homeX=x; c.homeY=y;
+  c.cleanNpc=true;
+  return c;
+}
+
+spawnVisibleCivilians(){
+  cfNpcSpawn(this);
+}
+
+updateVisibleCivilians(dt){
+  cfNpcUpdate(this,dt);
+  cfTrafficKeepStable(this);
+}
+
+ensureNpcsForCurrentScreen(){
+  cfNpcSpawn(this);
+}
+createWestgateReturnTrigger(){
+  if(this._westgateReturnReady || !(AREA==="highway_loop" || AREA==="highway")) return;
+  this._westgateReturnReady=true;
+  this.westgateReturnZone={x:this.mapW*.50,y:this.mapH*.93,r:120};
+  this.westgateReturnLabel=this.add.text(this.westgateReturnZone.x,this.westgateReturnZone.y-56,"WESTGATE\nX RETURN",{
+    fontFamily:"monospace",fontSize:"9px",color:"#9eefff",
+    backgroundColor:"rgba(0,0,0,.60)",padding:{x:5,y:3},align:"center"
+  }).setOrigin(.5).setDepth(DEPTH.LABEL+30).setVisible(loopChunk()===0);
+}
+updateWestgateReturnTrigger(){
+  if(!this.westgateReturnZone || loopChunk()!==0) return;
+  const target=this.vehicleMode && this.vehicle ? this.vehicle : this.player;
+  if(!target) return;
+  const d=Phaser.Math.Distance.Between(target.x,target.y,this.westgateReturnZone.x,this.westgateReturnZone.y);
+  const near=d<this.westgateReturnZone.r;
+  if(this.westgateReturnLabel) this.westgateReturnLabel.setVisible(near);
+  if(near && input.carjackPressed){
+    input.carjackPressed=false;
+    this.returnToWestgate();
+  }
+}
+returnToWestgate(){
+  try{
+    if(this.vehicleMode && this.vehicle && typeof cfSaveVehicleState==="function") cfSaveVehicleState(this);
+  }catch(e){}
+  location.replace(location.pathname+`?v=westgate-v117&area=westgate_blacklight&entry=highway_return&collision=off&t=${Date.now()}`);
+}
+
+initWantedSystem(){
+  if(this._wantedReady) return;
+  this._wantedReady=true;
+  const savedWanted=cfLoadWanted ? cfLoadWanted() : null;
+  this.wantedLevel=savedWanted?.level||0;
+  this.wantedHeat=savedWanted?.heat||0;
+  this.wantedDecayTimer=0;
+  this.patrolChasers=[];
+  this.roadblockCooldown=0;
+}
+addWanted(amount=1, reason="crime"){
+  this.initWantedSystem();
+  this.wantedHeat += amount;
+  const old=this.wantedLevel||0;
+  this.wantedLevel=Phaser.Math.Clamp(Math.floor(this.wantedHeat/2),0,5);
+  if(this.wantedLevel>old){
+    showToast(`WANTED LEVEL ${this.wantedLevel}\n${reason.toUpperCase()}`);
+    this.spawnCivicPatrolChaser();
+  }
+  this.updateWantedHud();
+}
+updateWantedHud(){
+  if(!wantedLine) return;
+  const full="★".repeat(this.wantedLevel||0);
+  const empty="☆".repeat(5-(this.wantedLevel||0));
+  wantedLine.innerHTML=`<span class="tag">WANTED:</span> ${full}${empty}`;
+}
+spawnCivicPatrolChaser(){
+  if(!(AREA==="highway" || AREA==="highway_loop")) return;
+  if(!this.trafficTextureKeys || !this.trafficTextureKeys.length) return;
+  const civicKeys=(this.emsTrafficTextureKeys && this.emsTrafficTextureKeys.length) ? this.emsTrafficTextureKeys : this.trafficTextureKeys;
+  const key=civicKeys[1 % civicKeys.length] || this.trafficTextureKeys[0];
+  const target=this.vehicleMode && this.vehicle ? this.vehicle : this.player;
+  const spawnY=target.y + (target.y<this.mapH*.5 ? 260 : -260);
+  const spawnX=target.x + (Math.random()>.5 ? 80 : -80);
+  const car=this.add.image(
+    Phaser.Math.Clamp(spawnX,60,this.mapW-60),
+    Phaser.Math.Clamp(spawnY,60,this.mapH-60),
+    key
+  ).setDepth(DEPTH.CHARACTER_BASE+180).setOrigin(.5,.5).setScale(0.90);
+  car.kind="Civic Patrol";
+  car.isPatrolChaser=true;
+  car.patrolSpeed=0;
+  car.patrolHeading=-90;
+  car.trafficRadius=62;
+  car.nameLabel=this.add.text(car.x,car.y-74,"CIVIC PATROL",{
+    fontFamily:"monospace",fontSize:"8px",color:"#ff9e9e",
+    backgroundColor:"rgba(0,0,0,.62)",padding:{x:3,y:1}
+  }).setOrigin(.5).setDepth(DEPTH.LABEL);
+  this.patrolChasers.push(car);
+  try{
+    if(this.cache.audio.exists("veh_civic_blip")) this.sound.play("veh_civic_blip",{volume:.35});
+    else if(this.cache.audio.exists("veh_police")) this.sound.play("veh_police",{volume:.25});
+  }catch(e){}
+}
+updateWantedSystem(dt){
+  this.initWantedSystem();
+  const delta=dt||16;
+  this.wantedDecayTimer += delta;
+  if(this.wantedLevel>0 && this.wantedDecayTimer>2500){
+    this.wantedDecayTimer=0;
+    const target=this.vehicleMode && this.vehicle ? this.vehicle : this.player;
+    let nearPatrol=false;
+    for(const p of this.patrolChasers||[]){
+      if(Phaser.Math.Distance.Between(target.x,target.y,p.x,p.y)<360) nearPatrol=true;
+    }
+    if(!nearPatrol){
+      this.wantedHeat=Math.max(0,this.wantedHeat-0.35);
+      this.wantedLevel=Phaser.Math.Clamp(Math.floor(this.wantedHeat/2),0,5);
+    }
+  }
+  this.updateWantedHud();
+
+  // Spawn more patrols if heat is high and not enough chasers.
+  if((this.wantedLevel||0)>0 && (!this.patrolChasers || this.patrolChasers.length<this.wantedLevel)){
+    if(Math.random()<0.006) this.spawnCivicPatrolChaser();
+  }
+
+  this.updatePatrolChasers(delta);
+}
+updatePatrolChasers(dt){
+  if(!this.patrolChasers) return;
+  const sec=Math.min(.05,(dt||16)/1000);
+  const target=this.vehicleMode && this.vehicle ? this.vehicle : this.player;
+  this.patrolChasers=this.patrolChasers.filter(car=>{
+    if(!car || !target) return false;
+    const dx=target.x-car.x, dy=target.y-car.y;
+    const dist=Math.hypot(dx,dy)||1;
+    const desired=Phaser.Math.RadToDeg(Math.atan2(dy,dx));
+    if(car.patrolHeading===undefined) car.patrolHeading=desired;
+    let diff=Phaser.Math.Angle.ShortestBetween(car.patrolHeading,desired);
+    car.patrolHeading += diff*0.055;
+    car.patrolSpeed += 190*sec;
+    car.patrolSpeed=Phaser.Math.Clamp(car.patrolSpeed,0,265+(this.wantedLevel*18));
+    const rad=Phaser.Math.DegToRad(car.patrolHeading);
+    car.x += Math.cos(rad)*car.patrolSpeed*sec;
+    car.y += Math.sin(rad)*car.patrolSpeed*sec;
+    car.angle=cfCarVisualAngle ? cfCarVisualAngle(car.patrolHeading) : car.patrolHeading+180;
+    if(car.nameLabel) car.nameLabel.setPosition(car.x,car.y-74);
+
+    // Collision: patrol rams player vehicle and raises heat.
+    if(this.vehicleMode && this.vehicle){
+      const d=Phaser.Math.Distance.Between(this.vehicle.x,this.vehicle.y,car.x,car.y);
+      if(d<92){
+        const nx=(this.vehicle.x-car.x)/(d||1);
+        const ny=(this.vehicle.y-car.y)/(d||1);
+        this.vehicle.x += nx*14;
+        this.vehicle.y += ny*14;
+        if(this.vehicleSpeed!==undefined) this.vehicleSpeed*=0.65;
+        this.addWanted(0.25,"ramming patrol");
+        try{ if(this.cache.audio.exists("veh_crash")) this.sound.play("veh_crash",{volume:.35}); }catch(e){}
+      }
+    }
+
+    if(car.x<-220 || car.x>this.mapW+220 || car.y<-220 || car.y>this.mapH+220){
+      if(car.nameLabel) car.nameLabel.destroy();
+      car.destroy();
+      return false;
+    }
+    return true;
+  });
+}
+maybeWantedFromDriving(){
+  if(!this.vehicleMode || !this.vehicle) return;
+  const speed=Math.abs(this.vehicleSpeed||0);
+  if(speed>250 && Math.random()<0.0025) this.addWanted(0.15,"reckless driving");
+}
+
+forceSpawnTrafficAllChunks(){
+  if(!(AREA==="highway" || AREA==="highway_loop")) return;
+  if(this._trafficForcedReady) return;
+  this._trafficForcedReady=true;
+  this.time.delayedCall(250, ()=>{
+    try{
+      if(!this.trafficCars || this.trafficCars.length<4){
+        if(this.spawnTraffic) this.spawnTraffic();
+      }
+      if(this.trafficCars && this.trafficCars.length){
+        this.trafficCars=this.trafficCars.filter(c=>!(c&&c.isPlayerVehicle));
+        for(let i=0;i<this.trafficCars.length;i++){
+          const car=this.trafficCars[i];
+          if(!car) continue;
+          car.visible=true;
+          if(car.nameLabel) car.nameLabel.visible=true;
+          // stagger y positions differently per chunk so every screen has traffic immediately
+          car.y = this.mapH*(0.06 + (((i*0.113)+(loopChunk()*0.071))%0.88));
+          if(car.trafficLane && car.trafficLane.x) car.x=car.trafficLane.x;
+        }
+      }
+    }catch(e){ console.warn("v112j traffic force spawn failed", e); }
+  });
+}
+hideTransitionDebugMarkers(){
+  // v112j: remove/disable visible transition circles/labels.
+  const killTexts=["","","","","",""];
+  this.children.list.forEach(obj=>{
+    try{
+      if(obj && obj.text && killTexts.some(t=>String(obj.text).includes(t))) obj.setVisible(false);
+      if(obj && obj.name && String(obj.name).toLowerCase().includes("transition")) obj.setVisible(false);
+    }catch(e){}
+  });
+}
+
+createHighwayVehicle(){
   if(AREA!=="highway" && AREA!=="highway_loop") return;
   // v75: Donny's car/van placed on the off-ramp shoulder, clear of the Westgate exit marker.
   this.vehicle = this.physics.add.image(this.mapW*0.50, this.mapH*0.72, "donny_car")
@@ -879,13 +1672,60 @@ tryMove(dx,dy){
     this.vehicle.body.setSize(26,54);
     this.vehicle.body.immovable = true;
   }
+  // v112c: entry edge spawn preserves same lane/road section.
+  if(AREA==="highway_loop"){
+    const laneIdx=Phaser.Math.Clamp(parseInt(qs.get("lane")||"1",10)||1,0,3);
+    const spawnY=(LOOP_ENTRY==="north"?this.mapH*0.12:this.mapH*0.88); const x=this.laneXFromIndex ? this.laneXFromIndex(laneIdx,spawnY) : this.mapW*0.50;
+    if(LOOP_ENTRY==="north"){
+      this.vehicle.setPosition(x,this.mapH*0.12);
+      this.vehicleHeading=90;
+      this.vehicle.angle=cfCarVisualAngle(this.vehicleHeading);
+    } else {
+      this.vehicle.setPosition(x,this.mapH*0.88);
+      this.vehicleHeading=-90;
+      this.vehicle.angle=cfCarVisualAngle(this.vehicleHeading);
+    }
+  }
   this.vehicleMode=false;
+  cfClearVehicleState();
+  cfUpdateVehicleAudio(this);
+  cfClearActiveVehicle();
+  this.playerVehicle=this.vehicle;
+  this.originalDonnyVehicle=this.vehicle;
   if(vehicleControls) vehicleControls.style.display="none";
+
+  // v112g: restore current/stolen vehicle after screen transition.
+  const activeVehicle=cfLoadActiveVehicle();
+  if((qs.get("vehicle")==="car" || qs.get("persist")==="1" || activeVehicle) && this.vehicle){
+    const carKey=qs.get("carKey") || activeVehicle?.carKey;
+    const stolen=(qs.get("stolen")==="1") || !!activeVehicle?.stolen;
+    if(carKey && this.textures.exists(carKey)){
+      this.vehicle.setTexture(carKey);
+    }
+    this.vehicle.stolen=stolen;
+    this.vehicle.jacked=stolen;
+    this.playerVehicle=this.vehicle;
+    this.vehicleMode=true;
+    const savedSpeed=parseFloat(qs.get("speed") || activeVehicle?.speed || "0");
+    const savedHeading=parseFloat(qs.get("heading") || activeVehicle?.heading || "-90");
+    if(!Number.isNaN(savedSpeed)) this.vehicleSpeed=savedSpeed;
+    if(!Number.isNaN(savedHeading)){
+      this.vehicleHeading=savedHeading;
+      if(typeof cfVehicleVisualAngleFromHeading==="function") this.vehicle.angle=cfCarVisualAngle(this.vehicleHeading);
+    }
+    if(this.player){ this.player.setVisible(false); this.player.setPosition(this.vehicle.x,this.vehicle.y); }
+    if(this.vehicleLabel){
+      this.vehicleLabel.setText(stolen?"STOLEN VEHICLE\nX EXIT":"DONNY'S CAR\nX EXIT").setPosition(this.vehicle.x,this.vehicle.y-58).setVisible(true);
+    }
+    setMode("IN CAR");
+  }
+
   const normalBtns=document.querySelector(".buttons"); if(normalBtns) normalBtns.style.display="block";
   input.a=false; input.b=false; input.vgas=false; input.vbrake=false;
   this.carCruise=false;
   this.autoDrive=false;
   this.vehicleSpeed=0;
+  if(this.vehicleFuel===undefined) this.vehicleFuel=100;
   this.vehicleMaxSpeed=10.0;
   this.vehicleTurnRate=2.7;
   this.vehicleFriction=0.94;
@@ -961,16 +1801,18 @@ enterVehicle(){
 
   input.a=false; input.b=false; input.xbtn=false; input.usePressed=false;
   this.vehicleSpeed=0;
+  this.vehicleHeading=this.vehicle.angle-180;
 
   this.cameras.main.startFollow(this.vehicle,true,0.12,0.12,0,0);
   this.ensureEngineAudio();
   this.setEngineVolume(false);
-  setObjective("Drive the highway loop");
-  showToast("IN CAR\nUse stick to drive • A boost • X exit");
+  setObjective("Drive north/south edge to change screens");
+  showToast("IN CAR\nA gas • B brake/reverse • stick steers • X exit");
 }
 exitVehicle(){
   if(!this.vehicle || !this.vehicleMode) return;
   this.vehicleMode=false;
+  if(this.vehicle) this.vehicle.setAlpha(1);
   this.vehicleUseLockUntil=this.time ? this.time.now+350 : performance.now()+350;
 
   input.a=false; input.b=false; input.xbtn=false; input.usePressed=false;
@@ -990,30 +1832,105 @@ exitVehicle(){
   if(vehicleControls) vehicleControls.style.display="none";
 
   this.cameras.main.startFollow(this.player,true,0.12,0.12,0,0);
+  if(carHudBlock) carHudBlock.style.display="none";
   setObjective("On foot");
   showToast("ON FOOT");
 }
+
+updateCarHud(){
+  try{
+    if(!carHudBlock) carHudBlock=document.getElementById("carHudBlock");
+    if(!speedBar) speedBar=document.getElementById("speedBar");
+    if(!fuelBar) fuelBar=document.getElementById("fuelBar");
+    if(!carHudBlock || !speedBar || !fuelBar) return;
+    if(!this.vehicleMode){
+      carHudBlock.style.display="none";
+      return;
+    }
+    carHudBlock.style.display="block";
+    const speed=Math.abs(this.vehicleSpeed||0);
+    const speedPct=Phaser.Math.Clamp((speed/6.0)*100,0,100);
+    if(this.vehicleFuel===undefined || Number.isNaN(this.vehicleFuel)) this.vehicleFuel=100;
+    if(speed>0.15 && input.a){
+      this.vehicleFuel=Math.max(0,this.vehicleFuel-0.002*speed);
+    }
+    speedBar.style.width=speedPct.toFixed(1)+"%";
+    fuelBar.style.width=this.vehicleFuel.toFixed(1)+"%";
+  }catch(e){}
+}
+
 updateVehicle(dt){
   if(!this.vehicle || !this.vehicleMode) return;
 
-  // v96: keep Donny inside vehicle and keep camera stable.
+  const sec=Math.max(0.010, Math.min(0.040, (dt||16)/1000));
+
+  // v97: buttons drive the car. Stick only steers/directs.
+  const steer=Math.abs(input.x)>0.10 ? input.x : 0;
+  const gas=input.a===true;
+  const brake=input.b===true;
+  const handbrake=input.r===true;
+
+  if(this.vehicleHeading === undefined) this.vehicleHeading = this.vehicle.angle - 90;
+  if(this.vehicleSpeed === undefined) this.vehicleSpeed = 0;
+
+  const absSpeed=Math.abs(this.vehicleSpeed);
+  const turnRate=(handbrake ? 210 : 115) * (0.35 + Math.min(absSpeed/260, 1.0));
+  this.vehicleHeading += steer * turnRate * sec;
+
+  if(gas) this.vehicleSpeed += 310 * sec;
+  if(brake) this.vehicleSpeed -= (this.vehicleSpeed > 20 ? 470 : 235) * sec;
+
+  this.vehicleSpeed=Phaser.Math.Clamp(this.vehicleSpeed, -145, 340);
+
+  // Coast/friction.
+  if(handbrake) this.vehicleSpeed *= Math.pow(0.76, sec*8);
+  else if(!gas && !brake) this.vehicleSpeed *= Math.pow(0.955, sec*8);
+
+  if(Math.abs(this.vehicleSpeed)<2) this.vehicleSpeed=0;
+
+  const rad=Phaser.Math.DegToRad(this.vehicleHeading);
+  this.vehicle.x += Math.cos(rad)*this.vehicleSpeed*sec;
+  this.vehicle.y += Math.sin(rad)*this.vehicleSpeed*sec;
+
+  this.vehicle.x=Phaser.Math.Clamp(this.vehicle.x,12,this.mapW-12);
+  this.vehicle.y=Phaser.Math.Clamp(this.vehicle.y,12,this.mapH-12);
+
+  // v107 GTA-style lane snap for Donny's car on straight highway.
+  if((AREA==="highway" || AREA==="highway_loop") && this.vehicleMode && this.vehicle){
+    const highwayLanes=[this.mapW*.215,this.mapW*.365,this.mapW*.680,this.mapW*.815];
+    let nearest=highwayLanes[0], best=Math.abs(this.vehicle.x-highwayLanes[0]);
+    for(const lx of highwayLanes){
+      const d=Math.abs(this.vehicle.x-lx);
+      if(d<best){ best=d; nearest=lx; }
+    }
+    const movingFast=Math.abs(this.vehicleSpeed||0)>2.2;
+    const verticalish=Math.abs(input.y)>Math.abs(input.x)*0.65 || Math.abs(input.y)>0.25;
+    if(movingFast && verticalish && best<85 && !input.r){
+      this.vehicle.x += (nearest-this.vehicle.x)*0.035;
+    }
+  }
+
+
+  // topdown car art orientation; keep stable and smooth.
+  this.vehicle.angle=this.vehicleHeading + 180;
+
+  // Keep Donny inside vehicle.
   if(this.player){
     this.player.setPosition(this.vehicle.x,this.vehicle.y);
     this.player.setVisible(false);
   }
 
-  this.vehicle.x=Phaser.Math.Clamp(this.vehicle.x,12,this.mapW-12);
-  this.vehicle.y=Phaser.Math.Clamp(this.vehicle.y,12,this.mapH-12);
-
   if(this.vehicleLabel){
     this.vehicleLabel.setPosition(this.vehicle.x,this.vehicle.y-58);
-    this.vehicleLabel.setText("DRIVING\\nSTICK DRIVE • A BOOST • X EXIT");
+    this.vehicleLabel.setText("DRIVING\\nNORTH EDGE NEXT • SOUTH EDGE PREV • X EXIT");
   }
 
-  this.setEngineVolume(Math.abs(this.vehicleSpeed||0)>0.1);
+  this.setEngineVolume(Math.abs(this.vehicleSpeed)>3);
   if(typeof this.checkHighwayLoopTransitions === "function") this.checkHighwayLoopTransitions();
 
-  coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.vehicle.x)},${Math.round(this.vehicle.y)} <span class="tag">MODE:</span> IN CAR <span class="tag">JOY:</span> ${input.x.toFixed(1)},${input.y.toFixed(1)} <span class="tag">A:</span>${input.a?1:0} <span class="tag">SPD:</span>${Math.round(this.vehicleSpeed||0)}`;
+  this.updateCarHud();
+
+  coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.vehicle.x)},${Math.round(this.vehicle.y)} <span class="tag">CAR:</span> ORIENT FIX <span class="tag">A:</span>${gas?1:0} <span class="tag">B:</span>${brake?1:0} <span class="tag">R:</span>${handbrake?1:0} <span class="tag">STEER:</span>${steer.toFixed(1)} <span class="tag">SPD:</span>${Math.round(this.vehicleSpeed)}`;
 }
 fixClubNpcFloorDepth(){
   // v73: club/A1 sprites are baked over a flat image, so force characters above floor.
@@ -1043,6 +1960,42 @@ fixClubNpcFloorDepth(){
     this.children.bringToTop(this.player);
   }
 }
+goHighwayLoop(step){
+  const n=HIGHWAY_LOOP.length;
+  const next=((loopChunk()+step)%n+n)%n;
+  const entry = step>0 ? "south" : "north";
+  if(this.vehicleMode && this.vehicle) cfSaveVehicleState(this);
+  if(this.wantedLevel>0) cfSaveWanted(this);
+  const inCar=this.vehicleMode?"&vehicle=car":"";
+  const carKey=this.vehicleMode&&this.vehicle?`&carKey=${encodeURIComponent(cfCurrentCarKey(this))}`:"";
+  const stolen=this.vehicleMode&&this.vehicle&&this.vehicle.stolen?"&stolen=1":"";
+  const spd=this.vehicleMode?`&speed=${Math.round(this.vehicleSpeed||0)}`:"";
+  const lane=this.vehicle&&this.nearestLaneIndexForX?this.nearestLaneIndexForX(this.vehicle.x,this.vehicle.y):1;
+  const heading=this.vehicleHeading!==undefined?Math.round(this.vehicleHeading):(step>0?-90:90);
+  location.replace(location.pathname+`?v=westgate-v117&area=highway_loop&chunk=${next}&entry=${entry}&lane=${lane}${inCar}${carKey}${stolen}${spd}&heading=${heading}&persist=1&collision=off&t=${Date.now()}`);
+}
+checkHighwayLoopTransitions(){
+  if(AREA!=="highway_loop" || !this.vehicle || !this.vehicleMode) return;
+
+  // v100: continuous north/south highway screens.
+  // North edge = next screen, stay in car. South edge = previous screen, stay in car. No button prompt.
+  const edgePad = 28;
+  if(this.vehicle.y <= edgePad){
+    this.goHighwayLoop(1);
+    return;
+  }
+  if(this.vehicle.y >= this.mapH - edgePad){
+    this.goHighwayLoop(-1);
+    return;
+  }
+
+  if(this.loopOfframpZone && Phaser.Math.Distance.Between(this.vehicle.x,this.vehicle.y,this.loopOfframpZone.x,this.loopOfframpZone.y)<this.loopOfframpZone.r){
+    setObjective("Off-ramp: "+this.loopOfframpZone.exit+" / X to enter later");
+  } else {
+    setObjective("Drive north/south edge to change screens screen");
+  }
+}
+
 lockCameraToPlayer(){
   if(!this.cameras || !this.cameras.main) return;
   const cam=this.cameras.main;
@@ -1065,7 +2018,19 @@ if(this.vehicle){
       this.vehicleLabel.setText(vd<190 ? "DONNY'S CAR\nTAP CAR TO ENTER" : "DONNY'S CAR");
     }
     if(this.vehicleMode){
-      this.updateVehicle(dt);
+      /* v112h tank update */ if(!(this.vehicleMode&&cfTankDrive(this,dt))) this.updateVehicle(dt);
+  if(this.updateCarHud) this.updateCarHud();
+  if(this.applyRoadFollowAssist) this.applyRoadFollowAssist();
+  this.updateTraffic(dt);
+  this.updatePulledDrivers(dt);
+  this.updateCarjackPrompt();
+  this.ensureNpcsForCurrentScreen();
+  this.updateVisibleCivilians(dt);
+  this.updateWestgateReturnTrigger();
+  this.updateWantedSystem(dt);
+  this.maybeWantedFromDriving();
+  if(this.hideTransitionDebugMarkers) this.hideTransitionDebugMarkers();
+  if(input.carjackPressed){ input.carjackPressed=false; if(this.tryCarjack && this.tryCarjack()) return; }
       
   if(AREA==="highway" && this.vehicle && !this.vehicleMode){
     const vd=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.vehicle.x,this.vehicle.y);
@@ -1133,6 +2098,12 @@ coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.player.x)}, 
   showToast("DONNY MOVED TO SAFE SPOT");
 }
 handleUse(){
+  // v112b: carjacking has priority over entering Donny's parked car.
+  // If Donny is on foot near traffic and presses X, steal traffic car first.
+  if((AREA==="highway" || AREA==="highway_loop") && !this.vehicleMode && this.tryCarjack && this.tryCarjack()){
+    return;
+  }
+
   // v96 vehicle enter/exit first.
   if((AREA==="highway" || AREA==="highway_loop") && this.vehicle){
     const now=this.time ? this.time.now : performance.now();
@@ -1161,8 +2132,8 @@ handleUse(){
     const d=Phaser.Math.Distance.Between((this.vehicleMode?this.vehicle.x:this.player.x),(this.vehicleMode?this.vehicle.y:this.player.y),this.loopOfframpZone.x,this.loopOfframpZone.y);
     if(d<this.loopOfframpZone.r){
       const chunk=HIGHWAY_LOOP[loopChunk()];
-      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v96&area=westgate&collision=mask";
-      else location.href=location.pathname+"?v=westgate-v96&area=a1&collision=mask";
+      if(chunk.id==="OFFRAMP_WESTGATE_BLACKLIGHT") location.href=location.pathname+"?v=westgate-v117&area=westgate&collision=mask";
+      else location.href=location.pathname+"?v=westgate-v117&area=a1&collision=mask";
       return;
     }
   }
@@ -1203,7 +2174,7 @@ handleUse(){
   if(AREA==="highway" && this.highwayWestgateExit){
     const d=Phaser.Math.Distance.Between(this.player.x,this.player.y,this.highwayWestgateExit.x,this.highwayWestgateExit.y);
     if(d < this.highwayWestgateExit.r){
-      location.href=location.pathname+"?v=westgate-v96&area=westgate&collision=mask";
+      location.href=location.pathname+"?v=westgate-v117&area=westgate&collision=mask";
       return;
     }
     showToast("Follow the marked ramp exit to Westgate.");
@@ -1249,7 +2220,7 @@ handleUse(){
       } else {
         showDialogue("CLUB BOUNCER", "Static drinks water. Good. Door’s yours.", [
           {label:"Open Door", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); showToast("CLUB ACCESS CLEARED\nDoor active"); closeDialogue();}},
-          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v96&area=club&collision=mask";}},
+          {label:"Enter Now", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); location.href=location.pathname+"?v=westgate-v117&area=club&collision=mask";}},
           {label:"Close", onClick:()=>{setFlag("talked_bouncer"); setFlag("club_access"); setObjective("Enter Blacklight Club"); if(this.clubDoorMarker) this.clubDoorMarker.setVisible(true); closeDialogue();}}
         ]);
       }
@@ -1266,21 +2237,47 @@ handleUse(){
       showDialogue("BLACKLIGHT CLUB", "The bouncer has not cleared you yet.", [{label:"Close",onClick:closeDialogue}]);
     } else {
       showDialogue("BLACKLIGHT CLUB", "Enter Blacklight Club?", [
-        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v96&area=club&collision=mask"},
+        {label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v117&area=club&collision=mask"},
         {label:"NO",onClick:closeDialogue}
       ]);
     }
     return;
   }
   if(Phaser.Geom.Rectangle.Contains(this.exitZone,this.player.x,this.player.y)){
-    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v96&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v96&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
-    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v96&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    if(AREA==="club") showDialogue("BLACKLIGHT EXIT","Return to Blacklight A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v117&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else if(AREA==="a1") showDialogue("WESTGATE ROUTE","Return to Westgate Connector?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v117&area=westgate&collision=mask"},{label:"NO",onClick:closeDialogue}]);
+    else showDialogue("BLACKLIGHT DISTRICT","Enter Blacklight District A1?",[{label:"YES",onClick:()=>location.href=location.pathname+"?v=westgate-v117&area=a1&collision=mask"},{label:"NO",onClick:closeDialogue}]);
   }
  }
 }
 
 
+
+if(resumeBtn) resumeBtn.onclick=()=>{ pauseOpen=false; if(pauseMenu) pauseMenu.style.display="none"; forceControlsLive(); };
+
+
+if(pauseTabMain) pauseTabMain.onclick=()=>setPauseTab("main");
+if(pauseTabInv) pauseTabInv.onclick=()=>setPauseTab("inv");
+
+if(pauseButton) pauseButton.onclick=()=>togglePause();
+
+
+function installActionButtonHoldFix(){
+  document.querySelectorAll(".btn").forEach(btn=>{
+    const raw=(btn.dataset.btn||btn.getAttribute("data-btn")||btn.id||btn.textContent||"").toLowerCase();
+    const name=raw.includes("gas")||raw==="a" ? "a" : raw.includes("brk")||raw.includes("brake")||raw==="b" ? "b" : raw.includes("bst")||raw.includes("boost")||raw==="r" ? "r" : raw.includes("use")||raw==="x" ? "x" : "";
+    if(!name || btn.__cfHoldFix) return;
+    btn.__cfHoldFix=true;
+    const down=e=>{ e.preventDefault(); cfSetActionButton(name,true); };
+    const up=e=>{ e.preventDefault(); if(name!=="x") cfSetActionButton(name,false); };
+    btn.addEventListener("pointerdown",down,{passive:false});
+    btn.addEventListener("pointerup",up,{passive:false});
+    btn.addEventListener("pointercancel",up,{passive:false});
+    btn.addEventListener("pointerleave",up,{passive:false});
+    btn.addEventListener("touchstart",down,{passive:false});
+    btn.addEventListener("touchend",up,{passive:false});
+  });
+}
 
 function hardStartMusic(){
   try{
@@ -1288,6 +2285,314 @@ function hardStartMusic(){
       window.__cfScene.startAreaMusic();
     }
   }catch(e){}
+}
+
+
+function togglePause(){
+  pauseOpen=!pauseOpen;
+  if(pauseMenu) pauseMenu.style.display=pauseOpen?"block":"none";
+  const buttons=document.querySelector(".buttons");
+  if(buttons){
+    buttons.style.opacity=pauseOpen?".35":"1";
+    buttons.style.pointerEvents=pauseOpen?"none":"auto";
+  }
+  if(pauseOpen){ setPauseTab("main"); renderInventory(); }
+}
+
+
+const EquipState={
+  load(){try{this.equipped=JSON.parse(localStorage.getItem("cf_equipped")||"{}");}catch(e){this.equipped={};}return this.equipped;},
+  save(){localStorage.setItem("cf_equipped",JSON.stringify(this.equipped||{}));},
+  equip(id){this.load();this.equipped.quick=id;this.save();renderInventory();showToast("EQUIPPED\n"+id.replaceAll("_"," ").toUpperCase());}
+};
+function renderInventory(){
+  if(!inventoryList) return;
+  ShopState.load(); EquipState.load();
+  inventoryList.innerHTML="";
+  const owned=ShopState.items.filter(it=>ShopState.qty(it.id)>0);
+  if(!owned.length){
+    inventoryList.innerHTML='<div class="equipLine">Inventory empty. Buy items from vendors.</div>';
+  } else {
+    owned.forEach(it=>{
+      const row=document.createElement("div");
+      row.className="invItem";
+      row.innerHTML=`<span>${it.name} x${ShopState.qty(it.id)}</span>`;
+      const btn=document.createElement("button");
+      btn.textContent=EquipState.equipped.quick===it.id ? "EQUIPPED" : "EQUIP";
+      btn.onclick=()=>EquipState.equip(it.id);
+      row.appendChild(btn);
+      inventoryList.appendChild(row);
+    });
+  }
+  if(equippedLine) equippedLine.textContent=EquipState.equipped.quick ? EquipState.equipped.quick.replaceAll("_"," ") : "None";
+}
+function setPauseTab(which){
+  if(pauseTabMain) pauseTabMain.classList.toggle("active", which==="main");
+  if(pauseTabInv) pauseTabInv.classList.toggle("active", which==="inv");
+  if(pauseMainPanel) pauseMainPanel.classList.toggle("active", which==="main");
+  if(pauseInvPanel) pauseInvPanel.classList.toggle("active", which==="inv");
+  if(which==="inv") renderInventory();
+}
+
+
+function cfSetActionButton(name, down){
+  if(name==="a") input.a=!!down;
+  if(name==="b") input.b=!!down;
+  if(name==="r") input.r=!!down;
+  if(name==="x" && down){
+    input.xbtn=true;
+    input.usePressed=true;
+    input.carjackPressed=true;
+  }
+}
+
+
+function cfCarVisualAngle(heading){
+  // v112i: current car art needed +90 more rotation.
+  // Fixes "left side is the front" behavior.
+  return heading + 180;
+}
+function cfCurrentCarKey(scene){
+  try{return (scene.vehicle && scene.vehicle.texture && scene.vehicle.texture.key) || "donny_car";}catch(e){return "donny_car";}
+}
+
+function cfSaveWanted(scene){
+  try{ localStorage.setItem("cf_wanted_state", JSON.stringify({level:scene.wantedLevel||0, heat:scene.wantedHeat||0, t:Date.now()})); }catch(e){}
+}
+function cfLoadWanted(){
+  try{return JSON.parse(localStorage.getItem("cf_wanted_state")||"null");}catch(e){return null;}
+}
+
+function cfSaveVehicleState(scene){
+  try{
+    if(!scene || !scene.vehicleMode || !scene.vehicle) return;
+    const lane = scene.nearestLaneIndexForX ? scene.nearestLaneIndexForX(scene.vehicle.x,scene.vehicle.y) : 1;
+    const data={
+      active:true,
+      stolen:!!scene.vehicle.stolen,
+      carKey:cfCurrentCarKey(scene),
+      speed:Math.round(scene.vehicleSpeed||0),
+      heading:Math.round(scene.vehicleHeading ?? ((scene.vehicle.angle||0)-90)),
+      lane:lane,
+      xRatio:scene.vehicle.x/scene.mapW,
+      yRatio:scene.vehicle.y/scene.mapH,
+      t:Date.now()
+    };
+    localStorage.setItem("cf_vehicle_state",JSON.stringify(data));
+    localStorage.setItem("cf_active_vehicle",JSON.stringify(data));
+  }catch(e){}
+}
+function cfLoadVehicleState(){
+  try{return JSON.parse(localStorage.getItem("cf_vehicle_state") || localStorage.getItem("cf_active_vehicle") || "null");}catch(e){return null;}
+}
+function cfClearVehicleState(){
+  try{localStorage.removeItem("cf_vehicle_state");localStorage.removeItem("cf_active_vehicle");}catch(e){}
+}
+function cfLaneX(scene, lane){
+  const xs=[scene.mapW*.215, scene.mapW*.365, scene.mapW*.680, scene.mapW*.815];
+  return xs[Phaser.Math.Clamp(lane||0,0,3)] || xs[1];
+}
+function cfTankDrive(scene, dt){
+  if(!scene || !scene.vehicleMode || !scene.vehicle || pauseOpen || shopOpen || dialogueOpen) return false;
+  const sec=Math.min(.05,(dt||16)/1000);
+  if(scene.vehicleHeading===undefined) scene.vehicleHeading=(scene.vehicle.angle||0)-90;
+  if(scene.vehicleSpeed===undefined) scene.vehicleSpeed=0;
+
+  const steer=Math.abs(input.x)>0.10 ? input.x : 0; // thumb stick turns only
+  const gas=!!input.a || !!input.vgas;
+  const brake=!!input.b || !!input.vbrake;
+  const handbrake=!!input.r;
+
+  const absSpeed=Math.abs(scene.vehicleSpeed);
+  const turnRate=(handbrake?230:125)*(0.35+Math.min(absSpeed/230,1));
+  scene.vehicleHeading += steer*turnRate*sec;
+
+  if(gas) scene.vehicleSpeed += 340*sec;
+  if(brake){
+    if(scene.vehicleSpeed>12) scene.vehicleSpeed -= 520*sec;
+    else scene.vehicleSpeed -= 220*sec;
+  }
+  if(!gas && !brake) scene.vehicleSpeed *= .982;
+  if(handbrake) scene.vehicleSpeed *= .955;
+  scene.vehicleSpeed=Phaser.Math.Clamp(scene.vehicleSpeed,-135,330);
+  if(Math.abs(scene.vehicleSpeed)<1.4) scene.vehicleSpeed=0;
+
+  const rad=Phaser.Math.DegToRad(scene.vehicleHeading);
+  scene.vehicle.x += Math.cos(rad)*scene.vehicleSpeed*sec;
+  scene.vehicle.y += Math.sin(rad)*scene.vehicleSpeed*sec;
+  scene.vehicle.x=Phaser.Math.Clamp(scene.vehicle.x,12,scene.mapW-12);
+  scene.vehicle.y=Phaser.Math.Clamp(scene.vehicle.y,12,scene.mapH-12);
+  scene.vehicle.angle=cfCarVisualAngle(scene.vehicleHeading);
+
+  if(scene.player){scene.player.setPosition(scene.vehicle.x,scene.vehicle.y);scene.player.setVisible(false);}
+  if(scene.vehicleLabel)scene.vehicleLabel.setPosition(scene.vehicle.x,scene.vehicle.y-58);
+  if(scene.cameras&&scene.cameras.main)scene.cameras.main.centerOn(scene.vehicle.x,scene.vehicle.y);
+  if(scene.updateCarHud)scene.updateCarHud();
+  if(scene.checkHighwayLoopTransitions)scene.checkHighwayLoopTransitions();
+  cfUpdateVehicleAudio(scene);
+  if(handbrake && Math.abs(scene.vehicleSpeed)>80 && Math.random()<0.045) cfPlayTireScreech(scene);
+
+  if(coordLine) coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(scene.vehicle.x)},${Math.round(scene.vehicle.y)} <span class="tag">CAR:</span> TANK <span class="tag">A:</span>${gas?1:0} <span class="tag">B:</span>${brake?1:0} <span class="tag">STEER:</span>${steer.toFixed(2)} <span class="tag">SPD:</span>${Math.round(scene.vehicleSpeed)}`;
+  return true;
+}
+function cfSetButtonDown(name,down){
+  if(name==="a"){input.a=!!down; input.vgas=!!down;}
+  if(name==="b"){input.b=!!down; input.vbrake=!!down;}
+  if(name==="r"){input.r=!!down;}
+  if(name==="x" && down){input.xbtn=true;input.usePressed=true;input.carjackPressed=true;}
+}
+function cfInstallButtonFix(){
+  document.querySelectorAll(".btn,.vbtn").forEach(btn=>{
+    if(btn.__cf112h) return;
+    btn.__cf112h=true;
+    const raw=(btn.dataset.btn||btn.className||btn.id||btn.textContent||"").toLowerCase();
+    let name="";
+    if(raw.includes("a")||raw.includes("gas")) name="a";
+    if(raw.includes("b")||raw.includes("brake")) name="b";
+    if(raw.includes("r")||raw.includes("hand")||raw.includes("bst")) name="r";
+    if(raw.includes("x")||raw.includes("exit")||raw.includes("use")) name="x";
+    if(!name) return;
+    const down=e=>{e.preventDefault();e.stopPropagation();cfSetButtonDown(name,true);};
+    const up=e=>{e.preventDefault();e.stopPropagation();if(name!=="x")cfSetButtonDown(name,false);};
+    ["pointerdown","touchstart","mousedown"].forEach(t=>btn.addEventListener(t,down,{passive:false}));
+    ["pointerup","pointercancel","pointerleave","touchend","mouseup"].forEach(t=>btn.addEventListener(t,up,{passive:false}));
+  });
+}
+
+
+function cfStartVehicleAudio(scene){
+  try{
+    if(!scene || scene._vehicleAudioReady) return;
+    scene._vehicleAudioReady=true;
+    const make=(key,vol,loop=true)=>{
+      if(!scene.cache.audio.exists(key)) return null;
+      const s=scene.sound.add(key,{loop,volume:vol});
+      return s;
+    };
+    scene.sndIdle=make("veh_idle",0.18,true);
+    scene.sndDrive=make("veh_drive",0.00,true);
+    scene.sndBoost=make("veh_boost",0.00,true);
+    if(scene.sndIdle && !scene.sndIdle.isPlaying) scene.sndIdle.play();
+    if(scene.sndDrive && !scene.sndDrive.isPlaying) scene.sndDrive.play();
+    if(scene.sndBoost && !scene.sndBoost.isPlaying) scene.sndBoost.play();
+  }catch(e){}
+}
+function cfUpdateVehicleAudio(scene){
+  try{
+    if(!scene || !scene.vehicleMode){ 
+      if(scene?.sndDrive) scene.sndDrive.setVolume(0);
+      if(scene?.sndBoost) scene.sndBoost.setVolume(0);
+      if(scene?.sndIdle) scene.sndIdle.setVolume(0.05);
+      return;
+    }
+    cfStartVehicleAudio(scene);
+    const speed=Math.min(1, Math.abs(scene.vehicleSpeed||0)/260);
+    const gas=!!input.a || !!input.vgas;
+    if(scene.sndIdle) scene.sndIdle.setVolume(0.10 + (1-speed)*0.10);
+    if(scene.sndDrive) scene.sndDrive.setVolume(0.05 + speed*0.28);
+    if(scene.sndBoost) scene.sndBoost.setVolume(gas && speed>.35 ? 0.18 : 0.0);
+  }catch(e){}
+}
+function cfPlayVehicleCrash(scene){
+  try{
+    if(scene?.cache?.audio?.exists("veh_crash")) scene.sound.play("veh_crash",{volume:0.35});
+  }catch(e){}
+}
+function cfPlayTireScreech(scene){
+  try{
+    if(scene?.cache?.audio?.exists("veh_tire")) scene.sound.play("veh_tire",{volume:0.22});
+  }catch(e){}
+}
+
+
+// v113j: clean independent world NPC manager.
+// This is intentionally separate from old visibleCivilians / spritesheet NPC code.
+function cfNpcMake(scene,x,y,label,color){
+  const c=scene.add.container(x,y).setDepth(DEPTH.CHARACTER_BASE+270);
+  const shadow=scene.add.ellipse(0,12,23,8,0x000000,.38);
+  const legs=scene.add.rectangle(0,8,10,16,0x1f2734,.95).setStrokeStyle(1,0x05070b,.9);
+  const body=scene.add.rectangle(0,-5,14,20,color,.98).setStrokeStyle(1,0x05070b,.9);
+  const head=scene.add.circle(0,-21,7,0xc98b5c,.98).setStrokeStyle(1,0x05070b,.9);
+  c.add([shadow,legs,body,head]);
+  c.homeX=x; c.homeY=y;
+  c.vx=(Math.random()>.5?1:-1)*(0.18+Math.random()*0.12);
+  c.vy=(Math.random()>.5?1:-1)*(0.10+Math.random()*0.10);
+  c.labelText=scene.add.text(x,y-42,label,{
+    fontFamily:"monospace",fontSize:"8px",color:"#e8fbff",
+    backgroundColor:"rgba(0,0,0,.68)",padding:{x:4,y:2}
+  }).setOrigin(.5).setDepth(DEPTH.LABEL+60);
+  c.isWorldNpc=true;
+  return c;
+}
+function cfNpcClear(scene){
+  if(!scene.cfWorldNpcs) scene.cfWorldNpcs=[];
+  for(const n of scene.cfWorldNpcs){
+    try{ if(n.labelText) n.labelText.destroy(); n.destroy(); }catch(e){}
+  }
+  scene.cfWorldNpcs=[];
+}
+function cfNpcLayout(scene){
+  const c=(typeof loopChunk==="function")?loopChunk():0;
+  // Fixed safe shoulder/sidewalk positions per chunk. Never attached to the player car.
+  const base=[
+    [0.13,0.22],[0.86,0.24],
+    [0.14,0.48],[0.85,0.52],
+    [0.16,0.75],[0.82,0.78]
+  ];
+  return base.map((p,i)=>({
+    x:Phaser.Math.Clamp(scene.mapW*p[0] + (((c+i)%3)-1)*18, 54, scene.mapW-54),
+    y:Phaser.Math.Clamp(scene.mapH*p[1] + ((c+i)%2?14:-14), 54, scene.mapH-54)
+  }));
+}
+function cfNpcSpawn(scene){
+  if(!(AREA==="highway" || AREA==="highway_loop")) return;
+  const key=`${AREA}:${loopChunk()}:${scene.mapW}x${scene.mapH}`;
+  if(scene.cfNpcKey===key && scene.cfWorldNpcs && scene.cfWorldNpcs.length) return;
+  cfNpcClear(scene);
+  const labels=["Civilian","Mechanic","Water Carrier","Elderly","Civilian","Civilian"];
+  const colors=[0x8bb6ff,0xa0a0a0,0x2f7cff,0xd8bd7a,0xd08cff,0x88d18a];
+  const pts=cfNpcLayout(scene);
+  for(let i=0;i<pts.length;i++){
+    scene.cfWorldNpcs.push(cfNpcMake(scene,pts[i].x,pts[i].y,labels[(i+loopChunk())%labels.length],colors[(i+loopChunk())%colors.length]));
+  }
+  scene.cfNpcKey=key;
+  showToast(`NPC MANAGER\n${scene.cfWorldNpcs.length} NPCs on chunk ${loopChunk()}`);
+}
+function cfNpcUpdate(scene,dt){
+  if(!(AREA==="highway" || AREA==="highway_loop")) return;
+  if(!scene.cfWorldNpcs || !scene.cfWorldNpcs.length || scene.cfNpcKey!==`${AREA}:${loopChunk()}:${scene.mapW}x${scene.mapH}`){
+    cfNpcSpawn(scene);
+    return;
+  }
+  const delta=Math.max(.8,Math.min(2,(dt||16)/16.666));
+  const car=scene.vehicleMode && scene.vehicle ? scene.vehicle : null;
+  for(const n of scene.cfWorldNpcs){
+    n.x+=n.vx*delta; n.y+=n.vy*delta;
+    if(Math.abs(n.x-n.homeX)>38) n.vx*=-1;
+    if(Math.abs(n.y-n.homeY)>30) n.vy*=-1;
+    if(car){
+      const d=Phaser.Math.Distance.Between(car.x,car.y,n.x,n.y);
+      if(d<95){
+        n.x+=(n.x-car.x)/(d||1)*2.0;
+        n.y+=(n.y-car.y)/(d||1)*2.0;
+      }
+    }
+    if(n.labelText) n.labelText.setPosition(n.x,n.y-42);
+  }
+}
+function cfTrafficKeepStable(scene){
+  if(!scene || !scene.trafficCars) return;
+  for(const car of scene.trafficCars){
+    if(!car || car===scene.vehicle || car.isPlayerVehicle || car.stolen) continue;
+    if(car.trafficLane && typeof cfTrafficVisualAngleFromDir==="function"){
+      car.angle=cfTrafficVisualAngleFromDir(car.trafficLane.dir);
+    }
+  }
+}
+
+
+function cfTrafficVisualAngleFromDir(dir){
+  return dir < 0 ? 0 : 180;
 }
 
 function setupControls(){
@@ -1350,27 +2655,9 @@ function setupControls(){
       const len=Math.hypot(vx,vy);
       if(len>.12){
         if(sc.vehicleMode && sc.vehicle){
-          // v96: stable car movement using the same working stick coordinates.
-          const baseSpeed = input.a ? 5.6 : 3.6;
-          sc.vehicle.x += vx*baseSpeed;
-          sc.vehicle.y += vy*baseSpeed;
-          sc.vehicle.x = Phaser.Math.Clamp(sc.vehicle.x,12,sc.mapW-12);
-          sc.vehicle.y = Phaser.Math.Clamp(sc.vehicle.y,12,sc.mapH-12);
-          if(len>.18){
-            // smooth facing; no wild spinning
-            const targetAngle = Phaser.Math.RadToDeg(Math.atan2(vy, vx)) + 90;
-            sc.vehicle.angle = Phaser.Math.Angle.RotateTo(
-              Phaser.Math.DegToRad(sc.vehicle.angle),
-              Phaser.Math.DegToRad(targetAngle),
-              0.18
-            ) * 180 / Math.PI;
-          }
-          sc.vehicleSpeed=baseSpeed;
+          // v112h: thumb stick steers only. It must not drag/move the car.
           if(sc.player){ sc.player.setPosition(sc.vehicle.x,sc.vehicle.y); sc.player.setVisible(false); }
-          if(sc.vehicleLabel) sc.vehicleLabel.setPosition(sc.vehicle.x, sc.vehicle.y-58);
-          if(sc.cameras && sc.cameras.main) sc.cameras.main.centerOn(sc.vehicle.x, sc.vehicle.y);
-          if(typeof sc.setEngineVolume==="function") sc.setEngineVolume(true);
-          if(coordLine) coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(sc.vehicle.x)},${Math.round(sc.vehicle.y)} <span class="tag">MODE:</span> IN CAR <span class="tag">JOY:</span> ${input.x.toFixed(1)},${input.y.toFixed(1)} <span class="tag">A:</span>${input.a?1:0}`;
+          if(coordLine) coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(sc.vehicle.x)},${Math.round(sc.vehicle.y)} <span class="tag">CAR:</span> STEER ONLY <span class="tag">JOY:</span> ${input.x.toFixed(1)},${input.y.toFixed(1)} <span class="tag">A:</span>${input.a?1:0} <span class="tag">B:</span>${input.b?1:0}`;
         } else if(sc.player){
           const speed=input.r ? 4.1 : 2.75; // pixels per frame, direct fallback
           sc.tryMove(vx*speed, vy*speed);
@@ -1431,10 +2718,10 @@ function setupControls(){
       hardStartMusic();
       const name=btn.dataset.btn;
       btn.classList.add("down");
-      if(name==="x"){ input.xbtn=true; input.usePressed=true; useNow(); }
+      if(name==="x"){ input.xbtn=true; input.usePressed=true; input.carjackPressed=true; if(window.__cfScene && !window.__cfScene.vehicleMode && window.__cfScene.tryCarjack && window.__cfScene.tryCarjack()){ return; } useNow(); }
       if(name==="r") input.r=true;
       if(name==="a"){ input.a=true; if(window.__cfScene?.vehicleMode && window.__cfScene.vehicleSpeed<0.9) window.__cfScene.vehicleSpeed=0.9; showToast(window.__cfScene?.vehicleMode ? "GAS ON" : "GAS / action slot ready"); }
-      if(name==="b"){ input.b=true; showToast(window.__cfScene?.vehicleMode ? "BRAKE ON" : "BRK / action slot ready"); }
+      if(name==="b"){ input.b=true; showToast(window.__cfScene?.vehicleMode ? "BRAKE" : "BRK / action slot ready"); }
       if(name==="y") showToast("LTS / action slot ready");
     }
     function up(e){
@@ -1582,7 +2869,52 @@ function installDedicatedVehicleControls(){
   }
 }
 
+
+function installV110MovementFallback(){
+  if(window.__v110MovementFallbackInstalled) return;
+  window.__v110MovementFallbackInstalled=true;
+
+  function tick(){
+    try{
+      const sc=window.__cfScene;
+      if(sc){
+        // Guaranteed NPC traffic movement.
+        if(sc.trafficCars && sc.trafficCars.length){
+          for(const car of sc.trafficCars){
+            const lane=car.trafficLane;
+            if(!lane) continue;
+            const speed=Math.max(2.1, car.trafficSpeed||2.1);
+            car.y += lane.dir * speed * 1.15;
+            if(car.y < -120) car.y=sc.mapH+120;
+            if(car.y > sc.mapH+120) car.y=-120;
+            car.x = lane.x;
+            if(car.nameLabel) car.nameLabel.setPosition(car.x,car.y-72);
+          }
+        }
+
+        // Guaranteed Donny car movement with working toggle/stick.
+        if(sc.vehicleMode && sc.vehicle && !dialogueOpen && !shopOpen && !pauseOpen){
+          cfTankDrive(sc,16);
+        } else if(sc.player && !dialogueOpen && !shopOpen && !pauseOpen){
+          const vx=input.x||0, vy=input.y||0;
+          const len=Math.hypot(vx,vy);
+          if(len>.12){
+            const speed=input.r ? 4.1 : 2.75;
+            if(sc.tryMove) sc.tryMove(vx*speed,vy*speed);
+          }
+        }
+      }
+    }catch(e){
+      console.warn("v110 movement fallback safe error", e);
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
 setupControls();
+cfInstallButtonFix();
+installV110MovementFallback();
 installDedicatedVehicleControls();
 installHardVehicleButtons();
 function viewportW(){return Math.max(320,Math.floor(window.visualViewport?window.visualViewport.width:innerWidth));} function viewportH(){return Math.max(240,Math.floor(window.visualViewport?window.visualViewport.height:innerHeight));}
@@ -1591,5 +2923,6 @@ function forceResize(){const w=viewportW(),h=viewportH();document.getElementById
 addEventListener("resize",forceResize);addEventListener("orientationchange",()=>setTimeout(forceResize,250));if(visualViewport)visualViewport.addEventListener("resize",forceResize);setTimeout(forceResize,100);
 })();
 </script>
+<script src="src/highway_clean_v114.js?v=114"></script>
 </body>
 </html>
