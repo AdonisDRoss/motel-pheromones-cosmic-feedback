@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v120</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v121</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
-#game{position:fixed;left:0;top:0;width:100dvw;height:100dvh;background:#05070b;overflow:hidden;}
+#game {position:fixed;left:0;top:0;width:100dvw;height:100dvh;background:#05070b;overflow:hidden;}
 #game canvas{position:absolute!important;left:0!important;top:0!important;width:100dvw!important;height:100dvh!important;display:block!important;}
 .hud{position:fixed;left:calc(env(safe-area-inset-left) + 6px);top:calc(env(safe-area-inset-top) + 5px);z-index:20;width:138px;max-width:25vw;padding:4px 6px;border:1px solid rgba(124,217,255,.38);background:rgba(4,10,18,.48);box-shadow:0 0 6px rgba(102,33,255,.14);backdrop-filter:blur(2px);font:7px/1.1 monospace;pointer-events:none;text-shadow:0 0 3px #0ff;}
 .hud .title{font-weight:700;color:#9eefff;letter-spacing:.6px;margin-bottom:1px;}
@@ -63,7 +63,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   .shopItem{padding:4px;}
   .shopItem button,#shopClose{font-size:9px;padding:3px 5px;}
 }
-
 
 #pauseMenu{
   position:fixed;
@@ -121,7 +120,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   #pauseMenu{top:50%; width:min(340px,60vw);}
 }
 
-
 #vehicleControls{
   position:fixed;
   right:calc(env(safe-area-inset-right) + 18px);
@@ -147,7 +145,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 .vbtn.gas{background:rgba(35,140,70,.82);}
 .vbtn.brake{background:rgba(150,55,70,.82);}
 .vbtn.exit{background:rgba(70,120,180,.82);}
-
 
 .pauseMiniRow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0;}
 .pauseHint{font:10px monospace;color:#9eefff;margin-top:8px;line-height:1.25;}
@@ -191,7 +188,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
 <div id="toast"></div><div id="hint"></div>
 <div id="dialogue"><div class="name" id="dlgName"></div><div id="dlgText"></div><div class="choices" id="dlgChoices"></div></div>
 
-
 <div id="pauseMenu">
   <h3>PAUSE</h3>
   <div class="pauseTabs">
@@ -214,7 +210,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
     <div id="inventoryList"></div>
     <div class="equipLine">Equipped: <span id="equippedLine">None</span></div>
   </div>
-</div></div>
+</div>
 
 <div id="shop">
   <div id="shopHeader">
@@ -243,7 +239,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Loop / Clean Map Rendering v120</div>
+<div class="version">Highway Loop / Clean Restore v121</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -304,32 +300,26 @@ const HIGHWAY_LOOP = [
   {id:"STRAIGHT_02", type:"straight", tile:"straight2"},
   {id:"STRAIGHT_03", type:"straight", tile:"straight1"},
   {id:"TURN_01", type:"turn", tile:"curve"},
-
   {id:"STRAIGHT_04", type:"straight", tile:"straight2"},
   {id:"STRAIGHT_05", type:"straight", tile:"straight1"},
   {id:"STRAIGHT_06", type:"straight", tile:"straight2"},
   {id:"OFFRAMP_GLASSWELL_NORTH", type:"offramp", tile:"ramp", exit:"Glasswell North / Civic Gate"},
-
   {id:"STRAIGHT_07", type:"straight", tile:"straight1"},
   {id:"STRAIGHT_08", type:"straight", tile:"straight2"},
   {id:"STRAIGHT_09", type:"straight", tile:"straight1"},
   {id:"TURN_02", type:"turn", tile:"curve"},
-
   {id:"STRAIGHT_10", type:"straight", tile:"straight2"},
   {id:"STRAIGHT_11", type:"straight", tile:"straight1"},
   {id:"STRAIGHT_12", type:"straight", tile:"straight2"},
   {id:"OFFRAMP_GLASSWELL_EAST", type:"offramp", tile:"ramp", exit:"Glasswell East / Admin-Ration"},
-
   {id:"STRAIGHT_13", type:"straight", tile:"straight1"},
   {id:"STRAIGHT_14", type:"straight", tile:"straight2"},
   {id:"STRAIGHT_15", type:"straight", tile:"straight1"},
   {id:"TURN_03", type:"turn", tile:"curve"},
-
   {id:"STRAIGHT_16", type:"straight", tile:"straight2"},
   {id:"STRAIGHT_17", type:"straight", tile:"straight1"},
   {id:"STRAIGHT_18", type:"straight", tile:"straight2"},
   {id:"OFFRAMP_GLASSWELL_SOUTH", type:"offramp", tile:"ramp", exit:"Glasswell South / Transit-Industrial"},
-
   {id:"STRAIGHT_19", type:"straight", tile:"straight1"},
   {id:"STRAIGHT_20", type:"straight", tile:"straight2"},
   {id:"STRAIGHT_21", type:"straight", tile:"straight1"},
@@ -410,12 +400,14 @@ class GameScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("map_base", mapCfg.base);
+    // *** RESTORED ROAD BACKGROUND IMAGE INITIALIZER ***
+    this.load.image(mapCfg.key, mapCfg.base);
     this.load.image("donnyCar", VEHICLES.donnyCar);
   }
 
   create() {
-    const bg = this.add.image(0, 0, "map_base").setOrigin(0, 0);
+    // *** INSTANTIATED ORIGINAL ROAD MAP SPRITE AS BACKGROUND ***
+    const bg = this.add.image(0, 0, mapCfg.key).setOrigin(0, 0);
     this.mapW = bg.width;
     this.mapH = bg.height;
 
@@ -430,7 +422,7 @@ class GameScene extends Phaser.Scene {
     this.vehicle.setScale(WORLD_SCALE);
     this.vehicle.setCollideWorldBounds(true);
 
-    // --- NPC TRAFFIC INFRASTRUCTURE ---
+    // --- TRAFFIC SETUP ---
     this.trafficGroup = this.physics.add.group();
     this.npcs = [];
     
@@ -509,7 +501,7 @@ class GameScene extends Phaser.Scene {
     let hAngle = cfRoadHeading(this, this.vehicle.y, playerLane, -1);
     this.vehicle.angle = hAngle + 180;
 
-    // --- NPC UPDATE PIPELINE ---
+    // --- TRAFFIC MOVEMENT CORE ---
     this.npcs.forEach((npc) => {
       npc.y += (npc.travelDirection * npc.currentSpeed * dtFactor);
       
