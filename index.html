@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v122</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v123</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -239,7 +239,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Loop / Zoom Out Fix v122</div>
+<div class="version">Highway Loop / Screen Aspect Fix v123</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -458,8 +458,8 @@ class GameScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.vehicle, true, 0.1, 0.1);
     this.cameras.main.setBounds(0, 0, this.mapW, this.mapH);
     
-    // *** ZOOM OUT ADJUSTMENT APPLIED HERE ***
-    this.cameras.main.setZoom(0.55);
+    // Default uniform baseline focus
+    this.cameras.main.setZoom(1.0);
 
     document.getElementById("mode").innerText = "DRIVING";
     document.getElementById("carHudBlock").style.display = "block";
@@ -616,14 +616,26 @@ function setupControls() {
 }
 
 setupControls();
-function viewportW(){return Math.max(320,Math.floor(window.visualViewport?window.visualViewport.width:innerWidth));} 
-function viewportH(){return Math.max(240,Math.floor(window.visualViewport?window.visualViewport.height:innerHeight));}
+
+// *** DYNAMIC DEVICE VIEWPORT CALCULATION TO STRETCH ASPECT WIDTH ***
+function viewportW(){
+  return Math.max(320, Math.floor((window.visualViewport ? window.visualViewport.width : innerWidth) / 0.55));
+} 
+function viewportH(){
+  return Math.max(240, Math.floor((window.visualViewport ? window.visualViewport.height : innerHeight) / 0.55));
+}
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: "game",
   backgroundColor: "#05070b",
-  scale: {mode:Phaser.Scale.RESIZE, autoCenter:Phaser.Scale.NO_CENTER, width:viewportW(), height:viewportH()},
+  // *** SYSTEM LAYOUT EXPANSION SCALE ENFORCED ***
+  scale: {
+    mode: Phaser.Scale.RESIZE, 
+    autoCenter: Phaser.Scale.NO_CENTER, 
+    width: viewportW(), 
+    height: viewportH()
+  },
   physics: {default:"arcade", arcade:{debug:false}},
   pixelArt: true,
   roundPixels: true,
@@ -632,12 +644,16 @@ const game = new Phaser.Game({
 });
 
 function forceResize(){
-  const w=viewportW(), h=viewportH();
-  document.getElementById("game").style.width=w+"px";
-  document.getElementById("game").style.height=h+"px";
-  if(game&&game.scale)game.scale.resize(w,h);
+  const w = viewportW(), h = viewportH();
+  // Adjust canvas component base wrapper bounds to match true landscape scale distribution
+  const canvasEl = document.querySelector("#game canvas");
+  if(canvasEl) {
+    canvasEl.style.width = "100dvw";
+    canvasEl.style.height = "100dvh";
+  }
+  if(game && game.scale) game.scale.resize(w, h);
 }
-addEventListener("resize",forceResize);
+addEventListener("resize", forceResize);
 })();
 </script>
 </body>
