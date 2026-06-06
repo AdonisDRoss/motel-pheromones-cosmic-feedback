@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v124</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v125</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -239,7 +239,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Loop / Crisp HUD Zoom v124</div>
+<div class="version">Highway Loop / Car Size Scaling v125</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -417,7 +417,9 @@ class GameScene extends Phaser.Scene {
     
     this.vehicle = this.physics.add.sprite(cfRoadCenterX(this, this.mapH * 0.8, 1), this.mapH * 0.8, "donnyCar");
     this.vehicle.setOrigin(0.5, 0.5);
-    this.vehicle.setScale(WORLD_SCALE);
+    
+    // *** DRDRASTIC CAR SCALING DOWN APPLIED HERE ***
+    this.vehicle.setScale(WORLD_SCALE * 0.22);
     this.vehicle.setCollideWorldBounds(true);
 
     // --- TRAFFIC SETUP ---
@@ -438,7 +440,9 @@ class GameScene extends Phaser.Scene {
       );
       
       npcCar.setOrigin(0.5, 0.5);
-      npcCar.setScale(WORLD_SCALE);
+      
+      // *** DRDRASTIC TRAFFIC SCALING DOWN APPLIED HERE ***
+      npcCar.setScale(WORLD_SCALE * 0.22);
       npcCar.setTint(0x7c94ff + (i * 0x110011)); 
       
       npcCar.laneIndex = laneIndex;
@@ -455,11 +459,10 @@ class GameScene extends Phaser.Scene {
       this.cameras.main.shake(120, 0.006);
     });
 
-    // Camera following setup with a small vertical leading lookahead offset
     this.cameras.main.startFollow(this.vehicle, true, 0.1, 0.1, 0, -60);
     this.cameras.main.setBounds(0, 0, this.mapW, this.mapH);
     
-    // *** CRISP VIEWPORT CAMERA ZOOM (0.65x View) ***
+    // Smooth cinematic focus view
     this.cameras.main.setZoom(0.65);
 
     document.getElementById("mode").innerText = "DRIVING";
@@ -617,8 +620,6 @@ function setupControls() {
 }
 
 setupControls();
-
-// *** RESTORED CLEAN NATIVE HIGH-RES LAYOUT WINDOW CODES ***
 function viewportW(){return Math.max(320,Math.floor(window.visualViewport?window.visualViewport.width:innerWidth));} 
 function viewportH(){return Math.max(240,Math.floor(window.visualViewport?window.visualViewport.height:innerHeight));}
 
