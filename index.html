@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v118</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v119 (Orientation Fix)</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -243,7 +243,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Loop / Safe Vehicle Traffic Fix v118</div>
+<div class="version">Highway Loop / Vehicle Orientation Fix v119</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -505,7 +505,7 @@ class GameScene extends Phaser.Scene {
       // Tracking properties
       npcCar.laneIndex = laneIndex;
       npcCar.travelDirection = -1; // Heading North up the map loop
-      npcCar.baseSpeed = this.laneSpeeds[laneIndex] + Phaser.Math.FloatBetween(-0.2, 0.2);
+      npcCar.baseSpeed = this.laneSpeeds[laneIndex] + Phaser.Math.FloatBetween(-0.15, 0.15);
       npcCar.currentSpeed = npcCar.baseSpeed;
       
       this.trafficGroup.add(npcCar);
@@ -564,7 +564,8 @@ class GameScene extends Phaser.Scene {
     else if (this.vehicle.x > midX + 12) playerLane = 2;
 
     let hAngle = cfRoadHeading(this, this.vehicle.y, playerLane, -1);
-    this.vehicle.angle = hAngle + 90;
+    // *** ORIENTATION FIX APPLIED HERE (+180 offset) ***
+    this.vehicle.angle = hAngle + 180;
 
     // --- EXECUTE TRAFFIC UPDATES & INTEGRATED AI TICK ---
     this.npcs.forEach((npc) => {
@@ -583,7 +584,8 @@ class GameScene extends Phaser.Scene {
       // Sync x position and visual angle back to matching math curvature functions
       npc.x = cfRoadCenterX(this, npc.y, npc.laneIndex);
       let npcHheading = cfRoadHeading(this, npc.y, npc.laneIndex, npc.travelDirection);
-      npc.angle = npcHheading + 90;
+      // *** ORIENTATION FIX APPLIED HERE (+180 offset) ***
+      npc.angle = npcHheading + 180;
 
       // Safe braking/lane switching smart lookahead routines
       this.handleNpcAiTicks(npc);
