@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v121</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v122</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -239,7 +239,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Loop / Clean Restore v121</div>
+<div class="version">Highway Loop / Zoom Out Fix v122</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -400,13 +400,11 @@ class GameScene extends Phaser.Scene {
   }
 
   preload() {
-    // *** RESTORED ROAD BACKGROUND IMAGE INITIALIZER ***
     this.load.image(mapCfg.key, mapCfg.base);
     this.load.image("donnyCar", VEHICLES.donnyCar);
   }
 
   create() {
-    // *** INSTANTIATED ORIGINAL ROAD MAP SPRITE AS BACKGROUND ***
     const bg = this.add.image(0, 0, mapCfg.key).setOrigin(0, 0);
     this.mapW = bg.width;
     this.mapH = bg.height;
@@ -459,6 +457,9 @@ class GameScene extends Phaser.Scene {
 
     this.cameras.main.startFollow(this.vehicle, true, 0.1, 0.1);
     this.cameras.main.setBounds(0, 0, this.mapW, this.mapH);
+    
+    // *** ZOOM OUT ADJUSTMENT APPLIED HERE ***
+    this.cameras.main.setZoom(0.55);
 
     document.getElementById("mode").innerText = "DRIVING";
     document.getElementById("carHudBlock").style.display = "block";
