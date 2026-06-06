@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v124</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v125</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -243,7 +243,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Loop / Force Drive + Traffic v124a-fix</div>
+<div class="version">Highway Loop / Direct Drive + Visible Traffic v125</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -1304,7 +1304,9 @@ preload(){
   }
 
   this.spawnTraffic();
-  // v124: force traffic after the scene settles regardless of AREA variable.
+  this.v125BindDirectButtons();
+  this.time.delayedCall(500,()=>{ this.spawnTraffic(); });
+  // v125: force traffic after the scene settles regardless of AREA variable.
   this.time.delayedCall(300,()=>{ if(!this.trafficCars || !this.trafficCars.length) this.spawnTraffic(); });
   this.time.delayedCall(1200,()=>{ if(!this.trafficCars || !this.trafficCars.length) this.spawnTraffic(); });
   cfNpcSpawn(this);
@@ -1495,10 +1497,121 @@ ensureV123TrafficTextures(){
   this.v123TrafficKeys=["v123_orange","v123_blue","v123_green","v123_red"];
 }
 
+
+createV125TrafficTexture(key,color="#ffcc33"){
+  if(this.textures.exists(key)) return;
+  const c=document.createElement("canvas");
+  c.width=120; c.height=190;
+  const ctx=c.getContext("2d");
+  ctx.clearRect(0,0,120,190);
+  ctx.save();
+  ctx.translate(60,95);
+  ctx.fillStyle=color;
+  ctx.strokeStyle="#000000";
+  ctx.lineWidth=8;
+  ctx.beginPath();
+  if(ctx.roundRect) ctx.roundRect(-34,-78,68,156,14);
+  else ctx.rect(-34,-78,68,156);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle="rgba(190,245,255,.9)";
+  ctx.fillRect(-23,-55,46,24);
+  ctx.fillStyle="rgba(0,0,0,.75)";
+  ctx.fillRect(-24,12,48,34);
+  ctx.fillStyle="#ffff88";
+  ctx.fillRect(-24,-84,14,8); ctx.fillRect(10,-84,14,8);
+  ctx.fillStyle="#ff3333";
+  ctx.fillRect(-24,78,14,8); ctx.fillRect(10,78,14,8);
+  ctx.restore();
+  this.textures.addCanvas(key,c);
+}
+
+ensureV125TrafficTextures(){
+  this.createV125TrafficTexture("v125_yellow","#ffcc33");
+  this.createV125TrafficTexture("v125_cyan","#35d7ff");
+  this.createV125TrafficTexture("v125_green","#44dd66");
+  this.createV125TrafficTexture("v125_red","#ff5555");
+  this.v125TrafficKeys=["v125_yellow","v125_cyan","v125_green","v125_red"];
+}
+
+v125ForceEnterCar(){
+  if(!this.vehicle) return;
+  this.vehicleMode=true;
+  this.playerVehicle=this.vehicle;
+  if(this.player){
+    this.player.setVisible(false);
+    this.player.setPosition(this.vehicle.x,this.vehicle.y);
+    if(this.player.body) this.player.body.enable=false;
+  }
+  if(this.vehicleHeading===undefined || Number.isNaN(this.vehicleHeading)) this.vehicleHeading=-90;
+  if(this.vehicleSpeed===undefined || Number.isNaN(this.vehicleSpeed)) this.vehicleSpeed=0;
+  if(this.vehicleLabel) this.vehicleLabel.setText("DONNY'S CAR\nX EXIT").setPosition(this.vehicle.x,this.vehicle.y-58).setVisible(true);
+  if(this.VS && this.VC){
+    const vid=this.vehicle.__vsId || "donny_car_persistent";
+    if(!this.VS.get(vid)) this.VS.register(vid,"donny_car",this.vehicle);
+    this.VS.setPlayerVehicle(vid);
+    this.VC.syncFromVehicle(this.vehicle,this.vehicleHeading,this.vehicleSpeed);
+  }
+  setMode("IN CAR");
+  const m=document.getElementById("mode");
+  if(m) m.textContent="IN CAR";
+}
+
+v125DirectDriveStep(dir=1){
+  // Absolute fallback: moves the visible car directly from DOM button events.
+  if(!this.vehicle) return;
+  this.v125ForceEnterCar();
+  if(this.vehicleHeading===undefined || Number.isNaN(this.vehicleHeading)) this.vehicleHeading=-90;
+  if(this.vehicleSpeed===undefined || Number.isNaN(this.vehicleSpeed)) this.vehicleSpeed=0;
+
+  // A accelerates forward, B reverses/brakes.
+  this.vehicleSpeed += dir>0 ? 18 : -22;
+  this.vehicleSpeed = Phaser.Math.Clamp(this.vehicleSpeed,-150,330);
+
+  const steer = Math.abs(input.x)>0.08 ? input.x : 0;
+  this.vehicleHeading += steer * 3.5;
+
+  const rad=Phaser.Math.DegToRad(this.vehicleHeading);
+  this.vehicle.x += Math.cos(rad) * this.vehicleSpeed * 0.018;
+  this.vehicle.y += Math.sin(rad) * this.vehicleSpeed * 0.018;
+  this.vehicle.x=Phaser.Math.Clamp(this.vehicle.x,12,this.mapW-12);
+  this.vehicle.y=Phaser.Math.Clamp(this.vehicle.y,12,this.mapH-12);
+  this.vehicle.angle=cfCarVisualAngle(this.vehicleHeading);
+
+  if(this.player) this.player.setPosition(this.vehicle.x,this.vehicle.y);
+  if(this.vehicleLabel) this.vehicleLabel.setPosition(this.vehicle.x,this.vehicle.y-58);
+  if(this.cameras?.main) this.cameras.main.centerOn(this.vehicle.x,this.vehicle.y);
+  if(coordLine) coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.vehicle.x)},${Math.round(this.vehicle.y)} <span class="tag">CAR:</span> v125 DIRECT <span class="tag">SPD:</span>${Math.round(this.vehicleSpeed)}`;
+}
+
+v125BindDirectButtons(){
+  if(this._v125ButtonsBound) return;
+  this._v125ButtonsBound=true;
+  const bind=(selector,dir)=>{
+    const el=document.querySelector(selector);
+    if(!el) return;
+    let timer=null;
+    const down=(e)=>{
+      e.preventDefault();
+      if(dir>0){input.a=true;input.vgas=true;} else {input.b=true;input.vbrake=true;}
+      this.v125DirectDriveStep(dir);
+      clearInterval(timer);
+      timer=setInterval(()=>this.v125DirectDriveStep(dir),33);
+    };
+    const up=(e)=>{
+      e.preventDefault();
+      clearInterval(timer); timer=null;
+      if(dir>0){input.a=false;input.vgas=false;} else {input.b=false;input.vbrake=false;}
+    };
+    ["touchstart","pointerdown","mousedown"].forEach(ev=>el.addEventListener(ev,down,{passive:false}));
+    ["touchend","touchcancel","pointerup","pointercancel","mouseup","mouseleave"].forEach(ev=>el.addEventListener(ev,up,{passive:false}));
+  };
+  bind(".btn.a",1);
+  bind(".btn.b",-1);
+}
+
 spawnTraffic(){
-  // v123: guaranteed simple visible traffic. No sprite-sheet dependency.
-  // v124: force traffic on this highway build regardless of AREA variable.
-  this.ensureV123TrafficTextures();
+  // v125: traffic is spawned near the current camera/player so it is actually visible during testing.
+  this.ensureV125TrafficTextures();
 
   if(!this.trafficCars) this.trafficCars=[];
   for(const old of this.trafficCars){
@@ -1506,45 +1619,45 @@ spawnTraffic(){
   }
   this.trafficCars=[];
 
-  const keys=this.v123TrafficKeys || ["v123_orange","v123_blue","v123_green","v123_red"];
-  const lanes=[
-    {idx:0, dir: 1},
-    {idx:1, dir: 1},
-    {idx:2, dir:-1},
-    {idx:3, dir:-1}
-  ];
+  const keys=this.v125TrafficKeys;
+  const baseY = this.vehicle ? this.vehicle.y : (this.player ? this.player.y : this.mapH*0.72);
+  const yOffsets=[-340,-230,-120,120,230,340];
+  const laneIdxs=[0,1,2,3,0,3];
 
-  for(let i=0;i<10;i++){
-    const lane=lanes[i%4];
-    const y=this.mapH*(0.08 + ((i*0.101)%0.84));
-    const x=(typeof cfRoadCenterX==="function") ? cfRoadCenterX(this,y,lane.idx) : this.mapW*(0.22+lane.idx*.18);
+  for(let i=0;i<6;i++){
+    const laneIndex=laneIdxs[i];
+    const dir=laneIndex<2 ? 1 : -1;
+    let y=Phaser.Math.Clamp(baseY + yOffsets[i], 120, this.mapH-120);
+    const x=(typeof cfRoadCenterX==="function") ? cfRoadCenterX(this,y,laneIndex) : this.mapW*(0.22+laneIndex*.18);
     const key=keys[i%keys.length];
 
     const car=this.add.image(x,y,key)
       .setOrigin(.5,.5)
-      .setScale(0.55)
-      .setDepth(DEPTH.CHARACTER_BASE+100+i);
+      .setScale(0.72)
+      .setDepth(DEPTH.CHARACTER_BASE+3000+i);
 
     car.isTraffic=true;
     car.isPlayerVehicle=false;
     car.stolen=false;
     car.jacked=false;
-    car.laneIndex=lane.idx;
-    car.trafficLane={dir:lane.dir};
-    car.trafficSpeed=1.45+(i%3)*0.25;
-    car.angle=lane.dir<0?0:180;
+    car.laneIndex=laneIndex;
+    car.trafficLane={dir};
+    car.trafficSpeed=1.2+(i%3)*0.25;
+    car.angle=dir<0?0:180;
+    car.kind="NPC Traffic";
 
-    car.nameLabel=this.add.text(car.x,car.y-72,TRAFFIC_NAMES[i%TRAFFIC_NAMES.length],{
+    car.nameLabel=this.add.text(car.x,car.y-86,"NPC CAR "+(i+1),{
       fontFamily:"monospace",
-      fontSize:"8px",
-      color:"#d8f7ff",
-      backgroundColor:"rgba(0,0,0,.55)",
-      padding:{x:2,y:1}
-    }).setOrigin(.5).setDepth(DEPTH.LABEL);
+      fontSize:"10px",
+      color:"#ffffff",
+      backgroundColor:"rgba(0,0,0,.75)",
+      padding:{x:3,y:2}
+    }).setOrigin(.5).setDepth(DEPTH.LABEL+1000);
 
     this.trafficCars.push(car);
   }
-  showToast("v124 TRAFFIC SPAWNED: "+this.trafficCars.length);
+
+  showToast("v125 VISIBLE TRAFFIC: "+this.trafficCars.length);
 }
 
 
@@ -1725,33 +1838,31 @@ updateCarjackPrompt(){
 }
 
 updateTraffic(dt){
-  // v123: simple AI traffic only. It never reads player input and never collides with player.
-  // v124: force traffic update regardless of AREA variable.
-
+  // v125: simple visible traffic, independent of player input.
   if(!this.trafficCars || !this.trafficCars.length){
-    if(!this._v123TrafficQueued){
-      this._v123TrafficQueued=true;
-      this.time?.delayedCall?.(150,()=>{ this._v123TrafficQueued=false; this.spawnTraffic(); });
+    if(!this._v125TrafficQueued){
+      this._v125TrafficQueued=true;
+      this.time?.delayedCall?.(150,()=>{ this._v125TrafficQueued=false; this.spawnTraffic(); });
     }
     return;
   }
 
   const delta=Math.max(.5,Math.min(1.75,(dt||16)/16.666));
-
   for(const car of this.trafficCars){
     if(!car || car===this.vehicle || car.isPlayerVehicle || car.stolen || car.jacked) continue;
     const laneIndex=Phaser.Math.Clamp(car.laneIndex ?? 1,0,3);
     const dir=(car.trafficLane && car.trafficLane.dir) || (laneIndex<2 ? 1 : -1);
-    const speed=car.trafficSpeed || 1.5;
+    car.y += dir * (car.trafficSpeed || 1.35) * delta;
 
-    car.y += dir * speed * delta;
-    if(car.y < -140) car.y=this.mapH+140;
-    if(car.y > this.mapH+140) car.y=-140;
+    const centerY=this.vehicle ? this.vehicle.y : (this.player ? this.player.y : this.mapH*0.5);
+    if(car.y < centerY-480) car.y=centerY+480;
+    if(car.y > centerY+480) car.y=centerY-480;
+    car.y=Phaser.Math.Clamp(car.y,80,this.mapH-80);
 
     car.x=(typeof cfRoadCenterX==="function") ? cfRoadCenterX(this,car.y,laneIndex) : car.x;
     car.angle=dir<0?0:180;
-    car.setDepth(DEPTH.CHARACTER_BASE+Math.floor(car.y));
-    if(car.nameLabel) car.nameLabel.setPosition(car.x,car.y-72);
+    car.setDepth(DEPTH.CHARACTER_BASE+Math.floor(car.y)+1000);
+    if(car.nameLabel) car.nameLabel.setPosition(car.x,car.y-86);
   }
 }
 
@@ -2460,6 +2571,9 @@ v123DriveUpdate(dt){
 
   const gasDown = !!(input.a || input.vgas);
   const brakeDown = !!(input.b || input.vbrake);
+  if((gasDown || brakeDown) && this.vehicle && this.v125DirectDriveStep){
+    this.v125DirectDriveStep(gasDown ? 1 : -1);
+  }
   const xDown = !!(input.xbtn || input.usePressed || input.carjackPressed);
 
   // Auto-enter vehicle if buttons pressed and not yet in car (highway_loop only)
@@ -2488,7 +2602,7 @@ v123DriveUpdate(dt){
       this.updateVisibleCivilians(dt);
       if(this.hideTransitionDebugMarkers) this.hideTransitionDebugMarkers();
       if(input.carjackPressed){ input.carjackPressed=false; if(this.tryCarjack && this.tryCarjack()) return; }
-      coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.vehicle.x)},${Math.round(this.vehicle.y)} <span class="tag">CAR:</span> v124a <span class="tag">SPD:</span>${Math.round(this.vehicleSpeed||0)} <span class="tag">A:</span>${gasDown?1:0} <span class="tag">B:</span>${brakeDown?1:0}`;
+      coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.vehicle.x)},${Math.round(this.vehicle.y)} <span class="tag">CAR:</span> v125 <span class="tag">SPD:</span>${Math.round(this.vehicleSpeed||0)} <span class="tag">A:</span>${gasDown?1:0} <span class="tag">B:</span>${brakeDown?1:0}`;
       return;
     }
   }
