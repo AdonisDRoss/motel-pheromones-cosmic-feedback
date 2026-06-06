@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v120</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v121</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -243,7 +243,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Loop / Safe Vehicle Traffic Fix v118</div>
+<div class="version">Highway Loop / NPC Traffic Restore v121</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -830,12 +830,8 @@ class TrafficManager {
     // Snap X using road curve formula (only when not being knocked sideways)
     const knockMag=Math.abs(v.ai.knockVX||0)+Math.abs(v.ai.knockVY||0);
     if(knockMag<0.8) v.sprite.x=this.rpm.laneX(laneIdx,v.sprite.y);
-    // Visual angle: follow road curve using cfRoadHeading; fallback to straight up/down
-    if(typeof cfRoadHeading==='function' && typeof cfVehicleVisualAngleFromHeading==='function'){
-      v.sprite.angle=cfVehicleVisualAngleFromHeading(cfRoadHeading(this.scene,v.sprite.y,laneIdx,dir));
-    } else {
-      v.sprite.angle=dir<0?0:180;
-    }
+    // v121: force simple north/south sprite facing. Curved heading made traffic look sideways.
+    v.sprite.angle=dir<0?0:180;
     v.sprite.setDepth(DEPTH.CHARACTER_BASE+Math.floor(v.sprite.y));
     // Move name label
     if(v.sprite.nameLabel) v.sprite.nameLabel.setPosition(v.sprite.x,v.sprite.y-72);
@@ -1104,6 +1100,50 @@ createDoorMarkerTexture(){
   ctx.restore();
   this.textures.addCanvas("door_marker",c);
 }
+
+createProceduralTrafficTexture(key, color="#c46a2b"){
+  // v121: guaranteed visible traffic sprite if uploaded traffic sheets fail or crop invisible.
+  if(this.textures.exists(key)) return;
+  const c=document.createElement("canvas");
+  c.width=96; c.height=160;
+  const ctx=c.getContext("2d");
+  ctx.clearRect(0,0,96,160);
+  ctx.save();
+  ctx.translate(48,80);
+  ctx.fillStyle=color;
+  ctx.strokeStyle="#05070b";
+  ctx.lineWidth=5;
+  ctx.beginPath();
+  ctx.roundRect(-24,-58,48,116,12);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle="rgba(190,245,255,.75)";
+  ctx.fillRect(-15,-39,30,20);
+  ctx.fillStyle="rgba(15,20,35,.82)";
+  ctx.fillRect(-17,7,34,26);
+  ctx.fillStyle="#05070b";
+  ctx.fillRect(-31,-43,8,25);
+  ctx.fillRect(23,-43,8,25);
+  ctx.fillRect(-31,21,8,25);
+  ctx.fillRect(23,21,8,25);
+  ctx.fillStyle="#f6e06a";
+  ctx.fillRect(-16,-63,10,5);
+  ctx.fillRect(6,-63,10,5);
+  ctx.fillStyle="#ff5555";
+  ctx.fillRect(-16,58,10,5);
+  ctx.fillRect(6,58,10,5);
+  ctx.restore();
+  this.textures.addCanvas(key,c);
+}
+
+ensureProceduralTrafficTextures(){
+  this.createProceduralTrafficTexture("traffic_proc_orange","#c46a2b");
+  this.createProceduralTrafficTexture("traffic_proc_blue","#2f76c8");
+  this.createProceduralTrafficTexture("traffic_proc_green","#4c9b5c");
+  this.createProceduralTrafficTexture("traffic_proc_red","#a84242");
+  this.proceduralTrafficKeys=["traffic_proc_orange","traffic_proc_blue","traffic_proc_green","traffic_proc_red"];
+}
+
 preload(){
   this.load.on("loaderror", file => {
     FAILED_ASSETS.add(file.key); console.error("LOAD ERROR:", file.key, file.src);
@@ -1425,6 +1465,7 @@ createTrafficTextures(){
   if(this._trafficTexturesReady) return;
   this._trafficTexturesReady=true;
   this.trafficTextureKeys=[];
+  this.ensureProceduralTrafficTextures();
 
   // Uploaded sheets are 6 columns x 2 rows. Each cell is a separate top-down vehicle.
   for(let s=1;s<=5;s++){
@@ -1447,11 +1488,20 @@ createTrafficTextures(){
       }
     }
   }
+
+  // v121: if uploaded sheet slicing produced no usable traffic textures, use procedural cars.
+  if(!this.trafficTextureKeys || !this.trafficTextureKeys.length){
+    this.trafficTextureKeys=[...(this.proceduralTrafficKeys||[])];
+  }
 }
 
 spawnTraffic(){
   if(!(AREA==="highway" || AREA==="highway_loop")) return;
   this.createTrafficTextures();
+  if(!this.trafficTextureKeys || !this.trafficTextureKeys.length){
+    this.ensureProceduralTrafficTextures();
+    this.trafficTextureKeys=[...(this.proceduralTrafficKeys||[])];
+  }
   // v120: apply deferred stolen vehicle texture — stored before traffic textures existed
   if(this._pendingStolenRestore && this.vehicle){
     const {carKey,stolen}=this._pendingStolenRestore;
@@ -1477,7 +1527,10 @@ spawnTraffic(){
     this.TM.showDebug();
   }
   this.trafficCars=[];
-  if(!this.trafficTextureKeys || !this.trafficTextureKeys.length) return;
+  if(!this.trafficTextureKeys || !this.trafficTextureKeys.length){
+    showToast("TRAFFIC TEXTURES FAILED");
+    return;
+  }
 
   // v107: lane centers from Donny's marked screenshot.
   // Left of center divider = southbound. Right of center divider = northbound.
@@ -1499,17 +1552,19 @@ spawnTraffic(){
     const key=list[(loopChunk()*5+i*2)%list.length];
 
     const y=(this.mapH*(0.05 + ((i*0.097)%0.90)));
-    const car=this.add.image(lane.x,y,key)
+    const laneIndex = i % 4;
+    const spawnX = (typeof cfRoadCenterX==="function") ? cfRoadCenterX(this,y,laneIndex) : lane.x;
+    const car=this.add.image(spawnX,y,key)
       .setDepth(DEPTH.CHARACTER_BASE+50+i)
       .setOrigin(.5,.5)
-      .setScale((isPatrol || isEMS) ? 0.86 : 0.82);
+      .setScale(key && key.startsWith("traffic_proc_") ? 0.55 : ((isPatrol || isEMS) ? 0.86 : 0.82));
 
     car.trafficLane=lane;
     car.trafficSpeed=Math.max(2.1, lane.speed + ((i%3)*0.16));
     car.trafficRadius=(isPatrol || isEMS) ? 58 : 54;
     car.kind=isEMS ? "EMS" : (isPatrol ? "Civic Patrol" : "Civilian");
     car.driverData=this.driverForTrafficCar(car,i);
-    car.laneIndex = i % 4;
+    car.laneIndex = laneIndex;
     // v112d initial traffic angle: sprite noses face lane direction, not sideways.
     car.angle=cfVehicleVisualAngleFromHeading(cfHeadingForTrafficDir(lane.dir,this,car.y));
     car.angle=lane.dir<0 ? 0 : 180;
@@ -1534,6 +1589,7 @@ spawnTraffic(){
       r.sprite.nameLabel=car.nameLabel; // attach to sprite for TM._aiStep
     }
   }
+  showToast("NPC TRAFFIC: " + this.trafficCars.length);
 }
 
 
@@ -1733,7 +1789,8 @@ updateTraffic(dt){
   if(this.TM){
     this.TM.setChunk(typeof loopChunk==='function'?loopChunk():0);
     this.TM.update(dt);
-    this.TM.collisions(); // player↔NPC and NPC↔NPC knockback
+    // v121: collisions disabled during foundation fix. This stops NPC traffic from going crazy when player is in car.
+    // this.TM.collisions();
     return;
   }
 
@@ -1845,7 +1902,10 @@ updateWantedHud(){
 }
 spawnCivicPatrolChaser(){
   if(!(AREA==="highway" || AREA==="highway_loop")) return;
-  if(!this.trafficTextureKeys || !this.trafficTextureKeys.length) return;
+  if(!this.trafficTextureKeys || !this.trafficTextureKeys.length){
+    showToast("TRAFFIC TEXTURES FAILED");
+    return;
+  }
   const civicKeys=(this.emsTrafficTextureKeys && this.emsTrafficTextureKeys.length) ? this.emsTrafficTextureKeys : this.trafficTextureKeys;
   const key=civicKeys[1 % civicKeys.length] || this.trafficTextureKeys[0];
   const target=this.vehicleMode && this.vehicle ? this.vehicle : this.player;
