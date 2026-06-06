@@ -795,6 +795,7 @@ class TrafficManager {
     r.ai.aiHeading=this.rpm.headingForDir(r.ai.dir);
     r.ai.aiSpeed=sprite.trafficSpeed||2.2;
     r.ai.targetSpeed=r.ai.aiSpeed;
+    r.ai.knockVX=0; r.ai.knockVY=0; r.ai.knockDecay=0.86;
     return r;
   }
   setChunk(id){this._chunkId=id;}
@@ -814,11 +815,21 @@ class TrafficManager {
     const dir=v.ai.dir;
     const speed=Phaser.Math.Clamp(v.ai.aiSpeed,.5,3.5);
     v.sprite.y+=dir*speed*delta;
+    // Apply collision knockback (decays each frame)
+    if(v.ai.knockVX||v.ai.knockVY){
+      v.sprite.x+=(v.ai.knockVX||0);
+      v.sprite.y+=(v.ai.knockVY||0);
+      v.ai.knockVX=(v.ai.knockVX||0)*(v.ai.knockDecay||0.86);
+      v.ai.knockVY=(v.ai.knockVY||0)*(v.ai.knockDecay||0.86);
+      if(Math.abs(v.ai.knockVX)<0.25) v.ai.knockVX=0;
+      if(Math.abs(v.ai.knockVY)<0.25) v.ai.knockVY=0;
+    }
     const sc=this.scene;
     if(v.sprite.y<-140) v.sprite.y=sc.mapH+140;
     if(v.sprite.y>sc.mapH+140) v.sprite.y=-140;
-    // Snap X using road curve formula
-    v.sprite.x=this.rpm.laneX(laneIdx,v.sprite.y);
+    // Snap X using road curve formula (only when not being knocked sideways)
+    const knockMag=Math.abs(v.ai.knockVX||0)+Math.abs(v.ai.knockVY||0);
+    if(knockMag<0.8) v.sprite.x=this.rpm.laneX(laneIdx,v.sprite.y);
     // Visual angle: follow road curve using cfRoadHeading; fallback to straight up/down
     if(typeof cfRoadHeading==='function' && typeof cfVehicleVisualAngleFromHeading==='function'){
       v.sprite.angle=cfVehicleVisualAngleFromHeading(cfRoadHeading(this.scene,v.sprite.y,laneIdx,dir));
@@ -830,6 +841,77 @@ class TrafficManager {
     if(v.sprite.nameLabel) v.sprite.nameLabel.setPosition(v.sprite.x,v.sprite.y-72);
     // Legacy compat: keep car.trafficLane.x in sync
     if(v.sprite.trafficLane) v.sprite.trafficLane.x=v.sprite.x;
+  }
+  // Vehicle collision: player↔NPC and NPC↔NPC. Called every frame from updateTraffic().
+  collisions(){
+    const sc=this.scene;
+    const PR=34; // player collision radius (px)
+    const aiList=Array.from(this.vs.traffic());
+    // Player ↔ NPC
+    if(sc.vehicleMode && sc.vehicle){
+      const px=sc.vehicle.x, py=sc.vehicle.y;
+      for(const v of aiList){
+        if(!v.sprite||v.sprite.active===false) continue;
+        const dx=px-v.sprite.x, dy=py-v.sprite.y;
+        const distSq=dx*dx+dy*dy;
+        const minD=PR+(v.sprite.trafficRadius||54);
+        if(distSq>minD*minD||distSq<0.01) continue;
+        const dist=Math.sqrt(distSq);
+        const pen=minD-dist;
+        const nx=dx/dist, ny=dy/dist; // normal: NPC→player
+        // Separate: push player 55%, NPC 45%
+        sc.vehicle.x+=nx*pen*0.55;
+        sc.vehicle.y+=ny*pen*0.55;
+        v.sprite.x-=nx*pen*0.45;
+        v.sprite.y-=ny*pen*0.45;
+        // Player knockback — only deflect when moving toward the NPC
+        const vc=sc.VC;
+        const spd=vc?vc._speed:(sc.vehicleSpeed||0);
+        const hdgRad=Phaser.Math.DegToRad(vc?vc._heading:(sc.vehicleHeading||0));
+        const dot=Math.cos(hdgRad)*(-nx)+Math.sin(hdgRad)*(-ny); // positive = heading into NPC
+        if(dot>0.05){
+          const impact=Math.min(Math.abs(spd),280)*dot;
+          if(vc){
+            vc._speed*=Phaser.Math.Clamp(1-(impact/340),0.18,0.80);
+            // Deflect heading: push away from NPC along normal
+            vc._heading+=nx*(impact*0.055);
+          } else {
+            sc.vehicleSpeed*=0.35;
+          }
+          // Screen shake — scales with impact magnitude
+          if(impact>25&&sc.cameras?.main) sc.cameras.main.shake(Math.min(180,impact*0.55),Phaser.Math.Clamp(impact/8000,0.002,0.010));
+          // Orange tint flash on the NPC
+          const sp=v.sprite;
+          if(sp.setTint) sp.setTint(0xff6622);
+          sc.time?.delayedCall?.(200,()=>{try{sp.clearTint();}catch(e){}});
+        }
+        // NPC knockback impulse (decays in _aiStep)
+        const impulse=Math.min(Math.abs(spd),280)*0.055;
+        v.ai.knockVX=(v.ai.knockVX||0)+(-nx)*impulse;
+        v.ai.knockVY=(v.ai.knockVY||0)+(-ny)*impulse;
+        v.ai.knockDecay=0.84;
+      }
+    }
+    // NPC ↔ NPC separation (prevents pile-ups)
+    for(let i=0;i<aiList.length;i++){
+      for(let j=i+1;j<aiList.length;j++){
+        const a=aiList[i],b=aiList[j];
+        if(!a.sprite||!b.sprite||a.sprite.active===false||b.sprite.active===false) continue;
+        const dx=a.sprite.x-b.sprite.x, dy=a.sprite.y-b.sprite.y;
+        const distSq=dx*dx+dy*dy;
+        const minD=(a.sprite.trafficRadius||54)+(b.sprite.trafficRadius||54);
+        if(distSq>minD*minD||distSq<0.01) continue;
+        const dist=Math.sqrt(distSq);
+        const pen=minD-dist;
+        const nx=dx/dist, ny=dy/dist;
+        a.sprite.x+=nx*pen*0.5; a.sprite.y+=ny*pen*0.5;
+        b.sprite.x-=nx*pen*0.5; b.sprite.y-=ny*pen*0.5;
+        // Gentle knockback so they drift apart
+        const k=pen*0.10;
+        a.ai.knockVX=(a.ai.knockVX||0)+nx*k; a.ai.knockVY=(a.ai.knockVY||0)+ny*k;
+        b.ai.knockVX=(b.ai.knockVX||0)-nx*k; b.ai.knockVY=(b.ai.knockVY||0)-ny*k;
+      }
+    }
   }
   showDebug(){
     if(this._debugText) return;
@@ -1651,6 +1733,7 @@ updateTraffic(dt){
   if(this.TM){
     this.TM.setChunk(typeof loopChunk==='function'?loopChunk():0);
     this.TM.update(dt);
+    this.TM.collisions(); // player↔NPC and NPC↔NPC knockback
     return;
   }
 
