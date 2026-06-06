@@ -243,7 +243,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Loop / Direct Drive + Visible Traffic v125</div>
+<div class="version">Highway Loop v125b — drive+traffic fix</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -1535,6 +1535,7 @@ ensureV125TrafficTextures(){
 
 v125ForceEnterCar(){
   if(!this.vehicle) return;
+  if(this.vehicleMode) return; // already in — don't re-run every interval tick
   this.vehicleMode=true;
   this.playerVehicle=this.vehicle;
   if(this.player){
@@ -1551,36 +1552,19 @@ v125ForceEnterCar(){
     this.VS.setPlayerVehicle(vid);
     this.VC.syncFromVehicle(this.vehicle,this.vehicleHeading,this.vehicleSpeed);
   }
+  if(this.cameras?.main) this.cameras.main.startFollow(this.vehicle,true,0.12,0.12,0,0);
+  this.ensureEngineAudio();
   setMode("IN CAR");
   const m=document.getElementById("mode");
   if(m) m.textContent="IN CAR";
 }
 
 v125DirectDriveStep(dir=1){
-  // Absolute fallback: moves the visible car directly from DOM button events.
   if(!this.vehicle) return;
+  // Ensure we're in the car. Idempotent — safe to call every interval tick.
   this.v125ForceEnterCar();
-  if(this.vehicleHeading===undefined || Number.isNaN(this.vehicleHeading)) this.vehicleHeading=-90;
-  if(this.vehicleSpeed===undefined || Number.isNaN(this.vehicleSpeed)) this.vehicleSpeed=0;
-
-  // A accelerates forward, B reverses/brakes.
-  this.vehicleSpeed += dir>0 ? 18 : -22;
-  this.vehicleSpeed = Phaser.Math.Clamp(this.vehicleSpeed,-150,330);
-
-  const steer = Math.abs(input.x)>0.08 ? input.x : 0;
-  this.vehicleHeading += steer * 3.5;
-
-  const rad=Phaser.Math.DegToRad(this.vehicleHeading);
-  this.vehicle.x += Math.cos(rad) * this.vehicleSpeed * 0.018;
-  this.vehicle.y += Math.sin(rad) * this.vehicleSpeed * 0.018;
-  this.vehicle.x=Phaser.Math.Clamp(this.vehicle.x,12,this.mapW-12);
-  this.vehicle.y=Phaser.Math.Clamp(this.vehicle.y,12,this.mapH-12);
-  this.vehicle.angle=cfCarVisualAngle(this.vehicleHeading);
-
-  if(this.player) this.player.setPosition(this.vehicle.x,this.vehicle.y);
-  if(this.vehicleLabel) this.vehicleLabel.setPosition(this.vehicle.x,this.vehicle.y-58);
-  if(this.cameras?.main) this.cameras.main.centerOn(this.vehicle.x,this.vehicle.y);
-  if(coordLine) coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.vehicle.x)},${Math.round(this.vehicle.y)} <span class="tag">CAR:</span> v125 DIRECT <span class="tag">SPD:</span>${Math.round(this.vehicleSpeed)}`;
+  // Input flags are already set by v125BindDirectButtons before calling here.
+  // VC.update() in v123DriveUpdate reads them and moves the car — don't duplicate.
 }
 
 v125BindDirectButtons(){
@@ -2261,7 +2245,7 @@ enterVehicle(){
   const normalBtns=document.querySelector(".buttons");
   if(normalBtns){ normalBtns.style.display="block"; normalBtns.style.opacity="1"; normalBtns.style.pointerEvents="auto"; }
 
-  input.a=false; input.b=false; input.xbtn=false; input.usePressed=false;
+  input.xbtn=false; input.usePressed=false; // keep input.a/b so first drive frame gets gas
   this.vehicleSpeed=0;
   this.vehicleHeading=this.vehicle.angle-180;
 
@@ -2571,15 +2555,12 @@ v123DriveUpdate(dt){
 
   const gasDown = !!(input.a || input.vgas);
   const brakeDown = !!(input.b || input.vbrake);
-  if((gasDown || brakeDown) && this.vehicle && this.v125DirectDriveStep){
-    this.v125DirectDriveStep(gasDown ? 1 : -1);
-  }
   const xDown = !!(input.xbtn || input.usePressed || input.carjackPressed);
 
   // Auto-enter vehicle if buttons pressed and not yet in car (highway_loop only)
   if((AREA==="highway_loop") && this.vehicle && !this.vehicleMode){
     if(xDown){ this.enterVehicle(); input.usePressed=false; input.carjackPressed=false; }
-    else if(gasDown || brakeDown){ this.enterVehicle(); }
+    else if((gasDown || brakeDown) && this.nearCarForEntry()){ this.enterVehicle(); }
   }
 
   // v78: reliable car entry from mobile buttons (highway off-ramp).
