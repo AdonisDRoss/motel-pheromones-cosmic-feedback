@@ -31,29 +31,29 @@ class MainStreetScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.spritesheet("donny", "assets/characters/donny_walk_4dir_128x128_phaser.png", {
+    this.load.spritesheet("donny", "assets/characters/donny_walk_4dir_128x128_phaser.png?v=019", {
       frameWidth: 128,
       frameHeight: 128
     });
 
-    this.load.spritesheet("donny_punch", "assets/characters/donny_punch_4dir_128x128_phaser.png", {
+    this.load.spritesheet("donny_punch", "assets/characters/donny_punch_4dir_128x128_phaser.png?v=019", {
       frameWidth: 128,
       frameHeight: 128
     });
 
-    this.load.image("auto_shop", "assets/buildings/auto_shop.png");
+    this.load.image("auto_shop", "assets/buildings/auto_shop.png?v=019");
 
-    this.load.spritesheet("farmer_walk", "assets/zombies/farmer_walker_walk.png", {
+    this.load.spritesheet("farmer_walk", "assets/zombies/farmer_walker_walk.png?v=019", {
       frameWidth: 256,
       frameHeight: 256
     });
 
-    this.load.spritesheet("farmer_attack", "assets/zombies/farmer_walker_attack.png", {
+    this.load.spritesheet("farmer_attack", "assets/zombies/farmer_walker_attack.png?v=019", {
       frameWidth: 256,
       frameHeight: 256
     });
 
-    this.load.spritesheet("farmer_ko", "assets/zombies/farmer_walker_ko.png", {
+    this.load.spritesheet("farmer_ko", "assets/zombies/farmer_walker_ko.png?v=019", {
       frameWidth: 256,
       frameHeight: 256
     });
@@ -344,7 +344,7 @@ class MainStreetScene extends Phaser.Scene {
       fontFamily: "Arial"
     }).setScrollFactor(0).setDepth(1000);
 
-    this.versionText = this.add.text(20, 675, "v0.1.8 - Exact 256 Zombie Sheets", {
+    this.versionText = this.add.text(20, 675, "v0.1.9 - Cache Bust + Exact Zombie Sheets", {
       fontSize: "14px",
       color: "#bbbbbb",
       fontFamily: "Arial"
