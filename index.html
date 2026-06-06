@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v119 (Orientation Fix)</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v120</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -243,7 +243,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Loop / Vehicle Orientation Fix v119</div>
+<div class="version">Highway Loop / Clean Map Rendering v120</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -355,49 +355,7 @@ function highwayLoopConfig(){
 
 let mapCfg = (AREA==="highway_loop") ? highwayLoopConfig() : (MAPS[AREA] || MAPS.a1);
 const WORLD_SCALE = AREA === "a1" ? 3.0 : (AREA === "club" ? 1.0 : ((AREA === "highway" || AREA==="highway_loop") ? 1.25 : 1.0));
-const DEPTH = {
-  MAP: 0,
-  GROUND_MARKER: 5,
-  LOW_PROP: 18,
-  CHARACTER_BASE: 1000,
-  LABEL: 5000,
-  UI: 9000
-};
-const DONNY = {
-  idleDown:"assets/sprites/player/donny/donny_idle_down_8f.png",
-  idleLeft:"assets/sprites/player/donny/donny_idle_left_8f.png",
-  idleRight:"assets/sprites/player/donny/donny_idle_right_8f.png",
-  idleUp:"assets/sprites/player/donny/donny_idle_up_8f.png",
 
-  walk:"assets/sprites/player/donny/donny_walk_4dir.png",
-
-  runDown:"assets/sprites/player/donny/donny_run_down_8f.png",
-  runLeft:"assets/sprites/player/donny/donny_run_left_8f.png",
-  runRight:"assets/sprites/player/donny/donny_run_right_8f.png",
-  runUp:"assets/sprites/player/donny/donny_run_up_8f.png"
-};
-const NPC_ASSETS = {
-  blacklight_kid: {
-    idle:"assets/sprites/npcs/blacklight_kid/blacklight_kid_idle_4dir_128.png",
-    walk:"assets/sprites/npcs/blacklight_kid/blacklight_kid_walk_4dir_128.png"
-  },
-  neon_vendor: {
-    idle:"assets/sprites/npcs/neon_vendor/neon_vendor_idle_4dir_128.png",
-    walk:"assets/sprites/npcs/neon_vendor/neon_vendor_walk_4dir_128.png"
-  },
-  blacklight_bouncer: {
-    idle:"assets/sprites/npcs/blacklight_bouncer/blacklight_bouncer_idle_4dir_128.png",
-    walk:"assets/sprites/npcs/blacklight_bouncer/blacklight_bouncer_walk_4dir_128.png"
-  },
-  blacklight_runner: {
-    idle:"assets/sprites/npcs/blacklight_runner/blacklight_runner_idle_4dir_128.png",
-    walk:"assets/sprites/npcs/blacklight_runner/blacklight_runner_walk_4dir_128.png"
-  },
-  kira_volt: {
-    idle:"assets/sprites/npcs/kira_volt/kira_volt_idle_4dir_128.png",
-    walk:"assets/sprites/npcs/kira_volt/kira_volt_walk_4dir_128.png"
-  }
-};
 const VEHICLES = {
   donnyCar:"assets/vehicles/special/aurelix_distortion/distortion_topdown.png"
 };
@@ -411,17 +369,11 @@ function cfSaveActiveVehicle(scene){
       carKey:(scene.vehicle.texture&&scene.vehicle.texture.key)||"donny_car",
       speed:Math.round(scene.vehicleSpeed||0),
       heading:Math.round(scene.vehicleHeading ?? ((scene.vehicle.angle||0)-90)),
-      lane: scene.nearestLaneIndexForX ? scene.nearestLaneIndexForX(scene.vehicle.x,scene.vehicle.y) : 1,
+      lane: 1,
       t:Date.now()
     };
     localStorage.setItem("cf_active_vehicle", JSON.stringify(data));
   }catch(e){}
-}
-function cfLoadActiveVehicle(){
-  try{return JSON.parse(localStorage.getItem("cf_active_vehicle")||"null");}catch(e){return null;}
-}
-function cfClearActiveVehicle(){
-  try{localStorage.removeItem("cf_active_vehicle");}catch(e){}
 }
 function cfClamp01(v){
   return Math.max(0, Math.min(1, v));
@@ -459,7 +411,6 @@ class GameScene extends Phaser.Scene {
 
   preload() {
     this.load.image("map_base", mapCfg.base);
-    if (mapCfg.mask) this.load.image("map_mask", mapCfg.mask);
     this.load.image("donnyCar", VEHICLES.donnyCar);
   }
 
@@ -470,7 +421,6 @@ class GameScene extends Phaser.Scene {
 
     this.physics.world.setBounds(0, 0, this.mapW, this.mapH);
 
-    // Spawn vehicle mode player
     this.vehicleMode = true;
     this.vehicleSpeed = 0;
     this.maxVehicleSpeed = 6.5;
@@ -480,11 +430,10 @@ class GameScene extends Phaser.Scene {
     this.vehicle.setScale(WORLD_SCALE);
     this.vehicle.setCollideWorldBounds(true);
 
-    // --- INTEGRATED NPC TRAFFIC INFRASTRUCTURE ---
+    // --- NPC TRAFFIC INFRASTRUCTURE ---
     this.trafficGroup = this.physics.add.group();
     this.npcs = [];
     
-    // Config values matching lane flow parameters
     this.laneSpeeds = [2.2, 3.1, 3.8, 2.7]; 
     const numTrafficCars = (AREA === "highway_loop") ? 6 : 0;
 
@@ -500,11 +449,10 @@ class GameScene extends Phaser.Scene {
       
       npcCar.setOrigin(0.5, 0.5);
       npcCar.setScale(WORLD_SCALE);
-      npcCar.setTint(0x7c94ff + (i * 0x110011)); // Tint distinct colors
+      npcCar.setTint(0x7c94ff + (i * 0x110011)); 
       
-      // Tracking properties
       npcCar.laneIndex = laneIndex;
-      npcCar.travelDirection = -1; // Heading North up the map loop
+      npcCar.travelDirection = -1; 
       npcCar.baseSpeed = this.laneSpeeds[laneIndex] + Phaser.Math.FloatBetween(-0.15, 0.15);
       npcCar.currentSpeed = npcCar.baseSpeed;
       
@@ -512,9 +460,8 @@ class GameScene extends Phaser.Scene {
       this.npcs.push(npcCar);
     }
 
-    // Set up collision handling between player and NPCs
     this.physics.add.collider(this.vehicle, this.trafficGroup, (player, npc) => {
-      this.vehicleSpeed *= 0.4; // Impact deceleration drop
+      this.vehicleSpeed *= 0.4; 
       this.cameras.main.shake(120, 0.006);
     });
 
@@ -529,7 +476,6 @@ class GameScene extends Phaser.Scene {
   update(time, delta) {
     const dtFactor = delta / 16.666;
 
-    // Standard player drive physics tracking
     let input = window.cfActiveControls || {x:0, y:0, a:false, b:false, r:false};
     
     if (input.a) {
@@ -540,14 +486,12 @@ class GameScene extends Phaser.Scene {
       this.vehicleSpeed *= Math.pow(0.97, dtFactor);
     }
 
-    // Lane drift simulation steering using joystick input coordinates
     if (Math.abs(this.vehicleSpeed) > 0.1) {
       this.vehicle.x += input.x * 3.5 * dtFactor * WORLD_SCALE;
     }
 
     this.vehicle.y -= this.vehicleSpeed * dtFactor;
 
-    // Endless road re-wrapping looping logic for player
     if (this.vehicle.y < 0) {
       this.vehicle.y = this.mapH;
       this.nextChunkLoop();
@@ -556,7 +500,6 @@ class GameScene extends Phaser.Scene {
       this.vehicle.y = 0;
     }
 
-    // Figure out lane approximation index for player orientation
     let playerLane = 1;
     let midX = this.mapW * 0.5;
     if (this.vehicle.x < midX - 12) playerLane = 0;
@@ -564,15 +507,12 @@ class GameScene extends Phaser.Scene {
     else if (this.vehicle.x > midX + 12) playerLane = 2;
 
     let hAngle = cfRoadHeading(this, this.vehicle.y, playerLane, -1);
-    // *** ORIENTATION FIX APPLIED HERE (+180 offset) ***
     this.vehicle.angle = hAngle + 180;
 
-    // --- EXECUTE TRAFFIC UPDATES & INTEGRATED AI TICK ---
+    // --- NPC UPDATE PIPELINE ---
     this.npcs.forEach((npc) => {
-      // Linear timeline position adjustment
       npc.y += (npc.travelDirection * npc.currentSpeed * dtFactor);
       
-      // Endless wrap loop processing for NPCs
       if (npc.y < 0) {
         npc.y = this.mapH;
         npc.laneIndex = Phaser.Math.Between(0, 3);
@@ -581,17 +521,13 @@ class GameScene extends Phaser.Scene {
         npc.y = 0;
       }
 
-      // Sync x position and visual angle back to matching math curvature functions
       npc.x = cfRoadCenterX(this, npc.y, npc.laneIndex);
       let npcHheading = cfRoadHeading(this, npc.y, npc.laneIndex, npc.travelDirection);
-      // *** ORIENTATION FIX APPLIED HERE (+180 offset) ***
       npc.angle = npcHheading + 180;
 
-      // Safe braking/lane switching smart lookahead routines
       this.handleNpcAiTicks(npc);
     });
 
-    // Update UI Elements
     let spdPct = Math.round(cfClamp01(Math.abs(this.vehicleSpeed) / this.maxVehicleSpeed) * 100);
     document.getElementById("speedBar").style.width = spdPct + "%";
     document.getElementById("coordLine").innerText = `XY: ${Math.round(this.vehicle.x)}, ${Math.round(this.vehicle.y)}`;
@@ -605,11 +541,10 @@ class GameScene extends Phaser.Scene {
       if (npc === other) return;
       
       if (npc.laneIndex === other.laneIndex) {
-        let diffY = npc.y - other.y; // Going North: smaller Y means ahead
+        let diffY = npc.y - other.y; 
         if (diffY > 0 && diffY < safeBufferY) {
           obstacleTriggered = true;
           
-          // Attempt immediate lane swap option
           let switchLeft = npc.laneIndex - 1;
           let switchRight = npc.laneIndex + 1;
           
@@ -618,14 +553,12 @@ class GameScene extends Phaser.Scene {
           } else if (switchRight <= 3 && !this.isSpecificLaneOccupied(switchRight, npc.y)) {
             npc.laneIndex = switchRight;
           } else {
-            // Apply brake interpolation matching leading velocity
             npc.currentSpeed = Math.max(1.2, other.currentSpeed - 0.4);
           }
         }
       }
     });
 
-    // Smooth return to base cruising speed properties when path returns clear
     if (!obstacleTriggered && npc.currentSpeed < npc.baseSpeed) {
       npc.currentSpeed += 0.04;
     }
@@ -645,7 +578,6 @@ class GameScene extends Phaser.Scene {
   }
 }
 
-// Global UI input fallback management handlers
 window.cfActiveControls = {x:0, y:0, a:false, b:false, r:false};
 function setupControls() {
   const stick = document.getElementById("stick");
