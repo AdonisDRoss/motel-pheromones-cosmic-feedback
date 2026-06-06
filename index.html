@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>Cosmic Feedback - Clean Gates v129</title>
+<title>Cosmic Feedback - Gates and NPCs v130</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05070b;font-family:monospace;touch-action:none}
@@ -41,7 +41,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05070b;fon
 <div id="stick"><div id="nub"></div></div>
 <div class="btn x" data-btn="x">X<br>USE</div><div class="btn y" data-btn="y">Y<br>LTS</div>
 <div class="btn b" data-btn="b">B<br>BRK</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn r" data-btn="r">R<br>BST</div>
-<div id="versionTag">Clean Gates / Direct Movement v129</div>
+<div id="versionTag">Gates + NPCs / Stable Base v130</div>
 <script>
 (()=> {
 const qs=new URLSearchParams(location.search);
@@ -51,7 +51,12 @@ const DEPTH={GROUND_MARKER:5,CHARACTER_BASE:1000,LABEL:6000};
 const MAPS={
  a1:{zone:"A1",objective:"Move to the upper-right gate and press X to enter Westgate.",base:"assets/maps/blacklight/blacklight_base.png",spawn:[.50,.55]},
  westgate:{zone:"WESTGATE",objective:"Press X at a gate to travel.",base:"assets/maps/westgate/westgate_base.png",spawn:[.50,.55]},
- highway_loop:{zone:"HIGHWAY",objective:"Upper-right gate goes to Westgate. Lower-right gate goes to Blacklight.",base:"assets/maps/highway_loop/highway_loop_base.png",spawn:[.72,.36]}
+ highway_loop:{zone:"HIGHWAY",objective:"Upper-right gate goes to Westgate. Lower-right gate goes to Blacklight.",base:"assets/maps/highway_loop/highway_loop_base.png",spawn:[.72,.36]},
+ north_gate:{zone:"NORTH",objective:"North Gate checkpoint. Press X at a gate to travel.",base:"assets/maps/blacklight/blacklight_base.png",spawn:[.50,.78]},
+ east_gate:{zone:"EAST",objective:"East Gate connector. Press X at a gate to travel.",base:"assets/maps/blacklight/blacklight_base.png",spawn:[.20,.50]},
+ south_gate:{zone:"SOUTH",objective:"South Gate checkpoint. Press X at a gate to travel.",base:"assets/maps/blacklight/blacklight_base.png",spawn:[.50,.22]},
+ industrial_gate:{zone:"INDUSTRIAL",objective:"Industrial Gate. Press X at a gate to travel.",base:"assets/maps/blacklight/blacklight_base.png",spawn:[.38,.38]},
+ civic_gate:{zone:"CIVIC",objective:"Civic Gate. Press X at a gate to travel.",base:"assets/maps/blacklight/blacklight_base.png",spawn:[.68,.68]}
 };
 const mapCfg=MAPS[AREA]||MAPS.a1;
 const DONNY={idleDown:"assets/sprites/characters/donny/donny_idle_down.png"};
@@ -62,7 +67,7 @@ function viewportW(){return Math.max(320,Math.floor(window.visualViewport?window
 function viewportH(){return Math.max(240,Math.floor(window.visualViewport?window.visualViewport.height:window.innerHeight))}
 function travelTo(area,entry){
  localStorage.removeItem("cf_vehicle_state");localStorage.removeItem("cf_active_vehicle");
- location.href="index.html?v=clean-gates-v129&area="+encodeURIComponent(area)+"&entry="+encodeURIComponent(entry||"gate")+"&collision=mask&vehicle=0&vehicleMode=0&persist=0";
+ location.href="index.html?v=gates-npcs-v130&area="+encodeURIComponent(area)+"&entry="+encodeURIComponent(entry||"gate")+"&collision=mask&vehicle=0&vehicleMode=0&persist=0";
 }
 class GameScene extends Phaser.Scene{
  constructor(){super({key:"GameScene"})}
@@ -78,11 +83,16 @@ class GameScene extends Phaser.Scene{
   this.cameras.main.setBounds(0,0,this.mapW,this.mapH); this.cameras.main.startFollow(this.player,true,.1,.1);
   this.cursors=this.input.keyboard.createCursorKeys();
   this.wasd=this.input.keyboard.addKeys({up:Phaser.Input.Keyboard.KeyCodes.W,left:Phaser.Input.Keyboard.KeyCodes.A,down:Phaser.Input.Keyboard.KeyCodes.S,right:Phaser.Input.Keyboard.KeyCodes.D,use:Phaser.Input.Keyboard.KeyCodes.E});
-  this.gates=[]; this.createGates(); this.syncDOMState(); this.setupDOMClickListeners();
+  this.gates=[]; this.npcs=[]; this.createGates(); this.spawnNpcs(); this.syncDOMState(); this.setupDOMClickListeners();
  }
  resolveSpawn(){
   const entry=qs.get("entry")||"default";
-  const points={a1:{from_westgate:[.72,.22],from_highway:[.74,.36],default:mapCfg.spawn},westgate:{from_blacklight:[.38,.64],from_highway:[.70,.20],default:mapCfg.spawn},highway_loop:{from_westgate:[.74,.20],from_blacklight:[.74,.34],default:mapCfg.spawn}};
+  const points={a1:{from_westgate:[.72,.22],from_highway:[.74,.36],default:mapCfg.spawn},westgate:{from_blacklight:[.38,.64],from_highway:[.70,.20],default:mapCfg.spawn},highway_loop:{from_westgate:[.74,.20],from_blacklight:[.74,.34],from_south_gate:[.50,.82],default:mapCfg.spawn},
+ north_gate:{from_blacklight:[.50,.78],from_civic:[.70,.25],default:mapCfg.spawn},
+ east_gate:{from_blacklight:[.20,.50],from_industrial:[.74,.66],default:mapCfg.spawn},
+ south_gate:{from_blacklight:[.50,.22],from_industrial:[.60,.70],from_highway:[.74,.34],default:mapCfg.spawn},
+ industrial_gate:{from_blacklight:[.35,.30],from_east:[.70,.50],from_south:[.54,.75],default:mapCfg.spawn},
+ civic_gate:{from_blacklight:[.72,.72],from_north:[.48,.25],default:mapCfg.spawn}};
   const p=(points[AREA]&&(points[AREA][entry]||points[AREA].default))||mapCfg.spawn;
   return{x:this.bg?this.bg.displayWidth*p[0]:500,y:this.bg?this.bg.displayHeight*p[1]:500};
  }
@@ -96,9 +106,86 @@ class GameScene extends Phaser.Scene{
  }
  createGates(){
   if(AREA==="highway_loop"){this.createGate(.74,.20,"OFFRAMP: WESTGATE","westgate","from_highway",190);this.createGate(.74,.34,"OFFRAMP: BLACKLIGHT","a1","from_highway",170)}
-  else if(AREA==="a1"){this.createGate(.82,.18,"TO WESTGATE","westgate","from_blacklight",155);this.createGate(.62,.82,"TO HIGHWAY LOOP","highway_loop","from_blacklight",155)}
-  else if(AREA==="westgate"){this.createGate(.34,.70,"BACK TO BLACKLIGHT","a1","from_westgate",155);this.createGate(.78,.24,"TO HIGHWAY LOOP","highway_loop","from_westgate",155)}
+  else if(AREA==="a1"){
+    this.createGate(.82,.18,"TO WESTGATE","westgate","from_blacklight",155);
+    this.createGate(.62,.82,"TO HIGHWAY LOOP","highway_loop","from_blacklight",155);
+    this.createGate(.50,.08,"NORTH GATE","north_gate","from_blacklight",135);
+    this.createGate(.92,.50,"EAST GATE","east_gate","from_blacklight",135);
+    this.createGate(.50,.92,"SOUTH GATE","south_gate","from_blacklight",135);
+    this.createGate(.80,.78,"INDUSTRIAL GATE","industrial_gate","from_blacklight",135);
+    this.createGate(.24,.22,"CIVIC GATE","civic_gate","from_blacklight",135);
+  }
+  else if(AREA==="westgate"){
+    this.createGate(.34,.70,"BACK TO BLACKLIGHT","a1","from_westgate",155);
+    this.createGate(.78,.24,"TO HIGHWAY LOOP","highway_loop","from_westgate",155);
+  }
+  else if(AREA==="north_gate"){
+    this.createGate(.50,.88,"BACK TO BLACKLIGHT","a1","from_north_gate",145);
+    this.createGate(.70,.24,"TO CIVIC GATE","civic_gate","from_north",145);
+  }
+  else if(AREA==="east_gate"){
+    this.createGate(.12,.50,"BACK TO BLACKLIGHT","a1","from_east_gate",145);
+    this.createGate(.74,.66,"TO INDUSTRIAL","industrial_gate","from_east",145);
+  }
+  else if(AREA==="south_gate"){
+    this.createGate(.50,.12,"BACK TO BLACKLIGHT","a1","from_south_gate",145);
+    this.createGate(.72,.78,"TO HIGHWAY LOOP","highway_loop","from_south_gate",145);
+    this.createGate(.60,.70,"TO INDUSTRIAL","industrial_gate","from_south",145);
+  }
+  else if(AREA==="industrial_gate"){
+    this.createGate(.30,.24,"BACK TO BLACKLIGHT","a1","from_industrial_gate",145);
+    this.createGate(.78,.52,"TO EAST GATE","east_gate","from_industrial",145);
+    this.createGate(.55,.84,"TO SOUTH GATE","south_gate","from_industrial",145);
+  }
+  else if(AREA==="civic_gate"){
+    this.createGate(.78,.78,"BACK TO BLACKLIGHT","a1","from_civic_gate",145);
+    this.createGate(.48,.18,"TO NORTH GATE","north_gate","from_civic",145);
+  }
  }
+
+ createNpcTexture(key,color="#72f7ff"){
+  if(this.textures.exists(key)) return;
+  const c=document.createElement("canvas");c.width=96;c.height=128;
+  const ctx=c.getContext("2d");ctx.clearRect(0,0,96,128);
+  ctx.save();ctx.translate(48,64);
+  ctx.fillStyle="#111722";ctx.strokeStyle=color;ctx.lineWidth=4;
+  ctx.beginPath();ctx.arc(0,-32,16,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.fillStyle=color;ctx.fillRect(-18,-12,36,44);
+  ctx.fillStyle="#0b0f16";ctx.fillRect(-14,32,10,28);ctx.fillRect(4,32,10,28);
+  ctx.fillStyle="#fff";ctx.fillRect(-10,-38,5,5);ctx.fillRect(5,-38,5,5);
+  ctx.restore();this.textures.addCanvas(key,c);
+ }
+ ensureNpcTextures(){
+  this.createNpcTexture("npc_kira","#8d5cff");
+  this.createNpcTexture("npc_vendor","#55ff88");
+  this.createNpcTexture("npc_bouncer","#ffcc33");
+  this.createNpcTexture("npc_runner","#5ad8ff");
+  this.createNpcTexture("npc_citizen","#ffffff");
+ }
+ spawnOneNpc(key,xr,yr,name,line){
+  if(!this.textures.exists(key)) this.ensureNpcTextures();
+  const npc=this.add.image(this.mapW*xr,this.mapH*yr,key).setDepth(DEPTH.CHARACTER_BASE+50).setScale(.70);
+  const label=this.add.text(npc.x,npc.y-58,name,{fontFamily:"monospace",fontSize:"10px",color:"#fff",backgroundColor:"rgba(0,0,0,.70)",padding:{x:3,y:2}}).setOrigin(.5).setDepth(DEPTH.LABEL);
+  this.npcs.push({npc,label,name,line});
+ }
+ spawnNpcs(){
+  this.ensureNpcTextures();
+  if(AREA==="a1"){
+    this.spawnOneNpc("npc_kira",.44,.42,"KIRA VOLT","The club hears everything.");
+    this.spawnOneNpc("npc_vendor",.58,.50,"NEON VENDOR","Water, batteries, glow junk.");
+    this.spawnOneNpc("npc_bouncer",.62,.30,"CLUB BOUNCER","Passphrase first.");
+    this.spawnOneNpc("npc_runner",.28,.58,"BLACKLIGHT RUNNER","Concord changed patrol routes.");
+  } else if(AREA==="westgate"){
+    this.spawnOneNpc("npc_runner",.40,.50,"WESTGATE RUNNER","Road is open if you keep moving.");
+    this.spawnOneNpc("npc_citizen",.56,.60,"WATER WORKER","Watch the checkpoint lights.");
+  } else if(AREA==="highway_loop"){
+    this.spawnOneNpc("npc_runner",.68,.44,"OFFRAMP SPOTTER","Upper route feeds Westgate.");
+  } else {
+    this.spawnOneNpc("npc_citizen",.50,.50,mapCfg.zone+" GUARD","Gate traffic is being rerouted.");
+    this.spawnOneNpc("npc_runner",.62,.58,"COURIER","Blacklight is still open.");
+  }
+ }
+
  update(){
   let mx=0,my=0;
   if(this.cursors.left.isDown||this.wasd.left.isDown)mx=-1;else if(this.cursors.right.isDown||this.wasd.right.isDown)mx=1;
@@ -107,6 +194,7 @@ class GameScene extends Phaser.Scene{
   let sp=inputState.r?4:2.5;
   if(mx||my){const a=Math.atan2(my,mx);this.player.setVelocity(Math.cos(a)*sp*60,Math.sin(a)*sp*60)}else this.player.setVelocity(0);
   this.updateGates();
+  this.updateNpcPrompt();
   const c=document.getElementById("coordLine"); if(c)c.innerHTML=`<span class="tag">XY:</span> ${Math.floor(this.player.x)}, ${Math.floor(this.player.y)} <span class="tag">X:</span>${inputState.x_use?1:0}`;
   this.updateBars();
  }
@@ -115,6 +203,19 @@ class GameScene extends Phaser.Scene{
   for(const gate of this.gates){const d=Phaser.Math.Distance.Between(this.player.x,this.player.y,gate.x,gate.y);const active=d<=gate.radius;gate.marker.setAlpha(active?1:.55);gate.labelObj.setAlpha(active?1:.75);if(active&&d<best){near=gate;best=d}}
   const obj=document.getElementById("objectiveText");
   if(near){if(obj)obj.innerText=`X / USE: ${near.label}`;if(inputState.x_use||Phaser.Input.Keyboard.JustDown(this.wasd.use)){inputState.x_use=false;travelTo(near.to,near.entry)}}else if(obj)obj.innerText=mapCfg.objective;
+ }
+ updateNpcPrompt(){
+  if(!this.npcs || !this.npcs.length) return;
+  let near=null,best=99999;
+  for(const item of this.npcs){
+    const d=Phaser.Math.Distance.Between(this.player.x,this.player.y,item.npc.x,item.npc.y);
+    if(d<90 && d<best){near=item;best=d;}
+  }
+  if(near && inputState.x_use){
+    inputState.x_use=false;
+    const obj=document.getElementById("objectiveText");
+    if(obj) obj.innerText=near.name+": "+near.line;
+  }
  }
  tryMove(vx,vy){if(this.player&&this.player.body)this.player.setVelocity(vx*60,vy*60)}
  syncDOMState(){document.getElementById("mode").innerText=state.mode;document.getElementById("zoneLine").innerText=state.currentZone;document.getElementById("creditLine").innerText=`Credits: ${state.credits}`}
