@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v118</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v120</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -697,6 +697,211 @@ if(muteBtn) muteBtn.onclick = ()=>setMusicVolume(getMusicVolume()>0 ? 0 : .60);
 
 
 
+
+// ================================================================
+// VEHICLE SYSTEM v119 — clean modular player/AI separation
+// VehicleState · RoadPathManager · TrafficManager · VehicleController
+// ================================================================
+
+const VM = Object.freeze({IDLE:'IDLE',PLAYER:'PLAYER',AI:'AI',PARKED:'PARKED',DESPAWNED:'DESPAWNED'});
+
+class VehicleRecord {
+  constructor(id, type, sprite){
+    this.id=id; this.type=type; this.sprite=sprite;
+    this.mode=VM.AI; this.chunkId=null; this.isPlayerOwned=false;
+    // AI namespace — TrafficManager ONLY reads/writes these
+    this.ai={aiSpeed:0,aiHeading:0,aiLane:0,targetSpeed:2.2,dir:1,chunkId:null};
+    // Player namespace — VehicleController ONLY reads/writes these
+    this.player={playerSpeed:0,playerHeading:0};
+  }
+  get x(){return this.sprite?this.sprite.x:0;}
+  get y(){return this.sprite?this.sprite.y:0;}
+}
+
+class VehicleState {
+  constructor(){
+    this._vehicles=new Map();
+    this._playerVehicleId=null;
+  }
+  register(id,type,sprite){
+    if(this._vehicles.has(id)) this._vehicles.get(id).sprite=sprite;
+    else this._vehicles.set(id,new VehicleRecord(id,type,sprite));
+    return this._vehicles.get(id);
+  }
+  unregister(id){
+    const r=this._vehicles.get(id);
+    if(r){r.mode=VM.DESPAWNED; this._vehicles.delete(id);}
+  }
+  get(id){return this._vehicles.get(id)||null;}
+  all(){return Array.from(this._vehicles.values());}
+  traffic(){return this.all().filter(v=>v.mode===VM.AI||v.mode===VM.PARKED);}
+  get playerVehicleId(){return this._playerVehicleId;}
+  getPlayerVehicle(){return this._playerVehicleId?this._vehicles.get(this._playerVehicleId)||null:null;}
+  setPlayerVehicle(id){
+    const prev=this.getPlayerVehicle();
+    if(prev&&prev.id!==id){prev.mode=VM.AI;prev.isPlayerOwned=false;}
+    const next=this._vehicles.get(id);
+    if(!next){console.error('[VS] unknown id:',id);return;}
+    next.mode=VM.PLAYER; next.isPlayerOwned=true;
+    next.player.playerHeading=next.ai.aiHeading;
+    next.player.playerSpeed=0;
+    this._playerVehicleId=id;
+  }
+  clearPlayerVehicle(){
+    const prev=this.getPlayerVehicle();
+    if(prev){prev.mode=VM.PARKED;prev.isPlayerOwned=false;prev.player.playerSpeed=0;}
+    this._playerVehicleId=null;
+  }
+  inChunk(chunkId){return this.all().filter(v=>v.chunkId===chunkId);}
+  despawnChunk(chunkId){
+    for(const v of this.inChunk(chunkId).filter(v=>!v.isPlayerOwned)){
+      if(v.sprite&&v.sprite.active){try{v.sprite.destroy();}catch(e){}}
+      this.unregister(v.id);
+    }
+  }
+  debug(){
+    const pv=this.getPlayerVehicle();
+    return {
+      id:this._playerVehicleId||'on foot',
+      type:pv?pv.type:'none',
+      mode:pv?pv.mode:'FOOT',
+      count:this.traffic().length
+    };
+  }
+}
+
+class RoadPathManager {
+  constructor(scene){this.scene=scene;}
+  laneX(laneIdx,y){
+    return (typeof cfRoadCenterX==='function')
+      ? cfRoadCenterX(this.scene,y,Phaser.Math.Clamp(laneIdx,0,3))
+      : [this.scene.mapW*.215,this.scene.mapW*.365,this.scene.mapW*.680,this.scene.mapW*.815][laneIdx||0];
+  }
+  dir(laneIdx){return laneIdx<2?1:-1;}
+  headingForDir(d){return d>0?90:-90;}
+}
+
+class TrafficManager {
+  constructor(scene,vs,rpm){
+    this.scene=scene; this.vs=vs; this.rpm=rpm;
+    this._debugText=null; this._chunkId=null;
+  }
+  // Register a spawned traffic sprite in VS so it's tracked
+  track(id,type,sprite,laneIdx,chunkId){
+    const r=this.vs.register(id,type,sprite);
+    r.mode=VM.AI; r.chunkId=chunkId;
+    r.ai.aiLane=laneIdx;
+    r.ai.dir=this.rpm.dir(laneIdx);
+    r.ai.aiHeading=this.rpm.headingForDir(r.ai.dir);
+    r.ai.aiSpeed=sprite.trafficSpeed||2.2;
+    r.ai.targetSpeed=r.ai.aiSpeed;
+    return r;
+  }
+  setChunk(id){this._chunkId=id;}
+  // Pure AI update — never touches the player vehicle
+  update(dt){
+    const delta=Math.max(.5,Math.min(1.75,(dt||16)/16.666));
+    const playerVehicleId=this.vs.playerVehicleId;
+    for(const v of this.vs.traffic()){
+      if(v.id===playerVehicleId) continue; // STRICT player separation
+      if(!v.sprite||v.sprite.active===false) continue;
+      this._aiStep(v,delta);
+    }
+    this._debugDraw();
+  }
+  _aiStep(v,delta){
+    const laneIdx=Phaser.Math.Clamp(v.ai.aiLane,0,3);
+    const dir=v.ai.dir;
+    const speed=Phaser.Math.Clamp(v.ai.aiSpeed,.5,3.5);
+    v.sprite.y+=dir*speed*delta;
+    const sc=this.scene;
+    if(v.sprite.y<-140) v.sprite.y=sc.mapH+140;
+    if(v.sprite.y>sc.mapH+140) v.sprite.y=-140;
+    // Snap X using road curve formula
+    v.sprite.x=this.rpm.laneX(laneIdx,v.sprite.y);
+    // Visual angle: north-facing art = 0, south = 180
+    v.sprite.angle=dir<0?0:180;
+    v.sprite.setDepth(DEPTH.CHARACTER_BASE+Math.floor(v.sprite.y));
+    // Move name label
+    if(v.sprite.nameLabel) v.sprite.nameLabel.setPosition(v.sprite.x,v.sprite.y-72);
+    // Legacy compat: keep car.trafficLane.x in sync
+    if(v.sprite.trafficLane) v.sprite.trafficLane.x=v.sprite.x;
+  }
+  showDebug(){
+    if(this._debugText) return;
+    this._debugText=this.scene.add.text(12,12,'',{
+      fontSize:'11px',fontFamily:'monospace',color:'#00ff88',
+      backgroundColor:'#00000099',padding:{x:7,y:5}
+    }).setScrollFactor(0).setDepth(10000);
+  }
+  _debugDraw(){
+    if(!this._debugText) return;
+    const d=this.vs.debug();
+    this._debugText.setText([
+      `VEH ID  : ${d.id}`,
+      `VEH TYPE: ${d.type}`,
+      `VEH MODE: ${d.mode}`,
+      `TRAFFIC : ${d.count}`,
+      `CHUNK   : ${this._chunkId!==null?this._chunkId:'?'}`
+    ]);
+  }
+}
+
+class VehicleController {
+  constructor(scene,vs,inputRef){
+    this.scene=scene; this.vs=vs; this.inp=inputRef;
+    this._speed=0; this._heading=0;
+  }
+  get speed(){return this._speed;}
+  set speed(v){this._speed=v; const pv=this.vs.getPlayerVehicle(); if(pv) pv.player.playerSpeed=v;}
+  get heading(){return this._heading;}
+  set heading(v){this._heading=v; const pv=this.vs.getPlayerVehicle(); if(pv) pv.player.playerHeading=v;}
+  // Called once on enter
+  syncFromVehicle(sprite,storedHeading,storedSpeed){
+    this._heading=storedHeading!==undefined?storedHeading:(sprite.angle||0)-180;
+    this._speed=storedSpeed||0;
+  }
+  update(delta){
+    const pv=this.vs.getPlayerVehicle();
+    if(!pv) return false;
+    const sprite=pv.sprite;
+    if(!sprite||sprite.active===false) return false;
+    const sc=this.scene;
+    if(typeof pauseOpen!=='undefined'&&(pauseOpen||shopOpen||dialogueOpen)) return false;
+    const sec=Math.min(0.050,(delta||16)/1000);
+    const inp=this.inp;
+    const steer=Math.abs(inp.x)>0.10?inp.x:0;
+    const gas=!!inp.a||!!inp.vgas;
+    const brake=!!inp.b||!!inp.vbrake;
+    const handbrake=!!inp.r;
+    const absSpeed=Math.abs(this._speed);
+    const turnRate=(handbrake?230:125)*(0.35+Math.min(absSpeed/230,1));
+    this._heading+=steer*turnRate*sec;
+    if(gas) this._speed+=340*sec;
+    if(brake){
+      if(this._speed>12) this._speed-=520*sec;
+      else this._speed-=220*sec;
+    }
+    if(!gas&&!brake) this._speed*=Math.pow(0.982,sec*60);
+    if(handbrake) this._speed*=Math.pow(0.955,sec*60);
+    this._speed=Phaser.Math.Clamp(this._speed,-135,330);
+    if(Math.abs(this._speed)<1.4) this._speed=0;
+    const rad=Phaser.Math.DegToRad(this._heading);
+    sprite.x+=Math.cos(rad)*this._speed*sec;
+    sprite.y+=Math.sin(rad)*this._speed*sec;
+    sprite.x=Phaser.Math.Clamp(sprite.x,12,sc.mapW-12);
+    sprite.y=Phaser.Math.Clamp(sprite.y,12,sc.mapH-12);
+    sprite.angle=cfCarVisualAngle(this._heading);
+    // Sync backward-compat scene properties
+    sc.vehicleSpeed=this._speed;
+    sc.vehicleHeading=this._heading;
+    if(sc.player){sc.player.setPosition(sprite.x,sprite.y);sc.player.setVisible(false);}
+    if(sc.vehicleLabel) sc.vehicleLabel.setPosition(sprite.x,sprite.y-58);
+    if(sc.cameras&&sc.cameras.main) sc.cameras.main.centerOn(sprite.x,sprite.y);
+    return true;
+  }
+}
+
 class GameScene extends Phaser.Scene {
  
 
@@ -958,12 +1163,18 @@ preload(){
 
   this.createHighwayVehicle();
 
-  // v112h restore active/stolen vehicle immediately after screen transition.
+  // v119 (was v112h): restore active/stolen vehicle immediately after screen transition.
+  // createTrafficTextures() was called inside createHighwayVehicle(), so stolen textures exist here.
   const cfPersist=cfLoadVehicleState();
   if((qs.get("vehicle")==="car" || qs.get("persist")==="1" || cfPersist) && this.vehicle){
     const carKey=qs.get("carKey") || cfPersist?.carKey || "donny_car";
     const stolen=(qs.get("stolen")==="1") || !!cfPersist?.stolen;
-    if(carKey && this.textures.exists(carKey)) this.vehicle.setTexture(carKey);
+    // v119: texture is now available because createTrafficTextures() ran early
+    if(carKey && this.textures.exists(carKey)){
+      this.vehicle.setTexture(carKey);
+    } else if(carKey && carKey!=="donny_car"){
+      console.warn("[v119] create restore: texture not found:", carKey, "→ keeping donny_car");
+    }
     this.vehicle.stolen=stolen;
     this.vehicle.jacked=stolen;
     this.vehicleMode=true;
@@ -980,6 +1191,15 @@ preload(){
     setMode("IN CAR");
     cfStartVehicleAudio(this);
     setObjective(stolen?"Drive stolen vehicle":"Drive Donny's car");
+    // v119: authoritative final restore — re-sync VS player vehicle and VC with restored state.
+    if(this.VS && this.VC){
+      const vid='donny_car_persistent';
+      this.VS.setPlayerVehicle(vid);
+      // update VS record with correct texture key
+      const rec=this.VS.get(vid);
+      if(rec) rec.type=(stolen?'Stolen:':'')+carKey;
+      this.VC.syncFromVehicle(this.vehicle,this.vehicleHeading,this.vehicleSpeed);
+    }
   }
 
   this.spawnTraffic();
@@ -1146,6 +1366,15 @@ createTrafficTextures(){
 spawnTraffic(){
   if(!(AREA==="highway" || AREA==="highway_loop")) return;
   this.createTrafficTextures();
+  // v119: init vehicle system if not already done
+  if(!this.VS){
+    this.VS=new VehicleState();
+    this.RPM=new RoadPathManager(this);
+    this.VC=new VehicleController(this,this.VS,input);
+    this.TM=new TrafficManager(this,this.VS,this.RPM);
+    this.TM.setChunk(typeof loopChunk==='function'?loopChunk():0);
+    this.TM.showDebug();
+  }
   this.trafficCars=[];
   if(!this.trafficTextureKeys || !this.trafficTextureKeys.length) return;
 
@@ -1193,6 +1422,16 @@ spawnTraffic(){
     }).setOrigin(.5).setDepth(DEPTH.LABEL);
 
     this.trafficCars.push(car);
+    // v119: register in VehicleState so TM tracks it (never updates player vehicle)
+    if(this.TM && this.VS){
+      const vid='traffic_'+i+'_chunk'+(typeof loopChunk==='function'?loopChunk():0);
+      car.__vsId=vid;
+      const r=this.TM.track(vid,car.kind||'Civilian',car,car.laneIndex||0,typeof loopChunk==='function'?loopChunk():0);
+      car.nameLabel.__vsRef=r; // keep label ref on sprite for TM._aiStep
+      // Move nameLabel ref to sprite so TM can update it
+      car.nameLabel=car.nameLabel; // already on car; TM checks car.nameLabel via sprite.nameLabel
+      r.sprite.nameLabel=car.nameLabel; // attach to sprite for TM._aiStep
+    }
   }
 }
 
@@ -1313,22 +1552,35 @@ applyRoadFollowAssist(){
 }
 
 tryCarjack(){
+  // v119: carjack uses VS for strict player/AI separation
   if(this.vehicleMode) return false;
   const car=this.nearestJackableTrafficCar();
   if(!car) return false;
 
   const texKey=(car.texture&&car.texture.key)||"donny_car";
   const oldX=car.x, oldY=car.y, oldAngle=car.angle||0;
-  if(car.nameLabel){car.nameLabel.destroy(); car.nameLabel=null;}
+  if(car.nameLabel){try{car.nameLabel.destroy();}catch(e){} car.nameLabel=null;}
   this.spawnPulledDriver(car);
 
-  // Clone to a player-only car. Never use the traffic object as the player vehicle.
+  // Remove from traffic arrays and VS so TM stops updating it
   if(this.trafficCars) this.trafficCars=this.trafficCars.filter(c=>c!==car);
+  if(this.VS && car.__vsId) this.VS.unregister(car.__vsId);
   try{car.destroy();}catch(e){car.setVisible(false);}
 
+  // Create fresh player-only sprite from the traffic car's texture
   const pc=this.add.image(oldX,oldY,texKey).setDepth(DEPTH.CHARACTER_BASE+230).setOrigin(.5,.5).setScale(0.90);
   pc.isPlayerVehicle=true; pc.stolen=true; pc.jacked=true; pc.kind="Stolen Vehicle";
   pc.angle=oldAngle;
+
+  // v119: register in VS as the player vehicle so TM never touches it
+  if(this.VS){
+    const vid='player_stolen_'+Date.now();
+    pc.__vsId=vid;
+    const r=this.VS.register(vid,'Stolen:'+texKey,pc);
+    r.chunkId=typeof loopChunk==='function'?loopChunk():0;
+    this.VS.setPlayerVehicle(vid);
+    if(this.VC) this.VC.syncFromVehicle(pc,(oldAngle||0)-180,0);
+  }
 
   if(this.vehicle && this.vehicle!==pc){this.vehicle.setVisible(true); this.vehicle.setAlpha(.55);}
   this.vehicle=pc; this.playerVehicle=pc; this.vehicleMode=true; this.vehicleSpeed=0;
@@ -1341,10 +1593,10 @@ tryCarjack(){
   }else{
     this.vehicleLabel=this.add.text(pc.x,pc.y-58,"STOLEN VEHICLE\nX EXIT",{fontFamily:"monospace",fontSize:"8px",color:"#9eefff",backgroundColor:"rgba(0,0,0,.55)",padding:{x:4,y:2},align:"center"}).setOrigin(.5).setDepth(DEPTH.LABEL);
   }
-  if(this.cameras?.main)this.cameras.main.startFollow(this.vehicle,true,0.12,0.12,0,0);
+  if(this.cameras?.main)this.cameras.main.startFollow(pc,true,0.12,0.12,0,0);
   setMode("IN CAR");
   if(this.addWanted)this.addWanted(2.2,"carjacking");
-  showToast("CARJACKED\nplayer-only car");
+  showToast("CARJACKED\n"+texKey);
   return true;
 }
 
@@ -1361,58 +1613,42 @@ updateCarjackPrompt(){
 }
 
 updateTraffic(dt){
-  // v118 SAFE TRAFFIC:
-  // Traffic cars are AI-only. They never read player input and never shove the player car.
-  // If traffic disappears after a chunk load, respawn it once.
+  // v119: AI traffic update — TrafficManager handles all AI vehicles
+  // Player vehicle is STRICTLY excluded (checked via VS.playerVehicleId)
   if(!(AREA==="highway" || AREA==="highway_loop")) return;
 
   if(!this.trafficCars || !Array.isArray(this.trafficCars)) this.trafficCars=[];
-  this.trafficCars=this.trafficCars.filter(car => car && car.active !== false && !car.destroyed);
 
-  if(this.trafficCars.length < 4 && this.spawnTraffic && !this._v118RespawningTraffic){
-    this._v118RespawningTraffic=true;
-    try{ this.spawnTraffic(); }catch(e){ console.warn("v118 spawnTraffic failed", e); }
-    this.time?.delayedCall?.(250, ()=>{ this._v118RespawningTraffic=false; });
+  // Respawn if nearly empty
+  if(this.trafficCars.length < 4 && !this._v119RespawnPending){
+    this._v119RespawnPending=true;
+    try{ this.spawnTraffic(); }catch(e){ console.warn("v119 spawnTraffic failed", e); }
+    this.time?.delayedCall?.(280, ()=>{ this._v119RespawnPending=false; });
   }
 
-  if(!this.trafficCars || !this.trafficCars.length) return;
+  if(!this.trafficCars.length) return;
 
+  // Use TM if available (preferred path — no player-vehicle contamination)
+  if(this.TM){
+    this.TM.setChunk(typeof loopChunk==='function'?loopChunk():0);
+    this.TM.update(dt);
+    return;
+  }
+
+  // Fallback path (legacy, should not normally run)
   const delta=Math.max(.5,Math.min(1.75,(dt||16)/16.666));
-
   for(const car of this.trafficCars){
-    if(!car || car.stolen || car.isPlayerVehicle || car===this.vehicle) continue;
-
-    if(!car.trafficLane){
-      const laneIdx=Phaser.Math.Clamp(car.laneIndex ?? 1,0,3);
-      const dir = laneIdx < 2 ? -1 : 1;
-      car.trafficLane={dir};
-      car.laneIndex=laneIdx;
-    }
-
-    const laneIdx=Phaser.Math.Clamp(car.laneIndex ?? 1,0,3);
-    const dir=car.trafficLane.dir || (laneIdx<2 ? -1 : 1);
-    const speed=Phaser.Math.Clamp(car.trafficSpeed || 1.2, .65, 2.8);
-
-    car.y += dir * speed * delta;
-
-    if(car.y < -140) car.y=this.mapH+140;
-    if(car.y > this.mapH+140) car.y=-140;
-
-    car.x = (typeof cfRoadCenterX==="function")
-      ? cfRoadCenterX(this, car.y, laneIdx)
-      : car.x;
-
-    // v118: use simple north/south visual angles so cars do not drive sideways.
-    // Top-down vehicle sheets face north at angle 0.
-    car.angle = dir < 0 ? 0 : 180;
-
-    if(car.nameLabel){
-      car.nameLabel.setPosition(car.x,car.y-72);
-      car.nameLabel.setVisible(true);
-    }
-
-    // Keep depth stable.
-    if(car.setDepth) car.setDepth(DEPTH.CHARACTER_BASE + Math.floor(car.y));
+    if(!car || car===this.vehicle || car.isPlayerVehicle || car.stolen) continue;
+    const laneIdx=Phaser.Math.Clamp(car.laneIndex??1,0,3);
+    const dir=car.trafficLane?.dir||(laneIdx<2?1:-1);
+    const speed=Phaser.Math.Clamp(car.trafficSpeed||1.2,.65,2.8);
+    car.y+=dir*speed*delta;
+    if(car.y<-140) car.y=this.mapH+140;
+    if(car.y>this.mapH+140) car.y=-140;
+    if(typeof cfRoadCenterX==="function") car.x=cfRoadCenterX(this,car.y,laneIdx);
+    car.angle=dir<0?0:180;
+    if(car.nameLabel) car.nameLabel.setPosition(car.x,car.y-72);
+    if(car.setDepth) car.setDepth(DEPTH.CHARACTER_BASE+Math.floor(car.y));
   }
 }
 
@@ -1677,6 +1913,10 @@ createHighwayVehicle(){
   this.originalDonnyVehicle=this.vehicle;
   if(vehicleControls) vehicleControls.style.display="none";
 
+  // v119: build traffic texture atlas early so stolen car textures are available at restore time.
+  // createTrafficTextures() is idempotent; safe to call here before spawnTraffic().
+  try{ this.createTrafficTextures(); }catch(e){}
+
   // v112g: restore current/stolen vehicle after screen transition.
   const activeVehicle=cfLoadActiveVehicle();
   if((qs.get("vehicle")==="car" || qs.get("persist")==="1" || activeVehicle) && this.vehicle){
@@ -1684,6 +1924,8 @@ createHighwayVehicle(){
     const stolen=(qs.get("stolen")==="1") || !!activeVehicle?.stolen;
     if(carKey && this.textures.exists(carKey)){
       this.vehicle.setTexture(carKey);
+    } else if(carKey && carKey!=="donny_car"){
+      console.warn("[v119] restore: texture not found:", carKey, "→ keeping donny_car");
     }
     this.vehicle.stolen=stolen;
     this.vehicle.jacked=stolen;
@@ -1717,6 +1959,26 @@ createHighwayVehicle(){
     fontFamily:"monospace",fontSize:"10px",color:"#9eefff",
     backgroundColor:"rgba(0,0,0,.60)",padding:{x:4,y:2},align:"center"
   }).setOrigin(.5).setDepth(DEPTH.LABEL+700);
+
+  // v119: init vehicle systems now (traffic not yet spawned)
+  if(!this.VS){
+    this.VS=new VehicleState();
+    this.RPM=new RoadPathManager(this);
+    this.VC=new VehicleController(this,this.VS,input);
+    this.TM=new TrafficManager(this,this.VS,this.RPM);
+    this.TM.setChunk(typeof loopChunk==='function'?loopChunk():0);
+    this.TM.showDebug();
+  }
+  // Register Donny's car as player vehicle in VS
+  const _dvid='donny_car_persistent';
+  this.vehicle.__vsId=_dvid;
+  this.VS.register(_dvid,'donny_car',this.vehicle);
+  // If vehicle mode is already restored (chunk persistence), set player vehicle
+  if(this.vehicleMode){
+    this.VS.setPlayerVehicle(_dvid);
+    if(this.VC) this.VC.syncFromVehicle(this.vehicle,this.vehicleHeading,this.vehicleSpeed);
+  }
+  this._donnyCarSprite=this.vehicle;
 }
 ensureEngineAudio(){
   // v75 procedural fallback engine audio: no external sound file required.
@@ -1817,6 +2079,9 @@ exitVehicle(){
 
   this.cameras.main.startFollow(this.player,true,0.12,0.12,0,0);
   if(carHudBlock) carHudBlock.style.display="none";
+  // v119: clear player vehicle in VS so TM never confuses it with traffic
+  if(this.VS) this.VS.clearPlayerVehicle();
+  if(this.VC){this.VC._speed=0; this.VC._heading=this.vehicleHeading||0;}
   setObjective("On foot");
   showToast("ON FOOT");
 }
@@ -1845,7 +2110,12 @@ updateCarHud(){
 
 updateVehicle(dt){
   if(!this.vehicle || !this.vehicleMode) return;
-
+  // v119: prefer VC.update if VS tracks a player vehicle (clean path)
+  if(this.VC && this.VS && this.VS.getPlayerVehicle()){
+    this.VC.update(dt);
+    return;
+  }
+  // Legacy fallback path (no VS yet)
   const sec=Math.max(0.010, Math.min(0.040, (dt||16)/1000));
 
   // v97: buttons drive the car. Stick only steers/directs.
@@ -1948,6 +2218,11 @@ goHighwayLoop(step){
   const n=HIGHWAY_LOOP.length;
   const next=((loopChunk()+step)%n+n)%n;
   const entry = step>0 ? "south" : "north";
+  // v119: sync VS speed/heading back to scene props before save
+  if(this.VC && this.VS && this.VS.getPlayerVehicle()){
+    this.vehicleSpeed=this.VC._speed;
+    this.vehicleHeading=this.VC._heading;
+  }
   if(this.vehicleMode && this.vehicle) cfSaveVehicleState(this);
   if(this.wantedLevel>0) cfSaveWanted(this);
   const inCar=this.vehicleMode?"&vehicle=car":"";
@@ -2347,7 +2622,14 @@ function cfCarVisualAngle(heading){
   return heading + 180;
 }
 function cfCurrentCarKey(scene){
-  try{return (scene.vehicle && scene.vehicle.texture && scene.vehicle.texture.key) || "donny_car";}catch(e){return "donny_car";}
+  try{
+    // v119: prefer VS player vehicle texture
+    if(scene.VS){
+      const pv=scene.VS.getPlayerVehicle();
+      if(pv && pv.sprite && pv.sprite.texture) return pv.sprite.texture.key||"donny_car";
+    }
+    return (scene.vehicle && scene.vehicle.texture && scene.vehicle.texture.key) || "donny_car";
+  }catch(e){return "donny_car";}
 }
 
 function cfSaveWanted(scene){
@@ -2388,6 +2670,16 @@ function cfLaneX(scene, lane){
 }
 function cfTankDrive(scene, dt){
   if(!scene || !scene.vehicleMode || !scene.vehicle || pauseOpen || shopOpen || dialogueOpen) return false;
+  // v119: use VC if VS has a player vehicle (preferred, no duplication)
+  if(scene.VC && scene.VS && scene.VS.getPlayerVehicle()){
+    const ok=scene.VC.update(dt);
+    if(ok){
+      cfUpdateVehicleAudio(scene);
+      if(!!scene.inp?.r && Math.abs(scene.vehicleSpeed)>80 && Math.random()<0.045) cfPlayTireScreech(scene);
+      if(coordLine) coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(scene.vehicle.x)},${Math.round(scene.vehicle.y)} <span class="tag">CAR:</span> VC <span class="tag">SPD:</span>${Math.round(scene.vehicleSpeed)} <span class="tag">HDG:</span>${Math.round(scene.vehicleHeading)}`;
+      return true;
+    }
+  }
   const sec=Math.min(.05,(dt||16)/1000);
   if(scene.vehicleHeading===undefined) scene.vehicleHeading=(scene.vehicle.angle||0)-90;
   if(scene.vehicleSpeed===undefined) scene.vehicleSpeed=0;
@@ -2865,42 +3157,26 @@ function installDedicatedVehicleControls(){
 
 
 function installV110MovementFallback(){
+  // v119: Car and traffic movement removed from this rAF loop.
+  // Traffic: handled exclusively by TM.update() inside Phaser scene.update() → updateTraffic(dt).
+  // Player car: handled exclusively by VC.update() inside cfTankDrive() → updateVehicle(dt).
+  // Running both here AND in Phaser update caused double-movement jitter and truck spinning.
+  // Only foot movement (on-foot Donny) is kept here as a mobile fallback.
   if(window.__v110MovementFallbackInstalled) return;
   window.__v110MovementFallbackInstalled=true;
 
   function tick(){
     try{
       const sc=window.__cfScene;
-      if(sc){
-        // Guaranteed NPC traffic movement.
-        if(sc.trafficCars && sc.trafficCars.length){
-          for(const car of sc.trafficCars){
-            const lane=car.trafficLane;
-            if(!lane) continue;
-            const speed=Math.max(2.1, car.trafficSpeed||2.1);
-            car.y += lane.dir * speed * 1.15;
-            if(car.y < -120) car.y=sc.mapH+120;
-            if(car.y > sc.mapH+120) car.y=-120;
-            car.x = lane.x;
-            if(car.nameLabel) car.nameLabel.setPosition(car.x,car.y-72);
-          }
-        }
-
-        // Guaranteed Donny car movement with working toggle/stick.
-        if(sc.vehicleMode && sc.vehicle && !dialogueOpen && !shopOpen && !pauseOpen){
-          cfTankDrive(sc,16);
-        } else if(sc.player && !dialogueOpen && !shopOpen && !pauseOpen){
-          const vx=input.x||0, vy=input.y||0;
-          const len=Math.hypot(vx,vy);
-          if(len>.12){
-            const speed=input.r ? 4.1 : 2.75;
-            if(sc.tryMove) sc.tryMove(vx*speed,vy*speed);
-          }
+      if(sc && sc.player && !sc.vehicleMode && !dialogueOpen && !shopOpen && !pauseOpen){
+        const vx=input.x||0, vy=input.y||0;
+        const len=Math.hypot(vx,vy);
+        if(len>.12){
+          const speed=input.r ? 4.1 : 2.75;
+          if(sc.tryMove) sc.tryMove(vx*speed,vy*speed);
         }
       }
-    }catch(e){
-      console.warn("v110 movement fallback safe error", e);
-    }
+    }catch(e){}
     requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
