@@ -819,8 +819,12 @@ class TrafficManager {
     if(v.sprite.y>sc.mapH+140) v.sprite.y=-140;
     // Snap X using road curve formula
     v.sprite.x=this.rpm.laneX(laneIdx,v.sprite.y);
-    // Visual angle: north-facing art = 0, south = 180
-    v.sprite.angle=dir<0?0:180;
+    // Visual angle: follow road curve using cfRoadHeading; fallback to straight up/down
+    if(typeof cfRoadHeading==='function' && typeof cfVehicleVisualAngleFromHeading==='function'){
+      v.sprite.angle=cfVehicleVisualAngleFromHeading(cfRoadHeading(this.scene,v.sprite.y,laneIdx,dir));
+    } else {
+      v.sprite.angle=dir<0?0:180;
+    }
     v.sprite.setDepth(DEPTH.CHARACTER_BASE+Math.floor(v.sprite.y));
     // Move name label
     if(v.sprite.nameLabel) v.sprite.nameLabel.setPosition(v.sprite.x,v.sprite.y-72);
@@ -1169,11 +1173,11 @@ preload(){
   if((qs.get("vehicle")==="car" || qs.get("persist")==="1" || cfPersist) && this.vehicle){
     const carKey=qs.get("carKey") || cfPersist?.carKey || "donny_car";
     const stolen=(qs.get("stolen")==="1") || !!cfPersist?.stolen;
-    // v119: texture is now available because createTrafficTextures() ran early
+    // v120: apply texture if already available, otherwise defer to spawnTraffic()
     if(carKey && this.textures.exists(carKey)){
       this.vehicle.setTexture(carKey);
     } else if(carKey && carKey!=="donny_car"){
-      console.warn("[v119] create restore: texture not found:", carKey, "→ keeping donny_car");
+      this._pendingStolenRestore={carKey,stolen};
     }
     this.vehicle.stolen=stolen;
     this.vehicle.jacked=stolen;
@@ -1366,6 +1370,21 @@ createTrafficTextures(){
 spawnTraffic(){
   if(!(AREA==="highway" || AREA==="highway_loop")) return;
   this.createTrafficTextures();
+  // v120: apply deferred stolen vehicle texture — stored before traffic textures existed
+  if(this._pendingStolenRestore && this.vehicle){
+    const {carKey,stolen}=this._pendingStolenRestore;
+    this._pendingStolenRestore=null;
+    if(this.textures.exists(carKey)){
+      this.vehicle.setTexture(carKey);
+      this.vehicle.stolen=stolen; this.vehicle.jacked=stolen;
+      if(this.vehicleLabel) this.vehicleLabel.setText(stolen?"STOLEN VEHICLE\nX EXIT":"DONNY'S CAR\nX EXIT").setPosition(this.vehicle.x,this.vehicle.y-58).setVisible(true);
+      if(this.VS && this.VC){
+        const rec=this.VS.get('donny_car_persistent');
+        if(rec) rec.type=(stolen?'Stolen:':'')+carKey;
+        this.VC.syncFromVehicle(this.vehicle,this.vehicleHeading,this.vehicleSpeed);
+      }
+    }
+  }
   // v119: init vehicle system if not already done
   if(!this.VS){
     this.VS=new VehicleState();
@@ -1913,9 +1932,10 @@ createHighwayVehicle(){
   this.originalDonnyVehicle=this.vehicle;
   if(vehicleControls) vehicleControls.style.display="none";
 
-  // v119: build traffic texture atlas early so stolen car textures are available at restore time.
-  // createTrafficTextures() is idempotent; safe to call here before spawnTraffic().
-  try{ this.createTrafficTextures(); }catch(e){}
+  // v120: do NOT call createTrafficTextures() here.
+  // Calling it early sets _trafficTexturesReady=true before the loop runs; if anything
+  // fails (silently caught), trafficTextureKeys stays [] and spawnTraffic() exits with no cars.
+  // Stolen texture restore is deferred to spawnTraffic() via this._pendingStolenRestore.
 
   // v112g: restore current/stolen vehicle after screen transition.
   const activeVehicle=cfLoadActiveVehicle();
@@ -1925,7 +1945,8 @@ createHighwayVehicle(){
     if(carKey && this.textures.exists(carKey)){
       this.vehicle.setTexture(carKey);
     } else if(carKey && carKey!=="donny_car"){
-      console.warn("[v119] restore: texture not found:", carKey, "→ keeping donny_car");
+      // v120: traffic textures don't exist yet — spawnTraffic() will apply this after creating them
+      this._pendingStolenRestore={carKey,stolen};
     }
     this.vehicle.stolen=stolen;
     this.vehicle.jacked=stolen;
