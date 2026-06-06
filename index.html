@@ -1,648 +1,711 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v125</title>
-<script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Stuck In Iowa: Dead County</title>
+
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+
 <style>
-html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
-#game {position:fixed;left:0;top:0;width:100dvw;height:100dvh;background:#05070b;overflow:hidden;}
-#game canvas{position:absolute!important;left:0!important;top:0!important;width:100dvw!important;height:100dvh!important;display:block!important;}
-.hud{position:fixed;left:calc(env(safe-area-inset-left) + 6px);top:calc(env(safe-area-inset-top) + 5px);z-index:20;width:138px;max-width:25vw;padding:4px 6px;border:1px solid rgba(124,217,255,.38);background:rgba(4,10,18,.48);box-shadow:0 0 6px rgba(102,33,255,.14);backdrop-filter:blur(2px);font:7px/1.1 monospace;pointer-events:none;text-shadow:0 0 3px #0ff;}
-.hud .title{font-weight:700;color:#9eefff;letter-spacing:.6px;margin-bottom:1px;}
-.bar{height:4px;background:rgba(0,0,0,.42);margin:1px 0 2px;border:1px solid rgba(255,255,255,.10);}
-.fill.hp{height:100%;width:100%;background:#39e886;} .fill.sta{height:100%;width:100%;background:#8d5cff;} .fill.water{height:100%;width:80%;background:#26c9ff;}
-.tag{color:#b9bdd7}
-#objectiveHud{position:fixed;left:calc(env(safe-area-inset-left) + 6px);top:calc(env(safe-area-inset-top) + 72px);z-index:21;width:160px;max-width:28vw;padding:4px 6px;border:1px solid rgba(190,95,255,.38);background:rgba(12,5,22,.50);color:#f1eaff;font:7px/1.2 monospace;pointer-events:none;text-shadow:0 0 4px #8a5cff;}
-#objectiveHud .objTitle{color:#d9b8ff;font-weight:800;letter-spacing:.6px;margin-bottom:3px;}
-#hint{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 7px);transform:translateX(-50%);z-index:22;padding:4px 7px;border:1px solid rgba(160,210,255,.50);background:rgba(0,0,0,.62);color:#e8fbff;font:9px monospace;display:none;white-space:nowrap;max-width:70vw;overflow:hidden;text-overflow:ellipsis;}
-#dialogue{position:fixed;left:calc(env(safe-area-inset-left) + 10px);bottom:calc(env(safe-area-inset-bottom) + 96px);z-index:70;width:min(560px,62vw);max-width:62vw;padding:6px 8px;border:1px solid rgba(124,217,255,.58);background:rgba(2,5,12,.86);box-shadow:0 0 14px rgba(115,32,255,.22);display:none;color:#e8fbff;font:11px/1.18 system-ui,-apple-system,Segoe UI,sans-serif;pointer-events:auto;}
-#dialogue .name{font-size:13px;font-weight:800;color:#9eefff;letter-spacing:.5px;margin-bottom:3px;}
-#dialogue .choices{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;}
-#dialogue button{background:#122033;color:#e8fbff;border:1px solid #4a79a8;border-radius:5px;padding:5px 7px;font-size:11px;font-weight:650;touch-action:manipulation;}
-.stick{pointer-events:auto;position:fixed;left:calc(env(safe-area-inset-left) + 20px);bottom:calc(env(safe-area-inset-bottom) + 30px);width:116px;height:116px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.05);z-index:25;touch-action:none;}
-.nub{position:absolute;width:48px;height:48px;border-radius:50%;left:34px;top:34px;background:rgba(255,255,255,.28);border:1px solid rgba(255,255,255,.35);}
-.buttons{pointer-events:auto;position:fixed;right:calc(env(safe-area-inset-right) + 18px);bottom:calc(env(safe-area-inset-bottom) + 22px);z-index:25;touch-action:none;}
-.btn{pointer-events:auto;position:absolute;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font:9px/1.05 monospace;border:2px solid rgba(255,255,255,.18);background:rgba(60,90,120,.38);user-select:none;}
-.a{right:0;bottom:28px;background:rgba(55,150,75,.40)} .b{right:58px;bottom:0;background:rgba(150,55,70,.40)} .x{right:58px;bottom:64px;background:rgba(60,120,170,.40)} .y{right:116px;bottom:28px;background:rgba(150,140,60,.40)} .r{right:0;bottom:92px;background:rgba(120,70,180,.48)}
-.version{position:fixed;right:calc(env(safe-area-inset-right) + 12px);bottom:calc(env(safe-area-inset-bottom) + 8px);z-index:15;color:#9eefff;background:rgba(0,0,0,.45);border:1px solid rgba(124,217,255,.3);padding:3px 6px;font:9px monospace;}
-#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 8px);transform:translateX(-50%);z-index:80;display:none;max-width:70vw;padding:7px 10px;border:1px solid rgba(124,217,255,.55);background:rgba(2,5,12,.82);color:#e8fbff;font:11px/1.2 monospace;text-align:center;box-shadow:0 0 14px rgba(115,32,255,.20);pointer-events:none;}
-
-#shop{
-  position:fixed;
-  left:calc(env(safe-area-inset-left) + 10px);
-  right:calc(env(safe-area-inset-right) + 10px);
-  top:calc(env(safe-area-inset-top) + 38px);
-  bottom:calc(env(safe-area-inset-bottom) + 86px);
-  z-index:90;
-  display:none;
-  border:1px solid rgba(124,217,255,.62);
-  background:rgba(2,5,12,.91);
-  color:#e8fbff;
-  box-shadow:0 0 18px rgba(115,32,255,.25);
-  font:11px/1.2 monospace;
-  overflow:hidden;
-  pointer-events:auto;
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #000;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
 }
-#shopHeader{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:7px 9px;border-bottom:1px solid rgba(124,217,255,.32);
-  color:#9eefff;font-weight:800;letter-spacing:.5px;
-}
-#shopBody{display:flex;gap:8px;padding:8px;height:calc(100% - 48px);box-sizing:border-box;}
-.shopPanel{flex:1;min-width:0;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.035);overflow:auto;padding:6px;}
-.shopPanel h4{margin:0 0 5px 0;color:#d9b8ff;font-size:10px;}
-.shopItem{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:5px;border-bottom:1px solid rgba(255,255,255,.08);}
-.shopItem span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.shopItem button,#shopClose{background:#122033;color:#e8fbff;border:1px solid #4a79a8;border-radius:5px;padding:4px 6px;font-size:10px;font-weight:700;}
-#shopLog{color:#bdefff;font-size:9px;margin-top:5px;min-height:22px;}
-@media (max-width:760px) and (orientation:landscape){
-  #shop{top:30px;bottom:74px;font-size:10px;}
-  #shopBody{padding:6px;gap:6px;}
-  .shopItem{padding:4px;}
-  .shopItem button,#shopClose{font-size:9px;padding:3px 5px;}
-}
-
-#pauseMenu{
-  position:fixed;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
-  z-index:120;
-  display:none;
-  width:min(360px,82vw);
-  border:1px solid rgba(124,217,255,.7);
-  background:rgba(2,6,14,.94);
-  color:#e8fbff;
-  box-shadow:0 0 24px rgba(115,32,255,.35);
-  font-family:monospace;
-  padding:14px;
-  pointer-events:auto;
-}
-#pauseMenu h3{
-  margin:0 0 10px 0;
-  color:#9eefff;
-  letter-spacing:1px;
-  font-size:18px;
-}
-.pauseRow{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  margin:10px 0;
-}
-.pauseRow label{
-  font-size:13px;
-  color:#d9b8ff;
-  font-weight:bold;
-}
-#musicVolume{
-  flex:1;
-  accent-color:#8d62ff;
-}
-#volumeReadout{
-  min-width:42px;
-  text-align:right;
-  color:#9eefff;
-}
-.pauseBtn{
-  background:#122033;
-  color:#e8fbff;
-  border:1px solid #4a79a8;
-  border-radius:6px;
-  padding:8px 10px;
-  font-size:13px;
-  font-weight:800;
-}
-@media (orientation:landscape){
-  #pauseMenu{top:50%; width:min(340px,60vw);}
-}
-
-#vehicleControls{
-  position:fixed;
-  right:calc(env(safe-area-inset-right) + 18px);
-  top:calc(env(safe-area-inset-top) + 82px);
-  z-index:130;
-  display:none;
-  gap:7px;
-  flex-direction:column;
-  pointer-events:auto;
-}
-.vbtn{
-  width:92px;
-  min-height:42px;
-  border-radius:10px;
-  border:2px solid rgba(158,239,255,.65);
-  background:rgba(3,12,24,.82);
-  color:#e8fbff;
-  font:10px/1.1 monospace;
-  font-weight:900;
-  touch-action:none;
-  user-select:none;
-}
-.vbtn.gas{background:rgba(35,140,70,.82);}
-.vbtn.brake{background:rgba(150,55,70,.82);}
-.vbtn.exit{background:rgba(70,120,180,.82);}
-
-.pauseMiniRow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0;}
-.pauseHint{font:10px monospace;color:#9eefff;margin-top:8px;line-height:1.25;}
-
-.pauseTabs{display:flex;gap:6px;margin:8px 0;}
-.pauseTab{background:#122033;color:#e8fbff;border:1px solid #4a79a8;border-radius:5px;padding:5px 7px;font:10px monospace;font-weight:800;}
-.pauseTab.active{background:#264a72;color:#fff;}
-.pausePanel{display:none;border:1px solid rgba(124,217,255,.22);background:rgba(255,255,255,.035);padding:8px;max-height:42vh;overflow:auto;}
-.pausePanel.active{display:block;}
-.invItem{display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid rgba(255,255,255,.08);padding:6px 0;font:10px monospace;}
-.invItem button{background:#122033;color:#e8fbff;border:1px solid #4a79a8;border-radius:5px;padding:4px 7px;font:10px monospace;font-weight:800;}
-.equipLine{font:10px monospace;color:#9eefff;margin-top:5px;}
-
-#pauseButton{
-  position:fixed;
-  right:calc(env(safe-area-inset-right) + 12px);
-  top:calc(env(safe-area-inset-top) + 8px);
-  z-index:140;
-  width:48px;
-  height:34px;
-  border-radius:8px;
-  border:2px solid rgba(158,239,255,.65);
-  background:rgba(3,12,24,.78);
-  color:#e8fbff;
-  font:11px monospace;
-  font-weight:900;
-  pointer-events:auto;
-  touch-action:manipulation;
+canvas {
+  display: block;
+  margin: 0 auto;
 }
 </style>
 </head>
+
 <body>
-<div id="game"></div>
-<button id="pauseButton">PAUSE</button>
-<div class="hud"><div class="title">DONNY</div><div><span class="tag">MODE:</span> <span id="mode">ON FOOT</span> <span class="tag">ZONE:</span> A1</div><div><span class="tag">HP</span></div><div class="bar"><div class="fill hp"></div></div><div><span class="tag">STA</span></div><div class="bar"><div class="fill sta"></div></div><div><span class="tag">WATER</span></div><div class="bar"><div class="fill water"></div></div><div id="carHudBlock" style="display:none;margin-top:3px;">
-<div><span class="tag">SPD</span></div><div class="bar"><div id="speedBar" class="fill" style="height:100%;width:0%;background:#9eefff;"></div></div>
-<div><span class="tag">FUEL</span></div><div class="bar"><div id="fuelBar" class="fill" style="height:100%;width:100%;background:#f6d36b;"></div></div>
-</div><div id="wantedLine"><span class="tag">WANTED:</span> ☆☆☆☆☆</div>
-<div id="coordLine"><span class="tag">XY:</span> --</div></div>
-<div id="objectiveHud"><div class="objTitle">OBJECTIVE</div><div id="objectiveText">Find Kira Volt</div></div>
-<div id="toast"></div><div id="hint"></div>
-<div id="dialogue"><div class="name" id="dlgName"></div><div id="dlgText"></div><div class="choices" id="dlgChoices"></div></div>
-
-<div id="pauseMenu">
-  <h3>PAUSE</h3>
-  <div class="pauseTabs">
-    <button class="pauseTab active" id="pauseTabMain">MAIN</button>
-    <button class="pauseTab" id="pauseTabInv">INVENTORY</button>
-  </div>
-  <div class="pausePanel active" id="pauseMainPanel">
-    <div class="pauseMiniRow">
-      <label>MUSIC</label>
-      <input id="musicVolume" type="range" min="0" max="100" step="1" value="60">
-      <span id="volumeReadout">60%</span>
-    </div>
-    <div class="pauseMiniRow">
-      <button class="pauseBtn" id="resumeBtn">RESUME</button>
-      <button class="pauseBtn" id="muteBtn">MUTE</button>
-    </div>
-    <div class="pauseHint">Y/LTS toggles pause.</div>
-  </div>
-  <div class="pausePanel" id="pauseInvPanel">
-    <div id="inventoryList"></div>
-    <div class="equipLine">Equipped: <span id="equippedLine">None</span></div>
-  </div>
-</div>
-
-<div id="shop">
-  <div id="shopHeader">
-    <div>NEON VENDOR // BUY / SELL</div>
-    <div><span id="creditLine">Credits: 0</span> <button id="shopClose">CLOSE</button></div>
-  </div>
-  <div id="shopBody">
-    <div class="shopPanel">
-      <h4>BUY</h4>
-      <div id="shopBuyList"></div>
-    </div>
-    <div class="shopPanel">
-      <h4>SELL</h4>
-      <div id="shopSellList"></div>
-      <div id="shopLog"></div>
-    </div>
-  </div>
-</div>
-
-<div class="stick" id="stick"><div class="nub" id="nub"></div></div>
-<div class="buttons"><div class="btn r" data-btn="r">R<br>BST</div><div class="btn x" data-btn="x">X<br>USE</div><div class="btn a" data-btn="a">A<br>GAS</div><div class="btn b" data-btn="b">B<br>BRK</div><div class="btn y" data-btn="y">Y<br>LTS</div></div>
-
-<div id="vehicleControls">
-  <button class="vbtn gas" id="driveGas">R<br>BOOST</button>
-  <button class="vbtn brake" id="driveBrake">BRAKE<br>STOP</button>
-  <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
-</div>
-
-<div class="version">Highway Loop / Car Size Scaling v125</div>
 <script>
-(() => {
-const qs = new URLSearchParams(location.search);
-const AREA = qs.get("area") || "highway_loop";
-const LOOP_CHUNK = Math.max(0, parseInt(qs.get("chunk") || "0", 10) || 0);
-const LOOP_ENTRY = qs.get("entry") || "south";
-const START_IN_CAR = qs.get("vehicle") === "car";
-const COLLISION_MODE = qs.get("collision") || "mask";
-const MAPS = {
-  a1: {
-    key:"blacklight_a1",
-    zone:"BLACKLIGHT A1",
-    base:"assets/maps/dust9/glasswell/blacklight_district/a1/layers/GLASSWELL_BLACKLIGHT_A1_base.png",
-    mask:"assets/maps/dust9/glasswell/blacklight_district/a1/masks/GLASSWELL_BLACKLIGHT_A1_collision_mask.png",
-    spawn:[0.455,0.700],
-    objective:"Find Kira Volt",
-    exitText:"Return to Westgate Connector"
-  },
-  club: {
-    key:"blacklight_club",
-    zone:"BLACKLIGHT CLUB",
-    base:"assets/maps/dust9/glasswell/blacklight_club/interior/GLASSWELL_BLACKLIGHT_CLUB_INTERIOR_base.png",
-    mask:"assets/maps/dust9/glasswell/blacklight_club/interior/GLASSWELL_BLACKLIGHT_CLUB_INTERIOR_collision_mask.png",
-    spawn:[0.50,0.86],
-    objective:"Find Kira at the DJ booth",
-    exitText:"Exit to Blacklight A1"
-  },
-  highway: {
-    key:"highway_offramp",
-    zone:"HIGHWAY OFF-RAMP",
-    base:"assets/maps/dust9/glasswell/road_kit/highway_roads/highway_off_or_on_ramp.png",
-    mask:"assets/maps/dust9/glasswell/road_kit/highway_roads/highway_off_or_on_ramp_collision_mask.png",
-    spawn:[0.72,0.50],
-    objective:"Follow the ramp back to Westgate",
-    exitText:"Enter Westgate Connector"
-  },
-  westgate: {
-    key:"westgate",
-    zone:"WESTGATE",
-    base:"assets/maps/dust9/glasswell/outer_ring/west_blacklight/layers/GLASSWELL_WESTGATE_BLACKLIGHT_CONNECTOR_base.png",
-    mask:"assets/maps/dust9/glasswell/outer_ring/west_blacklight/masks/GLASSWELL_WESTGATE_BLACKLIGHT_CONNECTOR_collision_mask.png",
-    spawn:[0.50,0.50],
-    objective:"Enter Blacklight District",
-    exitText:"Enter Blacklight District"
-  }
-};
-
-const HIGHWAY_TILE_PATHS = {
-  ramp:"assets/maps/dust9/glasswell/road_kit/highway_roads/highway_off_or_on_ramp.png",
-  straight1:"assets/maps/dust9/glasswell/road_kit/highway_roads/highway_straight_01.png",
-  straight2:"assets/maps/dust9/glasswell/road_kit/highway_roads/highway_straight_02.png",
-  curve:"assets/maps/dust9/glasswell/road_kit/highway_roads/highway_curve_01.png"
-};
-
-const HIGHWAY_LOOP = [
-  {id:"OFFRAMP_WESTGATE_BLACKLIGHT", type:"offramp", tile:"ramp", exit:"Westgate / Blacklight"},
-  {id:"STRAIGHT_01", type:"straight", tile:"straight1"},
-  {id:"STRAIGHT_02", type:"straight", tile:"straight2"},
-  {id:"STRAIGHT_03", type:"straight", tile:"straight1"},
-  {id:"TURN_01", type:"turn", tile:"curve"},
-  {id:"STRAIGHT_04", type:"straight", tile:"straight2"},
-  {id:"STRAIGHT_05", type:"straight", tile:"straight1"},
-  {id:"STRAIGHT_06", type:"straight", tile:"straight2"},
-  {id:"OFFRAMP_GLASSWELL_NORTH", type:"offramp", tile:"ramp", exit:"Glasswell North / Civic Gate"},
-  {id:"STRAIGHT_07", type:"straight", tile:"straight1"},
-  {id:"STRAIGHT_08", type:"straight", tile:"straight2"},
-  {id:"STRAIGHT_09", type:"straight", tile:"straight1"},
-  {id:"TURN_02", type:"turn", tile:"curve"},
-  {id:"STRAIGHT_10", type:"straight", tile:"straight2"},
-  {id:"STRAIGHT_11", type:"straight", tile:"straight1"},
-  {id:"STRAIGHT_12", type:"straight", tile:"straight2"},
-  {id:"OFFRAMP_GLASSWELL_EAST", type:"offramp", tile:"ramp", exit:"Glasswell East / Admin-Ration"},
-  {id:"STRAIGHT_13", type:"straight", tile:"straight1"},
-  {id:"STRAIGHT_14", type:"straight", tile:"straight2"},
-  {id:"STRAIGHT_15", type:"straight", tile:"straight1"},
-  {id:"TURN_03", type:"turn", tile:"curve"},
-  {id:"STRAIGHT_16", type:"straight", tile:"straight2"},
-  {id:"STRAIGHT_17", type:"straight", tile:"straight1"},
-  {id:"STRAIGHT_18", type:"straight", tile:"straight2"},
-  {id:"OFFRAMP_GLASSWELL_SOUTH", type:"offramp", tile:"ramp", exit:"Glasswell South / Transit-Industrial"},
-  {id:"STRAIGHT_19", type:"straight", tile:"straight1"},
-  {id:"STRAIGHT_20", type:"straight", tile:"straight2"},
-  {id:"STRAIGHT_21", type:"straight", tile:"straight1"},
-  {id:"RETURN_TO_WESTGATE_OFFRAMP", type:"return", tile:"straight2"}
-];
-
-function loopChunk(){
-  const n = HIGHWAY_LOOP.length;
-  return ((LOOP_CHUNK % n) + n) % n;
-}
-function highwayLoopConfig(){
-  const c = HIGHWAY_LOOP[loopChunk()];
-  return {
-    key:"highway_loop_" + loopChunk(),
-    zone:c.id,
-    base:HIGHWAY_TILE_PATHS[c.tile],
-    mask:null,
-    spawn:[0.50,LOOP_ENTRY==="north" ? 0.12 : 0.88],
-    objective:`Highway Loop ${loopChunk()+1}/${HIGHWAY_LOOP.length}: ${c.id}`,
-    exitText:"Continue Highway Loop"
-  };
-}
-
-let mapCfg = (AREA==="highway_loop") ? highwayLoopConfig() : (MAPS[AREA] || MAPS.a1);
-const WORLD_SCALE = AREA === "a1" ? 3.0 : (AREA === "club" ? 1.0 : ((AREA === "highway" || AREA==="highway_loop") ? 1.25 : 1.0));
-
-const VEHICLES = {
-  donnyCar:"assets/vehicles/special/aurelix_distortion/distortion_topdown.png"
-};
-
-function cfSaveActiveVehicle(scene){
-  try{
-    if(!scene || !scene.vehicleMode || !scene.vehicle) return;
-    const data={
-      active:true,
-      stolen:!!scene.vehicle.stolen,
-      carKey:(scene.vehicle.texture&&scene.vehicle.texture.key)||"donny_car",
-      speed:Math.round(scene.vehicleSpeed||0),
-      heading:Math.round(scene.vehicleHeading ?? ((scene.vehicle.angle||0)-90)),
-      lane: 1,
-      t:Date.now()
-    };
-    localStorage.setItem("cf_active_vehicle", JSON.stringify(data));
-  }catch(e){}
-}
-function cfClamp01(v){
-  return Math.max(0, Math.min(1, v));
-}
-
-function cfRoadCenterX(scene, y, laneIndex = 1) {
-  if (!scene || !scene.mapH) return 400;
-  const progress = cfClamp01(y / scene.mapH);
-  const type = (HIGHWAY_LOOP[loopChunk()] || {}).type || "straight";
-  const midX = scene.mapW * 0.5;
-  let baseCenter = midX;
-  if (type === "turn") {
-    baseCenter = midX + Math.sin(progress * Math.PI) * (scene.mapW * 0.16);
-  } else if (type === "offramp") {
-    baseCenter = midX - (progress * 40 * WORLD_SCALE);
-  }
-  const totalLanes = 4;
-  const laneSpacing = 24 * WORLD_SCALE;
-  const offset = (laneIndex - (totalLanes - 1) * 0.5) * laneSpacing;
-  return baseCenter + offset;
-}
-
-function cfRoadHeading(scene, y, laneIndex = 1, dir = -1) {
-  const deltaY = 6;
-  const nextY = y + (dir * deltaY);
-  const x1 = cfRoadCenterX(scene, y, laneIndex);
-  const x2 = cfRoadCenterX(scene, nextY, laneIndex);
-  return Math.atan2(nextY - y, x2 - x1) * (180 / Math.PI);
-}
-
-class GameScene extends Phaser.Scene {
+class MainStreetScene extends Phaser.Scene {
   constructor() {
-    super("GameScene");
+    super("MainStreetScene");
   }
 
   preload() {
-    this.load.image(mapCfg.key, mapCfg.base);
-    this.load.image("donnyCar", VEHICLES.donnyCar);
+    this.load.spritesheet("donny", "assets/characters/donny_walk_4dir_128x128_phaser.png", {
+      frameWidth: 128,
+      frameHeight: 128
+    });
+
+    this.load.spritesheet("donny_punch", "assets/characters/donny_punch_4dir_128x128_phaser.png", {
+      frameWidth: 128,
+      frameHeight: 128
+    });
+
+    this.load.image("auto_shop", "assets/buildings/auto_shop.png");
+
+    this.load.spritesheet("farmer_walk", "assets/zombies/farmer_walker_walk.png", {
+      frameWidth: 256,
+      frameHeight: 256
+    });
+
+    this.load.spritesheet("farmer_attack", "assets/zombies/farmer_walker_attack.png", {
+      frameWidth: 256,
+      frameHeight: 256
+    });
+
+    this.load.spritesheet("farmer_ko", "assets/zombies/farmer_walker_ko.png", {
+      frameWidth: 256,
+      frameHeight: 256
+    });
   }
 
   create() {
-    const bg = this.add.image(0, 0, mapCfg.key).setOrigin(0, 0);
-    this.mapW = bg.width;
-    this.mapH = bg.height;
+    this.input.addPointer(5);
 
-    this.physics.world.setBounds(0, 0, this.mapW, this.mapH);
+    this.worldW = 2400;
+    this.worldH = 1400;
 
-    this.vehicleMode = true;
-    this.vehicleSpeed = 0;
-    this.maxVehicleSpeed = 6.5;
-    
-    this.vehicle = this.physics.add.sprite(cfRoadCenterX(this, this.mapH * 0.8, 1), this.mapH * 0.8, "donnyCar");
-    this.vehicle.setOrigin(0.5, 0.5);
-    
-    // *** DRDRASTIC CAR SCALING DOWN APPLIED HERE ***
-    this.vehicle.setScale(WORLD_SCALE * 0.22);
-    this.vehicle.setCollideWorldBounds(true);
+    this.physics.world.setBounds(0, 0, this.worldW, this.worldH);
+    this.cameras.main.setBounds(0, 0, this.worldW, this.worldH);
 
-    // --- TRAFFIC SETUP ---
-    this.trafficGroup = this.physics.add.group();
-    this.npcs = [];
-    
-    this.laneSpeeds = [2.2, 3.1, 3.8, 2.7]; 
-    const numTrafficCars = (AREA === "highway_loop") ? 6 : 0;
+    this.mobile = {
+      left: false,
+      right: false,
+      up: false,
+      down: false,
+      a: false,
+      b: false,
+      x: false,
+      y: false
+    };
 
-    for (let i = 0; i < numTrafficCars; i++) {
-      let spawnY = (this.mapH / numTrafficCars) * i;
-      let laneIndex = Phaser.Math.Between(0, 3);
-      
-      let npcCar = this.physics.add.sprite(
-        cfRoadCenterX(this, spawnY, laneIndex),
-        spawnY,
-        "donnyCar"
-      );
-      
-      npcCar.setOrigin(0.5, 0.5);
-      
-      // *** DRDRASTIC TRAFFIC SCALING DOWN APPLIED HERE ***
-      npcCar.setScale(WORLD_SCALE * 0.22);
-      npcCar.setTint(0x7c94ff + (i * 0x110011)); 
-      
-      npcCar.laneIndex = laneIndex;
-      npcCar.travelDirection = -1; 
-      npcCar.baseSpeed = this.laneSpeeds[laneIndex] + Phaser.Math.FloatBetween(-0.15, 0.15);
-      npcCar.currentSpeed = npcCar.baseSpeed;
-      
-      this.trafficGroup.add(npcCar);
-      this.npcs.push(npcCar);
-    }
+    this.food = 5;
+    this.medicine = 2;
+    this.wood = 8;
+    this.survivors = 0;
+    this.jimFollowing = false;
+    this.safehouseUnlocked = false;
+    this.attackCooldown = false;
+    this.day = 1;
+    this.minutes = 8 * 60;
+    this.zombieDead = false;
+    this.zombieAttacking = false;
+    this.zombieLastDir = "down";
+    this.facing = "down";
+    this.isAttacking = false;
 
-    this.physics.add.collider(this.vehicle, this.trafficGroup, (player, npc) => {
-      this.vehicleSpeed *= 0.4; 
-      this.cameras.main.shake(120, 0.006);
+    this.makeMap();
+
+    this.player = this.physics.add.sprite(1200, 720, "donny", 0);
+    this.player.setCollideWorldBounds(true);
+    this.player.setScale(1.15);
+
+    this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+
+    this.createPlayerAnims();
+    this.createZombieAnims();
+
+    this.jim = this.add.rectangle(1030, 500, 42, 62, 0x00ffff);
+    this.jimLabel = this.add.text(1005, 450, "JIM", {
+      fontSize: "18px",
+      color: "#ffffff",
+      fontFamily: "Arial"
     });
 
-    this.cameras.main.startFollow(this.vehicle, true, 0.1, 0.1, 0, -60);
-    this.cameras.main.setBounds(0, 0, this.mapW, this.mapH);
-    
-    // Smooth cinematic focus view
-    this.cameras.main.setZoom(0.65);
+    this.safehouse = this.add.rectangle(1150, 250, 260, 180, 0x00ff00, 0.18);
 
-    document.getElementById("mode").innerText = "DRIVING";
-    document.getElementById("carHudBlock").style.display = "block";
-    document.getElementById("objectiveText").innerText = mapCfg.objective;
-  }
+    this.zombie = this.physics.add.sprite(350, 1180, "farmer_walk", 0);
+    this.zombie.setScale(0.42);
+    this.zombie.setCollideWorldBounds(true);
+    this.zombie.body.setSize(95, 130);
+    this.zombie.body.setOffset(80, 90);
+    this.zombie.hp = 100;
 
-  update(time, delta) {
-    const dtFactor = delta / 16.666;
-
-    let input = window.cfActiveControls || {x:0, y:0, a:false, b:false, r:false};
-    
-    if (input.a) {
-      this.vehicleSpeed = Math.min(this.maxVehicleSpeed, this.vehicleSpeed + 0.08 * dtFactor);
-    } else if (input.b) {
-      this.vehicleSpeed = Math.max(-1.5, this.vehicleSpeed - 0.12 * dtFactor);
-    } else {
-      this.vehicleSpeed *= Math.pow(0.97, dtFactor);
-    }
-
-    if (Math.abs(this.vehicleSpeed) > 0.1) {
-      this.vehicle.x += input.x * 3.5 * dtFactor * WORLD_SCALE;
-    }
-
-    this.vehicle.y -= this.vehicleSpeed * dtFactor;
-
-    if (this.vehicle.y < 0) {
-      this.vehicle.y = this.mapH;
-      this.nextChunkLoop();
-      return;
-    } else if (this.vehicle.y > this.mapH) {
-      this.vehicle.y = 0;
-    }
-
-    let playerLane = 1;
-    let midX = this.mapW * 0.5;
-    if (this.vehicle.x < midX - 12) playerLane = 0;
-    else if (this.vehicle.x > midX + 36) playerLane = 3;
-    else if (this.vehicle.x > midX + 12) playerLane = 2;
-
-    let hAngle = cfRoadHeading(this, this.vehicle.y, playerLane, -1);
-    this.vehicle.angle = hAngle + 180;
-
-    // --- TRAFFIC MOVEMENT CORE ---
-    this.npcs.forEach((npc) => {
-      npc.y += (npc.travelDirection * npc.currentSpeed * dtFactor);
-      
-      if (npc.y < 0) {
-        npc.y = this.mapH;
-        npc.laneIndex = Phaser.Math.Between(0, 3);
-        npc.currentSpeed = this.laneSpeeds[npc.laneIndex] + Phaser.Math.FloatBetween(-0.15, 0.15);
-      } else if (npc.y > this.mapH) {
-        npc.y = 0;
-      }
-
-      npc.x = cfRoadCenterX(this, npc.y, npc.laneIndex);
-      let npcHheading = cfRoadHeading(this, npc.y, npc.laneIndex, npc.travelDirection);
-      npc.angle = npcHheading + 180;
-
-      this.handleNpcAiTicks(npc);
+    this.zombieLabel = this.add.text(295, 1130, "FARMER WALKER", {
+      fontSize: "15px",
+      color: "#d6ffd6",
+      fontFamily: "Arial"
     });
 
-    let spdPct = Math.round(cfClamp01(Math.abs(this.vehicleSpeed) / this.maxVehicleSpeed) * 100);
-    document.getElementById("speedBar").style.width = spdPct + "%";
-    document.getElementById("coordLine").innerText = `XY: ${Math.round(this.vehicle.x)}, ${Math.round(this.vehicle.y)}`;
+    this.keys = this.input.keyboard.addKeys({
+      up: "W",
+      down: "S",
+      left: "A",
+      right: "D",
+      interact: "E",
+      attack: "SPACE"
+    });
+
+    this.createHUD();
+    this.createControls();
   }
 
-  handleNpcAiTicks(npc) {
-    let safeBufferY = 130;
-    let obstacleTriggered = false;
+  createPlayerAnims() {
+    this.anims.create({
+      key: "walk_down",
+      frames: this.anims.generateFrameNumbers("donny", { start: 0, end: 7 }),
+      frameRate: 8,
+      repeat: -1
+    });
 
-    this.npcs.forEach((other) => {
-      if (npc === other) return;
-      
-      if (npc.laneIndex === other.laneIndex) {
-        let diffY = npc.y - other.y; 
-        if (diffY > 0 && diffY < safeBufferY) {
-          obstacleTriggered = true;
-          
-          let switchLeft = npc.laneIndex - 1;
-          let switchRight = npc.laneIndex + 1;
-          
-          if (switchLeft >= 0 && !this.isSpecificLaneOccupied(switchLeft, npc.y)) {
-            npc.laneIndex = switchLeft;
-          } else if (switchRight <= 3 && !this.isSpecificLaneOccupied(switchRight, npc.y)) {
-            npc.laneIndex = switchRight;
-          } else {
-            npc.currentSpeed = Math.max(1.2, other.currentSpeed - 0.4);
-          }
+    this.anims.create({
+      key: "walk_right",
+      frames: this.anims.generateFrameNumbers("donny", { start: 8, end: 15 }),
+      frameRate: 8,
+      repeat: -1
+    });
+
+    this.anims.create({
+      key: "walk_left",
+      frames: this.anims.generateFrameNumbers("donny", { start: 16, end: 23 }),
+      frameRate: 8,
+      repeat: -1
+    });
+
+    this.anims.create({
+      key: "walk_up",
+      frames: this.anims.generateFrameNumbers("donny", { start: 24, end: 31 }),
+      frameRate: 8,
+      repeat: -1
+    });
+
+    this.anims.create({
+      key: "punch_down",
+      frames: this.anims.generateFrameNumbers("donny_punch", { start: 0, end: 5 }),
+      frameRate: 14,
+      repeat: 0
+    });
+
+    this.anims.create({
+      key: "punch_right",
+      frames: this.anims.generateFrameNumbers("donny_punch", { start: 6, end: 11 }),
+      frameRate: 14,
+      repeat: 0
+    });
+
+    this.anims.create({
+      key: "punch_left",
+      frames: this.anims.generateFrameNumbers("donny_punch", { start: 12, end: 17 }),
+      frameRate: 14,
+      repeat: 0
+    });
+
+    this.anims.create({
+      key: "punch_up",
+      frames: this.anims.generateFrameNumbers("donny_punch", { start: 18, end: 23 }),
+      frameRate: 14,
+      repeat: 0
+    });
+  }
+
+  createZombieAnims() {
+    // Uploaded zombie sheets are 6 columns x 4 rows, 256x256 per cell.
+    // Walk sheet rows:
+    // 0 = down/front, 1 = right-side, 2 = up/back, 3 = unused/backup.
+    // Left reuses right-side frames with flipX.
+    this.anims.create({
+      key: "farmer_walk_down",
+      frames: this.anims.generateFrameNumbers("farmer_walk", { start: 0, end: 5 }),
+      frameRate: 7,
+      repeat: -1
+    });
+
+    this.anims.create({
+      key: "farmer_walk_right",
+      frames: this.anims.generateFrameNumbers("farmer_walk", { start: 6, end: 11 }),
+      frameRate: 7,
+      repeat: -1
+    });
+
+    this.anims.create({
+      key: "farmer_walk_left",
+      frames: this.anims.generateFrameNumbers("farmer_walk", { start: 6, end: 11 }),
+      frameRate: 7,
+      repeat: -1
+    });
+
+    this.anims.create({
+      key: "farmer_walk_up",
+      frames: this.anims.generateFrameNumbers("farmer_walk", { start: 12, end: 17 }),
+      frameRate: 7,
+      repeat: -1
+    });
+
+    // Attack sheet is also 6 columns x 4 rows.
+    this.anims.create({
+      key: "farmer_attack_down",
+      frames: this.anims.generateFrameNumbers("farmer_attack", { start: 0, end: 5 }),
+      frameRate: 10,
+      repeat: 0
+    });
+
+    this.anims.create({
+      key: "farmer_attack_right",
+      frames: this.anims.generateFrameNumbers("farmer_attack", { start: 6, end: 11 }),
+      frameRate: 10,
+      repeat: 0
+    });
+
+    this.anims.create({
+      key: "farmer_attack_left",
+      frames: this.anims.generateFrameNumbers("farmer_attack", { start: 6, end: 11 }),
+      frameRate: 10,
+      repeat: 0
+    });
+
+    this.anims.create({
+      key: "farmer_attack_up",
+      frames: this.anims.generateFrameNumbers("farmer_attack", { start: 18, end: 23 }),
+      frameRate: 10,
+      repeat: 0
+    });
+
+    // KO uses first row for the collapse.
+    this.anims.create({
+      key: "farmer_ko",
+      frames: this.anims.generateFrameNumbers("farmer_ko", { start: 0, end: 5 }),
+      frameRate: 7,
+      repeat: 0
+    });
+  }
+
+  makeMap() {
+    this.add.rectangle(1200, 700, 2400, 1400, 0x34552d);
+
+    for (let x = 0; x < 2400; x += 40) {
+      this.add.rectangle(x, 70, 18, 120, 0x9b8a2d);
+      this.add.rectangle(x + 20, 1330, 18, 120, 0x9b8a2d);
+    }
+
+    this.add.rectangle(1200, 700, 2400, 320, 0x2c2c2c);
+    this.add.rectangle(1200, 520, 2400, 42, 0x666666);
+    this.add.rectangle(1200, 880, 2400, 42, 0x666666);
+
+    for (let x = 0; x < 2500; x += 220) {
+      this.add.rectangle(x, 700, 110, 12, 0xd9bd4c);
+    }
+
+    this.makeBuilding(250, 260, 300, 220, "GAS");
+    this.makeBuilding(680, 260, 330, 220, "DINER");
+
+    this.autoShopSprite = this.add.image(1150, 280, "auto_shop");
+    this.autoShopSprite.setDisplaySize(650, 310);
+
+    // Invisible solid collision box for the Auto Shop.
+    // This blocks the wall/roof area but leaves the door area reachable.
+    this.autoShopBlocker = this.add.rectangle(1150, 275, 610, 215, 0xff0000, 0);
+    this.physics.add.existing(this.autoShopBlocker, true);
+
+    this.add.rectangle(1150, 430, 76, 48, 0x111111);
+
+    this.makeBuilding(1600, 260, 330, 220, "BAR");
+    this.makeBuilding(2050, 260, 360, 220, "MOTEL");
+
+    this.makeBuilding(350, 1140, 360, 220, "HOUSE");
+    this.makeBuilding(850, 1140, 360, 220, "STORE");
+    this.makeBuilding(1350, 1140, 420, 220, "CLINIC");
+    this.makeBuilding(1900, 1140, 420, 220, "POLICE");
+  }
+
+  makeBuilding(x, y, w, h, label) {
+    this.add.rectangle(x, y, w, h, 0x4b4b4b);
+    this.add.rectangle(x, y - h / 2 + 20, w, 40, 0x222222);
+    this.add.rectangle(x, y + h / 2 - 18, 54, 36, 0x111111);
+
+    this.add.text(x, y - 5, label, {
+      fontSize: "24px",
+      color: "#ffffff",
+      fontFamily: "Arial"
+    }).setOrigin(0.5);
+  }
+
+  createHUD() {
+    this.missionText = this.add.text(20, 20, "Talk To Jim", {
+      fontSize: "24px",
+      color: "#ffff00",
+      fontFamily: "Arial"
+    }).setScrollFactor(0).setDepth(1000);
+
+    this.resourceText = this.add.text(20, 58, "", {
+      fontSize: "18px",
+      color: "#ffffff",
+      fontFamily: "Arial"
+    }).setScrollFactor(0).setDepth(1000);
+
+    this.clockText = this.add.text(1040, 20, "", {
+      fontSize: "20px",
+      color: "#ffffff",
+      fontFamily: "Arial"
+    }).setScrollFactor(0).setDepth(1000);
+
+    this.tipText = this.add.text(20, 160, "Move: left stick / WASD   Talk: A / E   Attack: X / Space", {
+      fontSize: "15px",
+      color: "#dddddd",
+      fontFamily: "Arial"
+    }).setScrollFactor(0).setDepth(1000);
+
+    this.versionText = this.add.text(20, 675, "v0.1.8 - Exact 256 Zombie Sheets", {
+      fontSize: "14px",
+      color: "#bbbbbb",
+      fontFamily: "Arial"
+    }).setScrollFactor(0).setDepth(1000);
+  }
+
+  createControls() {
+    this.stickBase = this.add.circle(135, 585, 70, 0x000000, 0.42)
+      .setScrollFactor(0)
+      .setDepth(1000);
+
+    this.stickKnob = this.add.circle(135, 585, 32, 0xffffff, 0.45)
+      .setScrollFactor(0)
+      .setDepth(1001);
+
+    this.stickHome = { x: 135, y: 585 };
+    this.stickTouchId = null;
+
+    this.makeButton(1120, 505, "Y", "y");
+    this.makeButton(1060, 575, "X", "x");
+    this.makeButton(1180, 575, "B", "b");
+    this.makeButton(1120, 645, "A", "a");
+
+    this.add.text(1060, 650, "SELECT", {
+      fontSize: "13px",
+      color: "#ffffff",
+      fontFamily: "Arial"
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(1001);
+
+    this.add.text(1190, 650, "START", {
+      fontSize: "13px",
+      color: "#ffffff",
+      fontFamily: "Arial"
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(1001);
+  }
+
+  makeButton(x, y, label, key) {
+    const btn = this.add.circle(x, y, 38, 0x333333, 0.72)
+      .setInteractive()
+      .setScrollFactor(0)
+      .setDepth(1000);
+
+    this.add.text(x, y, label, {
+      fontSize: "24px",
+      color: "#ffffff",
+      fontFamily: "Arial"
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(1001);
+
+    btn.on("pointerdown", () => {
+      this.mobile[key] = true;
+
+      if (key === "a") this.tryInteract();
+      if (key === "x") this.attack();
+    });
+
+    btn.on("pointerup", () => {
+      this.mobile[key] = false;
+    });
+
+    btn.on("pointerout", () => {
+      this.mobile[key] = false;
+    });
+  }
+
+  handleVirtualStick() {
+    let found = false;
+
+    for (const p of this.input.manager.pointers) {
+      if (!p || !p.isDown) continue;
+
+      if (p.x < 480) {
+        found = true;
+
+        if (this.stickTouchId === null) {
+          this.stickTouchId = p.id;
+          this.stickHome.x = p.x;
+          this.stickHome.y = p.y;
+          this.stickBase.x = p.x;
+          this.stickBase.y = p.y;
+        }
+
+        if (this.stickTouchId === p.id) {
+          const dx = p.x - this.stickHome.x;
+          const dy = p.y - this.stickHome.y;
+
+          this.mobile.left = dx < -18;
+          this.mobile.right = dx > 18;
+          this.mobile.up = dy < -18;
+          this.mobile.down = dy > 18;
+
+          const dist = Math.min(48, Math.sqrt(dx * dx + dy * dy));
+          const angle = Math.atan2(dy, dx);
+
+          this.stickKnob.x = this.stickHome.x + Math.cos(angle) * dist;
+          this.stickKnob.y = this.stickHome.y + Math.sin(angle) * dist;
         }
       }
-    });
+    }
 
-    if (!obstacleTriggered && npc.currentSpeed < npc.baseSpeed) {
-      npc.currentSpeed += 0.04;
+    if (!found) {
+      this.stickTouchId = null;
+      this.mobile.left = false;
+      this.mobile.right = false;
+      this.mobile.up = false;
+      this.mobile.down = false;
+
+      this.stickHome.x = 135;
+      this.stickHome.y = 585;
+
+      this.stickBase.x = 135;
+      this.stickBase.y = 585;
+      this.stickKnob.x = 135;
+      this.stickKnob.y = 585;
     }
   }
 
-  isSpecificLaneOccupied(laneIndex, currentY) {
-    let padding = 90;
-    return this.npcs.some((car) => {
-      return car.laneIndex === laneIndex && Math.abs(car.y - currentY) < padding;
+  tryInteract() {
+    const distToJim = Phaser.Math.Distance.Between(
+      this.player.x,
+      this.player.y,
+      this.jim.x,
+      this.jim.y
+    );
+
+    if (distToJim < 140 && !this.jimFollowing && !this.safehouseUnlocked) {
+      this.jimFollowing = true;
+      this.missionText.setText("Escort Jim To Auto Shop");
+    }
+  }
+
+  attack() {
+    if (this.attackCooldown) return;
+
+    this.attackCooldown = true;
+
+    this.time.delayedCall(350, () => {
+      this.attackCooldown = false;
     });
-  }
 
-  nextChunkLoop() {
-    cfSaveActiveVehicle(this);
-    const nextChunk = (LOOP_CHUNK + 1) % HIGHWAY_LOOP.length;
-    location.search = `?area=highway_loop&chunk=${nextChunk}&vehicle=car&entry=south`;
-  }
-}
+    this.isAttacking = true;
+    this.player.setTexture("donny_punch");
+    this.player.anims.play("punch_" + this.facing, true);
 
-window.cfActiveControls = {x:0, y:0, a:false, b:false, r:false};
-function setupControls() {
-  const stick = document.getElementById("stick");
-  const nub = document.getElementById("nub");
-  let activeTouchId = null;
-  let startX = 0, startY = 0;
+    this.player.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+      this.isAttacking = false;
+      this.player.setTexture("donny");
+    });
 
-  stick.addEventListener("touchstart", (e) => {
-    if (activeTouchId !== null) return;
-    const touch = e.changedTouches[0];
-    activeTouchId = touch.identifier;
-    const rect = stick.getBoundingClientRect();
-    startX = rect.left + rect.width / 2;
-    startY = rect.top + rect.height / 2;
-  }, {passive:true});
+    const slash = this.add.circle(this.player.x, this.player.y, 80, 0xffffff, 0.18);
+    this.time.delayedCall(120, () => slash.destroy());
 
-  stick.addEventListener("touchmove", (e) => {
-    if (activeTouchId === null) return;
-    for (let t of e.changedTouches) {
-      if (t.identifier === activeTouchId) {
-        let dx = t.clientX - startX;
-        let dy = t.clientY - startY;
-        let dist = Math.sqrt(dx*dx + dy*dy);
-        if (dist > 40) { dx *= 40/dist; dy *= 40/dist; dist = 40; }
-        nub.style.transform = `translate(${dx}px, ${dy}px)`;
-        window.cfActiveControls.x = dx / 40;
-        window.cfActiveControls.y = dy / 40;
+    if (this.zombie && this.zombie.active && !this.zombieDead) {
+      const d = Phaser.Math.Distance.Between(
+        this.player.x,
+        this.player.y,
+        this.zombie.x,
+        this.zombie.y
+      );
+
+      if (d < 120) {
+        this.zombie.hp -= 25;
+        this.zombie.setTint(0x99ff99);
+
+        this.time.delayedCall(100, () => {
+          if (this.zombie && this.zombie.active) {
+            this.zombie.clearTint();
+          }
+        });
+
+        if (this.zombie.hp <= 0) {
+          this.killZombie();
+        }
       }
     }
-  }, {passive:true});
+  }
 
-  const resetStick = () => { activeTouchId = null; nub.style.transform = "none"; window.cfActiveControls.x = 0; window.cfActiveControls.y = 0; };
-  stick.addEventListener("touchend", resetStick); stick.addEventListener("touchcancel", resetStick);
+  killZombie() {
+    this.zombieDead = true;
+    this.zombie.setVelocity(0, 0);
+    this.zombie.play("farmer_ko", true);
 
-  document.querySelectorAll(".btn").forEach(b => {
-    const key = b.getAttribute("data-btn");
-    const press = () => { if(key) window.cfActiveControls[key] = true; };
-    const release = () => { if(key) window.cfActiveControls[key] = false; };
-    b.addEventListener("touchstart", press, {passive:true});
-    b.addEventListener("touchend", release, {passive:true});
-    b.addEventListener("touchcancel", release, {passive:true});
-  });
+    if (this.zombieLabel) {
+      this.zombieLabel.destroy();
+    }
+
+    this.missionText.setText("Zombie Down - Help Jim");
+
+    this.zombie.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+      this.zombie.anims.stop();
+      this.zombie.setFrame(5);
+    });
+  }
+
+  updateZombie() {
+    if (!this.zombie || !this.zombie.active || this.zombieDead) return;
+
+    const zombieDist = Phaser.Math.Distance.Between(
+      this.zombie.x,
+      this.zombie.y,
+      this.player.x,
+      this.player.y
+    );
+
+    if (zombieDist < 600) {
+      const angle = Phaser.Math.Angle.Between(
+        this.zombie.x,
+        this.zombie.y,
+        this.player.x,
+        this.player.y
+      );
+
+      this.zombie.x += Math.cos(angle) * 0.9;
+      this.zombie.y += Math.sin(angle) * 0.9;
+
+      const dx = this.player.x - this.zombie.x;
+      const dy = this.player.y - this.zombie.y;
+
+      if (Math.abs(dx) > Math.abs(dy)) {
+        this.zombieLastDir = dx > 0 ? "right" : "left";
+      } else {
+        this.zombieLastDir = dy > 0 ? "down" : "up";
+      }
+
+      if (this.zombieLastDir === "left") {
+        this.zombie.setFlipX(true);
+        this.zombie.anims.play("farmer_walk_left", true);
+      } else {
+        this.zombie.setFlipX(false);
+        this.zombie.anims.play("farmer_walk_" + this.zombieLastDir, true);
+      }
+    } else {
+      this.zombie.anims.stop();
+    }
+
+    if (this.zombieLabel) {
+      this.zombieLabel.x = this.zombie.x - 55;
+      this.zombieLabel.y = this.zombie.y - 70;
+    }
+  }
+
+  update() {
+    this.handleVirtualStick();
+
+    if (Phaser.Input.Keyboard.JustDown(this.keys.interact)) {
+      this.tryInteract();
+    }
+
+    if (Phaser.Input.Keyboard.JustDown(this.keys.attack)) {
+      this.attack();
+    }
+
+    const speed = 240;
+    this.player.setVelocity(0);
+
+    const left = this.keys.left.isDown || this.mobile.left;
+    const right = this.keys.right.isDown || this.mobile.right;
+    const up = this.keys.up.isDown || this.mobile.up;
+    const down = this.keys.down.isDown || this.mobile.down;
+
+    if (left) this.player.setVelocityX(-speed);
+    if (right) this.player.setVelocityX(speed);
+    if (up) this.player.setVelocityY(-speed);
+    if (down) this.player.setVelocityY(speed);
+
+    this.player.body.velocity.normalize().scale(speed);
+
+    if (this.autoShopBlocker) {
+      this.physics.collide(this.player, this.autoShopBlocker);
+    }
+
+    if (left) this.facing = "left";
+    else if (right) this.facing = "right";
+    else if (up) this.facing = "up";
+    else if (down) this.facing = "down";
+
+    if (!this.isAttacking) {
+      if (left) {
+        this.player.anims.play("walk_left", true);
+      } else if (right) {
+        this.player.anims.play("walk_right", true);
+      } else if (up) {
+        this.player.anims.play("walk_up", true);
+      } else if (down) {
+        this.player.anims.play("walk_down", true);
+      } else {
+        this.player.anims.stop();
+      }
+    }
+
+    this.updateZombie();
+
+    if (this.jimFollowing && !this.safehouseUnlocked) {
+      const dist = Phaser.Math.Distance.Between(this.jim.x, this.jim.y, this.player.x, this.player.y);
+
+      if (dist > 90) {
+        const angle = Phaser.Math.Angle.Between(this.jim.x, this.jim.y, this.player.x, this.player.y);
+        this.jim.x += Math.cos(angle) * 2.0;
+        this.jim.y += Math.sin(angle) * 2.0;
+      }
+
+      this.jimLabel.x = this.jim.x - 25;
+      this.jimLabel.y = this.jim.y - 50;
+
+      const safeDist = Phaser.Math.Distance.Between(this.jim.x, this.jim.y, 1150, 250);
+
+      if (safeDist < 120) {
+        this.safehouseUnlocked = true;
+        this.jimFollowing = false;
+
+        this.food += 3;
+        this.medicine += 1;
+        this.wood += 5;
+        this.survivors = 1;
+
+        this.missionText.setText("AUTO SHOP SECURED");
+      }
+    }
+
+    this.minutes += 0.03;
+
+    if (this.minutes >= 1440) {
+      this.minutes = 0;
+      this.day += 1;
+    }
+
+    const h = Math.floor(this.minutes / 60).toString().padStart(2, "0");
+    const m = Math.floor(this.minutes % 60).toString().padStart(2, "0");
+
+    this.clockText.setText("Day " + this.day + "  " + h + ":" + m);
+
+    this.resourceText.setText(
+      "Food: " + this.food +
+      "\nMedicine: " + this.medicine +
+      "\nWood: " + this.wood +
+      "\nSurvivors: " + this.survivors
+    );
+  }
 }
 
-setupControls();
-function viewportW(){return Math.max(320,Math.floor(window.visualViewport?window.visualViewport.width:innerWidth));} 
-function viewportH(){return Math.max(240,Math.floor(window.visualViewport?window.visualViewport.height:innerHeight));}
-
-const game = new Phaser.Game({
+const config = {
   type: Phaser.AUTO,
-  parent: "game",
-  backgroundColor: "#05070b",
-  scale: {mode:Phaser.Scale.RESIZE, autoCenter:Phaser.Scale.NO_CENTER, width:viewportW(), height:viewportH()},
-  physics: {default:"arcade", arcade:{debug:false}},
-  pixelArt: true,
-  roundPixels: true,
-  scene: [GameScene],
-  render: {pixelArt:false, antialias:true}
-});
+  width: 1280,
+  height: 720,
+  backgroundColor: "#111111",
+  parent: document.body,
+  physics: {
+    default: "arcade",
+    arcade: {
+      debug: false
+    }
+  },
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: 1280,
+    height: 720
+  },
+  scene: [MainStreetScene]
+};
 
-function forceResize(){
-  const w=viewportW(), h=viewportH();
-  document.getElementById("game").style.width=w+"px";
-  document.getElementById("game").style.height=h+"px";
-  if(game&&game.scale)game.scale.resize(w,h);
-}
-addEventListener("resize",forceResize);
-})();
+new Phaser.Game(config);
 </script>
 </body>
 </html>
