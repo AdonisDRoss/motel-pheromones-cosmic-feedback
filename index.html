@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<title>Cosmic Feedback - Blacklight Highway Loop v123</title>
+<title>Cosmic Feedback - Blacklight Highway Loop v124</title>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 <style>
 html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8f7ff;overflow:hidden!important;position:fixed;inset:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;overscroll-behavior:none;}
@@ -243,7 +243,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;background:#05070b;color:#d8
   <button class="vbtn exit" id="driveExit">EXIT<br>CAR</button>
 </div>
 
-<div class="version">Highway Loop / Emergency Drive + Traffic v123</div>
+<div class="version">Highway Loop / Force Drive + Traffic v124</div>
 <script>
 (() => {
 const qs = new URLSearchParams(location.search);
@@ -1304,10 +1304,9 @@ preload(){
   }
 
   this.spawnTraffic();
-  // v123: if old code failed to make traffic, force it again after the scene settles.
-  if(AREA==="highway" || AREA==="highway_loop"){
-    this.time.delayedCall(300,()=>{ if(!this.trafficCars || !this.trafficCars.length) this.spawnTraffic(); });
-  }
+  // v124: force traffic after the scene settles regardless of AREA variable.
+  this.time.delayedCall(300,()=>{ if(!this.trafficCars || !this.trafficCars.length) this.spawnTraffic(); });
+  this.time.delayedCall(1200,()=>{ if(!this.trafficCars || !this.trafficCars.length) this.spawnTraffic(); });
   cfNpcSpawn(this);
   this.forceSpawnTrafficAllChunks();
   this.hideTransitionDebugMarkers();
@@ -1498,7 +1497,7 @@ ensureV123TrafficTextures(){
 
 spawnTraffic(){
   // v123: guaranteed simple visible traffic. No sprite-sheet dependency.
-  if(!(AREA==="highway" || AREA==="highway_loop")) return;
+  // v124: force traffic on this highway build regardless of AREA variable.
   this.ensureV123TrafficTextures();
 
   if(!this.trafficCars) this.trafficCars=[];
@@ -1545,7 +1544,7 @@ spawnTraffic(){
 
     this.trafficCars.push(car);
   }
-  showToast("v123 TRAFFIC SPAWNED: "+this.trafficCars.length);
+  showToast("v124 TRAFFIC SPAWNED: "+this.trafficCars.length);
 }
 
 
@@ -1727,7 +1726,7 @@ updateCarjackPrompt(){
 
 updateTraffic(dt){
   // v123: simple AI traffic only. It never reads player input and never collides with player.
-  if(!(AREA==="highway" || AREA==="highway_loop")) return;
+  // v124: force traffic update regardless of AREA variable.
 
   if(!this.trafficCars || !this.trafficCars.length){
     if(!this._v123TrafficQueued){
@@ -2407,10 +2406,36 @@ v123DriveUpdate(dt){
   if(this.cameras?.main) this.cameras.main.centerOn(this.vehicle.x,this.vehicle.y);
   if(this.updateCarHud) this.updateCarHud();
   cfSaveActiveVehicle(this);
-  coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.vehicle.x)},${Math.round(this.vehicle.y)} <span class="tag">CAR:</span> v123 <span class="tag">SPD:</span>${Math.round(this.vehicleSpeed)} <span class="tag">A:</span>${input.a?1:0} <span class="tag">B:</span>${input.b?1:0}`;
+  coordLine.innerHTML=`<span class="tag">XY:</span> ${Math.round(this.vehicle.x)},${Math.round(this.vehicle.y)} <span class="tag">CAR:</span> v124 <span class="tag">SPD:</span>${Math.round(this.vehicleSpeed)} <span class="tag">A:</span>${input.a?1:0} <span class="tag">B:</span>${input.b?1:0}`;
 }
 
  update(_,dt){
+  // v124 emergency bypass: keep traffic alive and allow the visible car to become drivable.
+  if(this.updateTraffic) this.updateTraffic(dt);
+
+  const gasDown = !!(input.a || input.vgas);
+  const brakeDown = !!(input.b || input.vbrake);
+  const xDown = !!(input.xbtn || input.usePressed || input.carjackPressed);
+
+  if(xDown && !this.vehicleMode && this.vehicle){
+    this.vehicleMode=true;
+    this.activeVehicle=this.vehicle;
+    setMode("IN CAR");
+    if(this.player) this.player.setVisible(false);
+    input.usePressed=false; input.carjackPressed=false;
+  }
+
+  if((gasDown || brakeDown) && !this.vehicleMode && this.vehicle){
+    this.vehicleMode=true;
+    this.activeVehicle=this.vehicle;
+    setMode("IN CAR");
+    if(this.player) this.player.setVisible(false);
+  }
+
+  if(this.vehicleMode && this.vehicle && this.v123DriveUpdate){
+    this.v123DriveUpdate(dt);
+  }
+
 
   // v118: always keep traffic alive per chunk, even when Donny is on foot.
   if(AREA==="highway" || AREA==="highway_loop"){
